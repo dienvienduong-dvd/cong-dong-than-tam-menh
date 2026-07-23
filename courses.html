@@ -814,10 +814,10 @@
         <main id="feed">
           <!-- Hero -->
           <div class="courses-hero">
-            <div class="courses-hero-icon">🎓</div>
+            <div class="courses-hero-icon" id="coursesHeroIcon">🎓</div>
             <div class="courses-hero-body">
-              <div class="courses-hero-title">Khóa học AI Agent</div>
-              <div class="courses-hero-sub">Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực
+              <div class="courses-hero-title" id="coursesHeroTitle">Khóa học AI Agent</div>
+              <div class="courses-hero-sub" id="coursesHeroDesc">Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực
                 chiến</div>
             </div>
             <div class="courses-hero-stats">
@@ -1034,8 +1034,19 @@
       if (id) goToCourse(id);
     }
 
+    async function loadCoursesHero() {
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        document.getElementById('coursesHeroIcon').textContent = (s.courses_hero_icon || '🎓').trim();
+        document.getElementById('coursesHeroTitle').textContent = (s.courses_hero_title || 'Khóa học AI Agent').trim();
+        document.getElementById('coursesHeroDesc').textContent = (s.courses_hero_desc ||
+          'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến').trim();
+      } catch (e) {}
+    }
+
     initUser();
     loadCourses();
+    loadCoursesHero();
   </script>
 </body>
 

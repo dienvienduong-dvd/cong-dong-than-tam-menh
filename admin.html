@@ -2273,6 +2273,7 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('home', this)">🏠 Trang chủ</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('banner', this)">📢 Banner</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('challenge', this)">🎯 Challenge</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('courses', this)">🎓 Khóa học</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('email', this)">⚙️ Email</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('calendar', this)">📅 Lịch</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
@@ -2480,6 +2481,51 @@
             </div>
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveChallengeHero()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- Courses page hero banner -->
+        <div class="settings-tab-panel" data-tab="courses">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>🎓 Banner trang Khóa học</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+              Tuỳ chỉnh icon, tiêu đề và mô tả hiển thị ở đầu trang <strong>courses.html</strong>.
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);min-width:80px;">Icon</label>
+              <input id="settingCoursesIcon" type="text" class="search-input"
+                style="width:80px;text-align:center;font-size:18px;" placeholder="🎓" maxlength="4" oninput="updateCoursesHeroPreview()">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Tiêu đề</label>
+              <input id="settingCoursesTitle" type="text" class="search-input" maxlength="80"
+                style="width:100%" placeholder="Khóa học AI Agent" oninput="updateCoursesHeroPreview()">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Mô tả</label>
+              <textarea id="settingCoursesDesc" rows="3" oninput="updateCoursesHeroPreview()"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"
+                placeholder="Học từ cơ bản đến nâng cao..."></textarea>
+            </div>
+            <!-- Preview -->
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">Xem trước</div>
+              <div style="background:var(--bg-active,#e0f2fe);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px;">
+                <div style="width:44px;height:44px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;" id="settingCoursesPreviewIcon">🎓</div>
+                <div>
+                  <div style="font-size:16px;font-weight:800;color:#1e3a8a;" id="settingCoursesPreviewTitle">Khóa học AI Agent</div>
+                  <div style="font-size:13px;color:#334155;" id="settingCoursesPreviewDesc">Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveCoursesHero()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
             </div>
           </div>
@@ -4796,6 +4842,12 @@
         document.getElementById('settingHomeStat3Label').value = s.home_stat3_label || 'Day Challenge';
         document.getElementById('settingHomeTags').value = s.home_tags || 'AI Agent, Prompt Engineering, n8n / Make, Automation, LLM Apps';
         updateHomeHeroPreview();
+
+        document.getElementById('settingCoursesIcon').value = s.courses_hero_icon || '🎓';
+        document.getElementById('settingCoursesTitle').value = s.courses_hero_title || 'Khóa học AI Agent';
+        document.getElementById('settingCoursesDesc').value = s.courses_hero_desc ||
+          'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến';
+        updateCoursesHeroPreview();
       } catch (e) { showToast('Không tải được cài đặt.', 'red'); }
     }
 
@@ -4917,6 +4969,29 @@
       if (res.error) { showToast(res.error, 'red'); return; }
       updateHomeHeroPreview();
       showToast('Đã lưu nội dung trang chủ.', 'green');
+    }
+
+    function updateCoursesHeroPreview() {
+      const icon = document.getElementById('settingCoursesIcon').value.trim() || '🎓';
+      const title = document.getElementById('settingCoursesTitle').value.trim() || 'Khóa học AI Agent';
+      const desc = document.getElementById('settingCoursesDesc').value.trim() ||
+        'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến';
+      document.getElementById('settingCoursesPreviewIcon').textContent = icon;
+      document.getElementById('settingCoursesPreviewTitle').textContent = title;
+      document.getElementById('settingCoursesPreviewDesc').textContent = desc;
+    }
+
+    async function saveCoursesHero() {
+      const icon = document.getElementById('settingCoursesIcon').value.trim() || '🎓';
+      const title = document.getElementById('settingCoursesTitle').value.trim() || 'Khóa học AI Agent';
+      const desc = document.getElementById('settingCoursesDesc').value.trim();
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ courses_hero_icon: icon, courses_hero_title: title, courses_hero_desc: desc })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      updateCoursesHeroPreview();
+      showToast('Đã lưu banner trang Khóa học.', 'green');
     }
 
     function renderAboutMediaList() {

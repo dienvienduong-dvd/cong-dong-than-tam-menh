@@ -953,6 +953,9 @@ const CHALLENGE_DAYS_TEACHER = [
     ['home_stat3_value',       '21'],
     ['home_stat3_label',       'Day Challenge'],
     ['home_tags',              'AI Agent, Prompt Engineering, n8n / Make, Automation, LLM Apps'],
+    ['courses_hero_icon',      '🎓'],
+    ['courses_hero_title',     'Khóa học AI Agent'],
+    ['courses_hero_desc',      'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -3661,6 +3664,7 @@ QUY TẮC BẮT BUỘC:
       'home_tagline', 'home_heading_line1', 'home_heading_highlight', 'home_heading_line2',
       'home_desc', 'home_stat1_value', 'home_stat1_label', 'home_stat2_value', 'home_stat2_label',
       'home_stat3_value', 'home_stat3_label', 'home_tags',
+      'courses_hero_icon', 'courses_hero_title', 'courses_hero_desc',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
