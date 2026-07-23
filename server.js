@@ -29,7 +29,7 @@ const SEPAY_KEY   = process.env.SEPAY_KEY   || 'ae3066fa595768259e92553aa371405a
 const GSHEET_ID   = process.env.GSHEET_ID   || '1TNzXmIR9Qcu_oqeNxYGFdnFxt2YN9xik4OPJOtac4nI';
 const RESEND_KEY       = process.env.RESEND_API_KEY    || '';
 const OPENROUTER_KEY   = process.env.OPENROUTER_API_KEY || '';
-const FROM_EMAIL  = process.env.FROM_EMAIL || 'Cộng đồng IELTS Chương Cà Mau <congdong@chuongcm.com>';
+const FROM_EMAIL  = process.env.FROM_EMAIL || 'Cộng đồng tiếng anh Chương Cà Mau <tienganh@chuongcm.com>';
 const ADMIN_EMAIL = 'tuchinguyen.ctv@gmail.com';
 
 const resendClient = RESEND_KEY ? new Resend(RESEND_KEY) : null;
