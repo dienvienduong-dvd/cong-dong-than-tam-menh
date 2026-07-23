@@ -469,9 +469,9 @@ const AV_COLORS = ['#0ea5e9','#8b5cf6','#10b981','#f59e0b','#ec4899','#3b82f6','
 const LEVELS = [
   {level:1,name:'Khởi động',xpMin:0,xpMax:45},{level:2,name:'Học viên',xpMin:45,xpMax:120},
   {level:3,name:'Thực hành',xpMin:120,xpMax:250},{level:4,name:'Nâng cao',xpMin:250,xpMax:450},
-  {level:5,name:'Chuyên gia',xpMin:450,xpMax:700},{level:6,name:'Master',xpMin:700,xpMax:1000},
-  {level:7,name:'Elite',xpMin:1000,xpMax:1500},{level:8,name:'Legend',xpMin:1500,xpMax:2200},
-  {level:9,name:'Grandmaster',xpMin:2200,xpMax:3000},
+  {level:5,name:'Chuyên gia',xpMin:450,xpMax:700},{level:6,name:'Bậc thầy',xpMin:700,xpMax:1000},
+  {level:7,name:'Huyền thoại',xpMin:1000,xpMax:1500},{level:8,name:'Tiên tri',xpMin:1500,xpMax:2200},
+  {level:9,name:'Thần thánh',xpMin:2200,xpMax:9999},
 ];
 function getLevel(xp) { for(let i=LEVELS.length-1;i>=0;i--) if(xp>=LEVELS[i].xpMin) return LEVELS[i]; return LEVELS[0]; }
 

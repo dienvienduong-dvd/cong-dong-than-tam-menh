@@ -1586,7 +1586,7 @@
       document.getElementById('sbAvatar').textContent = initials;
       document.getElementById('sbAvatar').style.background = avatarGrad(u.first_name);
       document.getElementById('sbName').textContent = `${u.first_name} ${u.last_name || ''}`.trim();
-      document.getElementById('sbLevel').textContent = `Level ${lv.level} · ${u.xp || 0} XP`;
+      document.getElementById('sbLevel').textContent = lv.name + ' · Lv.' + lv.level;
       const tbAv = document.getElementById('topbarAvatar');
       if (tbAv) { tbAv.textContent = initials; tbAv.style.background = avatarGrad(u.first_name); }
       ['sbAvatar','sbName','topbarAvatar'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.cursor='pointer'; el.onclick=()=>location.href=`profile.html?id=${u.id}`; } });

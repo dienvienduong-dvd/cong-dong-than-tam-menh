@@ -1108,7 +1108,7 @@
       document.getElementById('sbAvatar').style.background = avColor(user.id);
       document.getElementById('sbName').textContent = `${user.first_name} ${user.last_name}`;
       const lv = getLevel(user.xp || 0);
-      document.getElementById('sbLevel').textContent = `Lv.${lv.level} · ${lv.name}`;
+      document.getElementById('sbLevel').textContent = `${lv.name} · Lv.${lv.level}`;
       ['sbAvatar','sbName'].forEach(id => { const el = document.getElementById(id); el.style.cursor='pointer'; el.onclick=()=>location.href=`profile.html?id=${user.id}`; });
       document.getElementById('topbarAvatar').textContent = avLetter(user);
       document.getElementById('topbarAvatar').style.background = avColor(user.id);
