@@ -2432,6 +2432,36 @@ QUY TẮC BẮT BUỘC:
     res.json({ users, total });
   });
 
+  // Global topbar search (public) — posts + members + products, 5 each
+  app.get('/api/search', (req, res) => {
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json({ posts: [], users: [], products: [] });
+    const like = `%${q}%`;
+
+    const posts = db.all(`
+      SELECT p.id, p.title, p.content, u.first_name, u.last_name
+      FROM posts p JOIN users u ON u.id = p.user_id
+      WHERE p.space_id IS NULL AND (p.title LIKE ? OR p.content LIKE ?)
+      ORDER BY p.created_at DESC LIMIT 5
+    `, [like, like]);
+
+    const users = db.all(`
+      SELECT id, first_name, last_name, level, xp
+      FROM users
+      WHERE status = 'active' AND (first_name LIKE ? OR last_name LIKE ? OR (first_name || ' ' || last_name) LIKE ?)
+      ORDER BY xp DESC LIMIT 5
+    `, [like, like, like]);
+
+    const products = db.all(`
+      SELECT id, title, price, cover_color
+      FROM products
+      WHERE status = 'published' AND (title LIKE ? OR description LIKE ?)
+      ORDER BY sales_count DESC LIMIT 5
+    `, [like, like]);
+
+    res.json({ posts, users, products });
+  });
+
   // Community stats bar (public) — members / admins / online counts
   app.get('/api/community/stats', (req, res) => {
     const members = db.get("SELECT COUNT(*) AS n FROM users WHERE status = 'active'").n;

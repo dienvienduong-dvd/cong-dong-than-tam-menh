@@ -58,6 +58,86 @@ function closeMainMenu() {
   }).catch(() => {});
 })();
 
+// ── Global topbar search ─────────────────────────────────────
+(function initGlobalSearch() {
+  const input = document.getElementById('globalSearchInput');
+  const panel = document.getElementById('globalSearchResults');
+  if (!input || !panel) return;
+
+  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function renderResults(data) {
+    const posts = data.posts || [], users = data.users || [], products = data.products || [];
+    if (!posts.length && !users.length && !products.length) {
+      panel.innerHTML = '<div class="gsr-empty">Không tìm thấy kết quả nào.</div>';
+      return;
+    }
+    let html = '';
+    if (posts.length) {
+      html += '<div class="gsr-group-title">Bài viết</div>' + posts.map(p => `
+        <a class="gsr-item" href="feed.html?post_id=${p.id}">
+          <div class="gsr-item-icon">📝</div>
+          <div class="gsr-item-text">
+            <div class="gsr-item-title">${esc(p.title)}</div>
+            <div class="gsr-item-sub">${esc(p.first_name)} ${esc(p.last_name)}</div>
+          </div>
+        </a>`).join('');
+    }
+    if (users.length) {
+      html += '<div class="gsr-group-title">Thành viên</div>' + users.map(u => `
+        <a class="gsr-item" href="profile.html?id=${u.id}">
+          <div class="gsr-item-icon">${esc((u.first_name || '?')[0])}</div>
+          <div class="gsr-item-text">
+            <div class="gsr-item-title">${esc(u.first_name)} ${esc(u.last_name)}</div>
+            <div class="gsr-item-sub">Lv.${u.level || 1} · ${u.xp || 0} XP</div>
+          </div>
+        </a>`).join('');
+    }
+    if (products.length) {
+      html += '<div class="gsr-group-title">Sản phẩm</div>' + products.map(p => `
+        <a class="gsr-item" href="marketplace.html?product_id=${p.id}">
+          <div class="gsr-item-icon" style="background:${p.cover_color || 'var(--color-primary)'}">🛍️</div>
+          <div class="gsr-item-text">
+            <div class="gsr-item-title">${esc(p.title)}</div>
+            <div class="gsr-item-sub">${Number(p.price || 0).toLocaleString('vi-VN')}₫</div>
+          </div>
+        </a>`).join('');
+    }
+    panel.innerHTML = html;
+  }
+
+  async function runSearch(q) {
+    panel.innerHTML = '<div class="gsr-loading">Đang tìm...</div>';
+    panel.classList.add('open');
+    try {
+      const data = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
+      renderResults(data);
+    } catch (e) {
+      panel.innerHTML = '<div class="gsr-empty">Lỗi kết nối server.</div>';
+    }
+  }
+
+  let debounceTimer = null;
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearTimeout(debounceTimer);
+    if (!q) { panel.classList.remove('open'); panel.innerHTML = ''; return; }
+    debounceTimer = setTimeout(() => runSearch(q), 300);
+  });
+
+  input.addEventListener('focus', () => {
+    if (input.value.trim() && panel.innerHTML) panel.classList.add('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target !== input && !panel.contains(e.target)) panel.classList.remove('open');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { panel.classList.remove('open'); input.blur(); }
+  });
+})();
+
 // Tab switching
 function setActiveTab(tabEl, groupSelector = '.tab-item') {
   const group = tabEl.closest('.tab-nav') || document.querySelector('.tab-nav');
