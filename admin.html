@@ -2270,6 +2270,7 @@
       <section class="page" id="page-settings">
         <div class="settings-tabs">
           <button class="settings-tab-btn active" onclick="showSettingsTab('community', this)">🏷️ Cộng đồng</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('home', this)">🏠 Trang chủ</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('banner', this)">📢 Banner</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('challenge', this)">🎯 Challenge</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('email', this)">⚙️ Email</button>
@@ -2293,6 +2294,99 @@
             </div>
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveCommunityName()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- Homepage (login page) hero -->
+        <div class="settings-tab-panel" data-tab="home">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>🏠 Nội dung trang chủ (index.html)</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+              Tuỳ chỉnh nội dung hiển thị ở khung bên trái trang đăng nhập (<strong>index.html</strong>): tagline, tiêu đề, mô tả, số liệu và thẻ tag.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Tagline</label>
+              <input id="settingHomeTagline" type="text" class="search-input" maxlength="60"
+                style="width:100%" placeholder="Cộng đồng AI Agent" oninput="updateHomeHeroPreview()">
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Tiêu đề dòng 1</label>
+                <input id="settingHomeLine1" type="text" class="search-input" maxlength="40"
+                  style="width:100%" placeholder="Làm chủ" oninput="updateHomeHeroPreview()">
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Từ khoá nổi bật</label>
+                <input id="settingHomeHighlight" type="text" class="search-input" maxlength="40"
+                  style="width:100%" placeholder="AI Agent" oninput="updateHomeHeroPreview()">
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Tiêu đề dòng 2</label>
+                <input id="settingHomeLine2" type="text" class="search-input" maxlength="40"
+                  style="width:100%" placeholder="từ hôm nay." oninput="updateHomeHeroPreview()">
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Mô tả</label>
+              <textarea id="settingHomeDesc" rows="2" oninput="updateHomeHeroPreview()"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"
+                placeholder="Nơi học viên thực chiến cùng nhau..."></textarea>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Số liệu 1 (giá trị / nhãn)</label>
+                <div style="display:flex;gap:6px;">
+                  <input id="settingHomeStat1Value" type="text" class="search-input" maxlength="12" placeholder="2K+" oninput="updateHomeHeroPreview()">
+                  <input id="settingHomeStat1Label" type="text" class="search-input" maxlength="24" placeholder="Học viên" oninput="updateHomeHeroPreview()">
+                </div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Số liệu 2 (giá trị / nhãn)</label>
+                <div style="display:flex;gap:6px;">
+                  <input id="settingHomeStat2Value" type="text" class="search-input" maxlength="12" placeholder="120+" oninput="updateHomeHeroPreview()">
+                  <input id="settingHomeStat2Label" type="text" class="search-input" maxlength="24" placeholder="Bài học" oninput="updateHomeHeroPreview()">
+                </div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Số liệu 3 (giá trị / nhãn)</label>
+                <div style="display:flex;gap:6px;">
+                  <input id="settingHomeStat3Value" type="text" class="search-input" maxlength="12" placeholder="21" oninput="updateHomeHeroPreview()">
+                  <input id="settingHomeStat3Label" type="text" class="search-input" maxlength="24" placeholder="Day Challenge" oninput="updateHomeHeroPreview()">
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Thẻ tag (phân cách bằng dấu phẩy)</label>
+              <input id="settingHomeTags" type="text" class="search-input"
+                style="width:100%" placeholder="AI Agent, Prompt Engineering, n8n / Make, Automation, LLM Apps" oninput="updateHomeHeroPreview()">
+            </div>
+            <!-- Preview -->
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">Xem trước</div>
+              <div style="background:#0a1628;border-radius:14px;padding:24px;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:#0ea5e9;margin-bottom:14px;" id="homeHeroPreviewTagline">Cộng đồng AI Agent</div>
+                <div style="font-size:26px;font-weight:800;color:#f0f6ff;line-height:1.2;margin-bottom:10px;">
+                  <span id="homeHeroPreviewLine1">Làm chủ</span><br>
+                  <span id="homeHeroPreviewHighlight" style="color:#0ea5e9;">AI Agent</span><br>
+                  <span id="homeHeroPreviewLine2">từ hôm nay.</span>
+                </div>
+                <div style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:16px;" id="homeHeroPreviewDesc">Nơi học viên thực chiến cùng nhau…</div>
+                <div style="display:flex;gap:24px;margin-bottom:14px;">
+                  <div><div style="font-size:20px;font-weight:800;color:#f0f6ff;" id="homeHeroPreviewStat1">2K+</div><div style="font-size:11px;color:#64748b;" id="homeHeroPreviewStat1Label">Học viên</div></div>
+                  <div><div style="font-size:20px;font-weight:800;color:#f0f6ff;" id="homeHeroPreviewStat2">120+</div><div style="font-size:11px;color:#64748b;" id="homeHeroPreviewStat2Label">Bài học</div></div>
+                  <div><div style="font-size:20px;font-weight:800;color:#f0f6ff;" id="homeHeroPreviewStat3">21</div><div style="font-size:11px;color:#64748b;" id="homeHeroPreviewStat3Label">Day Challenge</div></div>
+                </div>
+                <div id="homeHeroPreviewTags" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveHomeHero()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
             </div>
           </div>
@@ -4687,6 +4781,21 @@
         document.getElementById('settingAboutIntro').value = s.about_intro || '';
         try { aboutMedia = JSON.parse(s.about_media || '[]'); } catch { aboutMedia = []; }
         renderAboutMediaList();
+
+        document.getElementById('settingHomeTagline').value = s.home_tagline || 'Cộng đồng AI Agent';
+        document.getElementById('settingHomeLine1').value = s.home_heading_line1 || 'Làm chủ';
+        document.getElementById('settingHomeHighlight').value = s.home_heading_highlight || 'AI Agent';
+        document.getElementById('settingHomeLine2').value = s.home_heading_line2 || 'từ hôm nay.';
+        document.getElementById('settingHomeDesc').value = s.home_desc ||
+          'Nơi học viên thực chiến cùng nhau — từ prompt engineering đến deploy agent thực tế trong 21 ngày.';
+        document.getElementById('settingHomeStat1Value').value = s.home_stat1_value || '2K+';
+        document.getElementById('settingHomeStat1Label').value = s.home_stat1_label || 'Học viên';
+        document.getElementById('settingHomeStat2Value').value = s.home_stat2_value || '120+';
+        document.getElementById('settingHomeStat2Label').value = s.home_stat2_label || 'Bài học';
+        document.getElementById('settingHomeStat3Value').value = s.home_stat3_value || '21';
+        document.getElementById('settingHomeStat3Label').value = s.home_stat3_label || 'Day Challenge';
+        document.getElementById('settingHomeTags').value = s.home_tags || 'AI Agent, Prompt Engineering, n8n / Make, Automation, LLM Apps';
+        updateHomeHeroPreview();
       } catch (e) { showToast('Không tải được cài đặt.', 'red'); }
     }
 
@@ -4750,6 +4859,64 @@
       if (res.error) { showToast(res.error, 'red'); return; }
       updateChallengeHeroPreview();
       showToast('Đã lưu banner trang Thử thách.', 'green');
+    }
+
+    function splitStatValuePreview(value) {
+      const m = String(value || '').match(/^(\d+)(.*)$/);
+      if (!m) return value || '';
+      return m[2] ? `${m[1]}${m[2]}` : m[1];
+    }
+
+    function updateHomeHeroPreview() {
+      const tagline = document.getElementById('settingHomeTagline').value.trim() || 'Cộng đồng AI Agent';
+      const line1 = document.getElementById('settingHomeLine1').value.trim() || 'Làm chủ';
+      const highlight = document.getElementById('settingHomeHighlight').value.trim() || 'AI Agent';
+      const line2 = document.getElementById('settingHomeLine2').value.trim() || 'từ hôm nay.';
+      const desc = document.getElementById('settingHomeDesc').value.trim() ||
+        'Nơi học viên thực chiến cùng nhau — từ prompt engineering đến deploy agent thực tế trong 21 ngày.';
+      const stat1v = document.getElementById('settingHomeStat1Value').value.trim() || '2K+';
+      const stat1l = document.getElementById('settingHomeStat1Label').value.trim() || 'Học viên';
+      const stat2v = document.getElementById('settingHomeStat2Value').value.trim() || '120+';
+      const stat2l = document.getElementById('settingHomeStat2Label').value.trim() || 'Bài học';
+      const stat3v = document.getElementById('settingHomeStat3Value').value.trim() || '21';
+      const stat3l = document.getElementById('settingHomeStat3Label').value.trim() || 'Day Challenge';
+      const tags = (document.getElementById('settingHomeTags').value || '').split(',').map(t => t.trim()).filter(Boolean);
+
+      document.getElementById('homeHeroPreviewTagline').textContent = tagline;
+      document.getElementById('homeHeroPreviewLine1').textContent = line1;
+      document.getElementById('homeHeroPreviewHighlight').textContent = highlight;
+      document.getElementById('homeHeroPreviewLine2').textContent = line2;
+      document.getElementById('homeHeroPreviewDesc').textContent = desc;
+      document.getElementById('homeHeroPreviewStat1').textContent = splitStatValuePreview(stat1v);
+      document.getElementById('homeHeroPreviewStat1Label').textContent = stat1l;
+      document.getElementById('homeHeroPreviewStat2').textContent = splitStatValuePreview(stat2v);
+      document.getElementById('homeHeroPreviewStat2Label').textContent = stat2l;
+      document.getElementById('homeHeroPreviewStat3').textContent = splitStatValuePreview(stat3v);
+      document.getElementById('homeHeroPreviewStat3Label').textContent = stat3l;
+      document.getElementById('homeHeroPreviewTags').innerHTML = tags.map(t =>
+        `<span style="font-size:11px;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:99px;padding:4px 10px;">${escHtml(t)}</span>`
+      ).join('');
+    }
+
+    async function saveHomeHero() {
+      const body = {
+        home_tagline: document.getElementById('settingHomeTagline').value.trim() || 'Cộng đồng AI Agent',
+        home_heading_line1: document.getElementById('settingHomeLine1').value.trim() || 'Làm chủ',
+        home_heading_highlight: document.getElementById('settingHomeHighlight').value.trim() || 'AI Agent',
+        home_heading_line2: document.getElementById('settingHomeLine2').value.trim() || 'từ hôm nay.',
+        home_desc: document.getElementById('settingHomeDesc').value.trim(),
+        home_stat1_value: document.getElementById('settingHomeStat1Value').value.trim() || '2K+',
+        home_stat1_label: document.getElementById('settingHomeStat1Label').value.trim() || 'Học viên',
+        home_stat2_value: document.getElementById('settingHomeStat2Value').value.trim() || '120+',
+        home_stat2_label: document.getElementById('settingHomeStat2Label').value.trim() || 'Bài học',
+        home_stat3_value: document.getElementById('settingHomeStat3Value').value.trim() || '21',
+        home_stat3_label: document.getElementById('settingHomeStat3Label').value.trim() || 'Day Challenge',
+        home_tags: document.getElementById('settingHomeTags').value.trim(),
+      };
+      const res = await api('/admin/settings', { method: 'PATCH', body: JSON.stringify(body) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      updateHomeHeroPreview();
+      showToast('Đã lưu nội dung trang chủ.', 'green');
     }
 
     function renderAboutMediaList() {

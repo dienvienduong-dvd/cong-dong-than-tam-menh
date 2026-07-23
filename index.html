@@ -168,34 +168,34 @@
   <!-- Left panel -->
   <div class="auth-left">
     <div class="auth-left-content">
-      <div class="auth-tagline">Cộng đồng AI Agent</div>
+      <div class="auth-tagline" id="homeTagline">Cộng đồng AI Agent</div>
 
       <h1 class="auth-heading">
-        Làm chủ<br>
-        <span class="hl">AI Agent</span><br>
-        từ hôm nay.
+        <span id="homeHeadingLine1">Làm chủ</span><br>
+        <span class="hl" id="homeHeadingHighlight">AI Agent</span><br>
+        <span id="homeHeadingLine2">từ hôm nay.</span>
       </h1>
 
-      <p class="auth-desc">
+      <p class="auth-desc" id="homeDesc">
         Nơi học viên thực chiến cùng nhau — từ prompt engineering đến deploy agent thực tế trong 21 ngày.
       </p>
 
       <div class="auth-stats">
         <div>
-          <div class="auth-stat-num">2<em>K+</em></div>
-          <div class="auth-stat-label">Học viên</div>
+          <div class="auth-stat-num" id="homeStat1Value">2<em>K+</em></div>
+          <div class="auth-stat-label" id="homeStat1Label">Học viên</div>
         </div>
         <div>
-          <div class="auth-stat-num">120<em>+</em></div>
-          <div class="auth-stat-label">Bài học</div>
+          <div class="auth-stat-num" id="homeStat2Value">120<em>+</em></div>
+          <div class="auth-stat-label" id="homeStat2Label">Bài học</div>
         </div>
         <div>
-          <div class="auth-stat-num">21</div>
-          <div class="auth-stat-label">Day Challenge</div>
+          <div class="auth-stat-num" id="homeStat3Value">21</div>
+          <div class="auth-stat-label" id="homeStat3Label">Day Challenge</div>
         </div>
       </div>
 
-      <div class="auth-tags">
+      <div class="auth-tags" id="homeTagsWrap">
         <span class="auth-tag">AI Agent</span>
         <span class="auth-tag">Prompt Engineering</span>
         <span class="auth-tag">n8n / Make</span>
@@ -301,6 +301,45 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="assets/js/app.js"></script>
 <script>
+// ── Homepage hero content (admin-configurable) ──────────────
+(function applyHomeSettings() {
+  function splitStatValue(value) {
+    const m = String(value || '').match(/^(\d+)(.*)$/);
+    if (!m) return { num: value, suffix: '' };
+    return { num: m[1], suffix: m[2] };
+  }
+
+  function renderStat(elId, value) {
+    const el = document.getElementById(elId);
+    if (!el || value == null || value === '') return;
+    const { num, suffix } = splitStatValue(value);
+    el.innerHTML = suffix ? `${num}<em>${suffix}</em>` : num;
+  }
+
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    if (s.home_tagline) document.getElementById('homeTagline').textContent = s.home_tagline;
+    if (s.home_heading_line1) document.getElementById('homeHeadingLine1').textContent = s.home_heading_line1;
+    if (s.home_heading_highlight) document.getElementById('homeHeadingHighlight').textContent = s.home_heading_highlight;
+    if (s.home_heading_line2) document.getElementById('homeHeadingLine2').textContent = s.home_heading_line2;
+    if (s.home_desc) document.getElementById('homeDesc').textContent = s.home_desc;
+
+    renderStat('homeStat1Value', s.home_stat1_value);
+    if (s.home_stat1_label) document.getElementById('homeStat1Label').textContent = s.home_stat1_label;
+    renderStat('homeStat2Value', s.home_stat2_value);
+    if (s.home_stat2_label) document.getElementById('homeStat2Label').textContent = s.home_stat2_label;
+    renderStat('homeStat3Value', s.home_stat3_value);
+    if (s.home_stat3_label) document.getElementById('homeStat3Label').textContent = s.home_stat3_label;
+
+    if (s.home_tags) {
+      const tags = s.home_tags.split(',').map(t => t.trim()).filter(Boolean);
+      if (tags.length) {
+        document.getElementById('homeTagsWrap').innerHTML =
+          tags.map(t => `<span class="auth-tag">${t.replace(/</g, '&lt;')}</span>`).join('');
+      }
+    }
+  }).catch(() => {});
+})();
+
 const GOOGLE_CLIENT_ID = '879415234564-unts08kj8pfh8pkspvhh404gqg0g3ce1.apps.googleusercontent.com';
 let gTokenClient;
 

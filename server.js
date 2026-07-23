@@ -941,6 +941,18 @@ const CHALLENGE_DAYS_TEACHER = [
     ['mp_bank_name',           'BIDV'],
     ['mp_bank_account_name',   'TỪ CHÍ NGUYỆN'],
     ['mp_bank_account_number', '96247NGUYEN'],
+    ['home_tagline',           'Cộng đồng AI Agent'],
+    ['home_heading_line1',     'Làm chủ'],
+    ['home_heading_highlight', 'AI Agent'],
+    ['home_heading_line2',     'từ hôm nay.'],
+    ['home_desc',              'Nơi học viên thực chiến cùng nhau — từ prompt engineering đến deploy agent thực tế trong 21 ngày.'],
+    ['home_stat1_value',       '2K+'],
+    ['home_stat1_label',       'Học viên'],
+    ['home_stat2_value',       '120+'],
+    ['home_stat2_label',       'Bài học'],
+    ['home_stat3_value',       '21'],
+    ['home_stat3_label',       'Day Challenge'],
+    ['home_tags',              'AI Agent, Prompt Engineering, n8n / Make, Automation, LLM Apps'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -3646,6 +3658,9 @@ QUY TẮC BẮT BUỘC:
       'challenge_hero_icon', 'challenge_hero_title', 'challenge_hero_desc',
       'mp_store_name', 'mp_store_desc',
       'mp_bank_name', 'mp_bank_account_name', 'mp_bank_account_number',
+      'home_tagline', 'home_heading_line1', 'home_heading_highlight', 'home_heading_line2',
+      'home_desc', 'home_stat1_value', 'home_stat1_label', 'home_stat2_value', 'home_stat2_label',
+      'home_stat3_value', 'home_stat3_label', 'home_tags',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
