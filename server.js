@@ -53,7 +53,11 @@ async function sendEmail({ to, subject, html }) {
   try {
     console.log(`[Email] Sending to ${to} | "${subject}"`);
     const result = await resendClient.emails.send({ from: FROM_EMAIL, to, subject, html });
-    console.log(`[Email] ✅ Sent — id: ${result?.data?.id || result?.id || JSON.stringify(result)}`);
+    if (result?.error) {
+      console.error(`[Email] ❌ Rejected by Resend — ${result.error.name || ''}: ${result.error.message || JSON.stringify(result.error)}`);
+    } else {
+      console.log(`[Email] ✅ Sent — id: ${result?.data?.id || result?.id || JSON.stringify(result)}`);
+    }
   } catch (err) {
     console.error('[Email] ❌ Error:', err.message, err?.response?.data || '');
   }
