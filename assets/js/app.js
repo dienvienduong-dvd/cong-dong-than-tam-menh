@@ -38,11 +38,15 @@ function closeMainMenu() {
   }
 
   fetch('/api/settings').then(r => r.json()).then(s => {
+    const tagline = (s.home_tagline || '').trim();
+    const taglineEl = document.getElementById('pageTagline');
+    if (tagline && taglineEl) taglineEl.textContent = tagline;
+
     const name = (s.community_name || '').trim();
     if (!name || name === DEFAULT_NAME) return;
 
     replaceInTitle(name);
-    document.querySelectorAll('.sidebar-logo-text, .form-logo-name, .mob-brand-name, #aboutCommunityName').forEach(el => {
+    document.querySelectorAll('.sidebar-logo-text, .form-logo-name, .mob-brand-name, #aboutCommunityName, .co-logo-text, .logo-text, .login-logo-name, .header-name').forEach(el => {
       el.textContent = name;
     });
 

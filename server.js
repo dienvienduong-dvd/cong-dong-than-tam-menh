@@ -29,7 +29,7 @@ const SEPAY_KEY   = process.env.SEPAY_KEY   || 'ae3066fa595768259e92553aa371405a
 const GSHEET_ID   = process.env.GSHEET_ID   || '1TNzXmIR9Qcu_oqeNxYGFdnFxt2YN9xik4OPJOtac4nI';
 const RESEND_KEY       = process.env.RESEND_API_KEY    || '';
 const OPENROUTER_KEY   = process.env.OPENROUTER_API_KEY || '';
-const FROM_EMAIL  = process.env.FROM_EMAIL || 'AI AGENTS CC <congdong@aiagentscc.com>';
+const FROM_EMAIL  = process.env.FROM_EMAIL || 'Cộng đồng IELTS Chương Cà Mau <congdong@chuongcm.com>';
 const ADMIN_EMAIL = 'tuchinguyen.ctv@gmail.com';
 
 const resendClient = RESEND_KEY ? new Resend(RESEND_KEY) : null;
@@ -72,10 +72,10 @@ function emailWrap(title, body) {
     .green{color:#10b981;font-weight:700}
   </style></head><body>
   <div class="box">
-    <p style="color:#0ea5e9;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">AI AGENTS CC</p>
+    <p style="color:#0ea5e9;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">CỘNG ĐỒNG IELTS CHƯƠNG CÀ MAU</p>
     <h1>${title}</h1>
     ${body}
-    <div class="footer">AI AGENTS CC — Cộng đồng học AI Agent Việt Nam<br>aiagentscc.com</div>
+    <div class="footer">Cộng đồng IELTS Chương Cà Mau<br>chuongcm.com</div>
   </div></body></html>`;
 }
 
@@ -932,30 +932,30 @@ const CHALLENGE_DAYS_TEACHER = [
     ['calendar_embed_url',     ''],
     ['about_intro',            ''],
     ['about_media',            '[]'],
-    ['community_name',         'AI AGENTS CC'],
+    ['community_name',         'Cộng đồng IELTS Chương Cà Mau'],
     ['challenge_hero_icon',    '⚡'],
     ['challenge_hero_title',   'Thử thách AI Agent'],
     ['challenge_hero_desc',    'Chọn thử thách phù hợp với bạn. Mỗi ngày một task thực chiến — từ prompt engineering đến deploy agent thật.'],
-    ['mp_store_name',          'AI Agents Marketplace'],
-    ['mp_store_desc',          'Chợ sản phẩm số dành cho cộng đồng AI Agent Việt Nam.'],
+    ['mp_store_name',          'IELTS Chương Cà Mau Marketplace'],
+    ['mp_store_desc',          'Chợ tài liệu, đề thi và công cụ học IELTS dành cho cộng đồng.'],
     ['mp_bank_name',           'BIDV'],
     ['mp_bank_account_name',   'TỪ CHÍ NGUYỆN'],
     ['mp_bank_account_number', '96247NGUYEN'],
-    ['home_tagline',           'Cộng đồng AI Agent'],
+    ['home_tagline',           'Cộng đồng IELTS'],
     ['home_heading_line1',     'Làm chủ'],
-    ['home_heading_highlight', 'AI Agent'],
+    ['home_heading_highlight', 'IELTS'],
     ['home_heading_line2',     'từ hôm nay.'],
-    ['home_desc',              'Nơi học viên thực chiến cùng nhau — từ prompt engineering đến deploy agent thực tế trong 21 ngày.'],
+    ['home_desc',              'Nơi học viên luyện thi cùng nhau — từ nền tảng đến nâng band điểm IELTS.'],
     ['home_stat1_value',       '2K+'],
     ['home_stat1_label',       'Học viên'],
     ['home_stat2_value',       '120+'],
     ['home_stat2_label',       'Bài học'],
     ['home_stat3_value',       '21'],
     ['home_stat3_label',       'Day Challenge'],
-    ['home_tags',              'AI Agent, Prompt Engineering, n8n / Make, Automation, LLM Apps'],
+    ['home_tags',              'IELTS, Nghe, Nói, Đọc, Viết'],
     ['courses_hero_icon',      '🎓'],
-    ['courses_hero_title',     'Khóa học AI Agent'],
-    ['courses_hero_desc',      'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến'],
+    ['courses_hero_title',     'Khóa học IELTS'],
+    ['courses_hero_desc',      'Học từ cơ bản đến nâng cao — luyện đề, chấm bài, nâng band điểm IELTS'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -1122,8 +1122,8 @@ QUY TẮC BẮT BUỘC:
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENROUTER_KEY}`,
-          'HTTP-Referer': 'https://aiagentscc.com',
-          'X-Title': 'AI AGENTS CC Exercise Grading'
+          'HTTP-Referer': 'https://chuongcm.com',
+          'X-Title': 'Cộng đồng IELTS Chương Cà Mau Exercise Grading'
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
@@ -1235,8 +1235,8 @@ QUY TẮC BẮT BUỘC:
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENROUTER_KEY}`,
-          'HTTP-Referer': 'https://aiagentscc.com',
-          'X-Title': 'AI AGENTS CC IELTS Test Extraction'
+          'HTTP-Referer': 'https://chuongcm.com',
+          'X-Title': 'Cộng đồng IELTS Chương Cà Mau Test Extraction'
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
@@ -1312,7 +1312,7 @@ QUY TẮC BẮT BUỘC:
     const to = req.query.to || ADMIN_EMAIL;
     await sendEmail({
       to,
-      subject: '🧪 Test email từ AI AGENTS CC',
+      subject: '🧪 Test email từ Cộng đồng IELTS Chương Cà Mau',
       html: emailWrap('Email test thành công!', `
         <p>Email system đang hoạt động bình thường.</p>
         <p>From: <strong>${FROM_EMAIL}</strong></p>
@@ -1636,18 +1636,18 @@ QUY TẮC BẮT BUỘC:
     // Welcome email (fire-and-forget after response)
     sendEmail({
       to: email,
-      subject: '🎉 Chào mừng bạn đến với AI AGENTS CC!',
+      subject: '🎉 Chào mừng bạn đến với Cộng đồng IELTS Chương Cà Mau!',
       html: emailWrap('Chào mừng đến với cộng đồng!', `
         <p>Xin chào <strong>${first_name} ${last_name}</strong>,</p>
-        <p>Bạn đã đăng ký thành công tài khoản tại <strong>AI AGENTS CC</strong> — cộng đồng học AI Agent hàng đầu Việt Nam.</p>
+        <p>Bạn đã đăng ký thành công tài khoản tại <strong>Cộng đồng IELTS Chương Cà Mau</strong>.</p>
         <p>Với tài khoản này, bạn có thể:</p>
         <ul style="color:#475569;line-height:2">
           <li>📝 Chia sẻ bài viết và học hỏi từ cộng đồng</li>
-          <li>🏆 Tham gia Thử Thách 21 Ngày AI Agent</li>
+          <li>🏆 Tham gia Thử Thách 21 Ngày</li>
           <li>🛒 Mua sắm sản phẩm số từ các thành viên</li>
           <li>📚 Truy cập khoá học và tài liệu độc quyền</li>
         </ul>
-        <a class="btn" href="https://aiagentscc.com/feed.html">Vào Bảng Tin Ngay</a>
+        <a class="btn" href="https://chuongcm.com/feed.html">Vào Bảng Tin Ngay</a>
         <p>Nếu có bất kỳ câu hỏi nào, hãy đăng lên cộng đồng — chúng tôi luôn sẵn sàng hỗ trợ!</p>
       `)
     });
@@ -1717,11 +1717,11 @@ QUY TẮC BẮT BUỘC:
         user = db.get('SELECT * FROM users WHERE id = ?', [result.lastInsertRowid]);
         sendEmail({
           to: email,
-          subject: '🎉 Chào mừng bạn đến với AI AGENTS CC!',
+          subject: '🎉 Chào mừng bạn đến với Cộng đồng IELTS Chương Cà Mau!',
           html: emailWrap('Chào mừng đến với cộng đồng!', `
             <p>Xin chào <strong>${first_name}</strong>,</p>
-            <p>Bạn đã đăng ký thành công tài khoản tại <strong>AI AGENTS CC</strong> qua Google.</p>
-            <a class="btn" href="https://aiagentscc.com/feed.html">Vào Bảng Tin Ngay</a>
+            <p>Bạn đã đăng ký thành công tài khoản tại <strong>Cộng đồng IELTS Chương Cà Mau</strong> qua Google.</p>
+            <a class="btn" href="https://chuongcm.com/feed.html">Vào Bảng Tin Ngay</a>
           `)
         });
       }
@@ -2675,7 +2675,7 @@ QUY TẮC BẮT BUỘC:
           <div class="rule"><strong>${enrollChallenge.title}</strong></div>
           <p>Yêu cầu của bạn đang <span class="badge">Chờ duyệt</span>. Admin sẽ xem xét và phê duyệt trong vòng <strong>24 giờ</strong>.</p>
           <p>Khi được duyệt, bạn sẽ nhận thêm một email xác nhận kèm nội quy tham gia.</p>
-          <a class="btn" href="https://aiagentscc.com/challenge.html">Xem trang thử thách</a>
+          <a class="btn" href="https://chuongcm.com/challenge.html">Xem trang thử thách</a>
         `)
       });
     }
@@ -2945,7 +2945,7 @@ QUY TẮC BẮT BUỘC:
             <p>Xin chào <strong>${approvedUser.first_name}</strong>,</p>
             <p>🎉 Tuyệt vời! Bạn đã được duyệt tham gia:</p>
             <div class="rule"><strong>${approvedChallenge.title}</strong></div>
-            <a class="btn" href="https://aiagentscc.com/challenge.html">Bắt đầu thử thách ngay</a>
+            <a class="btn" href="https://chuongcm.com/challenge.html">Bắt đầu thử thách ngay</a>
             <p style="margin-top:24px"><strong>📋 Nội quy cộng đồng</strong></p>
             <div class="rule">1️⃣ <strong>Cam kết hoàn thành:</strong> Nộp bài đúng hạn mỗi ngày. Mỗi ngày có deadline riêng — hãy kiểm tra trang thử thách.</div>
             <div class="rule">2️⃣ <strong>Nộp bài thật:</strong> Không copy bài của người khác. Screenshot, link, ảnh phải là kết quả thực tế của bạn.</div>
@@ -3808,7 +3808,7 @@ QUY TẮC BẮT BUỘC:
           💰 Giá: <strong>${amtFmt}</strong>
         </div>
         <p>Admin sẽ duyệt trong vòng <strong>24 giờ</strong>. Bạn sẽ nhận email ngay khi có kết quả.</p>
-        <a class="btn" href="https://aiagentscc.com/marketplace.html">Xem Marketplace</a>
+        <a class="btn" href="https://chuongcm.com/marketplace.html">Xem Marketplace</a>
       `)
     });
     // Thông báo cho admin
@@ -3823,7 +3823,7 @@ QUY TẮC BẮT BUỘC:
           💰 Giá: <strong>${amtFmt}</strong><br>
           🆔 ID sản phẩm: #${product.id}
         </div>
-        <a class="btn" href="https://aiagentscc.com/admin.html">Duyệt trong Admin Panel</a>
+        <a class="btn" href="https://chuongcm.com/admin.html">Duyệt trong Admin Panel</a>
       `)
     });
   });
@@ -3871,7 +3871,7 @@ QUY TẮC BẮT BUỘC:
             </div>
             <p>Quét mã QR để thanh toán nhanh:</p>
             <p><img src="${qrUrl}" alt="QR Code" style="width:180px;border-radius:8px;border:1px solid #e2e8f0"></p>
-            <a class="btn" href="https://aiagentscc.com/checkout.html?id=${product_id}">Xem lại đơn hàng</a>
+            <a class="btn" href="https://chuongcm.com/checkout.html?id=${product_id}">Xem lại đơn hàng</a>
             <p style="color:#94a3b8;font-size:13px">Đơn hàng sẽ tự động hủy nếu không nhận được thanh toán trong 48 giờ.</p>
           `)
         });
@@ -3974,7 +3974,7 @@ QUY TẮC BẮT BUỘC:
                 🛍️ <strong>${prod.title}</strong><br>
                 💰 Giá: <strong>${amtFmt}</strong>
               </div>
-              <a class="btn" href="https://aiagentscc.com/marketplace.html">Xem trên Marketplace</a>
+              <a class="btn" href="https://chuongcm.com/marketplace.html">Xem trên Marketplace</a>
             `)
           });
         } else if (status === 'rejected') {
@@ -3986,7 +3986,7 @@ QUY TẮC BẮT BUỘC:
               <p>Rất tiếc, sản phẩm dưới đây chưa đáp ứng tiêu chí duyệt của chúng tôi:</p>
               <div class="rule">🛍️ <strong>${prod.title}</strong></div>
               <p>Vui lòng liên hệ admin để biết lý do và chỉnh sửa lại trước khi đăng lại.</p>
-              <a class="btn" href="https://aiagentscc.com/marketplace.html">Về Marketplace</a>
+              <a class="btn" href="https://chuongcm.com/marketplace.html">Về Marketplace</a>
             `)
           });
         }
@@ -4055,7 +4055,7 @@ QUY TẮC BẮT BUỘC:
             🆔 Mã đơn: #${orderId}
           </div>
           <p>Nếu bạn đã chuyển khoản, vui lòng liên hệ admin để được hoàn tiền hoặc hỗ trợ.</p>
-          <a class="btn" href="https://aiagentscc.com/marketplace.html">Xem Marketplace</a>
+          <a class="btn" href="https://chuongcm.com/marketplace.html">Xem Marketplace</a>
         `)
       });
     }
@@ -4089,7 +4089,7 @@ QUY TẮC BẮT BUỘC:
           🆔 Mã đơn: #${orderId}
         </div>
         <p>Admin sẽ kiểm tra và xác nhận thanh toán trong vòng <strong>1–4 giờ</strong> (giờ hành chính). Bạn sẽ nhận thêm email sau khi được xác nhận.</p>
-        <p style="color:#94a3b8;font-size:13px">Nếu có thắc mắc, hãy liên hệ qua cộng đồng AI AGENTS CC.</p>
+        <p style="color:#94a3b8;font-size:13px">Nếu có thắc mắc, hãy liên hệ qua cộng đồng IELTS Chương Cà Mau.</p>
       `)
     });
     // Notify admin
@@ -4104,7 +4104,7 @@ QUY TẮC BẮT BUỘC:
           💰 ${amtFmt}<br>
           🆔 Đơn #${orderId}
         </div>
-        <a class="btn" href="https://aiagentscc.com/admin.html">Xác nhận trong Admin Panel</a>
+        <a class="btn" href="https://chuongcm.com/admin.html">Xác nhận trong Admin Panel</a>
       `)
     });
   });
@@ -4149,7 +4149,7 @@ QUY TẮC BẮT BUỘC:
             📦 Trạng thái: <span class="green">Đã xác nhận</span>
           </div>
           <p>Người bán sẽ liên hệ với bạn trong vòng <strong>24 giờ</strong> để hướng dẫn nhận sản phẩm.</p>
-          <a class="btn" href="https://aiagentscc.com/feed.html">Về trang cộng đồng</a>
+          <a class="btn" href="https://chuongcm.com/feed.html">Về trang cộng đồng</a>
         `)
       });
 
@@ -4165,7 +4165,7 @@ QUY TẮC BẮT BUỘC:
             💰 Số tiền: <strong>${amtFmt}</strong><br>
             🆔 Đơn hàng: #${orderId}
           </div>
-          <a class="btn" href="https://aiagentscc.com/admin.html">Xem trong Admin Panel</a>
+          <a class="btn" href="https://chuongcm.com/admin.html">Xem trong Admin Panel</a>
         `)
       });
     } catch (err) {
@@ -4329,7 +4329,7 @@ QUY TẮC BẮT BUỘC:
                 Nội dung: <strong>AIAGENT ${row.product_id} ${row.buyer_id}</strong>
               </div>
               <p><img src="${qrUrl}" alt="QR" style="width:160px;border-radius:8px;border:1px solid #e2e8f0"></p>
-              <a class="btn" href="https://aiagentscc.com/checkout.html?id=${row.product_id}">Hoàn tất thanh toán</a>
+              <a class="btn" href="https://chuongcm.com/checkout.html?id=${row.product_id}">Hoàn tất thanh toán</a>
             `)
           });
         }
@@ -4387,7 +4387,7 @@ QUY TẮC BẮT BUỘC:
               Ngày ${day.day_number}: <strong>${day.title}</strong>
             </div>
             <p>Dù trễ hạn, bài nộp của bạn vẫn được chấp nhận. Ngày tiếp theo sẽ mở sau khi bài được duyệt.</p>
-            <a class="btn" href="https://aiagentscc.com/challenge-day-detail.html?challenge_id=${e.challenge_id}&day_id=${day.id}">Nộp bài ngay</a>
+            <a class="btn" href="https://chuongcm.com/challenge-day-detail.html?challenge_id=${e.challenge_id}&day_id=${day.id}">Nộp bài ngay</a>
           `)
         });
         // Update late_reminders table
@@ -4412,42 +4412,42 @@ QUY TẮC BẮT BUỘC:
     const existing = db.get("SELECT value FROM site_settings WHERE key='email_templates'");
     if (existing) return;
     const defaults = [
-      { id:1, name:'Email chào mừng', subject:'Chào mừng đến với AI Agent CC! 🎉', category:'welcome',
-        body:`<h2>Chào mừng {{first_name}} đến với AI Agent CC! 🎉</h2>
-<p>Bạn đã chính thức gia nhập cộng đồng <strong>AI Agent CC</strong> — nơi người Việt học và ứng dụng AI Agent vào công việc thực tế.</p>
+      { id:1, name:'Email chào mừng', subject:'Chào mừng đến với Cộng đồng IELTS Chương Cà Mau! 🎉', category:'welcome',
+        body:`<h2>Chào mừng {{first_name}} đến với Cộng đồng IELTS Chương Cà Mau! 🎉</h2>
+<p>Bạn đã chính thức gia nhập cộng đồng <strong>IELTS Chương Cà Mau</strong> — nơi học viên cùng nhau luyện thi và nâng band điểm IELTS.</p>
 <p><strong>Bắt đầu ngay:</strong></p>
 <ul>
-  <li>🔥 <a href="https://aiagentscc.com/challenge.html">Đăng ký Thử thách 21 ngày AI Agent</a></li>
-  <li>💬 <a href="https://aiagentscc.com/feed.html">Chia sẻ bài đầu tiên trên Bảng tin</a></li>
-  <li>🛍️ <a href="https://aiagentscc.com/marketplace.html">Khám phá Chợ sản phẩm số AI</a></li>
+  <li>🔥 <a href="https://chuongcm.com/challenge.html">Đăng ký Thử thách 21 ngày</a></li>
+  <li>💬 <a href="https://chuongcm.com/feed.html">Chia sẻ bài đầu tiên trên Bảng tin</a></li>
+  <li>🛍️ <a href="https://chuongcm.com/marketplace.html">Khám phá Chợ tài liệu IELTS</a></li>
 </ul>
-<p>Hẹn gặp bạn trong cộng đồng!<br><strong>Team AI Agent CC</strong></p>`, updated_at:'2025-04-01' },
+<p>Hẹn gặp bạn trong cộng đồng!<br><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-01' },
       { id:2, name:'Xác nhận đăng ký thử thách', subject:'Bạn đã đăng ký Thử thách 21 ngày! 🔥', category:'challenge',
         body:`<h2>Bạn đã đăng ký Thử thách 21 ngày! 🔥</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Chúc mừng! Bạn đã chính thức đăng ký <strong>Thử thách 21 Ngày Làm Chủ AI Agent</strong>.</p>
+<p>Chúc mừng! Bạn đã chính thức đăng ký <strong>Thử thách 21 Ngày</strong>.</p>
 <p>📅 Bắt đầu: <strong>{{start_date}}</strong><br>
 ✅ Mỗi ngày hoàn thành 1 nhiệm vụ<br>
 ⭐ Nhận XP và phần thưởng khi hoàn thành</p>
-<p><a href="https://aiagentscc.com/challenge.html">Xem chi tiết thử thách →</a></p>
-<p>Chúng tôi sẽ gửi nhắc nhở mỗi ngày lúc 19:00.<br><strong>Team AI Agent CC</strong></p>`, updated_at:'2025-04-05' },
+<p><a href="https://chuongcm.com/challenge.html">Xem chi tiết thử thách →</a></p>
+<p>Chúng tôi sẽ gửi nhắc nhở mỗi ngày lúc 19:00.<br><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-05' },
       { id:3, name:'Nhắc nhở hoàn thành ngày', subject:'Đừng quên nhiệm vụ hôm nay — Ngày {{day_number}} 📅', category:'reminder',
         body:`<h2>Đừng quên nhiệm vụ hôm nay! 📅</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Hôm nay là <strong>Ngày {{day_number}}</strong> trong hành trình 21 ngày của bạn.</p>
 <p>🎯 Nhiệm vụ: <strong>{{task_title}}</strong></p>
 <p>Hoàn thành trước nửa đêm để không mất streak!<br>Streak hiện tại: 🔥 <strong>{{streak}} ngày</strong></p>
-<p><a href="https://aiagentscc.com/challenge.html">Hoàn thành ngay →</a></p>
-<p><strong>Team AI Agent CC</strong></p>`, updated_at:'2025-04-10' },
+<p><a href="https://chuongcm.com/challenge.html">Hoàn thành ngay →</a></p>
+<p><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-10' },
       { id:4, name:'Chúc mừng hoàn thành 21 ngày', subject:'🏆 Bạn đã hoàn thành Thử thách 21 ngày!', category:'completion',
         body:`<h2>🏆 Bạn đã chinh phục 21 ngày!</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Bạn đã hoàn thành <strong>Thử thách 21 Ngày AI Agent</strong>! Chỉ có <strong>{{completion_pct}}%</strong> người đăng ký đạt được điều này.</p>
-<p>🌟 +{{xp_earned}} XP<br>🏆 Huy hiệu "AI Agent Master"<br>🎁 Giảm 20% cho khoá học nâng cao</p>
-<p><a href="https://aiagentscc.com/leaderboard.html">Xem bảng xếp hạng →</a></p>
-<p><strong>Team AI Agent CC</strong></p>`, updated_at:'2025-04-15' },
-      { id:5, name:'Giới thiệu sản phẩm — Email 1', subject:'Khám phá bộ tài liệu AI Agent chuyên nghiệp 🚀', category:'sales',
-        body:`<h2>Khám phá bộ tài liệu AI Agent 🚀</h2>
+<p>Bạn đã hoàn thành <strong>Thử thách 21 Ngày</strong>! Chỉ có <strong>{{completion_pct}}%</strong> người đăng ký đạt được điều này.</p>
+<p>🌟 +{{xp_earned}} XP<br>🏆 Huy hiệu "Streak Master"<br>🎁 Giảm 20% cho khoá học nâng cao</p>
+<p><a href="https://chuongcm.com/leaderboard.html">Xem bảng xếp hạng →</a></p>
+<p><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-15' },
+      { id:5, name:'Giới thiệu sản phẩm — Email 1', subject:'Khám phá bộ tài liệu IELTS chuyên nghiệp 🚀', category:'sales',
+        body:`<h2>Khám phá bộ tài liệu IELTS 🚀</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Bộ tài liệu <strong>{{product_name}}</strong> giúp bạn rút ngắn thời gian học từ tháng xuống còn tuần.</p>
 <p><strong>Bao gồm:</strong></p>
@@ -4457,53 +4457,53 @@ QUY TẮC BẮT BUỘC:
   <li>{{feature_3}}</li>
 </ul>
 <p>Giá: <strong>{{price}}</strong> — Hoàn tiền 7 ngày nếu không hài lòng.</p>
-<p><a href="https://aiagentscc.com/marketplace.html">Xem chi tiết →</a></p>
-<p><strong>Team AI Agent CC</strong></p>`, updated_at:'2025-05-01' },
+<p><a href="https://chuongcm.com/marketplace.html">Xem chi tiết →</a></p>
+<p><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-05-01' },
       { id:6, name:'Bán hàng — Social Proof', subject:'Cộng đồng nói gì về sản phẩm này? 💬', category:'sales',
         body:`<h2>Cộng đồng nói gì? 💬</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Sau khi ra mắt <strong>{{product_name}}</strong>, chúng tôi nhận được rất nhiều phản hồi tích cực:</p>
 <blockquote>"{{testimonial_1}}" — <strong>{{user_1}}</strong></blockquote>
 <blockquote>"{{testimonial_2}}" — <strong>{{user_2}}</strong></blockquote>
-<p><a href="https://aiagentscc.com/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-02' },
+<p><a href="https://chuongcm.com/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-02' },
       { id:7, name:'Bán hàng — Last Chance', subject:'⏰ Còn 24 giờ — Ưu đãi sắp kết thúc!', category:'sales',
         body:`<h2>⏰ Còn 24 giờ!</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Chương trình ưu đãi cho <strong>{{product_name}}</strong> kết thúc lúc 23:59 ngày <strong>{{deadline}}</strong>.</p>
 <p style="text-align:center;font-size:28px;font-weight:bold;color:#ef4444">{{discount_pct}}% OFF</p>
 <p>Còn {{hours_left}} giờ — {{spots_left}} suất cuối cùng.</p>
-<p><a href="https://aiagentscc.com/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-03' },
+<p><a href="https://chuongcm.com/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-03' },
       { id:8, name:'Tái kích hoạt — Nhớ bạn', subject:'Chúng tôi nhớ bạn! Có nhiều điều mới 👋', category:'reengagement',
         body:`<h2>Chúng tôi nhớ bạn! 👋</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Đã {{days_inactive}} ngày kể từ lần cuối bạn ghé AI Agent CC. Cộng đồng có nhiều điều mới:</p>
+<p>Đã {{days_inactive}} ngày kể từ lần cuối bạn ghé Cộng đồng IELTS Chương Cà Mau. Cộng đồng có nhiều điều mới:</p>
 <ul>
   <li>🔥 Thử thách mới: <strong>{{new_challenge}}</strong></li>
   <li>💬 {{new_posts}} bài đăng từ cộng đồng</li>
   <li>🛍️ {{new_products}} sản phẩm mới tại Chợ</li>
 </ul>
-<p><a href="https://aiagentscc.com/feed.html">Quay lại cộng đồng →</a></p>`, updated_at:'2025-05-10' },
+<p><a href="https://chuongcm.com/feed.html">Quay lại cộng đồng →</a></p>`, updated_at:'2025-05-10' },
       { id:9, name:'Tái kích hoạt — Phần thưởng', subject:'🎁 Phần thưởng đặc biệt dành riêng cho bạn', category:'reengagement',
         body:`<h2>🎁 Phần thưởng đặc biệt!</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Để chào đón bạn quay lại, chúng tôi tặng:</p>
 <p style="text-align:center;font-size:32px;font-weight:bold;color:#8b5cf6">+50 XP</p>
 <p>Bonus khi hoàn thành nhiệm vụ đầu tiên sau khi quay lại. Có hiệu lực trong 7 ngày.</p>
-<p><a href="https://aiagentscc.com/challenge.html">Nhận phần thưởng →</a></p>`, updated_at:'2025-05-10' },
-      { id:10, name:'Newsletter hàng tuần', subject:'Tổng hợp tuần tại AI Agent CC — {{week}}', category:'newsletter',
+<p><a href="https://chuongcm.com/challenge.html">Nhận phần thưởng →</a></p>`, updated_at:'2025-05-10' },
+      { id:10, name:'Newsletter hàng tuần', subject:'Tổng hợp tuần tại Cộng đồng IELTS Chương Cà Mau — {{week}}', category:'newsletter',
         body:`<h2>📰 Tổng hợp tuần {{week}}</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p><strong>Bài nổi bật tuần này:</strong></p>
 <p>📌 <strong>{{post_1_title}}</strong><br>{{post_1_excerpt}}</p>
 <p>📌 <strong>{{post_2_title}}</strong><br>{{post_2_excerpt}}</p>
-<p><a href="https://aiagentscc.com/feed.html">Xem thêm →</a></p>`, updated_at:'2025-05-20' },
+<p><a href="https://chuongcm.com/feed.html">Xem thêm →</a></p>`, updated_at:'2025-05-20' },
       { id:11, name:'Thông báo sản phẩm mới', subject:'🚀 Ra mắt: {{product_name}} — Xem ngay!', category:'sales',
         body:`<h2>🚀 Ra mắt: {{product_name}}</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Chúng tôi vừa ra mắt <strong>{{product_name}}</strong> — được thiết kế đặc biệt cho cộng đồng AI Agent CC.</p>
+<p>Chúng tôi vừa ra mắt <strong>{{product_name}}</strong> — được thiết kế đặc biệt cho cộng đồng IELTS Chương Cà Mau.</p>
 <p style="text-align:center;font-size:28px;font-weight:bold;color:#10b981">{{launch_price}}</p>
 <p><strike>{{regular_price}}</strike> — Ưu đãi kết thúc sau {{launch_hours}} giờ.</p>
-<p><a href="https://aiagentscc.com/marketplace.html">Xem & mua ngay →</a></p>`, updated_at:'2025-05-22' },
+<p><a href="https://chuongcm.com/marketplace.html">Xem & mua ngay →</a></p>`, updated_at:'2025-05-22' },
       { id:12, name:'Nhắc nhở hoàn thiện hồ sơ', subject:'Hồ sơ chưa hoàn chỉnh — cập nhật ngay', category:'reminder',
         body:`<h2>Hồ sơ chưa hoàn chỉnh 📋</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
@@ -4515,7 +4515,7 @@ QUY TẮC BẮT BUỘC:
   <li>🌐 Website / LinkedIn</li>
 </ul>
 <p>Chỉ mất 2 phút!</p>
-<p><a href="https://aiagentscc.com/profile.html">Cập nhật hồ sơ →</a></p>`, updated_at:'2025-05-23' },
+<p><a href="https://chuongcm.com/profile.html">Cập nhật hồ sơ →</a></p>`, updated_at:'2025-05-23' },
     ];
     db.run("INSERT OR REPLACE INTO site_settings (key,value) VALUES ('email_templates',?)", [JSON.stringify(defaults)]);
     console.log('✅ Seeded 12 email templates');
@@ -4723,8 +4723,8 @@ Sau khi có đủ thông tin 5 chặng:
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENROUTER_KEY}`,
-          'HTTP-Referer': 'https://aiagentscc.com',
-          'X-Title': 'AI AGENTS CC Intake'
+          'HTTP-Referer': 'https://chuongcm.com',
+          'X-Title': 'Cộng đồng IELTS Chương Cà Mau Intake'
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
@@ -4792,13 +4792,13 @@ Sau khi có đủ thông tin 5 chặng:
 
   // ── Start ──────────────────────────────────────────────────
   app.listen(PORT, () => {
-    console.log(`\n✅  AI Agent Command Center API`);
+    console.log(`\n✅  Cộng đồng IELTS Chương Cà Mau API`);
     console.log(`   http://localhost:${PORT}`);
     console.log(`   Admin: http://localhost:${PORT}/admin.html`);
     console.log(`   Admin key : ${ADMIN_KEY}`);
     console.log(`\n🔔  SePay Webhook`);
     console.log(`   SePay Key : ${SEPAY_KEY}`);
-    console.log(`   Webhook   : https://aiagentscc.com/api/webhook/sepay`);
+    console.log(`   Webhook   : https://chuongcm.com/api/webhook/sepay`);
     console.log(`\n📧  Email (Resend)`);
     console.log(`   Status    : ${resendClient ? '✅ Active' : '⚠️  No RESEND_API_KEY — emails disabled'}`);
     console.log(`   From      : ${FROM_EMAIL}`);

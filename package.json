@@ -1,7 +1,7 @@
 {
   "name": "ai-agent-command-center",
   "version": "1.0.0",
-  "description": "AI Agent Community Platform — Vietnamese",
+  "description": "Community Platform — Vietnamese",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
