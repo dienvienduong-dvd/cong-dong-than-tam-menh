@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Reading Interactive Test 2</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        header {
+            background-color: #1e293b;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .timer {
+            background-color: #0f172a;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+        .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-success {
+            background-color: #10b981;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        
+        /* Navigation Tabs */
+        .tabs {
+            background-color: #ffffff;
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 20px;
+        }
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        /* Main Workspace Splitted layout */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .passage-section {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        .passage-section.active {
+            display: flex;
+        }
+        
+        .left-panel, .right-panel {
+            width: 50%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 25px;
+        }
+        .left-panel {
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+        .right-panel {
+            background-color: #f8fafc;
+        }
+
+        /* Typography */
+        h2 {
+            color: #1e293b;
+            font-size: 1.5rem;
+            margin-top: 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #334155;
+            font-size: 1.2rem;
+            margin-top: 25px;
+        }
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        /* Quiz elements */
+        .question-block {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 4px solid #cbd5e1;
+        }
+        .question-block.answered {
+            border-left-color: #3b82f6;
+        }
+        .question-block.correct {
+            border-left-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .question-block.incorrect {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        
+        .question-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        select, input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            background-color: #fff;
+            max-width: 100%;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+        }
+        
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        /* Tables inside questions */
+        .quiz-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: #fff;
+        }
+        .quiz-table th, .quiz-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            font-size: 0.95rem;
+        }
+        .quiz-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        .feedback {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: none;
+        }
+        .correct .feedback {
+            color: #15803d;
+            display: block;
+        }
+        .incorrect .feedback {
+            color: #b91c1c;
+            display: block;
+        }
+
+        /* Results dashboard */
+        #results-summary {
+            display: none;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #results-summary h2 {
+            color: #1e40af;
+            border: none;
+            margin: 0 0 10px 0;
+        }
+        .score-badge {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>IELTS Reading Mock Test Online</h1>
+        <div class="timer-container">
+            <div class="timer" id="timer-display">60:00</div>
+            <button class="btn btn-success" id="submit-test-btn" onclick="submitTest()">Nộp Bài / Submit</button>
+        </div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchPassage(1)">Passage 1: Make That Wine!</button>
+        <button class="tab-btn" onclick="switchPassage(2)">Passage 2: That Vision Thing</button>
+        <button class="tab-btn" onclick="switchPassage(3)">Passage 3: Destination Mars</button>
+    </div>
+
+    <div class="workspace">
+        <!-- PASSAGE 1 -->
+        <div id="passage1" class="passage-section active">
+            <div class="left-panel">
+                <h2>Make That Wine!</h2>
+                <p>Australia is a nation of beer drinkers. Actually, make that wine. Yes, wine has now just about supplanted beer as the alcoholic drink of choice, probably because of the extensive range of choices available and the rich culture behind them. This all adds a certain depth and intimacy to the drinking process which beer just cannot match. In addition, although wine drinkers seldom think about it, moderate consumption seems to be beneficial for the health, lowering the incidence of heart disease and various other ailments.</p>
+                <p>Wine is the product of the fermentation of grape juice, in which yeast (a fungus) consumes the natural sugars within, producing alcohol and carbon dioxide as waste. Yeast grows naturally on many varieties of grapes, often visible as a white powder, and causing fermentation directly on the plant. Thus, the discovery of wine-making was inevitable at some stage in human history. The evidence shows that this was at least 8,000 years ago in the Near East. From there, wine-making spread around the ancient Mediterranean civilisations, where the liquid was extensively produced, drunk, and traded. To this day, the biggest drinkers of wine remain the Mediterranean countries, with France leading the way.</p>
+                <p>This leads to the classification of wines, which is quite complex. It often begins with the colour: red or white. Most people do not know that the colour of wine is not due to the grapes used (whose skins are either green or purple), but to the wine-making process itself. All grape juice is clear. Red wines are produced by leaving the grape skin in contact with the juice during fermentation; white wines by not doing so. Thus, white wine can be made from dark-coloured grapes, provided that the skin is separated early, although the resultant wine may have a pinkish tinge.</p>
+                <p>A similar wine classification is based more specifically on the grape species used, giving such well known names as Pinot Noir and Merlot. Chardonnay grapes remain one of the most widely planted, producing an array of white wines, rivaling the cabernet sauvignon grape, a key ingredient in the world’s most widely recognised, and similarly named, red wines. When one grape species is used, or is predominant, the wine produced is called varietal, as opposed to mixing the juices of various identified grapes, which results in blended wines. The latter process is often done when wine-makers, and the people who drink their product, want a consistent taste, year after year. Far from being looked down upon, it often results in some of the world’s most expensive bottles, such as the Cote Rotie wines in France.</p>
+                <p>Increasingly, however, market recognition is based on the location of the wine production, resulting in labels such as Bordeaux in France, Napa Valley in California, and the Barossa Valley in Australia. Traditional wines made in these places carry trademarks, respected by serious wine drinkers. However, an example of the blurred lines is the term ‘champagne’. This was once expected to be made from grapes grown in the Champagne region of France, with all the expertise and traditions of that area, but, despite legal attempts to trademark the term, it has become ‘semi-generic’, allowing it to be used for any wine of this type made anywhere in the world.</p>
+                <p>Finally, we come to the vinification method as a means of classification. One example is, in fact, champagne, known as a ‘sparkling’ wine. By allowing a secondary fermentation in a sealed container, it retains some of the waste carbon dioxide. Another variation is to stop the fermentation before all the natural sugars are consumed, creating dessert wines, ranging from slight to extreme sweetness. Yet again, grapes can be harvested well beyond their maximum ripeness, creating ‘late harvest wines’, or allowed to become partially dried (or ‘raisoned’), creating ‘dried grape wines’. Clearly, there are many possibilities, all producing uniquely flavoured products.</p>
+                <p>One of the best-known terms relating to wine is ‘vintage’. This signifies that the product was made from grapes that were grown in a single labeled year. If that year is eventually acknowledged to have produced exceptionally fine grapes and resultant wines (‘a good vintage’), bottles from that period are often saved for future consumption. Of course, the appreciation and assessment of wine is an inexact science, meaning that the significance of a particular vintage often promotes much speculation and disagreement. A non-vintage wine is usually a blend from the produce of two or more years, which is done, as mentioned before, for consistency and quality control.</p>
+                <p>This leads to the rich and varied world of wine assessment, and its descriptive terminology. Wine has such a variety of aromas, flavours, textures, and aftertastes that serious wine drinkers demand an agreed vocabulary so that the drinking sensations can be reliably described in writing. From bouquet to biscuity, mellow to musky, vivid to vegetal, the conceited connoisseur can perplex the listener with some really purple prose. Perhaps the opportunity to posture pretentiously with all this jargon is the main reason why wine enthusiasts are so taken with this product. Cheers!</p>
+            </div>
+            <div class="right-panel">
+                <div id="results-summary">
+                    <h2>Kết Quả Bài Làm / Test Results</h2>
+                    <div class="score-badge" id="score-display">0 / 40</div>
+                    <p id="score-comment"></p>
+                </div>
+
+                <h3>Questions 1-4</h3>
+                <p><em>Do the following statements agree with the information given in Reading Passage One?<br>
+                Write <strong>TRUE</strong> if the statement agrees with the information<br>
+                <strong>FALSE</strong> if the statement contradicts the information<br>
+                <strong>NOT GIVEN</strong> if there is no information on this</em></p>
+
+                <div class="question-block" data-q="1" data-type="dropdown">
+                    <div class="question-title">1. Wine is popular in Australia because it is healthy.</div>
+                    <select id="q1">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: FALSE</div>
+                </div>
+
+                <div class="question-block" data-q="2" data-type="dropdown">
+                    <div class="question-title">2. Yeast is white-coloured.</div>
+                    <select id="q2">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: TRUE</div>
+                </div>
+
+                <div class="question-block" data-q="3" data-type="dropdown">
+                    <div class="question-title">3. Wine is popular in the Near East.</div>
+                    <select id="q3">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: NOT GIVEN</div>
+                </div>
+
+                <div class="question-block" data-q="4" data-type="dropdown">
+                    <div class="question-title">4. Blended wines are usually cheaper.</div>
+                    <select id="q4">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: FALSE</div>
+                </div>
+
+                <h3>Questions 5-10</h3>
+                <p><em>Complete the table. Choose <strong>NO MORE THAN TWO WORDS</strong> from the passage for each answer.</em></p>
+                <table class="quiz-table">
+                    <thead>
+                        <tr>
+                            <th>Classification based on</th>
+                            <th>Associated fact</th>
+                            <th>Related example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Colour</td>
+                            <td>Red wines use (5) <input type="text" id="q5" style="width: 120px;"> in fermentation.</td>
+                            <td>(6) <input type="text" id="q6" style="width: 120px;"></td>
+                        </tr>
+                        <tr>
+                            <td>grape species</td>
+                            <td>can be (7) <input type="text" id="q7" style="width: 120px;"> or blended</td>
+                            <td>Cote Rotie wines</td>
+                        </tr>
+                        <tr>
+                            <td>Location</td>
+                            <td>Drinkers of wine (8) <input type="text" id="q8" style="width: 120px;"> this.</td>
+                            <td>Barossa Valley</td>
+                        </tr>
+                        <tr>
+                            <td>(9) <input type="text" id="q9" style="width: 120px;"></td>
+                            <td>can allow (10) <input type="text" id="q10" style="width: 120px;"> to remain</td>
+                            <td>dessert wine</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Questions 11-13</h3>
+                <p><em>Choose the correct letter, A, B, C, or D.</em></p>
+
+                <div class="question-block" data-q="11" data-type="radio">
+                    <div class="question-title">11. Vintage wines are</div>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="q11" value="A"> A mostly better.</label>
+                        <label class="radio-label"><input type="radio" name="q11" value="B"> B often preferred.</label>
+                        <label class="radio-label"><input type="radio" name="q11" value="C"> C often discussed.</label>
+                        <label class="radio-label"><input type="radio" name="q11" value="D"> D more costly.</label>
+                    </div>
+                    <div class="feedback">Đáp án đúng: C</div>
+                </div>
+
+                <div class="question-block" data-q="12" data-type="radio">
+                    <div class="question-title">12. The author thinks that wine terminology is</div>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="q12" value="A"> A unnecessary.</label>
+                        <label class="radio-label"><input type="radio" name="q12" value="B"> B serious.</label>
+                        <label class="radio-label"><input type="radio" name="q12" value="C"> C good.</label>
+                        <label class="radio-label"><input type="radio" name="q12" value="D"> D bad.</label>
+                    </div>
+                    <div class="feedback">Đáp án đúng: A</div>
+                </div>
+
+                <div class="question-block" data-q="13" data-type="radio">
+                    <div class="question-title">13. Wine</div>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="q13" value="A"> A is more popular than beer, in Australia.</label>
+                        <label class="radio-label"><input type="radio" name="q13" value="B"> B is most popular in France.</label>
+                        <label class="radio-label"><input type="radio" name="q13" value="C"> C can be simply classified.</label>
+                        <label class="radio-label"><input type="radio" name="q13" value="D"> D is often ‘raisoned’.</label>
+                    </div>
+                    <div class="feedback">Đáp án đúng: A</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASSAGE 2 -->
+        <div id="passage2" class="passage-section">
+            <div class="left-panel">
+                <h2>That Vision Thing</h2>
+                <p>In the past, management took a minor role in influencing motivation. It was generally considered that if the correct tools, training, and environment were provided, individuals would do their jobs, and that this was sufficient in itself. People in organisations were considered ‘personnel’. But look how it has now changed. ‘Personnel’ have become ‘human resources’. and staff are now seen in terms of strategic potential, and with appropriate development, are one of the most important assets organisations may have.</p>
+                <p>A key aspect of this is motivation, and to achieve it, the latest buzzword is envisioning. We often hear management gurus propounding the thesis that any leader of worth must have a vision. This can unite, inspire, and direct the energies of the staff in the right direction. In the absence of such a ‘visionary leader’, the organisation necessarily flounders in complete aimlessness – or at least, that is what we are led to believe. And yet I strongly disagree that this ‘vision thing’ (as famously referred to by former American President, George Bush Senior) is worth much at all. I’d even go further, stating that it can be distinctly bad for the organisation.</p>
+                <p>The first fact to realise is that ‘envisioning’ fails to acknowledge the true human nature of organisations. These places are not composed of lemmings., all with a simplistic and single-minded dedication towards one goal. They are most obviously composed of groups of human beings, and with their rich variety of personalities and experiences, no such community can be homogenous and share exactly the same sat of personal values. These people are, in fact, merely loosely-bound cohorts pursuing different objectives (status, money, power, or individually defined agendas), in different manners. Thus a truly shared and meaningful vision is very difficult, and often impossible, to generate.</p>
+                <p>Yet the ‘visionary’ manager attempts to do just this. The trouble is, the high-minded dictates of his fresh MBA do not mention becoming bogged down in a long, laboured excess of word-smithing, or how, in order to reach a consensus, the vision necessarily loses all individuality. The books do not mention the passionless and sterile written exhortation which is ultimately produced, of working towards ‘unshakeable integrity’. As admirable in content as these may be, they are merely corporate mantras rather than words to be lived by. Few will believe in something imposed from above, instead merely complying at a superficial level.</p>
+                <p>The unfortunate fact is, when turning from rhetoric to reality, the contradictions can be overwhelming. Deep down, all staff members know that envisioning is attempted not to create a more egalitarian company, but only as a means of enriching the company directors. But what about those staff member? Few of them work merely for the love of their job. In a materialistic and consumer-driven world, they work for hard and tangible rewards. This can take many forms, but certainly involves the company giving back profit in the form of salary, overtime, TOIL, bonuses, perks and extra days off. Personal visions never, ever, mention these.</p>
+                <p>Here’s another reason why envisioning is dubious at best. Workers do not like to be treated as products in the service of profits, or cogs in the organisational machine, yet envisioning ranks them as even worse – as animals in a sociological experiment. The assumption is that they lack their own personal vision and are helplessly adrift, deficits which can only be remedied by a great leader who can herd the lost sheep in the right direction. This is not a feeling likely to enhance commitment to the cause, and often make staff feel the very opposite, a fact about which I can personally testify from my own experiences of working in big companies where the envisioning farce was played out.</p>
+                <p>Personal visions are, in fact, necessarily complex. Almost everyone would surely have difficulties in articulating their deepest motivations, as well as in being honest about this to themselves. They would similarly have some reluctance to openly talk on the subject, often with people who might be competitors for that next promotion. Furthermore, envisioning begs the question of whether a vision is even necessary. Some people are not driven by a determination to stridently blaze a trail through life. This may merely show a spiritual calm, and a desire to appreciate the present. It may also be a smarter and more strategic approach to life’s unpredictable turns, applying equally well to the business world. In short, a lack of vision may be better – much better.</p>
+                <p>George Bush, as with many presidents, occasionally did not articulate his thoughts clearly, but his famously dismissive comment about envisioning speaks volumes. ‘That vision thing’ is remarkable in its concision. In just three words, it encapsulates the trendy, contrived, pigeon-holing, simplistic, top-down, and often insulting and hypocritical nature of the process. Mr Bush, you have my vote.</p>
+            </div>
+            <div class="right-panel">
+                <h3>Questions 14-17</h3>
+                <p><em>Answer the questions. Choose <strong>NO MORE THAN TWO WORDS</strong> from the passage for each answer</em></p>
+                
+                <div class="question-block" data-q="14" data-type="text">
+                    <div class="question-title">14. Broadly, what do staff need in order to most benefit a company?</div>
+                    <input type="text" id="q14">
+                    <div class="feedback">Đáp án đúng: motivation (hoặc appropriate development)</div>
+                </div>
+
+                <div class="question-block" data-q="15" data-type="text">
+                    <div class="question-title">15. Which people advise envisioning?</div>
+                    <input type="text" id="q15">
+                    <div class="feedback">Đáp án đúng: management gurus</div>
+                </div>
+
+                <div class="question-block" data-q="16" data-type="text">
+                    <div class="question-title">16. What do they believe a lack of vision might cause?</div>
+                    <input type="text" id="q16">
+                    <div class="feedback">Đáp án đúng: complete aimlessness</div>
+                </div>
+
+                <div class="question-block" data-q="17" data-type="text">
+                    <div class="question-title">17. What aspect can groups of people never have in common?</div>
+                    <input type="text" id="q17">
+                    <div class="feedback">Đáp án đúng: personal values</div>
+                </div>
+
+                <h3>Questions 18-23</h3>
+                <p><em>Complete the flow chart. Choose <strong>NO MORE THAN THREE WORDS</strong> from the passage for each answer.</em></p>
+                
+                <div style="background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
+                    <h4>The Envisioning Process</h4>
+                    <p>1. Manager (having just obtained <strong>18.</strong> <input type="text" id="q18">) + People with greatly varied <strong>19.</strong> <input type="text" id="q19"></p>
+                    <p>↓</p>
+                    <p>2. Playing with language for a long time</p>
+                    <p>↓</p>
+                    <p>3. Produces a <strong>20.</strong> <input type="text" id="q20"> set of words</p>
+                    <p>↓</p>
+                    <p>4. Results in: <br>
+                    - Obeyed only at <strong>21.</strong> <input type="text" id="q21"><br>
+                    - Can cause lack of <strong>22.</strong> <input type="text" id="q22"></p>
+                    <p>💡 Meanwhile, employees want <strong>23.</strong> <input type="text" id="q23"> payback.</p>
+                </div>
+
+                <h3>Questions 24-26</h3>
+                <p><em>Choose the correct letter, A, B, C, or D.</em></p>
+
+                <div class="question-block" data-q="24" data-type="radio">
+                    <div class="question-title">24. Most people</div>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="q24" value="A"> A can define what makes them want to succeed.</label>
+                        <label class="radio-label"><input type="radio" name="q24" value="B"> B will discuss their personal visions with others.</label>
+                        <label class="radio-label"><input type="radio" name="q24" value="C"> C are interested in promotions.</label>
+                        <label class="radio-label"><input type="radio" name="q24" value="D"> D express their deeper feelings truthfully.</label>
+                    </div>
+                    <div class="feedback">Đáp án đúng: C</div>
+                </div>
+
+                <div class="question-block" data-q="25" data-type="radio">
+                    <div class="question-title">25. Personal visions</div>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="q25" value="A"> A take people forward in life.</label>
+                        <label class="radio-label"><input type="radio" name="q25" value="B"> B result in the absorption of immediate details.</label>
+                        <label class="radio-label"><input type="radio" name="q25" value="C"> C provide defence against unexpected events.</label>
+                        <label class="radio-label"><input type="radio" name="q25" value="D"> D help calm people’s minds.</label>
+                    </div>
+                    <div class="feedback">Đáp án đúng: C</div>
+                </div>
+
+                <div class="question-block" data-q="26" data-type="radio">
+                    <div class="question-title">26. With regard to envisioning, the author feels</div>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="q26" value="A"> A critical.</label>
+                        <label class="radio-label"><input type="radio" name="q26" value="B"> B contemptuous.</label>
+                        <label class="radio-label"><input type="radio" name="q26" value="C"> C impartial.</label>
+                        <label class="radio-label"><input type="radio" name="q26" value="D"> D suspicious.</label>
+                    </div>
+                    <div class="feedback">Đáp án đúng: B</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASSAGE 3 -->
+        <div id="passage3" class="passage-section">
+            <div class="left-panel">
+                <h2>Destination Mars</h2>
+                <p>Mars is the closest potentially habitable planet. It has solid ground, protective surface features, a thin atmosphere, more closely mimics the gravitational and lighting conditions on Earth, and is reachable – just. Most importantly, studies have found that this planet has vast reserves of frozen water, and there are other basic minerals as well. In contrast, the closest heavenly body – the moon – is dusty, barren, hostile, and dark. Settlement of the moon would be much easier, but since there are no resources there, it would ultimately be more costly and of little use. If there is any extra-terrestrial site where humankind will ultimately settle, it must be Mars.</p>
+                <p>Yet this planet is much more distant than the moon, making the logistics daunting. Food, water, oxygen, and life-support systems for such a journey would be too heavy for current rocket science. Technological innovations would be necessary, and the timing of the trip absolutely critical. The different orbits of Mars and Earth mean that they most closely approach each other every 26 months, but this event itself fluctuates on a 15-year cycle. This means that only once in that time does a launch window open. That is quite few and far between, yet missions must necessarily leave at these times.</p>
+                <p>The trouble is, even then, the journey to Mars and back would take over a year, and the human body suffers profoundly when left in micro-gravity for that length of time. Without the need to stand, there is almost no flexing or pressure on the back or the leg muscles. These gradually shrink and weaken, while bones lose their density, and lungs their aerobic capacity. When left long enough in space, astronauts are unable to function properly. Yet these people will need their full physical strength and alertness for the many operational duties required. These include docking in space, approaches and landing on Mars, remote manipulation of machines, and dealing with any emergencies that arise.</p>
+                <p>Another hazard of such duration in a hermetically sealed spacecraft is disease. Human bodies constantly shed waste material (sweat, skin-flakes, hair, moisture, mucus, and the products of digestion), all of which allow microbes to breed prolifically. Coughs and sneezes spray fluids into the air, which, without gravity to pull them down to surfaces, simply float as airborne particles in those cramped confines, causing easy microbial exchange between crew members. Bacterial infections and fungal attacks can be prevalent, and human immune systems are weakened in micro-gravity. Thus, a long mission to Mars would require the best air-cleansing system available, rigorous disinfecting and hygiene procedures, plus an excellent supply of antibiotics.</p>
+                <p>On reaching Mars, the problems only increase. Staying on the planet for any significant length of time will be difficult. In the absence of a thick protective atmosphere or magnetosphere to burn up or deflect objects, respectively, astronauts will be exposed, to potentially lethal UV radiation, micro-meteoroids, solar flares, and high-energy particles, all of which regularly bombard the surface. Spacecraft and land-based capsules will need special shielding, which adds to the weight and expense. Construction of living quarters will be time-consuming, difficult, and dangerous. For a longer stay on Mars, the only solution, it seems, is to go underground.</p>
+                <p>One of the most interesting discoveries in this respect is of possible cave entrances on the side of Arsia Mons, a large Martian volcano. Seven such entrances have been identified in satellite imagery, showing circular holes resembling the collapse of cave ceilings. The hope is that these may lead to more extensive cave formations, or perhaps lava tubes, offering the protection necessary in such a hostile terrain. An additional benefit is the potential access to vital minerals, and most importantly of all, the possibility of frozen water. These sites therefore open up the possibility of independent and permanent settlement on this planet.</p>
+                <p>The most exciting option is to attempt that on the very first trip – in other words, making it a one-way journey. The advantage is that the duration of space travel is immediately halved, reducing the technological, biological, and financial challenges. This very strong argument is somewhat offset by the difficulties in establishing a permanent presence, as well as the necessary ongoing commitment to it – for example, in the delivery of food and supplies via unmanned spacecraft. Similarly, the psychological effects on these pioneers of permanent isolation from Earth and its community, as well as being crowded into confined Martian living quarters with the same companions, raise issues of whether such a settlement is humanly feasible.</p>
+                <p>This begs the question of why undertake such missions at all. The answer, according to proponents, is that it is our destiny. Throughout history, explorers have regularly embarked on journeys in the full knowledge that death may await them, or that even if they succeeded, their health and wellbeing would be severely compromised. And today, people regularly practise extreme sports, or work in dangerous occupations, all of which significantly lower their life expectancy. The risks involved in being a Martian pioneer are no different, and so, it is argued, there is no reason why they should deter us now.</p>
+            </div>
+            <div class="right-panel">
+                <h3>Questions 27-30</h3>
+                <p><em>Do the following statements agree with the information given in Reading Passage One?<br>
+                Write <strong>TRUE</strong> if the statement agrees with the information<br>
+                <strong>FALSE</strong> if the statement contradicts the information<br>
+                <strong>NOT GIVEN</strong> if there is no information on this</em></p>
+
+                <div class="question-block" data-q="27" data-type="dropdown">
+                    <div class="question-title">27. The greatest advantage of Mars is that it has many basic minerals.</div>
+                    <select id="q27">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: FALSE</div>
+                </div>
+
+                <div class="question-block" data-q="28" data-type="dropdown">
+                    <div class="question-title">28. Settlement of the moon would be more expensive.</div>
+                    <select id="q28">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: TRUE</div>
+                </div>
+
+                <div class="question-block" data-q="29" data-type="dropdown">
+                    <div class="question-title">29. The magnetosphere burns up objects.</div>
+                    <select id="q29">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: FALSE</div>
+                </div>
+
+                <div class="question-block" data-q="30" data-type="dropdown">
+                    <div class="question-title">30. A one-way expedition to Mars is better.</div>
+                    <select id="q30">
+                        <option value="">-- Choose option --</option>
+                        <option value="TRUE">TRUE</option>
+                        <option value="FALSE">FALSE</option>
+                        <option value="NOT GIVEN">NOT GIVEN</option>
+                    </select>
+                    <div class="feedback">Đáp án đúng: NOT GIVEN</div>
+                </div>
+
+                <h3>Questions 31-35</h3>
+                <p><em>Complete the table. Choose <strong>NO MORE THAN TWO WORDS</strong> from the passage for each answer.</em></p>
+                <table class="quiz-table">
+                    <thead>
+                        <tr>
+                            <th>Problems involved in travelling to Mars</th>
+                            <th>Associated Fact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>inadequate rocketry</td>
+                            <td>Scientists would need (31) <input type="text" id="q31" style="width: 150px;"></td>
+                        </tr>
+                        <tr>
+                            <td>Infrequent (32) <input type="text" id="q32" style="width: 150px;"></td>
+                            <td>once every 15 years</td>
+                        </tr>
+                        <tr>
+                            <td>effect of space on (33) <input type="text" id="q33" style="width: 150px;"></td>
+                            <td>Bones (34) <input type="text" id="q34" style="width: 150px;">.</td>
+                        </tr>
+                        <tr>
+                            <td>Disease</td>
+                            <td>Lack of gravity facilitates (35) <input type="text" id="q35" style="width: 150px;">.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Questions 36-40</h3>
+                <p><em>Give TWO examples of the following categories. Choose <strong>NO MORE THAN TWO WORDS</strong> from the passage for each example.</em></p>
+                <table class="quiz-table">
+                    <thead>
+                        <tr>
+                            <th>Categories</th>
+                            <th>Example</th>
+                            <th>Another example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>human attributes needed for important space activities</td>
+                            <td>Physical strength</td>
+                            <td>(36) <input type="text" id="q36" style="width: 150px;"></td>
+                        </tr>
+                        <tr>
+                            <td>specific medical conditions which could occur in space</td>
+                            <td>(37) <input type="text" id="q37" style="width: 150px;"></td>
+                            <td>fungal attack</td>
+                        </tr>
+                        <tr>
+                            <td>solid objects which could strike astronauts on Mars</td>
+                            <td>(38) <input type="text" id="q38" style="width: 150px;"></td>
+                            <td>high-energy particles</td>
+                        </tr>
+                        <tr>
+                            <td>useful substances inside Martian caves</td>
+                            <td>vital minerals</td>
+                            <td>(39) <input type="text" id="q39" style="width: 150px;"></td>
+                        </tr>
+                        <tr>
+                            <td>high-risk activities happening now on Earth</td>
+                            <td>extreme sports</td>
+                            <td>(40) <input type="text" id="q40" style="width: 150px;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Answers dictionary
+        const answers = {
+            1: "FALSE",
+            2: "TRUE",
+            3: "NOT GIVEN",
+            4: "FALSE",
+            5: ["skin", "grape skin"],
+            6: ["pinkish tinge"],
+            7: ["varietal"],
+            8: ["respect"],
+            9: ["vinification method"],
+            10: ["natural sugars"],
+            11: "C",
+            12: "A",
+            13: "A",
+            14: ["motivation", "appropriate development"],
+            15: ["management gurus"],
+            16: ["complete aimlessness"],
+            17: ["personal values"],
+            18: ["mba"],
+            19: ["personalities", "experiences"],
+            20: ["sterile", "passionless", "passionless and sterile"],
+            21: ["superficial level"],
+            22: ["commitment"],
+            23: ["hard and tangible"],
+            24: "C",
+            25: "C",
+            26: "B",
+            27: "FALSE",
+            28: "TRUE",
+            29: "FALSE",
+            30: "NOT GIVEN",
+            31: ["technological innovations"],
+            32: ["launch window", "window"],
+            33: ["human body", "body"],
+            34: ["lose density", "lose their density"],
+            35: ["microbial exchange"],
+            36: ["alertness"],
+            37: ["bacterial infections", "bacterial infection"],
+            38: ["micro-meteoroids", "micro meteoroids"],
+            39: ["frozen water"],
+            40: ["dangerous occupations"]
+        };
+
+        // Timer function
+        let timeLeft = 60 * 60;
+        const timerDisplay = document.getElementById('timer-display');
+        const countdown = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                submitTest();
+            } else {
+                timeLeft--;
+                let mins = Math.floor(timeLeft / 60);
+                let secs = timeLeft % 60;
+                timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+
+        // Switch passages
+        function switchPassage(id) {
+            document.querySelectorAll('.passage-section').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`passage${id}`).classList.add('active');
+            document.querySelectorAll('.tab-btn')[id-1].classList.add('active');
+        }
+
+        // Submit and Grade Test
+        function submitTest() {
+            clearInterval(countdown);
+            let score = 0;
+            
+            // Loop through all 40 questions
+            for (let i = 1; i <= 40; i++) {
+                let userAns = "";
+                let isCorrect = false;
+                
+                // Get user input based on DOM element type
+                let selectEl = document.getElementById(`q${i}`);
+                let textEl = document.getElementById(`q${i}`);
+                let radioEl = document.getElementsByName(`q${i}`);
+                
+                if (selectEl && selectEl.tagName === 'SELECT') {
+                    userAns = selectEl.value;
+                    if (userAns === answers[i]) isCorrect = true;
+                } else if (radioEl.length > 0) {
+                    for (let r of radioEl) {
+                        if (r.checked) userAns = r.value;
+                    }
+                    if (userAns === answers[i]) isCorrect = true;
+                } else if (textEl) {
+                    userAns = textEl.value.trim().toLowerCase().replace(/\s+/g, ' ');
+                    let validAnswers = Array.isArray(answers[i]) ? answers[i] : [answers[i]];
+                    if (validAnswers.map(v => v.toLowerCase()).includes(userAns)) isCorrect = true;
+                }
+                
+                // Style parent containers or nearby blocks
+                let block = selectEl ? selectEl.closest('.question-block') : null;
+                if (!block && radioEl.length > 0) block = radioEl[0].closest('.question-block');
+                
+                if (block) {
+                    block.classList.remove('correct', 'incorrect');
+                    block.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+                
+                // For tables / flow charts where inputs don't have wrappers
+                if (textEl && !block) {
+                    textEl.style.backgroundColor = isCorrect ? '#d1fae5' : '#fee2e2';
+                    textEl.style.borderColor = isCorrect ? '#10b981' : '#ef4444';
+                    textEl.title = `Đáp án: ${Array.isArray(answers[i]) ? answers[i].join(' / ') : answers[i]}`;
+                }
+                
+                if (isCorrect) score++;
+            }
+            
+            // Show Results Panel
+            const summary = document.getElementById('results-summary');
+            summary.style.display = 'block';
+            document.getElementById('score-display').textContent = `${score} / 40`;
+            
+            let comment = "";
+            if (score >= 35) comment = "Xuất sắc! Bạn đạt trình độ tương đương 8.0+ IELTS Reading.";
+            else if (score >= 30) comment = "Rất tốt! Trình độ tương đương khoảng 7.0 - 7.5.";
+            else if (score >= 23) comment = "Khá ổn! Trình độ tương đương khoảng 6.0 - 6.5.";
+            else comment = "Cần cố gắng luyện tập thêm để nâng cao vốn từ và kỹ năng đọc hiểu.";
+            
+            document.getElementById('score-comment').textContent = comment;
+            
+            // Reveal all feedback boxes
+            document.querySelectorAll('.feedback').forEach(f => f.style.display = 'block');
+            
+            // Scroll to summary
+            switchPassage(1);
+            summary.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Audit Quiz — Bạn đang lãng phí bao nhiêu giờ/tuần?</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0e0e14;
+    --surface2: #16161f;
+    --border: #1f1f2e;
+    --accent: #7c6dfa;
+    --accent-glow: rgba(124,109,250,0.25);
+    --green: #22d47a;
+    --red: #ff5470;
+    --yellow: #f5c842;
+    --text: #f0f0f8;
+    --muted: #7070a0;
+    --dim: #3a3a58;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,109,250,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,109,250,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 600px;
+    background: radial-gradient(ellipse at center, rgba(124,109,250,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ---- INTRO SCREEN ---- */
+  #screen-intro {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 0;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,109,250,0.12);
+    border: 1px solid rgba(124,109,250,0.3);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 32px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+  }
+
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #7c6dfa, #ff5470, #f5c842);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .intro-desc {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 40px;
+    max-width: 500px;
+  }
+
+  .intro-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .stat-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+  }
+
+  .btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 16px 32px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 40px rgba(124,109,250,0.4);
+    letter-spacing: 0.01em;
+  }
+
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 48px rgba(124,109,250,0.5);
+  }
+
+  .btn-start .arrow {
+    font-size: 18px;
+    transition: transform 0.2s;
+  }
+
+  .btn-start:hover .arrow { transform: translateX(4px); }
+
+  .intro-note {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ---- QUIZ SCREEN ---- */
+  #screen-quiz {
+    display: none;
+    min-height: 100vh;
+    padding: 48px 0;
+  }
+
+  .progress-bar-wrap {
+    margin-bottom: 48px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #ff5470);
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .q-category {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .q-category::before {
+    content: '';
+    width: 16px; height: 1px;
+    background: var(--accent);
+  }
+
+  .q-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(20px, 4vw, 28px);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .option-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(124,109,250,0.06), transparent);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .option-btn:hover {
+    border-color: rgba(124,109,250,0.5);
+    transform: translateX(4px);
+  }
+
+  .option-btn:hover::before { opacity: 1; }
+
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: rgba(124,109,250,0.1);
+  }
+
+  .option-letter {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .option-btn.selected .option-letter {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .option-text { flex: 1; line-height: 1.4; }
+  .option-hours {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .btn-next {
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.3;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-next.active {
+    opacity: 1;
+    pointer-events: all;
+    box-shadow: 0 0 24px rgba(124,109,250,0.3);
+  }
+
+  .btn-next.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 32px rgba(124,109,250,0.4);
+  }
+
+  /* ---- RESULT SCREEN ---- */
+  #screen-result {
+    display: none;
+    min-height: 100vh;
+    padding: 60px 0;
+  }
+
+  .result-header {
+    margin-bottom: 40px;
+  }
+
+  .result-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(24px, 5vw, 38px);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .result-subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* Big number */
+  .result-number-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-number-block::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .rnb-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .rnb-value {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 8vw, 72px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), #ff5470);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .rnb-unit {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .rc-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .rc-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .rc-value.danger { color: var(--red); }
+  .rc-value.warn { color: var(--yellow); }
+  .rc-value.good { color: var(--green); }
+
+  .rc-note {
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+
+  /* Breakdown bars */
+  .breakdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .breakdown-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .breakdown-row {
+    margin-bottom: 14px;
+  }
+
+  .breakdown-row:last-child { margin-bottom: 0; }
+
+  .breakdown-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .breakdown-name { color: var(--muted); }
+  .breakdown-hours { color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  .breakdown-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .breakdown-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* CTA */
+  .result-cta {
+    background: linear-gradient(135deg, rgba(124,109,250,0.15), rgba(255,84,112,0.08));
+    border: 1px solid rgba(124,109,250,0.35);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .cta-icon { font-size: 36px; margin-bottom: 16px; }
+
+  .cta-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+  }
+
+  .cta-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .cta-benefits {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 28px;
+    text-align: left;
+  }
+
+  .cta-benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .cta-benefit::before {
+    content: '✓';
+    color: var(--green);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .btn-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 16px 32px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 40px rgba(124,109,250,0.35);
+    width: 100%;
+    text-decoration: none;
+  }
+
+  .btn-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 48px rgba(124,109,250,0.5);
+  }
+
+  .btn-retry {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .btn-retry:hover { color: var(--text); border-color: var(--dim); }
+
+  /* Level badge */
+  .level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .level-badge.critical { background: rgba(255,84,112,0.15); color: var(--red); border: 1px solid rgba(255,84,112,0.3); }
+  .level-badge.warning { background: rgba(245,200,66,0.12); color: var(--yellow); border: 1px solid rgba(245,200,66,0.3); }
+  .level-badge.good { background: rgba(34,212,122,0.1); color: var(--green); border: 1px solid rgba(34,212,122,0.25); }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in { animation: fadeIn 0.4s ease both; }
+
+  .q-enter { animation: fadeIn 0.3s ease both; }
+
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .count-anim { animation: countUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+</style>
+</head>
+<body>
+
+<!-- ===================== INTRO ===================== -->
+<div id="screen-intro">
+  <div class="wrap fade-in">
+    <div class="badge">AI AUDIT · 5 CÂU HỎI · 2 PHÚT</div>
+    <h1>Bạn đang<br>lãng phí <em>bao nhiêu<br>giờ</em> mỗi tuần?</h1>
+    <p class="intro-desc">
+      Trả lời 5 câu hỏi về công việc hàng ngày của bạn — chúng tôi sẽ tính chính xác
+      số giờ và số tiền bạn đang để lãng phí vì chưa dùng AI đúng cách.
+    </p>
+    <div class="intro-stats">
+      <div class="stat">
+        <span class="stat-num">5</span>
+        <span class="stat-label">Câu hỏi</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">2 phút</span>
+        <span class="stat-label">Hoàn thành</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">100%</span>
+        <span class="stat-label">Miễn phí</span>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">
+      Bắt đầu kiểm tra ngay
+      <span class="arrow">→</span>
+    </button>
+    <p class="intro-note">✦ Không yêu cầu email · Kết quả hiện ngay</p>
+  </div>
+</div>
+
+<!-- ===================== QUIZ ===================== -->
+<div id="screen-quiz">
+  <div class="wrap">
+    <div class="progress-bar-wrap">
+      <div class="progress-meta">
+        <span class="progress-label">CÂU HỎI <span id="q-current">1</span>/5</span>
+        <span class="progress-label"><span id="q-percent">0</span>% HOÀN THÀNH</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div id="question-area"></div>
+
+    <button class="btn-next" id="btn-next" onclick="nextQuestion()">
+      Tiếp theo <span>→</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== RESULT ===================== -->
+<div id="screen-result">
+  <div class="wrap">
+    <div class="result-header fade-in">
+      <div class="result-tag">// KẾT QUẢ KIỂM TRA AI CỦA BẠN</div>
+      <div class="level-badge" id="level-badge"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-subtitle" id="result-subtitle"></div>
+    </div>
+
+    <div class="result-number-block fade-in count-anim">
+      <div class="rnb-label">SỐ GIỜ LÃNG PHÍ MỖI TUẦN</div>
+      <div class="rnb-value" id="hours-value">0</div>
+      <div class="rnb-unit">giờ/tuần · vì làm thủ công những việc AI có thể làm</div>
+    </div>
+
+    <div class="result-grid fade-in">
+      <div class="result-card">
+        <div class="rc-label">Tiền lãng phí mỗi tháng</div>
+        <div class="rc-value danger" id="money-month">0đ</div>
+        <div class="rc-note">Tính theo lương trung bình 150k/giờ</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-label">Nếu tối ưu hóa được</div>
+        <div class="rc-value good" id="money-save">+0đ</div>
+        <div class="rc-note">Giá trị bạn có thể lấy lại mỗi tháng</div>
+      </div>
+    </div>
+
+    <div class="breakdown fade-in" id="breakdown-section">
+      <div class="breakdown-title">Phân tích theo loại công việc</div>
+      <div id="breakdown-rows"></div>
+    </div>
+
+    <div class="result-cta fade-in">
+      <div class="cta-icon">⚡</div>
+      <div class="cta-title">Lấy lại những giờ đó trong 21 ngày</div>
+      <div class="cta-desc">
+        Tham gia Telegram community — nhận ngay bộ tài liệu <strong>fix từng điểm lãng phí</strong>
+        trong kết quả của bạn.
+      </div>
+      <div class="cta-benefits">
+        <div class="cta-benefit">Prompt pack cho từng loại công việc bạn đang làm thủ công</div>
+        <div class="cta-benefit">Checklist 7 việc có thể tự động hóa ngay hôm nay</div>
+        <div class="cta-benefit">Cộng đồng 300+ người đang build hệ thống AI cùng bạn</div>
+        <div class="cta-benefit">Hỗ trợ trực tiếp từ AI Agent team</div>
+      </div>
+      <a href="https://t.me/aiagentscc" target="_blank" class="btn-cta">
+        Vào Telegram nhận tài liệu miễn phí →
+      </a>
+    </div>
+
+    <button class="btn-retry" onclick="retakeQuiz()">↺ Làm lại quiz</button>
+  </div>
+</div>
+
+<script>
+const WAGE_PER_HOUR = 150000; // 150k VND/giờ
+
+const questions = [
+  {
+    id: 1,
+    category: "Viết lách & Nội dung",
+    text: "Mỗi tuần bạn dành bao nhiêu giờ để viết: caption, email, mô tả sản phẩm, bài đăng?",
+    topic: "content",
+    options: [
+      { letter: "A", text: "Ít hơn 1 giờ — tôi không viết nhiều", hours: 0.5 },
+      { letter: "B", text: "1–3 giờ — viết vài bài, email đơn giản", hours: 2 },
+      { letter: "C", text: "3–6 giờ — viết đều đặn mỗi ngày", hours: 4.5 },
+      { letter: "D", text: "Hơn 6 giờ — viết là công việc chính của tôi", hours: 8 },
+    ]
+  },
+  {
+    id: 2,
+    category: "Trả lời & Giao tiếp",
+    text: "Bạn tốn bao nhiêu giờ mỗi tuần trả lời tin nhắn khách hàng, bình luận, inbox?",
+    topic: "reply",
+    options: [
+      { letter: "A", text: "Ít hơn 1 giờ", hours: 0.5 },
+      { letter: "B", text: "1–3 giờ", hours: 2 },
+      { letter: "C", text: "3–7 giờ — khách nhắn nhiều", hours: 5 },
+      { letter: "D", text: "Hơn 7 giờ — tôi phải trả lời cả ngày", hours: 9 },
+    ]
+  },
+  {
+    id: 3,
+    category: "Nghiên cứu & Tổng hợp",
+    text: "Mỗi tuần bạn mất bao lâu để tìm kiếm thông tin, đọc bài, tổng hợp ý tưởng?",
+    topic: "research",
+    options: [
+      { letter: "A", text: "Gần như không — tôi không cần research", hours: 0.3 },
+      { letter: "B", text: "1–2 giờ", hours: 1.5 },
+      { letter: "C", text: "2–5 giờ", hours: 3.5 },
+      { letter: "D", text: "Hơn 5 giờ — research chiếm rất nhiều thời gian", hours: 6 },
+    ]
+  },
+  {
+    id: 4,
+    category: "Lên kế hoạch & Tổ chức",
+    text: "Bạn dành bao nhiêu giờ để lập kế hoạch, viết to-do list, sắp xếp công việc mỗi tuần?",
+    topic: "planning",
+    options: [
+      { letter: "A", text: "Ít hơn 30 phút", hours: 0.3 },
+      { letter: "B", text: "30 phút–1.5 giờ", hours: 1 },
+      { letter: "C", text: "1.5–3 giờ", hours: 2 },
+      { letter: "D", text: "Hơn 3 giờ — tôi plan nhiều nhưng vẫn loạn", hours: 4 },
+    ]
+  },
+  {
+    id: 5,
+    category: "Báo cáo & Tài liệu",
+    text: "Bạn tốn bao nhiêu giờ tạo báo cáo, slide, tài liệu, bảng biểu mỗi tuần?",
+    topic: "docs",
+    options: [
+      { letter: "A", text: "Gần như không", hours: 0.2 },
+      { letter: "B", text: "1–2 giờ", hours: 1.5 },
+      { letter: "C", text: "2–4 giờ", hours: 3 },
+      { letter: "D", text: "Hơn 4 giờ — tôi làm nhiều báo cáo", hours: 5 },
+    ]
+  }
+];
+
+// Colors for breakdown bars
+const topicColors = {
+  content: '#7c6dfa',
+  reply: '#ff5470',
+  research: '#f5c842',
+  planning: '#22d47a',
+  docs: '#5bc8ff',
+};
+
+const topicNames = {
+  content: 'Viết lách & Nội dung',
+  reply: 'Trả lời & Giao tiếp',
+  research: 'Nghiên cứu & Tổng hợp',
+  planning: 'Lên kế hoạch',
+  docs: 'Báo cáo & Tài liệu',
+};
+
+let currentQ = 0;
+let answers = [];
+let selectedOption = null;
+
+function startQuiz() {
+  document.getElementById('screen-intro').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  renderQuestion(0);
+}
+
+function renderQuestion(idx) {
+  const q = questions[idx];
+  selectedOption = null;
+  document.getElementById('btn-next').classList.remove('active');
+
+  const pct = Math.round((idx / questions.length) * 100);
+  document.getElementById('q-current').textContent = idx + 1;
+  document.getElementById('q-percent').textContent = pct;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  const html = `
+    <div class="q-enter">
+      <div class="q-category">${q.category}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <button class="option-btn" onclick="selectOption(${i}, ${opt.hours})" data-idx="${i}">
+            <span class="option-letter">${opt.letter}</span>
+            <span class="option-text">${opt.text}</span>
+            <span class="option-hours">${opt.hours}h</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('question-area').innerHTML = html;
+}
+
+function selectOption(idx, hours) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.option-btn')[idx].classList.add('selected');
+  selectedOption = { idx, hours };
+  document.getElementById('btn-next').classList.add('active');
+}
+
+function nextQuestion() {
+  if (!selectedOption) return;
+
+  const q = questions[currentQ];
+  answers[currentQ] = { topic: q.topic, hours: selectedOption.hours };
+
+  currentQ++;
+
+  if (currentQ >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion(currentQ);
+  }
+}
+
+function showResult() {
+  document.getElementById('screen-quiz').style.display = 'none';
+  document.getElementById('screen-result').style.display = 'block';
+
+  const totalHours = answers.reduce((s, a) => s + a.hours, 0);
+  // 70% of hours can be saved with AI (conservative estimate)
+  const savableHours = Math.round(totalHours * 0.7 * 10) / 10;
+  const moneyMonth = Math.round(savableHours * 4.3 * WAGE_PER_HOUR / 10000) * 10000;
+  const moneySave = moneyMonth;
+
+  // Level
+  let level, levelClass, title, subtitle;
+  if (totalHours >= 18) {
+    level = '🔴 Mức Nguy Hiểm';
+    levelClass = 'critical';
+    title = `Bạn đang mất ${totalHours.toFixed(1)} giờ/tuần vào việc AI làm được`;
+    subtitle = `Đây là mức lãng phí nghiêm trọng. Phần lớn công việc hàng ngày của bạn có thể tự động hóa — và bạn chưa làm điều đó.`;
+  } else if (totalHours >= 9) {
+    level = '🟡 Cần Cải Thiện';
+    levelClass = 'warning';
+    title = `${totalHours.toFixed(1)} giờ/tuần — bạn đang bỏ lỡ tiềm năng lớn`;
+    subtitle = `Bạn đã có nền tảng tốt, nhưng vẫn còn nhiều "điểm nghẽn" mà AI có thể giải quyết nhanh hơn bạn nghĩ.`;
+  } else {
+    level = '🟢 Khá Tốt';
+    levelClass = 'good';
+    title = `${totalHours.toFixed(1)} giờ/tuần — còn phòng để tối ưu thêm`;
+    subtitle = `Bạn không lãng phí quá nhiều, nhưng vẫn có thể cải thiện. Những giờ tiết kiệm được có thể dùng cho việc có giá trị cao hơn.`;
+  }
+
+  document.getElementById('level-badge').className = `level-badge ${levelClass}`;
+  document.getElementById('level-badge').textContent = level;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-subtitle').textContent = subtitle;
+
+  // Animate number
+  animateNumber('hours-value', savableHours, 1);
+  document.getElementById('money-month').textContent = formatMoney(moneyMonth);
+  document.getElementById('money-save').textContent = '+' + formatMoney(moneySave);
+
+  // Breakdown bars
+  const maxH = Math.max(...answers.map(a => a.hours));
+  const rows = answers.map((a, i) => {
+    const pct = maxH > 0 ? (a.hours / maxH) * 100 : 0;
+    const color = topicColors[a.topic] || '#7c6dfa';
+    return `
+      <div class="breakdown-row">
+        <div class="breakdown-meta">
+          <span class="breakdown-name">${topicNames[a.topic]}</span>
+          <span class="breakdown-hours">${a.hours}h/tuần</span>
+        </div>
+        <div class="breakdown-track">
+          <div class="breakdown-bar" style="width:0%; background:${color}" data-width="${pct}"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('breakdown-rows').innerHTML = rows;
+
+  // Animate bars with delay
+  setTimeout(() => {
+    document.querySelectorAll('.breakdown-bar').forEach(bar => {
+      bar.style.width = bar.dataset.width + '%';
+    });
+  }, 300);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function animateNumber(id, target, decimals) {
+  const el = document.getElementById(id);
+  const duration = 1200;
+  const start = performance.now();
+  function update(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const val = target * ease;
+    el.textContent = decimals > 0 ? val.toFixed(1) : Math.round(val);
+    if (t < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+function formatMoney(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + ' triệu đ';
+  return n.toLocaleString('vi-VN') + 'đ';
+}
+
+function retakeQuiz() {
+  currentQ = 0;
+  answers = [];
+  selectedOption = null;
+  document.getElementById('screen-result').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  renderQuestion(0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

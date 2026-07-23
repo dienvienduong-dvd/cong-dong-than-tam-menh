@@ -1,0 +1,1312 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngày 19 — Ra Mắt Sản Phẩm Số Đầu Tiên</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ink: #1a1612; --ink-soft: #4a4038; --ink-mute: #8a7f75;
+    --paper: #faf7f2; --paper-warm: #f2ece0; --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f; --accent-soft: #fce4dc;
+    --gold: #b8882d; --gold-soft: #f8ecd0;
+    --sage: #5c6b4d; --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+    line-height: 1.65; font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200,68,31,0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184,136,45,0.04) 0%, transparent 40%);
+  }
+  .topbar {
+    position: sticky; top: 0;
+    background: rgba(250,247,242,0.92);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule); z-index: 100; padding: 14px 0;
+  }
+  .topbar-inner {
+    max-width: 780px; margin: 0 auto; padding: 0 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  }
+  .topbar-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--ink-mute); text-transform:uppercase; }
+  .topbar-nav { display:flex; gap:6px; font-size:13px; }
+  .topbar-nav a { color:var(--ink-soft); text-decoration:none; padding:6px 12px; border-radius:100px; transition:all 0.2s; white-space:nowrap; font-weight:500; }
+  .topbar-nav a:hover { background:var(--paper-deep); color:var(--ink); }
+  main { max-width:720px; margin:0 auto; padding:48px 24px 120px; }
+  .hero { margin-bottom:56px; padding-bottom:40px; border-bottom:1px solid var(--rule); }
+  .day-tag { display:inline-flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase; margin-bottom:20px; font-weight:600; }
+  .day-tag::before { content:""; width:32px; height:1px; background:var(--accent); }
+  h1 { font-family:'Fraunces',serif; font-size:clamp(32px,6vw,48px); font-weight:600; line-height:1.05; letter-spacing:-0.02em; margin-bottom:24px; color:var(--ink); }
+  .hero-sub { font-family:'Fraunces',serif; font-style:italic; font-size:19px; color:var(--ink-soft); line-height:1.5; }
+  .goal-box { background:var(--paper-warm); border-left:3px solid var(--accent); padding:24px 28px; margin:32px 0; border-radius:0 8px 8px 0; }
+  .goal-box-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase; margin-bottom:10px; font-weight:600; }
+  .goal-box p { font-size:16px; color:var(--ink); }
+  .goal-box em { font-family:'Fraunces',serif; font-style:italic; font-size:18px; color:var(--accent); display:block; margin:10px 0 4px; font-weight:500; }
+  section { margin-bottom:56px; }
+  h2 { font-family:'Fraunces',serif; font-size:28px; font-weight:600; line-height:1.15; letter-spacing:-0.015em; margin:64px 0 20px; padding-top:24px; border-top:1px solid var(--rule); color:var(--ink); }
+  h2 .step-num { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-mute); display:block; margin-bottom:6px; letter-spacing:0.15em; font-weight:500; }
+  .phase-header { text-align:center; margin:80px 0 40px; position:relative; }
+  .phase-header::before,.phase-header::after { content:""; position:absolute; top:50%; width:60px; height:1px; background:var(--rule); }
+  .phase-header::before { left:20%; } .phase-header::after { right:20%; }
+  .phase-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.25em; color:var(--ink-mute); text-transform:uppercase; display:block; margin-bottom:8px; }
+  .phase-title { font-family:'Fraunces',serif; font-style:italic; font-size:32px; color:var(--ink); font-weight:500; letter-spacing:-0.01em; }
+  h3 { font-family:'Fraunces',serif; font-size:21px; font-weight:600; margin:32px 0 12px; color:var(--ink); line-height:1.3; }
+  p { margin-bottom:16px; color:var(--ink-soft); }
+  strong { color:var(--ink); font-weight:600; }
+  em { font-family:'Fraunces',serif; font-style:italic; color:var(--ink); }
+  ul,ol { margin:16px 0 20px 4px; padding-left:24px; }
+  li { margin-bottom:10px; color:var(--ink-soft); }
+  li::marker { color:var(--accent); font-family:'JetBrains Mono',monospace; font-weight:600; }
+  code { font-family:'JetBrains Mono',monospace; font-size:13px; background:var(--paper-deep); padding:2px 7px; border-radius:4px; color:var(--accent); font-weight:500; word-break:break-word; }
+  pre { background:var(--paper-deep); padding:14px 18px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.6; color:var(--ink); margin:12px 0; overflow-x:auto; border-left:3px solid var(--accent); }
+  pre code { background:transparent; padding:0; color:var(--ink); font-weight:400; }
+
+  /* Components */
+  .story { background:var(--gold-soft); padding:28px 32px; margin:28px 0; border-radius:12px; border:1px solid rgba(184,136,45,0.2); }
+  .story-label { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--gold); text-transform:uppercase; margin-bottom:14px; font-weight:600; }
+  .story p { color:var(--ink); font-size:16px; }
+  .story p:last-child { margin-bottom:0; }
+  .metaphor { background:var(--sage-soft); padding:24px 28px; margin:24px 0; border-radius:10px; border-left:3px solid var(--sage); position:relative; }
+  .metaphor::before { content:"💡"; position:absolute; top:20px; right:24px; font-size:20px; opacity:0.6; }
+  .metaphor-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--sage); text-transform:uppercase; margin-bottom:8px; font-weight:600; }
+  .metaphor blockquote { font-family:'Fraunces',serif; font-style:italic; font-size:18px; color:var(--ink); line-height:1.5; margin-top:8px; border:none; padding:0; }
+  .tip { background:var(--accent-soft); padding:20px 24px; margin:24px 0; border-radius:10px; position:relative; border-left:3px solid var(--accent); }
+  .tip::before { content:"🔥"; position:absolute; top:16px; right:20px; font-size:18px; }
+  .tip-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--accent); text-transform:uppercase; margin-bottom:10px; font-weight:600; padding-right:30px; }
+  .tip p { color:var(--ink); font-size:15px; }
+  .tip p:last-child { margin-bottom:0; }
+  .warning { background:#fff4e6; border-left:3px solid #e8a544; padding:20px 24px; margin:24px 0; border-radius:10px; position:relative; }
+  .warning::before { content:"⚠️"; position:absolute; top:16px; right:20px; font-size:18px; }
+  .warning-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:#b97318; text-transform:uppercase; margin-bottom:10px; font-weight:600; padding-right:30px; }
+  .warning p { color:var(--ink); font-size:15px; }
+  .warning p:last-child { margin-bottom:0; }
+  .verify { background:white; border:2px dashed var(--sage); padding:18px 22px; margin:18px 0; border-radius:8px; }
+  .verify-label { display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--sage); text-transform:uppercase; margin-bottom:10px; font-weight:700; }
+  .verify-label::before { content:"✓"; background:var(--sage); color:white; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; }
+  .verify p { color:var(--ink); font-size:15px; margin-bottom:0; }
+  .prompt-box { background:var(--ink); margin:20px 0; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  .prompt-header { background:rgba(255,255,255,0.04); padding:10px 20px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
+  .prompt-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:rgba(255,255,255,0.5); text-transform:uppercase; font-weight:500; }
+  .copy-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); font-family:'JetBrains Mono',monospace; font-size:11px; padding:4px 10px; border-radius:4px; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em; }
+  .copy-btn:hover { background:rgba(255,255,255,0.15); color:white; }
+  .copy-btn.copied { background:var(--sage); color:white; border-color:var(--sage); }
+  .prompt-body { padding:20px 24px; font-family:'JetBrains Mono',monospace; font-size:13.5px; line-height:1.65; color:#f5ede0; white-space:pre-wrap; word-wrap:break-word; }
+  .click-path { background:var(--paper-deep); padding:12px 16px; margin:12px 0; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink); line-height:1.5; border-left:3px solid var(--accent); overflow-x:auto; }
+  .click-path strong { color:var(--accent); }
+  .ui-mock { background:white; border:1px solid var(--rule); padding:16px 20px; margin:14px 0; border-radius:8px; box-shadow:var(--shadow); font-size:14px; }
+  .ui-mock-title { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:var(--ink-mute); text-transform:uppercase; margin-bottom:8px; font-weight:600; }
+  .ui-mock-content { background:var(--paper-warm); padding:12px 14px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink); line-height:1.55; white-space:pre-wrap; }
+  .troubleshoot { background:white; border:1px solid var(--rule); margin:20px 0; border-radius:10px; overflow:hidden; box-shadow:var(--shadow); }
+  .troubleshoot-header { background:#fff4e6; padding:12px 18px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:#b97318; text-transform:uppercase; font-weight:600; border-bottom:1px solid #e8a544; display:flex; align-items:center; gap:8px; }
+  .troubleshoot-body { padding:16px 22px; }
+  .troubleshoot-body details { margin:8px 0; border-bottom:1px dashed var(--rule); padding-bottom:8px; }
+  .troubleshoot-body details:last-child { border-bottom:none; }
+  .troubleshoot-body summary { cursor:pointer; font-weight:600; color:var(--ink); padding:6px 0; font-size:14.5px; }
+  .troubleshoot-body summary:hover { color:var(--accent); }
+  .troubleshoot-body details[open] summary { color:var(--accent); }
+  .troubleshoot-body details > p,.troubleshoot-body details > ul { margin-top:8px; color:var(--ink-soft); font-size:14px; }
+
+  /* Product type cards */
+  .product-card { background:white; padding:24px 28px; margin:14px 0; border-radius:12px; border:2px solid var(--rule); box-shadow:var(--shadow); cursor:pointer; transition:all 0.2s; position:relative; }
+  .product-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .product-card.selected { border-color:var(--accent); background:var(--accent-soft); }
+  .product-card-tag { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase; font-weight:600; margin-bottom:6px; }
+  .product-card-title { font-family:'Fraunces',serif; font-size:20px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .product-card-time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--sage); font-weight:600; margin-bottom:8px; }
+  .product-card-desc { font-size:14px; color:var(--ink-soft); line-height:1.5; margin-bottom:10px; }
+  .product-card-price { font-family:'Fraunces',serif; font-style:italic; color:var(--accent); font-size:15px; font-weight:500; }
+  .product-card-badge { position:absolute; top:16px; right:16px; background:var(--accent); color:white; font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px; border-radius:4px; font-weight:600; letter-spacing:0.1em; }
+
+  /* Pricing table */
+  .price-box { background:white; border:1px solid var(--rule); padding:20px 24px; margin:12px 0; border-radius:10px; box-shadow:var(--shadow); display:flex; align-items:center; gap:20px; }
+  .price-box-num { font-family:'Fraunces',serif; font-size:36px; font-weight:700; color:var(--accent); line-height:1; white-space:nowrap; }
+  .price-box-desc { flex:1; }
+  .price-box-name { font-weight:700; color:var(--ink); font-size:16px; margin-bottom:4px; }
+  .price-box-note { font-size:13px; color:var(--ink-mute); }
+
+  /* Ideation worksheet */
+  .worksheet { background:var(--paper-warm); border:1px solid var(--rule); padding:24px 28px; margin:20px 0; border-radius:10px; }
+  .worksheet-title { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--gold); text-transform:uppercase; font-weight:600; margin-bottom:16px; }
+  .worksheet-q { padding:12px 0; border-bottom:1px dashed var(--rule); }
+  .worksheet-q:last-child { border-bottom:none; }
+  .worksheet-q-num { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); font-weight:700; margin-bottom:4px; }
+  .worksheet-q-text { font-size:15px; color:var(--ink); font-weight:600; margin-bottom:4px; }
+  .worksheet-q-hint { font-size:13px; color:var(--ink-mute); font-style:italic; }
+
+  /* Checklist */
+  .checklist { background:white; padding:28px 32px; margin:28px 0; border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--rule); }
+  .checklist-title { font-family:'Fraunces',serif; font-size:20px; font-weight:600; margin-bottom:18px; color:var(--ink); }
+  .check-item { display:flex; align-items:flex-start; gap:14px; padding:12px 0; border-bottom:1px dashed var(--rule); cursor:pointer; user-select:none; }
+  .check-item:last-child { border-bottom:none; }
+  .check-box { flex-shrink:0; width:22px; height:22px; border:2px solid var(--ink-mute); border-radius:5px; margin-top:3px; position:relative; transition:all 0.2s; background:white; }
+  .check-item.done .check-box { background:var(--sage); border-color:var(--sage); }
+  .check-item.done .check-box::after { content:"✓"; color:white; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:14px; font-weight:bold; }
+  .check-item.done .check-text { color:var(--ink-mute); text-decoration:line-through; }
+  .check-text { color:var(--ink); font-size:15px; line-height:1.55; }
+  .success { background:linear-gradient(135deg,var(--sage-soft) 0%,#f0f4e8 100%); padding:28px 32px; margin:32px 0; border-radius:12px; border:1px solid rgba(92,107,77,0.2); }
+  .success-title { font-family:'Fraunces',serif; font-size:22px; font-weight:600; color:var(--sage); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+  .success-title::before { content:"✓"; background:var(--sage); color:white; width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:15px; font-weight:bold; }
+  .success ul { margin:0; padding-left:4px; list-style:none; }
+  .success li { padding:6px 0; color:var(--ink); font-weight:500; padding-left:22px; position:relative; }
+  .success li::before { content:"→"; position:absolute; left:0; color:var(--sage); font-weight:bold; }
+  footer { max-width:720px; margin:0 auto; padding:48px 24px 64px; text-align:center; border-top:1px solid var(--rule); }
+  .footer-quote { font-family:'Fraunces',serif; font-style:italic; font-size:20px; color:var(--ink-soft); line-height:1.5; margin-bottom:12px; }
+  .footer-sig { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:var(--ink-mute); text-transform:uppercase; }
+
+  @media (max-width:640px) {
+    main { padding:32px 20px 100px; }
+    h1 { font-size:32px; } h2 { font-size:24px; margin-top:48px; } h3 { font-size:19px; }
+    .phase-title { font-size:26px; }
+    .phase-header::before,.phase-header::after { width:30px; }
+    .phase-header::before { left:10%; } .phase-header::after { right:10%; }
+    .topbar-nav a { padding:6px 8px; font-size:12px; }
+    .topbar-label { display:none; }
+    .story,.success { padding:22px; }
+    .prompt-body { font-size:12.5px; padding:16px 20px; }
+    .price-box { flex-direction:column; gap:8px; }
+    .price-box-num { font-size:28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">21-Day Challenge</div>
+    <nav class="topbar-nav">
+      <a href="#phase1">1 · Tìm Ý Tưởng</a>
+      <a href="#phase2">2 · Research</a>
+      <a href="#phase3">3 · Tạo Sản Phẩm</a>
+      <a href="#phase4">4 · Đưa Lên Bán</a>
+      <a href="#phase5">5 · Live!</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 19 · Tuần 4</div>
+  <h1>
+    Tạo Và Bán<br>
+    Sản Phẩm Số Đầu Tiên
+  </h1>
+  <p class="hero-sub">
+    Hôm nay bạn sẽ <em>nghĩ ra 1 sản phẩm số, dùng AI tạo ra nó, đưa lên website, và mở bán thật</em> — tất cả trong 1 ngày. Cuối ngày bạn có 1 link mua hàng thật, không phải bài tập giả.
+  </p>
+</header>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Cuối hôm nay bạn có:</p>
+  <em>1 sản phẩm số hoàn chỉnh — do AI tạo, bạn kiểm duyệt</em>
+  <em>1 trang bán hàng live trên website của bạn — có ảnh, mô tả, nút mua</em>
+  <em>1 trang sản phẩm gắn Sepay API thật — khách bấm "Mua" là tạo đơn + hiện QR chuyển khoản ngay</em>
+</div>
+
+<div class="story">
+  <div class="story-label">Tại sao hôm nay là ngày quan trọng nhất</div>
+  <p>18 ngày qua bạn build hệ thống. Website, agent, skills, automation — tất cả chạy rất ngon. Nhưng chạy cho ai? Để làm gì?</p>
+  <p><strong>Hôm nay là ngày bạn biến hệ thống thành tiền.</strong> Không phải "sẽ bán sau khi hoàn thiện thêm" — mà là bán ngay hôm nay, dù sản phẩm còn đơn giản. 1 người mua = bạn đã là người bán sản phẩm số thật sự.</p>
+  <p>Đây cũng là thứ bạn sẽ trình bày ở <strong>Demo Day Ngày 21</strong> — không phải slides trống, mà là sản phẩm thật, link thật, có thể mua thật.</p>
+</div>
+
+<div class="story">
+  <div class="story-label">Trước khi bắt đầu — đọc cái này</div>
+  <p>Trong chuỗi thử thách này, <strong>rất nhiều thành viên đã kiếm được tiền trong vòng chưa đến 10 ngày</strong>. Không phải vì họ may mắn — mà vì họ tìm được mô hình phù hợp với mình:</p>
+  <ul style="margin: 12px 0; padding-left: 20px;">
+    <li>Có người nhận ngay dự án <strong>vibe coding freelance</strong> — khách trả tiền để họ build website, tool, automation</li>
+    <li>Có người <strong>build con bot rồi bán</strong> — chatbot, agent tự động cho các business khác</li>
+    <li>Có người chưa bán gì ra ngoài nhưng <strong>tăng năng suất cá nhân</strong> đến mức tiết kiệm được chi phí thuê người, hoặc làm được nhiều việc hơn trong cùng thời gian</li>
+  </ul>
+  <p>Nếu bạn đang thuộc nhóm <em>chưa kiếm được tiền</em> — không sao cả. Có thể bạn chưa tìm được mô hình phù hợp. <strong>Ngày 19 này là dành cho bạn.</strong></p>
+  <p>Gợi ý của thử thách hôm nay là <strong>sản phẩm thông tin</strong> — thứ mà Nghĩa đã dùng để xây dựng doanh thu <em>hàng tỉ đồng mỗi tháng</em>, và đã giúp nhiều case kinh doanh thông tin ở quy mô <em>triệu đô</em>. Đây là hướng đi rất đáng theo đuổi — và nhiệm vụ hôm nay sẽ giúp bạn trải nghiệm nó ở mức cơ bản nhất, trong 1 ngày.</p>
+  <p style="margin-bottom: 0; font-size: 14px; color: var(--ink-mute);">Muốn tìm hiểu thêm về mô hình kinh doanh thông tin của Nghĩa → <a href="https://kp3.agency" target="_blank" style="color: var(--accent); font-weight: 600;">kp3.agency</a></p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Quy tắc AI-First xuyên suốt hôm nay</div>
+  <p><strong>AI làm — bạn kiểm duyệt.</strong> Không tự viết từng chữ, không tự thiết kế từng pixel. Prompt rõ ràng → agent làm → bạn đọc, sửa chỗ nào cần, approve. Đây là nguyên tắc Operator của KP3.</p>
+  <p>Kẹt ở đâu — paste vào agent coding + bảo giải thích / chạy giúp / viết lại. <em>Không Google. Không tự đoán.</em></p>
+</div>
+
+<div class="warning">
+  <div class="warning-label">Bẫy phổ biến — đọc trước khi bắt đầu</div>
+  <p><strong>"Để hoàn thiện thêm rồi mới bán"</strong> — đây là bẫy lớn nhất. Sản phẩm số không cần hoàn hảo ngày 1. Bán được 1 người → nhận feedback → cải thiện. Mục tiêu hôm nay là <em>live</em>, không phải <em>perfect</em>.</p>
+  <p>Cho phép bản thân ra mắt sản phẩm còn thô. Quan trọng hơn là bạn THỰC SỰ ĐƯA LÊN BÁN.</p>
+</div>
+
+<!-- ===== DIAGRAM ===== -->
+<div class="story">
+  <div class="story-label">Flow toàn bộ ngày 19</div>
+  <pre style="margin:12px 0;background:white;padding:16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;color:var(--ink);border-left:3px solid var(--accent);white-space:pre-wrap;">PHẦN 1 · Tìm ý tưởng
+  Trả lời 5 câu hỏi → xác định sản phẩm + audience
+  Chọn dạng sản phẩm phù hợp nhất
+↓
+PHẦN 2 · Research offer + thị trường
+  Dùng skills KP3 phân tích avatar + offer + đối thủ
+  Tinh chỉnh ý tưởng trước khi tạo
+↓
+PHẦN 3 · AI tạo nội dung sản phẩm
+  Agent vibe outline + nội dung đầy đủ
+  Bạn kiểm duyệt → đóng gói PDF/ZIP → định giá
+↓
+PHẦN 4 · Đưa lên website bán
+  Upload file + vibe landing page + checkout dùng Sepay API có sẵn
+  Gắn Resend gửi email tự động + test mua thật
+↓
+PHẦN 5 · Live!
+  Announce 2 kênh → lưu link cho Demo Day Ngày 21</pre>
+
+</div>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 1: TÌM Ý TƯỞNG -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase1">
+  <span class="phase-label">Phần Một</span>
+  <div class="phase-title">Tìm Ý Tưởng Sản Phẩm</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Trả lời 5 câu hỏi — tìm ra sản phẩm của bạn
+  </h2>
+
+  <p>Đừng ngồi nghĩ "mình có thể bán gì" vì sẽ không ra được gì. Hãy trả lời 5 câu hỏi dưới đây — câu trả lời sẽ tự chỉ ra sản phẩm phù hợp.</p>
+
+  <p><strong>Cách làm:</strong> Mở file text (Notes, Notion, Word...) → trả lời từng câu → sau đó dùng prompt ở cuối bước này để agent phân tích và gợi ý sản phẩm.</p>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — đừng tự nghĩ, để agent gợi ý</div>
+    <p>Câu 1 hỏi "bạn giỏi nhất điều gì" — nhiều người bị đóng băng vì nghĩ <em>"mình không giỏi gì đặc biệt"</em>. Đây là suy nghĩ sai. Bạn biết thứ gì đó mà người khác không biết — hoặc mất nhiều thời gian hơn để học. <strong>Đó chính là sản phẩm.</strong></p>
+    <p>Nếu chưa nghĩ ra, đọc danh sách gợi ý dưới đây — rất có thể bạn đang giỏi ít nhất 1 trong số đó mà chưa nhận ra:</p>
+  </div>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Gợi ý — bạn có thể đang giỏi 1 trong những thứ này</div>
+    <div class="ui-mock-content">🛒 Kinh doanh & Bán hàng
+   Chạy Facebook Ads · Bán hàng Shopee/TikTok Shop · Viết caption bán hàng
+   Xây dựng phễu bán hàng · Đàm phán với nhà cung cấp · Định giá sản phẩm
+
+📱 Content & Marketing
+   Viết content không bị AI-generic · Reels viral · Script video YouTube
+   Email marketing · SEO cơ bản · Xây kênh TikTok từ 0
+
+🤖 AI & Công nghệ
+   Dùng Claude/ChatGPT hiệu quả · Setup agent tự động · Vibe coding cơ bản
+   Automation workflow · Prompt engineering · Build chatbot
+
+💼 Nghề nghiệp & Chuyên môn
+   Kế toán cho freelancer · Hợp đồng dịch vụ · Quản lý dự án nhỏ
+   Thiết kế Canva · Chỉnh ảnh Lightroom · Dựng video CapCut
+
+🏋️ Sức khoẻ & Lifestyle
+   Lên kế hoạch ăn uống · Lịch tập gym · Thói quen sáng hiệu quả
+   Quản lý thời gian · Đọc sách hiệu quả · Học ngoại ngữ nhanh
+
+🎓 Kiến thức từ ngành bạn làm
+   Bạn làm nghề gì? → Người mới vào ngành đó muốn học gì từ bạn?</div>
+  </div>
+
+  <div class="worksheet">
+    <div class="worksheet-title">Worksheet · 5 Câu Hỏi Tìm Sản Phẩm</div>
+
+    <div class="worksheet-q">
+      <div class="worksheet-q-num">Câu 1</div>
+      <div class="worksheet-q-text">Bạn giỏi nhất điều gì — đến mức người khác hỏi bạn liên tục?</div>
+      <div class="worksheet-q-hint">Ví dụ: chụp ảnh sản phẩm, viết caption Facebook, setup Shopee shop, dạy yoga, làm bánh, tư vấn tài chính cá nhân, lên plan chạy bộ...</div>
+    </div>
+
+    <div class="worksheet-q">
+      <div class="worksheet-q-num">Câu 2</div>
+      <div class="worksheet-q-text">Bạn vừa học được gì trong 18 ngày qua — mà người khác chưa biết?</div>
+      <div class="worksheet-q-hint">Ví dụ: cách tạo skill cho Claude, setup agent tự động đăng Facebook, dùng Sepay nhận thanh toán không cần app, setup VPS để chạy website...</div>
+    </div>
+
+    <div class="worksheet-q">
+      <div class="worksheet-q-num">Câu 3</div>
+      <div class="worksheet-q-text">Khách hàng lý tưởng của bạn là ai — họ đang gặp đau đầu gì?</div>
+      <div class="worksheet-q-hint">Ví dụ: chủ shop online không biết viết content, freelancer không biết tự động hoá quy trình, coach muốn ra khoá học online nhưng không biết dùng AI...</div>
+    </div>
+
+    <div class="worksheet-q">
+      <div class="worksheet-q-num">Câu 4</div>
+      <div class="worksheet-q-text">Nếu bạn phải giúp 1 người cụ thể giải quyết vấn đề của họ trong 1 giờ — bạn sẽ dạy họ làm gì?</div>
+      <div class="worksheet-q-hint">Đây thường chính là nội dung của sản phẩm số. Bạn đang "đóng hộp" cái 1 giờ đó thành 1 file người ta mua về tự học.</div>
+    </div>
+
+    <div class="worksheet-q">
+      <div class="worksheet-q-num">Câu 5</div>
+      <div class="worksheet-q-text">Người mua sản phẩm của bạn xong sẽ có được gì cụ thể?</div>
+      <div class="worksheet-q-hint">Càng cụ thể càng tốt. "Hiểu hơn về AI" là không đủ. "Có 1 agent Telegram tự đăng Facebook mỗi sáng" là tốt. "Có 1 ebook 20 trang về X" cũng tốt.</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — để agent phân tích câu trả lời</div>
+    <p>Sau khi trả lời xong 5 câu, <strong>đừng tự kết luận</strong>. Mở agent coding → paste 5 câu trả lời → paste prompt dưới đây:</p>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Phân tích worksheet → gợi ý sản phẩm</span>
+      <button class="copy-btn" data-copy="p1">COPY</button>
+    </div>
+    <div class="prompt-body" id="p1">Đây là câu trả lời của tôi cho 5 câu hỏi tìm sản phẩm số:
+
+Câu 1 - Tôi giỏi nhất: [dán câu trả lời]
+Câu 2 - Tôi vừa học được: [dán câu trả lời]
+Câu 3 - Khách hàng + vấn đề của họ: [dán câu trả lời]
+Câu 4 - Tôi sẽ dạy họ làm gì trong 1 giờ: [dán câu trả lời]
+Câu 5 - Sau khi mua họ sẽ có: [dán câu trả lời]
+
+Dựa trên các câu trả lời, hãy:
+
+1. Gợi ý cho tôi 3 ý tưởng sản phẩm số cụ thể (không chung chung). Mỗi ý tưởng gồm:
+   - Tên sản phẩm
+   - Dạng sản phẩm (ebook / bộ skills / template pack / prompt pack / mini-guide)
+   - Nội dung chính (~5 chương hoặc mục lớn)
+   - Đối tượng mua
+   - Mức giá đề xuất (theo thị trường VN)
+
+2. Cho tôi biết ý tưởng nào bạn nghĩ PHÙ HỢP NHẤT với tôi và tại sao (1 đoạn ngắn).
+
+3. Cho tôi biết ý tưởng nào có thể bán được NHANH NHẤT (ít cạnh tranh + audience rõ).
+
+Trả lời thực tế, không khen lấy lòng. Nếu thấy câu trả lời của tôi chưa đủ rõ để gợi ý, hỏi thêm tôi 1-2 câu.</div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Hiểu sản phẩm thông tin — và chọn dạng phù hợp
+  </h2>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Sản phẩm thông tin là gì?</div>
+    <blockquote>
+      Sản phẩm thông tin = <strong>bạn đóng gói kiến thức hoặc kinh nghiệm của mình thành 1 file</strong> — người khác mua về để học, áp dụng, hoặc tiết kiệm thời gian. Không cần kho bãi, không cần giao hàng, không cần thời gian của bạn mỗi lần bán. Tạo 1 lần — bán mãi mãi.
+    </blockquote>
+  </div>
+
+  <p>Skills AI, ebook, template, SOP, prompt pack, mini-guide... <strong>tất cả đều là sản phẩm thông tin</strong>. Điểm chung: chúng đóng gói thứ bạn biết thành thứ người khác sẵn sàng trả tiền để có được nhanh hơn.</p>
+
+  <p>Dưới đây là 4 dạng phổ biến nhất — AI tạo được trong 1 ngày:</p>
+
+  <div class="product-card" onclick="this.classList.toggle('selected')">
+    <div class="product-card-badge">DỄ NHẤT</div>
+    <div class="product-card-tag">Dạng 1</div>
+    <div class="product-card-title">📘 Ebook / Hướng Dẫn Chuyên Sâu</div>
+    <p class="product-card-desc">Từ 15-50 trang. Chia chương rõ ràng. Có ví dụ thực tế. Định dạng PDF đẹp. Phù hợp nếu bạn có kiến thức/kinh nghiệm muốn chia sẻ — bất kể ngành nào.</p>
+    <p class="product-card-price">Giá thường: 97k – 500k VND</p>
+  </div>
+
+  <div class="product-card" onclick="this.classList.toggle('selected')">
+    <div class="product-card-badge">BẠN ĐÃ BIẾT LÀM</div>
+    <div class="product-card-tag">Dạng 2</div>
+    <div class="product-card-title">🛠 Bộ Skills AI (Claude Skills)</div>
+    <p class="product-card-desc">3-10 Claude Skills đóng gói theo chủ đề cụ thể. Ví dụ: "Bộ 5 Skills cho Content Creator", "Bộ Skills cho Coach/Trainer", "Bộ Skills cho Chủ Shop Online". Bạn đã làm quen từ Ngày 16.</p>
+    <p class="product-card-price">Giá thường: 500k – 2tr VND</p>
+  </div>
+
+  <div class="product-card" onclick="this.classList.toggle('selected')">
+    <div class="product-card-tag">Dạng 3</div>
+    <div class="product-card-title">📋 Template Pack / Prompt Pack</div>
+    <p class="product-card-desc">10-50 templates hoặc prompts theo chủ đề. Ví dụ: "50 Prompt ChatGPT cho Marketing", "30 Template Email bán hàng", "20 Template Canva cho Instagram". Đơn giản nhưng rất dễ bán vì hữu dụng ngay.</p>
+    <p class="product-card-price">Giá thường: 99k – 299k VND</p>
+  </div>
+
+  <div class="product-card" onclick="this.classList.toggle('selected')">
+    <div class="product-card-tag">Dạng 4</div>
+    <div class="product-card-title">🎯 Mini Checklist / SOP Pack</div>
+    <p class="product-card-desc">3-10 checklist/SOP cho 1 workflow cụ thể. Ví dụ: "Checklist setup Shopee từ A-Z", "SOP chạy Facebook Ads tuần đầu tiên", "Checklist ra mắt khoá học online". Nhỏ nhưng giá trị cao vì tiết kiệm thời gian.</p>
+    <p class="product-card-price">Giá thường: 97k – 199k VND</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Nên chọn cái nào?</div>
+    <p>Nếu bạn chưa biết chọn gì — <strong>chọn Dạng 1 (Ebook)</strong>. Đây là dạng dễ nhất, ai cũng làm được, thị trường VN đang có nhu cầu mạnh. Nội dung chỉ cần 15-20 trang là đủ ra mắt.</p>
+    <p>Nếu bạn muốn giá cao hơn và biết Claude Skills — <strong>chọn Dạng 2 (Bộ Skills AI)</strong>. Bạn đã có nền tảng từ Ngày 16.</p>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 2: RESEARCH OFFER + THỊ TRƯỜNG -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase2">
+  <span class="phase-label">Phần Hai</span>
+  <div class="phase-title">Research Offer + Thị Trường</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Dùng bộ skills đã có để research — trước khi tạo bất cứ thứ gì
+  </h2>
+
+  <div class="story">
+    <div class="story-label">Nhắc lại — bạn đang có sẵn công cụ research</div>
+    <p>Bộ skills KP3 tôi tặng bạn ở Ngày 15-16 không chỉ dùng để viết content. <strong>Nhiều skills trong bộ đó được thiết kế đặc biệt để research</strong> — phân tích avatar khách hàng, tìm pain point thị trường, đánh giá đối thủ, kiểm tra offer có hợp lý không.</p>
+    <p>Đừng tạo sản phẩm theo cảm tính. Research bằng skills → tiết kiệm được việc tạo ra thứ không ai mua.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — mở bộ skills lên và dùng ngay</div>
+    <p>Mở agent coding → gọi các skills research từ bộ kp3-skills/ bằng <code>@filename</code>. Nếu chưa cài — quay lại Ngày 16 Bước 02 để cài lại. Toàn bộ bước này làm bằng skills có sẵn, <strong>không cần prompt từ đầu</strong>.</p>
+    <p><strong>Tên skill trong bộ có thể khác nhau tuỳ phiên bản</strong> — nếu không thấy đúng tên, gõ <code>@</code> trong agent coding rồi tìm skill nào có chữ "avatar", "offer", "research" trong tên. Hoặc đơn giản hơn: dùng prompt thủ công ở từng sub-step dưới đây — kết quả tương đương.</p>
+  </div>
+
+  <h3>3.1 — Dùng Avatar Builder skill — hiểu khách hàng thật</h3>
+
+  <p>Trong bộ kp3-skills/ có skill <code>assp-avatar-builder</code> (hoặc tên tương tự). Đây là skill phân tích Dream Buyer Avatar — người sẽ mua sản phẩm của bạn.</p>
+
+  <div class="click-path">
+    Agent coding → gõ <strong>@assp-avatar-builder/SKILL.md</strong> (hoặc tên skill tương ứng trong bộ của bạn) → inject vào context
+  </div>
+
+  <p>Sau khi inject skill, nhập:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Avatar Builder — nghiên cứu khách hàng mục tiêu</span>
+      <button class="copy-btn" data-copy="p3a_research">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3a_research">Dùng Avatar Builder skill để phân tích Dream Buyer Avatar cho sản phẩm tôi đang định tạo:
+
+Sản phẩm: [điền tên/ý tưởng sản phẩm từ Bước 01-02]
+Đối tượng dự kiến: [điền mô tả sơ bộ]
+
+Phân tích sâu:
+1. Họ là ai (nhân khẩu học + tâm lý học)
+2. Pain point sâu nhất họ đang gặp — đủ để trả tiền mua giải pháp
+3. Họ đã thử những cách nào khác chưa hiệu quả?
+4. Họ muốn outcome gì sau khi dùng sản phẩm này?
+5. Điều gì có thể khiến họ KHÔNG mua — objections phổ biến?
+
+Sau đó: đánh giá xem ý tưởng sản phẩm của tôi có match với avatar này không. Nếu có gap — gợi ý điều chỉnh.</div>
+  </div>
+
+  <h3>3.2 — Dùng Offer Architect skill — kiểm tra offer có hấp dẫn không</h3>
+
+  <p>Trong bộ kp3-skills/ có skill <code>assp-offer-architect</code> (hoặc tương tự). Skill này giúp bạn kiểm tra và cải thiện offer trước khi ra mắt.</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Offer Architect — đánh giá và cải thiện offer</span>
+      <button class="copy-btn" data-copy="p3b_research">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3b_research">Dùng Offer Architect skill để đánh giá offer của tôi:
+
+Offer hiện tại:
+- Sản phẩm: [tên + mô tả ngắn]
+- Giá: [giá dự kiến]
+- Khách hàng nhận được gì: [list]
+- Ai mua: [avatar]
+
+Đánh giá:
+1. Offer này có rõ ràng và hấp dẫn không (thang điểm 1-10)? Tại sao?
+2. Value-to-price ratio có hợp lý không với thị trường VN?
+3. Điểm yếu lớn nhất của offer này là gì?
+4. Cần thêm gì để offer này mạnh hơn — bonus, guarantee, hoặc re-framing?
+5. Đề xuất tên sản phẩm và tagline 1 câu mạnh hơn (3 phương án)
+
+Trả lời thẳng thắn — không khen lấy lòng.</div>
+  </div>
+
+  <h3>3.3 — Check đối thủ nhanh</h3>
+
+  <p>Trước khi tạo, biết người khác đang bán gì cùng chủ đề — để định vị khác biệt. Không cần skill đặc biệt, chỉ cần bảo agent:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Research đối thủ nhanh</span>
+      <button class="copy-btn" data-copy="p3c_research">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3c_research">Search và phân tích nhanh các sản phẩm số đang bán cùng chủ đề với tôi:
+
+Chủ đề: [điền]
+Thị trường: Việt Nam
+Kênh: Gumroad, Shopee digital, Facebook groups, các website VN
+
+Tìm kiếm và cho tôi biết:
+1. Có bao nhiêu sản phẩm tương tự đang được bán?
+2. Mức giá phổ biến là bao nhiêu?
+3. Họ đang positioning như thế nào (tên, tagline, USP)?
+4. Điểm yếu chung của các sản phẩm đó là gì (đọc review nếu có)?
+5. Có khoảng trống nào (underserved audience, format chưa có) để tôi điền vào?
+
+Kết luận: sản phẩm của tôi nên khác đối thủ ở điểm nào?</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — trước khi sang Phần Ba</div>
+    <p>Sau Bước 03 bạn có đủ 3 thứ để bắt đầu tạo sản phẩm với sự tự tin:</p>
+    <ul style="margin-top:8px;">
+      <li>✓ <strong>Avatar rõ</strong> — biết chính xác ai sẽ mua và tại sao họ mua</li>
+      <li>✓ <strong>Offer mạnh</strong> — offer đã được kiểm tra, có điểm khác biệt</li>
+      <li>✓ <strong>Biết đối thủ</strong> — biết cần khác họ ở đâu</li>
+    </ul>
+    <p>Nếu sau research bạn thấy ý tưởng ban đầu chưa ổn — <strong>điều chỉnh ngay ở đây</strong>, trước khi bỏ 2-3 giờ tạo nội dung.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — dùng kết quả research để tinh chỉnh</div>
+    <p>Trước khi sang Bước 04, bảo agent: <em>"Dựa trên kết quả research vừa rồi (avatar, offer, đối thủ), hãy đề xuất: tên sản phẩm tốt hơn, angle/góc tiếp cận khác biệt, và 1-2 điểm tôi nên nhấn mạnh trong nội dung."</em> Dùng output đó làm input cho Bước 04.</p>
+  </div>
+
+  <div class="warning">
+    <div class="warning-label">Đừng dùng research như cái cớ để trì hoãn</div>
+    <p>Research vừa đủ là được. Mục tiêu là <em>điều chỉnh sản phẩm trước khi tạo</em>, không phải tìm lý do để không tạo. Nếu chưa tìm được ý tưởng hoàn hảo — cứ tiến. Sản phẩm ra thị trường + feedback thật > sản phẩm hoàn hảo trong đầu.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHẦN 3: AI TẠO NỘI DUNG SẢN PHẨM -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase3">
+  <span class="phase-label">Phần Ba</span>
+  <div class="phase-title">AI Tạo Nội Dung Sản Phẩm</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    Vibe outline + nội dung với agent coding
+  </h2>
+
+  <p>Dù chọn dạng sản phẩm nào, luôn bắt đầu bằng <strong>outline trước</strong> — rồi mới gen nội dung từng phần. Đừng bảo agent "viết hết cho tôi 1 lần" — kết quả sẽ generic và nhạt.</p>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — đọc brain.db trước khi viết</div>
+    <p>Trước khi gen nội dung, bảo agent: <em>"Đọc brain.db trong thư mục my-brain/ để hiểu brand voice, expertise, và audience của tôi. Dùng giọng văn đó để viết sản phẩm — không phải giọng generic của AI."</em></p>
+    <p>Đây là điểm khác biệt giữa sản phẩm <strong>của bạn</strong> và sản phẩm của hàng nghìn người dùng AI khác.</p>
+  </div>
+
+  <h3>Nếu bạn chọn Dạng 1 — Ebook</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe Ebook từ A-Z</span>
+      <button class="copy-btn" data-copy="p3a">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3a">Đọc brain.db trong my-brain/ để hiểu brand voice, expertise, và audience của tôi.
+
+Tôi muốn tạo 1 ebook để bán. Thông tin sản phẩm:
+
+- Chủ đề: [điền — VD: "Cách dùng AI để viết content bán hàng cho chủ shop"]
+- Đối tượng: [điền — VD: "Chủ shop online, 25-40 tuổi, không rành kỹ thuật"]
+- Vấn đề họ đang gặp: [điền — VD: "Không biết viết caption, tốn 2-3 giờ/ngày cho content"]
+- Sau khi đọc xong họ có thể làm được: [điền — VD: "Tự viết được 30 caption/tháng chỉ trong 1 giờ dùng AI"]
+- Độ dài mong muốn: ~20 trang (khoảng 5.000-8.000 từ)
+
+Làm theo 3 bước:
+
+BƯỚC 1: Đề xuất outline (7-10 chương/phần) — mỗi phần có tên + mô tả ngắn 1 câu. Chờ tôi duyệt outline trước khi viết nội dung.
+
+BƯỚC 2 (sau khi tôi duyệt): Viết full nội dung từng chương — đúng brand voice từ brain.db. Mỗi chương có:
+   - Intro ngắn (2-3 câu)
+   - Nội dung chính với ví dụ thực tế + có thể áp dụng ngay
+   - Key takeaway cuối chương (3-5 dòng)
+
+BƯỚC 3: Viết phần mở đầu (lời tác giả ngắn) + phần kết (kêu gọi hành động).
+
+Tone: thực tế, không hoa mỹ, như người bạn giàu kinh nghiệm đang nói chuyện. Không có câu "trong thế giới ngày nay" hay cụm từ AI generic.
+
+Lưu từng chương vào file riêng trong thư mục: ebook-draft/chuong-01.md, ebook-draft/chuong-02.md...</div>
+  </div>
+
+  <h3>Nếu bạn chọn Dạng 2 — Bộ Skills AI</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe bộ 5 Claude Skills theo chủ đề</span>
+      <button class="copy-btn" data-copy="p3b">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3b">Đọc brain.db trong my-brain/ và đọc ebook hướng dẫn tạo skills (đường dẫn: [đường dẫn file ebook Anthropic]).
+
+Tôi muốn tạo bộ 5 Claude Skills để bán, chủ đề: [điền — VD: "Bộ Skills cho Content Creator Vietnam"]
+
+Đối tượng: [điền]
+Vấn đề họ đang gặp: [điền]
+
+Tạo 5 skills theo cấu trúc chuẩn Anthropic (mỗi skill có thư mục riêng):
+
+1. [Tên skill 1 — điền ý tưởng hoặc để agent gợi ý]
+2. [Tên skill 2]
+3. [Tên skill 3]
+4. [Tên skill 4]
+5. [Tên skill 5]
+
+Với mỗi skill:
+- Tạo SKILL.md với YAML frontmatter đầy đủ (name, description chuẩn — có What + When + trigger phrases)
+- Viết instructions rõ ràng, có 2-3 examples thực tế, có troubleshooting nếu cần
+- Nếu skill cần template: tạo assets/template.md
+- Nếu skill cần references: tạo references/ với file MD chuyên sâu
+
+Sau khi tạo xong:
+- Tạo file README.md cho toàn bộ bộ skills (hướng dẫn cài đặt + giới thiệu từng skill)
+- Tạo script để đóng gói tất cả vào 1 file ZIP
+
+Làm từng skill, chờ tôi xem và approve trước khi sang skill tiếp theo.</div>
+  </div>
+
+  <h3>Nếu bạn chọn Dạng 3 — Prompt Pack / Template Pack</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe Prompt Pack 30 prompts</span>
+      <button class="copy-btn" data-copy="p3c">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3c">Đọc brain.db trong my-brain/ để hiểu brand voice và audience của tôi.
+
+Tôi muốn tạo 1 Prompt Pack để bán, chủ đề: [điền — VD: "30 Prompts Claude AI cho Marketer Việt Nam"]
+
+Đối tượng: [điền]
+
+Tạo 30 prompts chất lượng cao — không phải prompts generic copy từ internet. Mỗi prompt:
+- Có tên ngắn gọn
+- Có mô tả 1 câu (dùng để làm gì)
+- Có prompt hoàn chỉnh với placeholder rõ [điền vào đây]
+- Có ví dụ output mong đợi (3-5 dòng)
+
+Chia thành 5 nhóm, mỗi nhóm 6 prompts:
+- Nhóm 1: [chủ đề con 1]
+- Nhóm 2: [chủ đề con 2]
+- Nhóm 3: [chủ đề con 3]
+- Nhóm 4: [chủ đề con 4]
+- Nhóm 5: [chủ đề con 5]
+
+Lưu vào file: prompt-pack-draft.md
+Format Markdown rõ ràng, đẹp, dễ đọc.
+Sau khi xong MD → giúp tôi tạo PDF đẹp từ file đó.</div>
+  </div>
+
+  <h3>Nếu bạn chọn Dạng 4 — Mini Checklist / SOP Pack</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe Checklist / SOP Pack</span>
+      <button class="copy-btn" data-copy="p3d">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3d">Đọc brain.db trong my-brain/ để hiểu brand voice và audience của tôi.
+
+Tôi muốn tạo 1 SOP/Checklist Pack để bán, chủ đề: [điền — VD: "Checklist chụp ảnh sản phẩm đẹp không cần máy ảnh xịn"]
+
+Đối tượng: [điền]
+
+Tạo pack gồm 5-7 checklist/SOP, mỗi cái:
+- Tên rõ ràng (VD: "Checklist setup ánh sáng tự nhiên")
+- Mô tả 1 câu (dùng để làm gì, khi nào dùng)
+- Các bước thực hiện (bullet points, ngắn gọn, actionable)
+- Lưu ý quan trọng + lỗi thường gặp (1-2 dòng)
+
+Format: Markdown rõ ràng, đẹp — mỗi checklist 1 section riêng.
+Sau khi xong: giúp tôi xuất ra PDF đẹp (dùng HTML → Chrome print).
+
+Lưu vào: checklist-pack-draft.md</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — bước quan trọng không được bỏ</div>
+    <p>Đọc lại từng chương/mục trong draft. <strong>Thêm vào ít nhất 2-3 ví dụ thật từ kinh nghiệm cá nhân của bạn</strong> — đây là thứ AI không tự nghĩ ra được, và là lý do khách mua sản phẩm của bạn thay vì sản phẩm AI generic khác. Ví dụ thật = giá trị thật.</p>
+  </div>
+</section>
+
+
+<!-- Đóng gói — tiếp theo của Phần Ba -->
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Xuất ra file đẹp — PDF hoặc ZIP
+  </h2>
+
+  <h3>Nếu sản phẩm là Ebook / Guide / Prompt Pack → xuất PDF</h3>
+
+  <p>Có 2 cách xuất PDF chuyên nghiệp:</p>
+
+  <p><strong>Cách A — Vibe code HTML → PDF (AI-First nhất):</strong></p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe HTML ebook đẹp → PDF</span>
+      <button class="copy-btn" data-copy="p4a">COPY</button>
+    </div>
+    <div class="prompt-body" id="p4a">Đọc tất cả file trong thư mục ebook-draft/ (hoặc file prompt-pack-draft.md).
+
+Tạo 1 file HTML duy nhất đẹp — phong cách book layout chuyên nghiệp, sẵn sàng in thành PDF. Yêu cầu:
+
+DESIGN:
+- Màu chủ đạo: [điền màu brand của bạn — VD: đen + vàng gold, hoặc trắng + xanh navy]
+- Font: 1 font serif đẹp cho heading (Fraunces/Playfair/Lora), 1 font sans-serif dễ đọc cho body
+- Trang bìa đẹp: tên sách lớn + tên tác giả + tagline 1 câu
+- Trang mục lục clickable
+- Mỗi chương bắt đầu trang mới (page-break-before)
+- Key takeaway mỗi chương có box nổi bật
+- Quote nổi bật có styling riêng
+- Header/footer mỗi trang: tên sách + số trang
+
+NỘI DUNG:
+- Đưa toàn bộ nội dung từ các file draft vào
+- Tên tác giả: [tên của bạn]
+- Website: [website của bạn]
+- Copyright year: 2026
+
+XUẤT:
+- Lưu file HTML vào: [tên-san-pham].html
+- Hướng dẫn tôi cách mở Chrome → Print → Save as PDF để ra file đẹp
+
+Ưu tiên layout đẹp, đọc thoải mái, trông professional.</div>
+  </div>
+
+  <p><strong>Cách B — Dùng Canva (nhanh hơn nếu quen):</strong></p>
+  <ol>
+    <li>Vào <code>canva.com</code> → chọn template <strong>Ebook</strong></li>
+    <li>Copy nội dung từ draft → paste vào Canva → chỉnh font/màu</li>
+    <li>Download → PDF Standard</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — Canva cũng có AI</div>
+    <p>Trong Canva, dùng <strong>Magic Design</strong> để gen layout tự động từ nội dung. Dùng <strong>Magic Write</strong> để viết lại những đoạn chưa ưng. Không cần design tay từng trang.</p>
+  </div>
+
+  <h3>Nếu sản phẩm là Bộ Skills AI → đóng gói ZIP</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Đóng gói bộ skills thành ZIP</span>
+      <button class="copy-btn" data-copy="p4b">COPY</button>
+    </div>
+    <div class="prompt-body" id="p4b">Tôi đã tạo xong 5 skills trong thư mục my-skills/. Giúp tôi đóng gói để bán:
+
+1. Kiểm tra lại từng skill: SKILL.md có đầy đủ name + description không? Instructions rõ không? Examples có không?
+
+2. Tạo file README.md ở root level của bộ skills:
+   - Tiêu đề bộ skills
+   - Tóm tắt 5 skills (mỗi skill 2-3 dòng)
+   - Hướng dẫn cài đặt (3 cách: Claude.ai Settings / Claude Code / @filename trick)
+   - FAQ nhanh (3-5 câu hỏi phổ biến)
+   - Thông tin tác giả + liên hệ
+
+3. Đóng gói toàn bộ vào 1 file ZIP tên: [ten-bo-skills]-kp3.zip
+
+4. Tạo thêm 1 file PDF "Hướng dẫn sử dụng" 3-5 trang:
+   - Cách cài đặt từng bước (có screenshot mô phỏng)
+   - Cách dùng mỗi skill (trigger phrase + ví dụ output)
+   - Lưu file PDF tên: huong-dan-su-dung.pdf
+
+Sau khi xong ZIP: list cho tôi xem cấu trúc file bên trong.</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Bạn có <strong>1 file hoàn chỉnh</strong>: <code>[tên-sản-phẩm].pdf</code> hoặc <code>[tên-bộ-skills].zip</code> trong thư mục trên máy. Mở ra, đọc thử — nếu bạn là khách hàng, bạn có cảm thấy xứng đáng với mức giá không?</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 05</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"PDF xuất ra font bị lỗi / layout vỡ"</summary>
+        <p>Dùng Chrome để in (không dùng Firefox hay Safari). Trước khi Save as PDF: bỏ tick "Headers and footers" + bỏ tick "Background graphics" nếu muốn nền trắng. Scale: 100%. Nếu vẫn lỗi — paste lỗi vào agent coding để sửa HTML.</p>
+      </details>
+      <details>
+        <summary>"Nội dung AI gen ra quá generic, không giống giọng mình"</summary>
+        <p>Bảo agent: "Đây là 3 bài viết cũ của tôi: [paste 3 bài]. Viết lại [chương X] theo đúng giọng này — tự nhiên, có ví dụ cụ thể, không hoa mỹ." Agent sẽ học từ mẫu thật của bạn.</p>
+      </details>
+      <details>
+        <summary>"Sản phẩm trông mỏng quá, sợ khách không mua"</summary>
+        <p>Bổ sung: (1) Checklist tóm tắt cuối mỗi chương, (2) Bonus section nhỏ (3-5 trang thêm), (3) Resource list (3-5 tool/link hữu ích), (4) Trang FAQ 5-7 câu hỏi. Agent làm được tất cả.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Định giá — đừng suy nghĩ quá nhiều
+  </h2>
+
+  <p>Định giá sản phẩm số ở VN theo công thức đơn giản này:</p>
+
+  <div class="price-box">
+    <div class="price-box-num">× 10</div>
+    <div class="price-box-desc">
+      <div class="price-box-name">Giá = 10 lần thời gian tiết kiệm được × mức lương giờ của khách</div>
+      <div class="price-box-note">Ví dụ: sản phẩm tiết kiệm khách 5 giờ/tháng, khách kiếm 100k/giờ → giá hợp lý = 5 × 100k × 10 = 5 triệu. Thường bán thấp hơn để dễ mua.</div>
+    </div>
+  </div>
+
+  <p>Hoặc đơn giản hơn — tham khảo mức giá phổ biến theo dạng:</p>
+
+  <div class="price-box">
+    <div class="price-box-num">97k</div>
+    <div class="price-box-desc">
+      <div class="price-box-name">Prompt Pack / Checklist Pack</div>
+      <div class="price-box-note">Impulse buy — khách mua không cần suy nghĩ nhiều</div>
+    </div>
+  </div>
+
+  <div class="price-box">
+    <div class="price-box-num">297k</div>
+    <div class="price-box-desc">
+      <div class="price-box-name">Ebook / Mini Guide (15-30 trang)</div>
+      <div class="price-box-note">Sweet spot — không quá đắt, vẫn có margin tốt</div>
+    </div>
+  </div>
+
+  <div class="price-box">
+    <div class="price-box-num">497k</div>
+    <div class="price-box-desc">
+      <div class="price-box-name">Ebook chuyên sâu / Bộ Skills 3-5 skills</div>
+      <div class="price-box-note">Cần positioning rõ hơn, nhưng margin rất tốt</div>
+    </div>
+  </div>
+
+  <div class="price-box">
+    <div class="price-box-num">1-2tr</div>
+    <div class="price-box-desc">
+      <div class="price-box-name">Bộ Skills 5-10 skills / Template system đầy đủ</div>
+      <div class="price-box-note">KP3 đang bán ở mức này — phù hợp nếu sản phẩm thật sự tiết kiệm nhiều thời gian</div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Lời khuyên từ thực tế</div>
+    <p>Với sản phẩm đầu tiên — <strong>đừng định giá quá thấp</strong> (dưới 100k trông không chuyên nghiệp) nhưng cũng <strong>đừng quá cao</strong> (chưa có social proof). Mức 197k-497k là an toàn nhất cho lần ra mắt đầu tiên.</p>
+    <p>Sau khi có 5-10 review → tăng giá lên 20-30% là chuyện bình thường.</p>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 4: ĐƯA LÊN WEBSITE BÁN -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase4">
+  <span class="phase-label">Phần Bốn</span>
+  <div class="phase-title">Đưa Lên Website — Mở Bán Thật</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Upload file lên server + tạo trang bán hàng
+  </h2>
+
+  <p>Bạn đã có Sepay API tích hợp vào web từ Ngày 10. Hôm nay chỉ cần agent vibe thêm <strong>1 trang landing page + checkout</strong> vào web đó — dùng Sepay API đang có sẵn, không cần setup lại gì.</p>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Hiểu đúng về Sepay API</div>
+    <blockquote>
+      Sepay đã được cài vào web của bạn từ Ngày 10 — giống như quầy thu ngân đã có sẵn trong cửa hàng. Hôm nay chỉ cần <strong>thêm 1 kệ hàng mới</strong> (trang sản phẩm) vào cửa hàng đó. Quầy thu ngân tự xử lý thanh toán, bạn không cần làm gì thêm với Sepay.
+    </blockquote>
+  </div>
+
+  <h3>7.1 — Upload file sản phẩm lên VPS</h3>
+
+  <p>File (PDF hoặc ZIP) cần nằm trên server để khách tải trực tiếp sau khi mua. Bảo agent:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Upload file + tạo endpoint download</span>
+      <button class="copy-btn" data-copy="p7a">COPY</button>
+    </div>
+    <div class="prompt-body" id="p7a">Đọc codebase website của tôi (VPS từ Ngày 14 thử thách KP3).
+
+Tôi có 1 file sản phẩm số cần upload lên server để bán:
+- File: [tên file.pdf hoặc file.zip]
+
+Làm 2 việc:
+
+1. Hướng dẫn tôi upload file lên VPS (dùng scp hoặc rsync hoặc SFTP — cách nào phù hợp với setup hiện tại của tôi)
+
+2. Tạo endpoint để khách tải file sau khi mua:
+   - Sau khi thanh toán thành công → khách được tải file này về máy
+   - Chọn cách implement đơn giản nhất phù hợp với stack hiện tại
+   - File phải stream về browser dạng download (không phải mở trong tab mới)
+
+Dùng stack hiện tại của website, không cài thêm thư viện mới nếu không cần thiết.</div>
+  </div>
+
+  <h3>7.2 — Vibe trang landing page + checkout</h3>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — agent vibe toàn bộ, dùng Sepay đang có sẵn</div>
+    <p>Agent đọc codebase → thấy Sepay đã tích hợp → tạo trang mới dùng đúng integration đó. Bạn không cần giải thích Sepay là gì — agent đọc code sẽ tự hiểu.</p>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe trang landing page + checkout sản phẩm số</span>
+      <button class="copy-btn" data-copy="p7b">COPY</button>
+    </div>
+    <div class="prompt-body" id="p7b">Đọc codebase website của tôi. Tôi đã có Sepay API tích hợp sẵn từ Ngày 10 — tìm cách Sepay đang được dùng trong project và dùng lại đúng pattern đó.
+
+Tôi cần thêm 1 flow bán sản phẩm số vào website. Gồm 3 trang/route:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRANG 1: Landing page sản phẩm
+URL: yourdomain.com/san-pham/[slug]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Thông tin sản phẩm:
+- Tên: [tên sản phẩm]
+- Tagline: [1 câu — khách nhận được gì]
+- Giá: [số tiền VND]
+- Họ nhận được: [list 3-5 điểm]
+- Dành cho ai: [mô tả ngắn]
+- Tác giả: [tên + 2-3 câu]
+
+Cấu trúc trang (đơn giản, không cần fancy):
+1. Tên sản phẩm + tagline to
+2. Họ nhận được gì — list rõ ràng
+3. Dành cho ai — 3 dạng người cụ thể
+4. Về tác giả — 3-4 câu
+5. Box giá + NÚT "Mua ngay [giá]VND" (to, màu nổi bật)
+6. Dòng nhỏ: "🔒 Thanh toán qua Sepay · File giao ngay sau thanh toán"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRANG 2: Checkout
+URL: yourdomain.com/san-pham/[slug]/checkout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Form: Tên khách, Email khách
+- Hiển thị: tên sản phẩm + giá
+- Nút "Thanh toán [giá]VND"
+- Khi bấm → gọi Sepay API (đang có sẵn) tạo đơn + lấy VietQR → hiển thị QR ngay trên trang cho khách quét chuyển khoản
+- Lưu order vào DB: tên, email, sản phẩm, giá, status=pending, order_id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRANG 3: Cảm ơn / Download
+URL: yourdomain.com/san-pham/[slug]/cam-on
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Sepay callback về đây sau khi thanh toán thành công
+- Server verify callback từ Sepay → xác nhận đơn đã được thanh toán
+- Hiển thị: "🎉 Cảm ơn [tên]! File đã sẵn sàng."
+- NÚT TẢI FILE TO → cho khách tải file ngay (implement cách đơn giản nhất)
+- Dòng nhỏ: "Chúng tôi đã gửi link vào email [email] — dùng được bất cứ lúc nào"
+
+Yêu cầu chung:
+- Dùng đúng stack + Sepay integration đang có, không thay đổi cái đang chạy
+- Đúng màu/font website hiện tại, mobile responsive
+- Deploy lên VPS sau khi xong
+- Báo tôi URL 3 trang để test
+
+Làm tuần tự từng trang, cho tôi xem rồi mới sang trang tiếp theo.</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Mở <code>yourdomain.com/san-pham/[slug]</code> trên điện thoại → thấy landing page đẹp, nút mua rõ. Bấm "Mua ngay" → chuyển sang trang checkout → điền thông tin → Sepay xử lý. Nếu OK → tiếp tục Bước 08.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 07</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Agent không tìm thấy Sepay integration trong codebase"</summary>
+        <p>Bảo agent: <em>"Tìm trong codebase các file có chứa 'sepay', 'SEPAY', hoặc import/require liên quan. List ra cho tôi thấy."</em> Nếu vẫn không thấy — Sepay có thể được gọi qua env variable, bảo agent tìm trong file .env hoặc config.</p>
+      </details>
+      <details>
+        <summary>"Trang deploy xong nhưng Sepay callback không về đúng"</summary>
+        <p>Kiểm tra URL callback đã đúng format Sepay yêu cầu chưa. Bảo agent: <em>"Đọc docs Sepay callback/webhook, đảm bảo URL và format verify đúng với docs."</em></p>
+      </details>
+      <details>
+        <summary>"Trang /cam-on hiển thị nhưng không có nút tải file"</summary>
+        <p>Bảo agent: <em>"Kiểm tra lại luồng: Sepay callback → server xác nhận thanh toán → trang /cam-on hiển thị nút tải. Tìm chỗ bị đứt và fix."</em></p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    Gắn email tự động — Resend gửi link cho khách
+  </h2>
+
+  <p>Bạn đã có <strong>Resend</strong> setup từ các nhiệm vụ trước. Khi có đơn thành công, server gọi Resend gửi email có link download cho khách — để khách có thể tải lại bất cứ lúc nào, không cần phụ thuộc vào trang /cam-on.</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Gắn Resend gửi email sau khi thanh toán thành công</span>
+      <button class="copy-btn" data-copy="p8">COPY</button>
+    </div>
+    <div class="prompt-body" id="p8">Đọc codebase website của tôi. Tôi đã có Resend setup sẵn — tìm config Resend trong project và dùng luôn.
+
+Trong flow bán sản phẩm vừa tạo ở Bước 07: sau khi Sepay callback báo thanh toán thành công và order được cập nhật status=paid → gửi email cho khách qua Resend.
+
+Nội dung email:
+Subject: "🎉 [Tên sản phẩm] — File của bạn đã sẵn sàng"
+
+Body (HTML + text fallback):
+  Chào [tên khách],
+
+  Cảm ơn bạn đã mua [tên sản phẩm]!
+
+  Bấm vào link dưới để tải file về máy:
+  → [link tải file — dùng cách implement ở Bước 07]
+
+  Lưu email này lại nếu cần tải lại sau nhé.
+
+  Nếu cần hỗ trợ: [email hoặc Telegram của bạn]
+
+  [Tên bạn]
+  [Website]
+
+Yêu cầu kỹ thuật:
+- Dùng Resend đang có (không cài thêm)
+- Token trong link email = cùng token đã tạo cho trang /cam-on
+- Gửi email ngay sau khi cập nhật order status=paid
+- Nếu gửi email thất bại: log error, không crash flow chính
+
+Sau khi code xong:
+1. Tạo lệnh curl test gửi email giả → tôi chạy kiểm tra trước
+2. Hướng dẫn xem log confirm email được gửi</div>
+  </div>
+
+  <h3>8.1 — Test toàn bộ flow end-to-end</h3>
+
+  <ol>
+    <li>Chạy lệnh curl test email → kiểm tra hộp thư nhận được email, link download trong email hoạt động</li>
+    <li>Vào trang landing page trên điện thoại → bấm mua → điền thông tin → Sepay xử lý</li>
+    <li>Sau khi thanh toán → trang /cam-on hiển thị + nút tải file hoạt động</li>
+    <li>Email nhận được trong vòng 1 phút, link trong email tải được file</li>
+    <li>Hoàn tiền về tài khoản sau khi xác nhận flow OK</li>
+  </ol>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — quan trọng nhất ngày hôm nay</div>
+    <p>Flow hoàn chỉnh: <strong>Landing page → Checkout → Sepay → Trang /cam-on (tải được ngay) + Email có link tải (nhận sau ít phút).</strong></p>
+    <p>Cả 2 kênh giao hàng phải hoạt động. Chưa test xong = chưa được announce.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 08</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Email gửi được nhưng link tải file bị lỗi"</summary>
+        <p>Bảo agent: <em>"Link tải file trong email bị lỗi — kiểm tra lại URL, đảm bảo khớp với endpoint download đã tạo ở Bước 07."</em></p>
+      </details>
+      <details>
+        <summary>"Email vào spam"</summary>
+        <p>Bảo agent: <em>"Kiểm tra SPF và DKIM record cho domain của tôi — setup nếu chưa có. Đây là lý do chính email vào spam."</em></p>
+      </details>
+      <details>
+        <summary>"Sepay callback không trigger email"</summary>
+        <p>SSH vào VPS → <code>tail -f storage/logs/laravel.log</code> (hoặc log tương ứng) → thanh toán thử → xem log có nhận callback không. Copy log → paste agent → hỏi "lỗi gì, fix sao".</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 5: LIVE! -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase5">
+  <span class="phase-label">Phần Năm</span>
+  <div class="phase-title">Live! — Bạn Là Người Bán Hàng Số</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Viết bài announce — dùng agent viết
+  </h2>
+
+  <p>Không cần bài dài. Không cần hoàn hảo. Chỉ cần thật và có link.</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Viết bài announce ra mắt sản phẩm</span>
+      <button class="copy-btn" data-copy="p9">COPY</button>
+    </div>
+    <div class="prompt-body" id="p9">Đọc brand voice từ brain.db.
+
+Viết 1 bài đăng Facebook announce ra mắt sản phẩm số đầu tiên của tôi:
+
+Thông tin:
+- Tên sản phẩm: [điền]
+- Đối tượng: [điền]
+- Vấn đề giải quyết: [điền]
+- Giá: [điền]
+- Link mua: [paste link trang sản phẩm của bạn]
+
+Cấu trúc bài:
+1. Hook mở đầu — gây tò mò hoặc nói thẳng vấn đề (1-2 câu)
+2. Story ngắn — tại sao tôi tạo sản phẩm này (3-4 câu)
+3. Giới thiệu sản phẩm — ngắn gọn, không liệt kê quá nhiều
+4. Ai nên mua — 2-3 dạng người cụ thể
+5. Link mua + giá
+6. CTA: "Comment [từ khoá] để tôi gửi thêm thông tin"
+
+Tone: thật, không cứng nhắc kiểu quảng cáo. Như chia sẻ với bạn bè.
+Không dùng emoji quá nhiều. Không hype kiểu "OMG tuyệt vời nhất".
+Độ dài: 150-250 chữ.</div>
+  </div>
+
+  <p>Đăng bài lên ít nhất 2 kênh: Facebook cá nhân + Page business + nhóm cộng đồng liên quan (nếu có).</p>
+
+  <div class="warning">
+    <div class="warning-label">Lưu hết mọi thứ cho Demo Day Ngày 21</div>
+    <p>Chụp screenshot và lưu lại:</p>
+    <ul>
+      <li>Link trang sản phẩm (yourdomain.com/san-pham/[tên])</li>
+      <li>Screenshot trang sản phẩm trên desktop + mobile</li>
+      <li>Screenshot màn hình Sepay sau khi test mua thành công</li>
+      <li>Link bài đăng Facebook announce</li>
+    </ul>
+    <p>Ở Demo Day Ngày 21, bạn sẽ mở thẳng link này và demo live cho cả nhóm xem.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 10</span>
+    Quan sát 48 giờ tới
+  </h2>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — để agent theo dõi đơn hàng</div>
+    <p>Bảo agent Telegram của bạn: <em>"Nếu Sepay gửi thông báo về Telegram khi có đơn mới — tóm tắt thông tin khách và nhắc tôi giao file."</em> Agent sẽ tự làm thư ký đơn hàng cho bạn, không cần ngồi canh Sepay.</p>
+  </div>
+
+  <p>Sản phẩm đã live. Trong 48 giờ tới, để ý:</p>
+
+  <ul>
+    <li><strong>Ai hỏi về sản phẩm?</strong> → đây là signal về audience thật</li>
+    <li><strong>Ai hỏi gì trước khi mua?</strong> → thêm vào phần FAQ trên trang</li>
+    <li><strong>Có ai mua không?</strong> → nếu có, chụp màn hình Sepay, lưu lại</li>
+    <li><strong>Nếu chưa ai mua:</strong> không sao — mục tiêu hôm nay là CÓ LINK LIVE, không phải bán được X đơn</li>
+  </ul>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Quan điểm đúng về ngày ra mắt</div>
+    <blockquote>
+      Ngày ra mắt không phải ngày kết thúc — là ngày bắt đầu. Sản phẩm số không "hết hàng", không "hỏng theo thời gian". Bạn có thể cải thiện nó sau mỗi feedback, nâng giá sau mỗi review, thêm phiên bản mới sau mỗi tháng. Hôm nay, điều quan trọng nhất là: <strong>có trang bán hàng thật, có link mua thật, đã đăng lên mạng thật.</strong>
+    </blockquote>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- CHECKLIST NỘP BÀI -->
+<!-- ============================================================ -->
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã trả lời 5 câu hỏi + chọn được 1 sản phẩm cụ thể</strong> — có tên sản phẩm, dạng sản phẩm, đối tượng, vấn đề giải quyết.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>AI đã tạo xong nội dung sản phẩm</strong> — bạn đã đọc qua, sửa chỗ chưa ưng, approve nội dung.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Có file thành phẩm trên máy</strong> — PDF đẹp hoặc ZIP bộ skills, mở ra được, đọc được.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Trang sản phẩm đã live trên website</strong> — đủ 6 phần (tên + tagline, lợi ích, đối tượng, tác giả, giá + nút mua, trust line) + có trang checkout có VietQR + trang cảm ơn/download, mobile ok.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Sepay API đã gắn vào trang + test mua thành công</strong> — bạn đã tự mua 1 lần trên điện thoại, quét QR + chuyển khoản, flow hoàn chỉnh.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã đăng bài announce ít nhất 2 kênh</strong> — có link trang sản phẩm trong bài đăng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã lưu screenshots cho Demo Day Ngày 21</strong> — link trang, screenshot desktop/mobile, Sepay confirm, bài đăng.</div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Có 1 link sản phẩm thật — người khác bấm vào là mua được ngay</li>
+      <li>Đã tự test mua 1 lần — flow hoàn chỉnh từ trang → Sepay → nhận file</li>
+      <li>Đã announce ít nhất 2 kênh — không phải chỉ để trong ngăn kéo</li>
+      <li>Đã lưu tất cả cho Demo Day Ngày 21</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top:32px;">
+    <div class="tip-label">Tinh thần ngày 19</div>
+    <p><strong>Sản phẩm thô còn hơn sản phẩm không tồn tại.</strong> Hàng trăm nghìn người đang "chuẩn bị ra mắt" mà không bao giờ ra mắt. Hôm nay bạn đã ra mắt thật — đây là điều phân biệt bạn với phần lớn còn lại.</p>
+    <p>Ở Demo Day Ngày 21, bạn sẽ mở link này live. Hãy để sản phẩm nói thay bạn.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "18 ngày bạn build hệ thống.<br>
+    Hôm nay bạn có <em>thứ đầu tiên để bán</em>."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 19 of 21</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const target = document.getElementById(btn.getAttribute('data-copy'));
+      if (!target) return;
+      navigator.clipboard.writeText(target.textContent).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'COPIED'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = target.textContent; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        btn.textContent = 'COPIED'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1500);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

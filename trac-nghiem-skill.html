@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trắc nghiệm — Claude Skills 4 Cấp Độ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ink: #1a1612; --ink-soft: #4a4038; --ink-mute: #8a7f75;
+    --paper: #faf7f2; --paper-warm: #f2ece0; --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f; --accent-soft: #fce4dc;
+    --gold: #b8882d; --gold-soft: #f8ecd0;
+    --sage: #5c6b4d; --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+    line-height: 1.65; font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200,68,31,0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184,136,45,0.04) 0%, transparent 40%);
+  }
+
+  /* TOPBAR */
+  .topbar {
+    position: sticky; top: 0;
+    background: rgba(250,247,242,0.92);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+    z-index: 100; padding: 14px 0;
+  }
+  .topbar-inner {
+    max-width: 780px; margin: 0 auto; padding: 0 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .topbar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em;
+    color: var(--ink-mute); text-transform: uppercase;
+  }
+  .score-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 600;
+    color: var(--sage);
+    background: var(--sage-soft);
+    border: 1px solid rgba(92,107,77,0.3);
+    padding: 4px 14px; border-radius: 20px;
+    transition: all 0.3s ease;
+  }
+
+  main { max-width: 720px; margin: 0 auto; padding: 48px 24px 100px; }
+
+  /* HERO */
+  .hero { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--rule); }
+  .day-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.18em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 20px; font-weight: 600;
+  }
+  .day-tag::before { content: ""; width: 32px; height: 1px; background: var(--accent); }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 600; line-height: 1.1;
+    letter-spacing: -0.02em; margin-bottom: 16px;
+  }
+  .hero-sub {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 17px; color: var(--ink-soft); line-height: 1.55;
+  }
+
+  /* INTRO BOX */
+  .intro-box {
+    background: linear-gradient(135deg, var(--gold-soft) 0%, #faf2e0 100%);
+    padding: 22px 26px; margin-bottom: 28px;
+    border-radius: 12px; border: 1px solid rgba(184,136,45,0.3);
+  }
+  .intro-box h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px; font-weight: 600; color: var(--gold);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
+  }
+  .intro-box h3::before { content: "🎯"; font-size: 20px; }
+  .intro-box p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 6px 0; }
+  .intro-box strong { color: var(--ink); }
+
+  /* PROGRESS */
+  .quiz-progress {
+    background: var(--paper); padding: 12px 16px;
+    border-radius: 8px; margin-bottom: 20px;
+    border: 1px solid var(--rule); text-align: center;
+  }
+  .quiz-progress-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-soft); letter-spacing: 0.05em;
+  }
+  .quiz-progress-bar {
+    height: 4px; background: var(--paper-deep);
+    border-radius: 2px; margin-top: 8px; overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%; background: var(--sage);
+    transition: width 0.4s ease; width: 0%;
+  }
+
+  /* QUIZ CARD */
+  .quiz-card {
+    background: white; padding: 22px 24px;
+    margin: 14px 0; border-radius: 12px;
+    border: 1px solid var(--rule); box-shadow: var(--shadow);
+    transition: border-color 0.3s;
+  }
+  .quiz-card.answered { border-color: var(--sage); box-shadow: 0 0 0 1px var(--sage), var(--shadow); }
+  .quiz-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.15em;
+    color: var(--accent); text-transform: uppercase;
+    font-weight: 600; margin-bottom: 10px;
+  }
+  .quiz-question {
+    font-family: 'Fraunces', serif;
+    font-size: 17px; font-weight: 500;
+    color: var(--ink); line-height: 1.45; margin-bottom: 16px;
+  }
+  .quiz-question strong { font-weight: 700; }
+
+  /* AI HELPER */
+  .quiz-helper {
+    background: var(--paper-warm); padding: 10px 14px;
+    margin: 0 0 14px; border-radius: 8px;
+    font-size: 12.5px; color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
+  }
+  .quiz-helper-text { flex: 1; min-width: 200px; }
+  .quiz-ask-btn {
+    background: var(--ink); color: #f5ede0; border: none;
+    padding: 7px 14px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.05em;
+    cursor: pointer; transition: background 0.2s; white-space: nowrap;
+    font-weight: 500;
+  }
+  .quiz-ask-btn:hover { background: var(--accent); }
+  .quiz-ask-btn.copied { background: var(--sage); }
+
+  /* OPTIONS */
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    background: var(--paper); padding: 12px 16px;
+    border-radius: 8px; cursor: pointer;
+    border: 2px solid transparent;
+    font-size: 14px; color: var(--ink); line-height: 1.5;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none; display: flex; align-items: flex-start; gap: 0;
+  }
+  .quiz-option:hover:not(.locked) { background: var(--paper-deep); }
+  .quiz-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .quiz-option.correct { border-color: var(--sage); background: var(--sage-soft); cursor: default; }
+  .quiz-option.wrong { border-color: #d96b4e; background: #fde8e0; opacity: 0.78; cursor: default; }
+  .quiz-option.locked { cursor: default; }
+  .option-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600; color: var(--accent);
+    margin-right: 10px; flex-shrink: 0;
+  }
+  .quiz-option.correct .option-letter { color: var(--sage); }
+  .quiz-option.wrong .option-letter { color: #d96b4e; }
+
+  /* ACTIONS */
+  .quiz-actions { margin-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .quiz-submit {
+    background: var(--accent); color: white; border: none;
+    padding: 9px 22px; border-radius: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .quiz-submit:hover:not(:disabled) { background: #b03a18; }
+  .quiz-submit:disabled { background: var(--ink-mute); cursor: not-allowed; opacity: 0.5; }
+
+  /* FEEDBACK */
+  .quiz-feedback {
+    margin-top: 14px; padding: 14px 18px;
+    border-radius: 8px; font-size: 13.5px; line-height: 1.55;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct-fb { background: var(--sage-soft); border-left: 3px solid var(--sage); }
+  .quiz-feedback.wrong-fb { background: #fde8e0; border-left: 3px solid #d96b4e; }
+  .quiz-feedback .fb-title {
+    font-family: 'Fraunces', serif; font-size: 15px;
+    display: block; margin-bottom: 6px; font-weight: 600;
+  }
+  .quiz-feedback.correct-fb .fb-title { color: var(--sage); }
+  .quiz-feedback.wrong-fb .fb-title { color: #b54a2c; }
+  .quiz-feedback p { margin: 4px 0; color: var(--ink); }
+  .quiz-feedback em { font-style: italic; color: var(--ink-soft); }
+
+  /* SUCCESS */
+  .quiz-success {
+    background: linear-gradient(135deg, var(--sage-soft) 0%, #eef2e6 100%);
+    padding: 28px 32px; margin-top: 24px;
+    border-radius: 12px; border: 1px solid var(--sage);
+    text-align: center; display: none;
+  }
+  .quiz-success.show { display: block; }
+  .quiz-success-title {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    color: var(--sage); margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .quiz-success-title::before { content: "🏆"; font-size: 26px; }
+  .quiz-success p { color: var(--ink-soft); font-size: 15px; margin: 6px 0; }
+  .quiz-success strong { color: var(--ink); }
+
+  /* LEVEL BADGE */
+  .level-map {
+    background: white; border: 1px solid var(--rule); border-radius: 10px;
+    padding: 20px 22px; margin-bottom: 24px; box-shadow: var(--shadow);
+  }
+  .level-map h4 {
+    font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600;
+    color: var(--ink); margin-bottom: 12px;
+  }
+  .level-row {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 6px 0; border-bottom: 1px dashed var(--rule); font-size: 13.5px;
+  }
+  .level-row:last-child { border-bottom: none; }
+  .level-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+    color: white; background: var(--accent);
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+  }
+  .level-tag.l2 { background: #b8882d; }
+  .level-tag.l3 { background: #4a7c8a; }
+  .level-tag.l4 { background: #7c4a8a; }
+  .level-tag.l5 { background: var(--sage); }
+  .level-desc { color: var(--ink-soft); }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    main { padding: 32px 18px 80px; }
+    h1 { font-size: 28px; }
+    .quiz-card { padding: 18px 16px; }
+    .quiz-question { font-size: 15px; }
+    .quiz-helper { flex-direction: column; align-items: stretch; }
+    .quiz-ask-btn { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">Ngày 16 · Claude Skills</div>
+    <div class="score-badge" id="topScore">0 / 10 đúng</div>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 16 · Tuần 3</div>
+  <h1>Trắc Nghiệm<br>Claude Skills 4 Cấp Độ</h1>
+  <p class="hero-sub">
+    10 tình huống thực tế — chọn đúng cấp skill phù hợp nhất.
+    Bắt buộc bấm <strong>"Hỏi AI"</strong> mỗi câu, dán prompt vào agent coding rồi mới chọn đáp án.
+  </p>
+</header>
+
+<div class="intro-box">
+  <h3>Trắc nghiệm — bắt buộc dùng AI để trả lời</h3>
+  <p>Mỗi câu là 1 tình huống thật. Bạn phải đoán: <strong>cấp skill nào phù hợp nhất</strong>?</p>
+  <p><strong>Quy tắc:</strong> với mỗi câu, bấm nút <strong>"Hỏi AI"</strong> — prompt tự copy vào clipboard, dán vào agent coding (Cursor / Antigravity / Claude Code) → agent giải thích. Sau đó quay lại đây chọn đáp án.</p>
+  <p>⚠ <strong>Chốt 1 lần là chốt vĩnh viễn</strong> — không retry. Mỗi câu đúng được +2 XP.</p>
+</div>
+
+<div class="level-map">
+  <h4>Bảng tham chiếu — 4 cấp độ Claude Skills</h4>
+  <div class="level-row">
+    <span class="level-tag">Cấp 1</span>
+    <span class="level-desc">Chỉ <code>SKILL.md</code> — hướng dẫn thuần văn bản</span>
+  </div>
+  <div class="level-row">
+    <span class="level-tag l2">Cấp 2</span>
+    <span class="level-desc">SKILL.md + <code>assets/</code> — template, file mẫu, logo, font</span>
+  </div>
+  <div class="level-row">
+    <span class="level-tag l3">Cấp 3</span>
+    <span class="level-desc">SKILL.md + <code>scripts/</code> — code Python/Bash chạy được</span>
+  </div>
+  <div class="level-row">
+    <span class="level-tag l4">Cấp 4</span>
+    <span class="level-desc">SKILL.md + <code>references/</code> — kiến thức chuyên sâu, tài liệu nghề</span>
+  </div>
+  <div class="level-row">
+    <span class="level-tag l5">Cấp 5</span>
+    <span class="level-desc">Đầy đủ tất cả: scripts + assets + references</span>
+  </div>
+</div>
+
+<div class="quiz-progress">
+  <div class="quiz-progress-text" id="progressText">0 / 10 câu đã trả lời · Score 0/10</div>
+  <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="progressFill"></div></div>
+</div>
+
+<div id="quizContainer"></div>
+
+<div class="quiz-success" id="quizSuccess">
+  <div class="quiz-success-title">Hoàn thành 10 câu!</div>
+  <p>Score của bạn: <strong id="finalScore"></strong></p>
+  <p>Giờ là lúc tự tay tạo skill đầu tiên — quay lại SOP để nộp bài.</p>
+</div>
+
+</main>
+
+<script>
+const questions = [
+  {
+    num: '01',
+    q: 'Bạn muốn agent <strong>trả lời câu hỏi thường gặp</strong> của khách hàng trên Telegram, đúng tone business của bạn. FAQ có sẵn 20 câu, mỗi câu trả lời ngắn 2-3 dòng.',
+    prompt: 'Tôi đang học về Claude Skills. Có 4 cấp độ:\n- Cấp 1: chỉ SKILL.md (hướng dẫn thuần)\n- Cấp 2: SKILL.md + assets/ (template/file mẫu)\n- Cấp 3: SKILL.md + scripts/ (code chạy được)\n- Cấp 4: SKILL.md + references/ (kiến thức sâu)\n- Cấp 5: đầy đủ tất cả\n\nTình huống: Tôi muốn tạo skill cho agent TRẢ LỜI CÂU HỎI THƯỜNG GẶP của khách hàng — FAQ có sẵn 20 câu, mỗi câu trả lời ngắn 2-3 dòng, đúng tone business của tôi.\n\nTheo bạn, skill này nên dùng cấp độ nào? Giải thích lý do trong 3-5 câu, không cần dài.',
+    options: [
+      'Cấp 1 — Chỉ SKILL.md với danh sách FAQ + cách phản hồi',
+      'Cấp 3 — Cần script Python để xử lý câu hỏi',
+      'Cấp 4 — Cần references chuyên sâu',
+      'Cấp 5 — Cần đầy đủ tất cả thành phần'
+    ],
+    correct: 0,
+    feedback: '<strong>Đáp án: A — Cấp 1.</strong> Trả lời FAQ là task đơn giản, chỉ cần hướng dẫn thuần văn bản: <em>"Khi khách hỏi câu A → trả lời theo cách B, giọng theo brand voice"</em>. Không cần script (không có data cần xử lý), không cần template (output là tin nhắn tự do), không cần references chuyên sâu (FAQ ngắn gọn).'
+  },
+  {
+    num: '02',
+    q: 'Bạn muốn agent <strong>edit video tự động</strong> — cắt clip dài thành 5 reels ngắn, thêm caption animation, ghép nhạc nền.',
+    prompt: 'Tôi đang học Claude Skills (4 cấp: 1=chỉ MD, 2=có template, 3=có script, 4=có references, 5=đầy đủ).\n\nTình huống: Tôi muốn tạo skill cho agent EDIT VIDEO TỰ ĐỘNG — cắt clip dài thành 5 reels ngắn, thêm caption animation, ghép nhạc nền.\n\nCấp nào phù hợp? Giải thích trong 3-5 câu.',
+    options: [
+      'Cấp 1 — SKILL.md với hướng dẫn cách edit',
+      'Cấp 2 — SKILL.md + template caption mẫu',
+      'Cấp 3 — SKILL.md + scripts/ chứa FFmpeg/Python xử lý video',
+      'Cấp 4 — SKILL.md + references/ về nguyên tắc montage'
+    ],
+    correct: 2,
+    feedback: '<strong>Đáp án: C — Cấp 3.</strong> Edit video cần <em>xử lý dữ liệu thực tế (file video)</em>. Không thể chỉ "mô tả bằng lời" — phải có script Python/Bash gọi FFmpeg để cắt, ghép, render. Đây là điển hình của task <strong>thay được video editor</strong> (~10tr/tháng).'
+  },
+  {
+    num: '03',
+    q: 'Bạn muốn agent <strong>soạn proposal/báo giá</strong> cho khách hàng mới — phải đúng template thương hiệu của bạn (logo, màu, layout cố định).',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent SOẠN PROPOSAL/BÁO GIÁ cho khách hàng mới, phải đúng template thương hiệu (logo, màu, layout cố định).\n\nCấp nào phù hợp? Giải thích ngắn gọn.',
+    options: [
+      'Cấp 1 — Chỉ SKILL.md mô tả nội dung proposal',
+      'Cấp 2 — SKILL.md + assets/proposal-template.docx có sẵn layout',
+      'Cấp 3 — Cần script Python tạo file Word',
+      'Cấp 4 — Cần references về kỹ thuật bán hàng'
+    ],
+    correct: 1,
+    feedback: '<strong>Đáp án: B — Cấp 2.</strong> Output cần đúng <em>format brand cố định</em> mỗi lần (logo, màu, layout). Cách tốt nhất: cho agent file template có sẵn, agent chỉ cần fill vào. Không cần script (không xử lý data), không cần references (kiến thức bán hàng đã có thể nằm trong SKILL.md).'
+  },
+  {
+    num: '04',
+    q: 'Bạn muốn agent <strong>code 1 tính năng mới</strong> vào website của bạn — ví dụ thêm trang "Khách hàng nói gì". Task gồm: viết code frontend, viết code backend, test, commit, deploy.',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống khó: Tôi muốn skill cho agent CODE TÍNH NĂNG MỚI vào website — viết frontend, viết backend, test, commit, deploy.\n\nCấp nào phù hợp? Giải thích tại sao trong 3-5 câu — đặc biệt giải thích tại sao có thể cần cả 3 thành phần (scripts + assets + references).',
+    options: [
+      'Cấp 1 — SKILL.md mô tả task + brand',
+      'Cấp 2 — Chỉ template code mẫu',
+      'Cấp 4 — Chỉ references về cách code',
+      'Cấp 5 — SKILL.md + scripts (test, deploy) + assets (code template) + references (best practices)'
+    ],
+    correct: 3,
+    feedback: '<strong>Đáp án: D — Cấp 5.</strong> Tasks code phức tạp = nhiều bước (write code, test, deploy) → cần đủ cả ba: <em>scripts</em> để tự test/deploy, <em>assets</em> chứa code template chuẩn của bạn, <em>references</em> chứa best practices của codebase. Đây là skill <strong>thay được junior dev</strong> (~15tr/tháng).'
+  },
+  {
+    num: '05',
+    q: 'Bạn muốn agent <strong>soạn hợp đồng</strong> cho khách thuê dịch vụ — phải đúng luật VN, có điều khoản chuẩn về thanh toán, sở hữu trí tuệ, NDA, giải quyết tranh chấp.',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent SOẠN HỢP ĐỒNG cho khách thuê dịch vụ — đúng luật VN, có điều khoản về thanh toán, IP, NDA, giải quyết tranh chấp.\n\nCấp nào phù hợp? Giải thích ngắn — đặc biệt tại sao cần references thay vì chỉ template.',
+    options: [
+      'Cấp 1 — Chỉ hướng dẫn thuần',
+      'Cấp 2 — Chỉ template hợp đồng',
+      'Cấp 4 — SKILL.md + references/ chứa các điều khoản pháp lý chuẩn',
+      'Cấp 3 — Cần script tạo file PDF'
+    ],
+    correct: 2,
+    feedback: '<strong>Đáp án: C — Cấp 4.</strong> Soạn hợp đồng cần <em>kiến thức chuyên sâu về luật</em>. Mỗi điều khoản (thanh toán, IP, NDA, tranh chấp) là 1 chuyên đề riêng — không thể nhét hết vào SKILL.md. Cách đúng: <strong>references/ chứa từng file MD cho mỗi loại điều khoản</strong>, agent đọc khi cần. Đây là skill <strong>thay được tư vấn pháp lý</strong> (~5-10tr/lần).'
+  },
+  {
+    num: '06',
+    q: 'Bạn muốn agent <strong>làm báo cáo doanh thu cuối tháng</strong> — đọc data thật từ database (đơn hàng, khách hàng), tính toán doanh thu/lãi/khách mới, vẽ biểu đồ, xuất ra slide PowerPoint theo template công ty.',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent LÀM BÁO CÁO DOANH THU CUỐI THÁNG — đọc data từ database, tính doanh thu/lãi/khách mới, vẽ biểu đồ, xuất ra slide PowerPoint theo template công ty.\n\nTask này cần cấp nào? Giải thích tại sao — task này tổng hợp những gì.',
+    options: [
+      'Cấp 1 — Hướng dẫn thuần',
+      'Cấp 2 — Chỉ template slide',
+      'Cấp 3 — Chỉ script đọc database',
+      'Cấp 5 — Đầy đủ: scripts (đọc DB + tính số), assets (template slide), references (cách diễn giải số liệu)'
+    ],
+    correct: 3,
+    feedback: '<strong>Đáp án: D — Cấp 5.</strong> Task này phức hợp 3 thứ: (1) đọc + tính data → <em>cần scripts</em>, (2) format slide đúng template công ty → <em>cần assets</em>, (3) diễn giải số liệu kiểu chuyên nghiệp → <em>cần references</em>. Skill này <strong>thay được data analyst</strong> (~20tr/tháng).'
+  },
+  {
+    num: '07',
+    q: 'Bạn muốn agent <strong>viết caption Instagram</strong> cho mỗi sản phẩm bạn bán — caption có cấu trúc cố định: Hook (câu gây chú ý) + Body (mô tả sản phẩm) + CTA (kêu gọi mua).',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent VIẾT CAPTION INSTAGRAM cho mỗi sản phẩm — caption có cấu trúc cố định: Hook + Body + CTA.\n\nCấp nào phù hợp? Giải thích ngắn gọn.',
+    options: [
+      'Cấp 1 — Chỉ SKILL.md mô tả cách viết caption',
+      'Cấp 2 — SKILL.md + assets/caption-template.md có Hook/Body/CTA mẫu',
+      'Cấp 3 — Cần script đọc thông tin sản phẩm',
+      'Cấp 4 — Cần references về marketing'
+    ],
+    correct: 1,
+    feedback: '<strong>Đáp án: B — Cấp 2.</strong> Caption cần <em>cấu trúc cố định</em> (Hook + Body + CTA) → cần template làm sẵn cho agent fill. Tương tự câu 03 (proposal): khi output có format chuẩn, dùng Cấp 2 với template trong assets/.'
+  },
+  {
+    num: '08',
+    q: 'Bạn muốn agent <strong>phân tích đối thủ cạnh tranh</strong> — bạn cho tên đối thủ, agent vào website của họ, đọc nội dung, đánh giá điểm mạnh/yếu, viết báo cáo dạng văn bản.',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent PHÂN TÍCH ĐỐI THỦ CẠNH TRANH — đưa tên đối thủ, agent vào website họ, đọc nội dung, đánh giá điểm mạnh/yếu, viết báo cáo dạng văn bản.\n\nCấp nào phù hợp? Giải thích ngắn — đặc biệt vì sao KHÔNG cần script crawl.',
+    options: [
+      'Cấp 1 — Chỉ SKILL.md với hướng dẫn phân tích theo framework SWOT',
+      'Cấp 2 — Cần template báo cáo',
+      'Cấp 3 — Cần script crawl website',
+      'Cấp 5 — Cần đầy đủ'
+    ],
+    correct: 0,
+    feedback: '<strong>Đáp án: A — Cấp 1.</strong> Phân tích đối thủ là task <em>research + suy luận</em> — agent dùng tool có sẵn (web search/fetch) tự đọc website, không cần script crawl đặc biệt. Output là văn bản tự do, không cần template cứng. Skill chỉ cần dạy <strong>framework phân tích</strong> (ví dụ SWOT).'
+  },
+  {
+    num: '09',
+    q: 'Bạn muốn agent <strong>tạo poster quảng cáo tự động</strong> — bạn nhập thông tin sự kiện (tên, ngày, địa điểm), agent tạo ra ảnh poster có sẵn typography đẹp, màu sắc đúng brand, logo công ty.',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent TẠO POSTER QUẢNG CÁO TỰ ĐỘNG — nhập thông tin sự kiện, agent tạo ra ảnh poster có typography đẹp, màu brand, logo công ty.\n\nCấp nào phù hợp? Giải thích — đặc biệt tại sao tạo ảnh cần script.',
+    options: [
+      'Cấp 1 — Chỉ hướng dẫn thiết kế',
+      'Cấp 2 — Chỉ assets/ chứa logo + font',
+      'Cấp 3 — SKILL.md + scripts/ (Python với Pillow/SVG để render ảnh) + assets/ (logo, font, màu)',
+      'Cấp 4 — Cần references về thiết kế'
+    ],
+    correct: 2,
+    feedback: '<strong>Đáp án: C — Cấp 3 (kết hợp với assets).</strong> Tạo ảnh là task <em>cần code chạy được</em> (Python với thư viện Pillow, hoặc SVG/Canvas). Đồng thời cần assets (logo, font). Đây là Cấp 3 mở rộng có cả assets — skill <strong>thay được junior designer</strong> (~10-15tr/tháng).'
+  },
+  {
+    num: '10',
+    q: 'Bạn muốn agent <strong>tư vấn đầu tư cơ bản</strong> cho khách hàng — agent hỏi tình hình tài chính của khách, gợi ý phân bổ portfolio (cổ phiếu, vàng, gửi tiết kiệm) dựa trên nguyên tắc đầu tư chuẩn (rule of 100, đa dạng hoá, etc.).',
+    prompt: 'Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).\n\nTình huống: Tôi muốn skill cho agent TƯ VẤN ĐẦU TƯ CƠ BẢN — agent hỏi tình hình tài chính khách, gợi ý phân bổ portfolio (cổ phiếu, vàng, gửi tiết kiệm) dựa trên nguyên tắc đầu tư chuẩn (rule of 100, đa dạng hoá...).\n\nCấp nào phù hợp? Giải thích ngắn — đặc biệt tại sao cần references thay vì nhét hết vào SKILL.md.',
+    options: [
+      'Cấp 1 — SKILL.md với vài nguyên tắc',
+      'Cấp 2 — Cần template báo cáo tư vấn',
+      'Cấp 4 — SKILL.md + references/ chứa từng nguyên tắc đầu tư chi tiết',
+      'Cấp 3 — Cần script tính toán'
+    ],
+    correct: 2,
+    feedback: '<strong>Đáp án: C — Cấp 4.</strong> Tư vấn đầu tư cần <em>kiến thức chuyên môn sâu</em> — mỗi nguyên tắc là 1 chuyên đề (đa dạng hóa, time horizon, risk tolerance...). references/ chứa từng file MD chi tiết, agent đọc khi tình huống yêu cầu. Đây là skill <strong>thay được tư vấn tài chính cá nhân</strong> (~10-20tr/cuộc tư vấn).'
+  }
+];
+
+let answered = 0;
+let score = 0;
+const selected = new Array(10).fill(null);
+const locked = new Array(10).fill(false);
+
+function updateProgress() {
+  document.getElementById('progressText').textContent =
+    `${answered} / 10 câu đã trả lời · Score ${score}/10`;
+  document.getElementById('progressFill').style.width = (answered / 10 * 100) + '%';
+  document.getElementById('topScore').textContent = `${score} / 10 đúng`;
+}
+
+function render() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card' + (locked[i] ? ' answered' : '');
+    card.id = `card-${i}`;
+
+    const optLetters = ['A', 'B', 'C', 'D'];
+
+    card.innerHTML = `
+      <div class="quiz-num">Câu ${q.num} / 10</div>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-helper">
+        <span class="quiz-helper-text">⚠ <strong>Chỉ chọn 1 lần</strong> — bấm "Hỏi AI" trước, hiểu kỹ rồi mới chọn đáp án.</span>
+        <button type="button" class="quiz-ask-btn" id="askBtn-${i}" onclick="copyPrompt(${i})">Hỏi AI</button>
+      </div>
+      <div class="quiz-options" id="opts-${i}">
+        ${q.options.map((opt, j) => {
+          let cls = 'quiz-option';
+          if (locked[i]) {
+            cls += ' locked';
+            if (j === q.correct) cls += ' correct';
+            else if (j === selected[i] && j !== q.correct) cls += ' wrong';
+          } else if (selected[i] === j) {
+            cls += ' selected';
+          }
+          return `<div class="${cls}" onclick="selectOption(${i}, ${j})">
+            <span class="option-letter">${optLetters[j]}.</span>${opt}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="quiz-actions" id="actions-${i}">
+        ${!locked[i] ? `<button class="quiz-submit" id="submit-${i}" onclick="submitAnswer(${i})" ${selected[i] === null ? 'disabled' : ''}>Chốt đáp án</button>` : ''}
+      </div>
+      <div class="quiz-feedback ${locked[i] ? (selected[i] === q.correct ? 'correct-fb show' : 'wrong-fb show') : ''}" id="feedback-${i}">
+        <span class="fb-title">${locked[i] ? (selected[i] === q.correct ? '✓ Đúng rồi!' : '✗ Chưa đúng') : ''}</span>
+        <p>${q.feedback}</p>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function selectOption(qi, oi) {
+  if (locked[qi]) return;
+  selected[qi] = oi;
+
+  const opts = document.querySelectorAll(`#opts-${qi} .quiz-option`);
+  opts.forEach((opt, j) => {
+    opt.classList.remove('selected');
+    if (j === oi) opt.classList.add('selected');
+  });
+
+  const btn = document.getElementById(`submit-${qi}`);
+  if (btn) btn.disabled = false;
+}
+
+function submitAnswer(qi) {
+  if (locked[qi] || selected[qi] === null) return;
+  locked[qi] = true;
+  answered++;
+
+  const q = questions[qi];
+  const isCorrect = selected[qi] === q.correct;
+  if (isCorrect) score++;
+
+  // Update card
+  const card = document.getElementById(`card-${qi}`);
+  card.classList.add('answered');
+
+  // Update options
+  const opts = document.querySelectorAll(`#opts-${qi} .quiz-option`);
+  opts.forEach((opt, j) => {
+    opt.classList.remove('selected');
+    opt.classList.add('locked');
+    if (j === q.correct) opt.classList.add('correct');
+    else if (j === selected[qi] && j !== q.correct) opt.classList.add('wrong');
+  });
+
+  // Remove submit button
+  document.getElementById(`actions-${qi}`).innerHTML = '';
+
+  // Show feedback
+  const fb = document.getElementById(`feedback-${qi}`);
+  fb.className = `quiz-feedback ${isCorrect ? 'correct-fb' : 'wrong-fb'} show`;
+  fb.querySelector('.fb-title').textContent = isCorrect ? '✓ Đúng rồi!' : '✗ Chưa đúng';
+
+  updateProgress();
+
+  if (answered === 10) {
+    const success = document.getElementById('quizSuccess');
+    success.classList.add('show');
+    document.getElementById('finalScore').textContent = `${score}/10`;
+    success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function copyPrompt(qi) {
+  const btn = document.getElementById(`askBtn-${qi}`);
+  navigator.clipboard.writeText(questions[qi].prompt).then(() => {
+    btn.textContent = 'ĐÃ COPY · Mở agent';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Hỏi AI';
+      btn.classList.remove('copied');
+    }, 2200);
+  }).catch(() => {
+    btn.textContent = 'ĐÃ COPY · Mở agent';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Hỏi AI';
+      btn.classList.remove('copied');
+    }, 2200);
+  });
+}
+
+render();
+updateProgress();
+</script>
+
+</body>
+</html>

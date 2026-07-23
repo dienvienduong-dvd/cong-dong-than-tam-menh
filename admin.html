@@ -259,7 +259,9 @@
       padding: 12px 10px;
       flex: 1;
       overflow-y: auto;
+      scrollbar-width: none;
     }
+    #sbar nav::-webkit-scrollbar { display: none; }
 
     .sbar-section {
       font-size: 10px;
@@ -268,6 +270,38 @@
       text-transform: uppercase;
       color: #475569;
       padding: 10px 10px 6px;
+    }
+
+    .sbar-section-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: color .12s;
+    }
+    .sbar-section-toggle:hover { color: #94a3b8; }
+
+    .sbar-chevron {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+      opacity: .7;
+      transition: transform .15s ease;
+    }
+    .sbar-section-toggle.collapsed .sbar-chevron { transform: rotate(-90deg); }
+
+    .sbar-group {
+      overflow: hidden;
+      max-height: 600px;
+      transition: max-height .2s ease, opacity .15s ease;
+    }
+    .sbar-group.collapsed {
+      max-height: 0;
+      opacity: 0;
     }
 
     .sbar-item {
@@ -863,6 +897,22 @@
       }
     }
 
+    /* ── Course grid ───────────────────────────────── */
+    .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; padding: 16px 20px; }
+    .course-card { border: 1px solid var(--border); border-radius: var(--r-md); background: var(--card); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .15s, border-color .15s; }
+    .course-card:hover { box-shadow: var(--shadow-md); border-color: #cbd5e1; }
+    .course-card-cover { height: 84px; display: flex; align-items: center; justify-content: center; position: relative; }
+    .course-card-cover .cc-order { position: absolute; top: 8px; left: 8px; background: rgba(255,255,255,.85); color: var(--text); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; }
+    .course-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .course-card-title { font-size: 14px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .course-card-meta { font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+    .course-status-toggle { border: none; cursor: pointer; font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; font-family: var(--font); align-self: flex-start; }
+    .course-status-toggle.published { background: #d1fae5; color: #065f46; }
+    .course-status-toggle.draft { background: #f1f5f9; color: #64748b; }
+    .course-status-toggle:hover { filter: brightness(0.95); }
+    .course-card-actions { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; }
+    .course-card-actions .btn-sm { flex: 1; min-width: 64px; padding-left: 0; padding-right: 0; text-align: center; }
+
     /* ── Rich Text Editor ──────────────────────────── */
     .rte-wrap { border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; background: #fff; }
     .rte-toolbar { display: flex; gap: 2px; padding: 4px 6px; background: #f8fafc; border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
@@ -872,14 +922,22 @@
     .rte-sep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; display: inline-block; }
     .rte-editor { padding: 8px 10px; outline: none; font-size: 13px; line-height: 1.7; color: var(--text); min-height: 80px; }
     .rte-editor:empty::before { content: attr(data-placeholder); color: var(--light); pointer-events: none; display: block; }
+    .rte-editor h1 { font-size: 18px; font-weight: 700; margin: 8px 0 4px; }
     .rte-editor h2 { font-size: 15px; font-weight: 700; margin: 6px 0 3px; }
     .rte-editor h3 { font-size: 13px; font-weight: 700; margin: 4px 0 2px; }
+    .rte-editor h4 { font-size: 12px; font-weight: 700; margin: 4px 0 2px; }
     .rte-editor ul, .rte-editor ol { padding-left: 20px; margin: 4px 0; }
     .rte-editor li { margin: 2px 0; }
     .rte-editor p { margin: 2px 0; }
     .rte-editor strong { font-weight: 700; }
     .rte-editor em { font-style: italic; }
     .rte-editor a { color: var(--primary); text-decoration: underline; cursor: pointer; }
+    .rte-editor blockquote { margin: 6px 0; padding: 4px 12px; border-left: 3px solid var(--border); color: var(--muted); }
+    .rte-editor pre { margin: 6px 0; padding: 8px 10px; background: #0f172a; color: #e2e8f0; border-radius: 6px; font-family: monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; }
+    .rte-editor code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+    .rte-editor pre code { background: transparent; padding: 0; }
+    .rte-editor img { max-width: 100%; border-radius: 8px; }
+    .rte-editor hr { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }
 
     /* ── CRM ───────────────────────────────────────── */
     .crm-tabs { display: flex; gap: 2px; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--card); flex-wrap: wrap; }
@@ -944,6 +1002,20 @@
     .prog-legend { display: flex; gap: 16px; flex-wrap: wrap; }
     .prog-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 500; }
     .prog-legend-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+    .settings-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+    .settings-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
+    .settings-tab-btn:hover { color: var(--text); }
+    .settings-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .settings-tab-panel { display: none; }
+    .settings-tab-panel.active { display: block; }
+
+    .mp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+    .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
+    .mp-tab-btn:hover { color: var(--text); }
+    .mp-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .mp-tab-panel { display: none; }
+    .mp-tab-panel.active { display: block; }
   </style>
 </head>
 
@@ -1000,7 +1072,11 @@
           Dashboard
         </button>
 
-        <div class="sbar-section">Quản lý</div>
+        <button class="sbar-section sbar-section-toggle" data-key="quanly" aria-expanded="true" onclick="toggleSbarGroup(this)">
+          <span>Quản lý</span>
+          <svg class="sbar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="sbar-group" data-key="quanly">
         <button class="sbar-item" onclick="showPage('users')">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -1017,14 +1093,44 @@
           Bài đăng
           <span class="sbar-count" id="sbPostCount">—</span>
         </button>
+        <button class="sbar-item" onclick="showPage('spaces')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+          </svg>
+          Spaces
+          <span class="sbar-count" id="sbSpaceCount">—</span>
+        </button>
+        <button class="sbar-item" onclick="showPage('topics')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M20.59 13.41L11 3.83V3h-.83L2 12.17 11.83 22 21 12.83z" />
+            <circle cx="6.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+          </svg>
+          Topics
+          <span class="sbar-count" id="sbTopicCount">—</span>
+        </button>
+        <button class="sbar-item" onclick="showPage('pillars')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 3v18M6 8l6-5 6 5M6 21V10M18 21V10" />
+          </svg>
+          Trụ cột
+          <span class="sbar-count" id="sbPillarCount">—</span>
+        </button>
         <button class="sbar-item" onclick="showPage('xplog')">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
           </svg>
           XP Log
         </button>
+        </div>
 
-        <div class="sbar-section">Challenge</div>
+        <button class="sbar-section sbar-section-toggle" data-key="challenge" aria-expanded="true" onclick="toggleSbarGroup(this)">
+          <span>Challenge</span>
+          <svg class="sbar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="sbar-group" data-key="challenge">
         <button class="sbar-item" onclick="showPage('challenges')">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path
@@ -1053,9 +1159,9 @@
           </svg>
           Tiến độ 21 ngày
         </button>
-      </nav>
+        </div>
 
-      <button class="sbar-item" onclick="showPage('marketplace')">
+        <button class="sbar-item" onclick="showPage('marketplace')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path
             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
@@ -1069,6 +1175,18 @@
           <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
         </svg>
         Khóa học
+      </button>
+      <button class="sbar-item" onclick="showPage('lesson-exercises')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Bài tập AI đã chấm
+      </button>
+      <button class="sbar-item" onclick="showPage('ielts-bank')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        Kho đề IELTS
       </button>
 
       <div class="sbar-section">Marketing</div>
@@ -1211,13 +1329,14 @@
                   <th>Level / XP</th>
                   <th>Streak</th>
                   <th>Trạng thái</th>
+                  <th>Admin cộng đồng</th>
                   <th>Tham gia</th>
                   <th>Hành động</th>
                 </tr>
               </thead>
               <tbody id="usersTbody">
                 <tr>
-                  <td colspan="8">
+                  <td colspan="9">
                     <div class="empty-state">Đang tải...</div>
                   </td>
                 </tr>
@@ -1488,27 +1607,31 @@
         </div>
       </section>
 
-      <!-- ── Courses ────────────────────────────────── -->
-      <section class="page" id="page-courses">
+      <!-- ── Lesson exercises (AI-graded, read-only oversight) ── -->
+      <section class="page" id="page-lesson-exercises">
         <div class="table-card">
           <div class="table-card-header">
-            <h2>Danh sách khóa học</h2>
-            <button class="btn-sm primary" onclick="openCourseModal()">+ Tạo khóa học</button>
+            <h2>Bài tập AI đã chấm</h2>
+            <select class="filter-select" id="exPassedFilter" onchange="loadLessonExercises()">
+              <option value="">Tất cả kết quả</option>
+              <option value="1">Đạt</option>
+              <option value="0">Chưa đạt</option>
+            </select>
           </div>
           <div style="overflow-x:auto">
             <table>
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Tên khóa học</th>
-                  <th>Giảng viên</th>
-                  <th>Bài học</th>
-                  <th>Trạng thái</th>
-                  <th>Thứ tự</th>
+                  <th>Học viên</th>
+                  <th>Khóa học · Bài học</th>
+                  <th>Điểm</th>
+                  <th>Kết quả</th>
+                  <th>Nộp lúc</th>
                   <th>Hành động</th>
                 </tr>
               </thead>
-              <tbody id="coursesTbody">
+              <tbody id="exTbody">
                 <tr>
                   <td colspan="7">
                     <div class="empty-state">Đang tải...</div>
@@ -1516,6 +1639,165 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div class="pager" id="exPager"></div>
+        </div>
+      </section>
+
+      <!-- ── Courses ────────────────────────────────── -->
+      <section class="page" id="page-spaces">
+        <div class="table-card-header" style="padding:0 0 14px;border:0;">
+          <h2>Tất cả Space Groups</h2>
+          <button class="btn-sm primary" onclick="openGroupModal()">+ Tạo Group</button>
+        </div>
+
+        <div class="table-card" style="padding:16px 20px;margin-bottom:16px;">
+          <div style="font-size:20px;font-weight:700;color:var(--text);" id="groupsSummary">— Groups • — Spaces</div>
+        </div>
+
+        <div id="groupsList">
+          <div class="table-card" style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Đang tải...</div>
+        </div>
+      </section>
+
+      <!-- ── Topics ─────────────────────────────────── -->
+      <section class="page" id="page-topics">
+        <div class="table-card">
+          <div class="table-card-header">
+            <span>Topics (<span id="topicTotal">0</span>)</span>
+            <button class="btn-sm primary" onclick="openTopicModal()">+ Tạo Topic</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Topic</th>
+                  <th>Space</th>
+                  <th>Bài đăng</th>
+                  <th>Thứ tự</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="topicTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topic modal -->
+      <div id="topicModal"
+        style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;padding:20px;">
+        <div
+          style="background:#fff;border-radius:12px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+          <div
+            style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);" id="topicModalTitle">Tạo Topic mới</div>
+            <button onclick="closeTopicModal()"
+              style="width:28px;height:28px;border-radius:50%;background:var(--surface);border:none;cursor:pointer;font-size:16px;color:var(--muted);">×</button>
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Space *</label>
+              <select class="search-input" style="width:100%" id="tpcSpace"></select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Icon</label>
+                <input class="search-input" style="width:100%" id="tpcIcon" maxlength="4" placeholder="🏷️">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Tên Topic *</label>
+                <input class="search-input" style="width:100%" id="tpcName" maxlength="60" placeholder="VD: Giới thiệu bản thân">
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Thứ tự</label>
+              <input class="search-input" style="width:100%" id="tpcOrder" type="number" min="0" placeholder="0">
+            </div>
+          </div>
+          <div
+            style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+            <button onclick="closeTopicModal()"
+              style="padding:8px 16px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;background:#fff;color:var(--muted);cursor:pointer;font-family:var(--font);">Hủy</button>
+            <button id="tpcSaveBtn" onclick="saveTopic()"
+              style="padding:8px 20px;background:#0ea5e9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);">Lưu Topic</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Pillars (trụ cột) ─────────────────────────────── -->
+      <section class="page" id="page-pillars">
+        <div class="table-card">
+          <div class="table-card-header">
+            <span>Trụ cột (<span id="pillarTotal">0</span>)</span>
+            <button class="btn-sm primary" onclick="openPillarModal()">+ Tạo Trụ cột</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Trụ cột</th>
+                  <th>Màu</th>
+                  <th>Bài đăng</th>
+                  <th>Thứ tự</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="pillarTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pillar modal -->
+      <div id="pillarModal"
+        style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;padding:20px;">
+        <div
+          style="background:#fff;border-radius:12px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+          <div
+            style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);" id="pillarModalTitle">Tạo Trụ cột mới</div>
+            <button onclick="closePillarModal()"
+              style="width:28px;height:28px;border-radius:50%;background:var(--surface);border:none;cursor:pointer;font-size:16px;color:var(--muted);">×</button>
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Icon</label>
+                <input class="search-input" style="width:100%" id="plrIcon" maxlength="4" placeholder="🔥">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Tên trụ cột *</label>
+                <input class="search-input" style="width:100%" id="plrLabel" maxlength="40" placeholder="VD: Chăm sóc khách hàng">
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;">Màu</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;" id="plrColorPicker"></div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Thứ tự</label>
+              <input class="search-input" style="width:100%" id="plrOrder" type="number" min="0" placeholder="0">
+            </div>
+          </div>
+          <div
+            style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+            <button onclick="closePillarModal()"
+              style="padding:8px 16px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;background:#fff;color:var(--muted);cursor:pointer;font-family:var(--font);">Hủy</button>
+            <button id="plrSaveBtn" onclick="savePillar()"
+              style="padding:8px 20px;background:#0ea5e9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);">Lưu Trụ cột</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="page" id="page-courses">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Danh sách khóa học</h2>
+            <button class="btn-sm primary" onclick="openCourseModal()">+ Tạo khóa học</button>
+          </div>
+          <div class="course-grid" id="coursesGrid">
+            <div class="empty-state">Đang tải...</div>
           </div>
         </div>
       </section>
@@ -1526,10 +1808,9 @@
           <!-- Danh sách bài học -->
           <div class="table-card">
             <div class="table-card-header">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <button class="btn-sm" onclick="showPage('courses')">← Quay lại</button>
-                <h2 id="lessonsModalTitle">Bài học</h2>
-              </div>
+              <button class="btn-sm" onclick="showPage('courses')">← Quay lại</button>
+              <h2 id="lessonsModalTitle">Bài học</h2>
+              <button class="btn-sm primary" onclick="newLesson()">+ Bài học mới</button>
             </div>
             <div id="lessonsList" style="padding:16px;">
               <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Đang tải...</div>
@@ -1545,7 +1826,7 @@
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tên bài học *</label>
                 <input class="search-input" style="width:100%" id="lsnTitle" placeholder="VD: Bài 1 — Giới thiệu">
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                 <div>
                   <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Thứ tự</label>
                   <input class="search-input" style="width:100%" type="number" id="lsnOrder" placeholder="1" min="0">
@@ -1553,6 +1834,13 @@
                 <div>
                   <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Thời lượng (phút)</label>
                   <input class="search-input" style="width:100%" type="number" id="lsnDuration" placeholder="15" min="0">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Trạng thái</label>
+                  <select class="search-input" style="width:100%" id="lsnStatus">
+                    <option value="published">Công khai</option>
+                    <option value="draft">Bản nháp</option>
+                  </select>
                 </div>
               </div>
               <div>
@@ -1562,9 +1850,60 @@
               </div>
               <div>
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Nội dung bài học</label>
-                <textarea id="lsnContent" rows="5"
-                  style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:12px;resize:vertical;outline:none;"
-                  placeholder="Nội dung, ghi chú, tài nguyên..."></textarea>
+                <div id="lsnContentWrap"></div>
+              </div>
+              <div style="border-top:1px solid var(--border);padding-top:12px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+                  <input type="checkbox" id="lsnExerciseEnabled" onchange="document.getElementById('lsnExerciseFields').style.display=this.checked?'flex':'none'">
+                  Bật bài tập
+                </label>
+              </div>
+              <div id="lsnExerciseFields" style="display:none;flex-direction:column;gap:12px;">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">📖 Chọn đề từ Kho đề IELTS (tùy chọn)</label>
+                  <select class="search-input" style="width:100%" id="lsnIeltsTestSelect" onchange="onIeltsTestSelectChange()">
+                    <option value="">— Không dùng đề IELTS, tự soạn bài tập bên dưới —</option>
+                  </select>
+                  <div id="lsnIeltsTestPreview" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--muted);"></div>
+                </div>
+                <div id="lsnManualExerciseFields" style="display:flex;flex-direction:column;gap:12px;">
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Loại bài tập</label>
+                    <select class="search-input" style="width:100%" id="lsnExerciseType" onchange="onExerciseTypeChange()">
+                      <option value="text">Tự luận (AI chấm)</option>
+                      <option value="quiz">Trắc nghiệm (chấm tự động)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Đề bài / Hướng dẫn (học viên sẽ thấy)</label>
+                    <textarea class="search-input" style="width:100%;min-height:70px;resize:vertical;" id="lsnExercisePrompt" placeholder="VD: Viết 1 câu mở đầu email cold outreach cho... (trắc nghiệm có thể để trống)"></textarea>
+                  </div>
+                  <div id="lsnRubricWrap">
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tiêu chí chấm điểm (AI dùng để chấm)</label>
+                    <textarea class="search-input" style="width:100%;min-height:70px;resize:vertical;" id="lsnExerciseRubric" placeholder="VD: Câu phải nêu rõ lợi ích, không quá 2 câu, giọng văn thân thiện..."></textarea>
+                    <div style="font-size:10px;color:var(--muted);margin-top:3px;">⚠️ Học viên KHÔNG BAO GIỜ nhìn thấy nội dung này — chỉ AI dùng để chấm điểm.</div>
+                  </div>
+                  <div id="lsnQuizSection" style="display:none;flex-direction:column;gap:10px;border-top:1px solid var(--border);padding-top:12px;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);">Câu hỏi trắc nghiệm</label>
+                    <div id="lsnQuizNoLessonMsg" style="display:none;font-size:12px;color:var(--muted);">Lưu bài học trước, sau đó mở lại để thêm câu hỏi.</div>
+                    <div id="lsnQuizQuestionsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    <button class="btn-sm" type="button" id="lsnAddQuestionBtn" onclick="openQuizQuestionModal()">+ Thêm câu hỏi</button>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                  <div id="lsnExerciseMaxScoreWrap">
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Điểm tối đa</label>
+                    <input class="search-input" style="width:100%" type="number" id="lsnExerciseMaxScore" placeholder="100" min="1">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Điểm đạt</label>
+                    <input class="search-input" style="width:100%" type="number" id="lsnExercisePassScore" placeholder="70" min="0">
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">XP thưởng</label>
+                    <input class="search-input" style="width:100%" type="number" id="lsnExerciseXpReward" placeholder="10" min="0">
+                  </div>
+                </div>
               </div>
               <div style="display:flex;gap:8px;">
                 <button class="btn-sm primary" id="lsnSaveBtn" onclick="saveLesson()">Thêm bài học</button>
@@ -1575,9 +1914,210 @@
         </div>
       </section>
 
+      <!-- ── Kho đề IELTS (ngân hàng đề dùng chung) ───── -->
+      <section class="page" id="page-ielts-bank">
+        <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px;align-items:start;">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>Kho đề IELTS</h2>
+              <button class="btn-sm primary" onclick="newIeltsTest()">+ Đề mới</button>
+            </div>
+            <div style="padding:12px 16px 0;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-sm primary" id="ieltsSkillTabReading" onclick="switchIeltsSkillTab('reading')">📖 Reading</button>
+              <button class="btn-sm" id="ieltsSkillTabWriting" onclick="switchIeltsSkillTab('writing')">✍️ Writing</button>
+              <button class="btn-sm" id="ieltsSkillTabListening" onclick="switchIeltsSkillTab('listening')">🎧 Listening</button>
+              <button class="btn-sm" id="ieltsSkillTabSpeaking" onclick="switchIeltsSkillTab('speaking')">🗣️ Speaking</button>
+            </div>
+            <div id="ieltsTestList" style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:8px;">
+              <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Đang tải...</div>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="table-card-header"><h2 id="ieltsFormTitle">Thêm đề mới</h2></div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Kỹ năng</label>
+                  <select class="search-input" style="width:100%" id="ieltsSkill" onchange="onIeltsSkillChange()">
+                    <option value="reading">📖 Reading</option>
+                    <option value="writing">✍️ Writing</option>
+                    <option value="listening">🎧 Listening</option>
+                    <option value="speaking">🗣️ Speaking</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Trạng thái</label>
+                  <select class="search-input" style="width:100%" id="ieltsStatus">
+                    <option value="published">Công khai</option>
+                    <option value="draft">Bản nháp</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tên đề *</label>
+                <input class="search-input" style="width:100%" id="ieltsTitle" placeholder="VD: IELTS Reading Test 2">
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Mô tả / hướng dẫn (học viên thấy)</label>
+                <textarea class="search-input" style="width:100%;min-height:50px;resize:vertical;" id="ieltsDescription"></textarea>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Thời gian làm bài (phút)</label>
+                  <input class="search-input" style="width:100%" type="number" id="ieltsTimeLimit" placeholder="60" min="1">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Điểm tối đa</label>
+                  <input class="search-input" style="width:100%" type="number" id="ieltsMaxScore" placeholder="40" min="1">
+                </div>
+              </div>
+
+              <!-- Writing-only fields -->
+              <div id="ieltsWritingFields" style="display:none;flex-direction:column;gap:12px;border-top:1px solid var(--border);padding-top:12px;">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Task</label>
+                  <select class="search-input" style="width:100%" id="ieltsTaskType">
+                    <option value="task1">Task 1 (biểu đồ/báo cáo)</option>
+                    <option value="task2">Task 2 (luận)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Đề bài (học viên thấy)</label>
+                  <textarea class="search-input" style="width:100%;min-height:70px;resize:vertical;" id="ieltsWritingPrompt"></textarea>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Ảnh biểu đồ (URL, Task 1)</label>
+                  <input class="search-input" style="width:100%" id="ieltsWritingImageUrl" placeholder="https://...">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tiêu chí chấm điểm IELTS (AI dùng, học viên không thấy)</label>
+                  <textarea class="search-input" style="width:100%;min-height:70px;resize:vertical;" id="ieltsWritingRubric"></textarea>
+                </div>
+              </div>
+
+              <!-- Speaking-only fields -->
+              <div id="ieltsSpeakingFields" style="display:none;flex-direction:column;gap:12px;border-top:1px solid var(--border);padding-top:12px;">
+                <div style="font-size:12px;color:var(--muted);line-height:1.5;">Tên đề = chủ đề nói, Mô tả/hướng dẫn (ở trên) = hướng dẫn tự luyện. Học viên sẽ bấm nút mở ChatGPT để luyện nói, rồi bấm "Đã hoàn thành" để nhận XP (không AI chấm).</div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Link mở ChatGPT (tuỳ chọn)</label>
+                  <input class="search-input" style="width:100%" id="ieltsChatgptUrl" placeholder="https://chatgpt.com/">
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;">Để trống sẽ dùng mặc định https://chatgpt.com/</div>
+                </div>
+              </div>
+
+              <!-- Reading/Listening fields -->
+              <div id="ieltsReadingFields" style="display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--border);padding-top:12px;">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;" id="ieltsPassagesLabel">Bài đọc (passages)</label>
+                  <div id="ieltsPassagesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                  <button class="btn-sm" type="button" style="margin-top:8px;" id="ieltsAddPassageBtn" onclick="addIeltsPassageRowUI()">+ Thêm bài đọc</button>
+                </div>
+                <div id="ieltsQuestionsSection" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border);padding-top:12px;">
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);">Câu hỏi</label>
+                  <div id="ieltsQuestionsNoTestMsg" style="display:none;font-size:12px;color:var(--muted);">Lưu đề trước, sau đó mở lại để thêm câu hỏi.</div>
+                  <div id="ieltsQuestionsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                  <button class="btn-sm" type="button" id="ieltsAddQuestionBtn" onclick="openIeltsQuestionModal()">+ Thêm câu hỏi</button>
+                </div>
+              </div>
+
+              <div style="border-top:1px solid var(--border);padding-top:12px;">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">🤖 Tạo đề từ file mẫu (PDF/DOCX chữ thật, không phải bản scan)</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <input type="file" id="ieltsExtractFile" accept=".pdf,.docx" style="flex:1;min-width:180px;">
+                  <button class="btn-sm" id="ieltsExtractBtn" onclick="extractIeltsFromFile()">AI trích xuất từ file</button>
+                </div>
+                <div style="font-size:10px;color:var(--muted);margin-top:4px;">AI sẽ đọc file và điền sẵn JSON bên dưới — vui lòng kiểm tra kỹ đáp án trước khi nhập, đặc biệt các câu có ghi "CẦN KIỂM TRA LẠI ĐÁP ÁN".</div>
+              </div>
+
+              <div style="border-top:1px solid var(--border);padding-top:12px;">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Nhập JSON hàng loạt (tuỳ chọn — xem định dạng trong kho-de-thi/tests/*.json)</label>
+                <textarea class="search-input" style="width:100%;min-height:80px;resize:vertical;font-family:monospace;font-size:11px;" id="ieltsImportJson" placeholder='{"test": {...}, "passages": [...], "questions": [...]}'></textarea>
+                <button class="btn-sm" style="margin-top:8px;" onclick="importIeltsJson()">Nhập JSON (tạo đề mới)</button>
+              </div>
+
+              <div style="display:flex;gap:8px;">
+                <button class="btn-sm primary" id="ieltsSaveBtn" onclick="saveIeltsTest()">Thêm đề</button>
+                <button class="btn-sm" onclick="cancelEditIeltsTest()">Hủy sửa</button>
+                <button class="btn-sm" onclick="openIeltsPreview()">👁️ Preview</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ── Marketplace ─────────────────────────────── -->
       <section class="page" id="page-marketplace">
-        <!-- Products table -->
+        <div class="mp-tabs">
+          <button class="mp-tab-btn active" onclick="showMpTab('general', this)">⚙️ Cài đặt chung</button>
+          <button class="mp-tab-btn" onclick="showMpTab('products', this)">🛍️ Sản phẩm</button>
+          <button class="mp-tab-btn" onclick="showMpTab('orders', this)">🧾 Đơn hàng</button>
+          <button class="mp-tab-btn" onclick="showMpTab('payment', this)">💳 Thanh toán</button>
+        </div>
+
+        <!-- Cài đặt chung -->
+        <div class="mp-tab-panel active" data-tab="general">
+          <div class="table-card" style="max-width:600px;">
+            <div class="table-card-header">
+              <h2>⚙️ Cài đặt chung cho cửa hàng</h2>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Tên cửa hàng</label>
+                <input id="mpSettingStoreName" type="text" class="search-input" maxlength="80"
+                  style="width:100%" placeholder="VD: AI Agents Marketplace">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Mô tả cửa hàng</label>
+                <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:2px;">
+                  Hiển thị ở trang giới thiệu Marketplace.
+                </div>
+                <textarea id="mpSettingStoreDesc" rows="3" maxlength="300"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;box-sizing:border-box;"
+                  placeholder="Giới thiệu ngắn về chợ sản phẩm..."></textarea>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn-sm primary" onclick="saveMpGeneralSettings()">💾 Lưu</button>
+                <button class="btn-sm" onclick="loadMpSettings()">↺ Đặt lại</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thanh toán -->
+        <div class="mp-tab-panel" data-tab="payment">
+          <div class="table-card" style="max-width:600px;">
+            <div class="table-card-header">
+              <h2>💳 Cài đặt thanh toán — Chuyển khoản ngân hàng</h2>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+                Thông tin này sẽ hiển thị cho người mua ở trang thanh toán (checkout.html) khi chọn chuyển khoản ngân hàng.
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Ngân hàng</label>
+                <input id="mpSettingBankName" type="text" class="search-input" maxlength="60"
+                  style="width:100%" placeholder="VD: BIDV">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Tên tài khoản</label>
+                <input id="mpSettingBankAccountName" type="text" class="search-input" maxlength="80"
+                  style="width:100%" placeholder="VD: TỪ CHÍ NGUYỆN">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:600;color:var(--text);">Số tài khoản</label>
+                <input id="mpSettingBankAccountNumber" type="text" class="search-input" maxlength="40"
+                  style="width:100%" placeholder="VD: 96247NGUYEN">
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn-sm primary" onclick="saveMpPaymentSettings()">💾 Lưu</button>
+                <button class="btn-sm" onclick="loadMpSettings()">↺ Đặt lại</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sản phẩm -->
+        <div class="mp-tab-panel" data-tab="products">
         <div class="table-card" style="margin-bottom:20px;">
           <div class="table-card-header">
             <span>Sản phẩm (<span id="mpProductTotal">0</span>)</span>
@@ -1636,9 +2176,23 @@
                 </div>
                 <div>
                   <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Giá
-                    (VNĐ) *</label>
+                    bán (VNĐ) *</label>
                   <input class="search-input" style="width:100%" id="mpProdPrice" type="number" min="0"
                     placeholder="VD: 199000 (0 = miễn phí)">
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Giá
+                    trị (VNĐ)</label>
+                  <input class="search-input" style="width:100%" id="mpProdComparePrice" type="number" min="0"
+                    placeholder="VD: 399000 (giá gạch ngang, để trống nếu không có)">
+                </div>
+                <div>
+                  <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Link
+                    chi tiết sản phẩm</label>
+                  <input class="search-input" style="width:100%" id="mpProdDetailUrl" type="text"
+                    placeholder="VD: challenge.html (để trống dùng trang chi tiết mặc định)">
                 </div>
               </div>
               <div>
@@ -1668,6 +2222,10 @@
                   <option value="draft">Bản nháp (ẩn)</option>
                 </select>
               </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">
+                <input type="checkbox" id="mpProdFeatured" style="width:16px;height:16px;cursor:pointer;">
+                🌟 Sản phẩm nổi bật (hiển thị ở Hero Marketplace)
+              </label>
             </div>
             <div
               style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
@@ -1679,8 +2237,10 @@
             </div>
           </div>
         </div>
+        </div>
 
-        <!-- Orders table -->
+        <!-- Đơn hàng -->
+        <div class="mp-tab-panel" data-tab="orders">
         <div class="table-card">
           <div class="table-card-header">
             <span>Đơn hàng (<span id="mpOrderTotal">0</span>)</span>
@@ -1703,10 +2263,43 @@
             </table>
           </div>
         </div>
+        </div>
       </section>
 
       <!-- ── Settings ───────────────────────────────── -->
       <section class="page" id="page-settings">
+        <div class="settings-tabs">
+          <button class="settings-tab-btn active" onclick="showSettingsTab('community', this)">🏷️ Cộng đồng</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('banner', this)">📢 Banner</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('challenge', this)">🎯 Challenge</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('email', this)">⚙️ Email</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('calendar', this)">📅 Lịch</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
+        </div>
+
+        <div class="settings-tab-panel active" data-tab="community">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>🏷️ Thông tin cộng đồng</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Tên cộng đồng</label>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:2px;">
+                Hiển thị ở logo sidebar, tiêu đề trang và trang giới thiệu trên toàn bộ hệ thống.
+              </div>
+              <input id="settingCommunityName" type="text" class="search-input" maxlength="60"
+                style="width:100%" placeholder="AI AGENTS CC">
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveCommunityName()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="settings-tab-panel" data-tab="banner">
         <div class="table-card" style="max-width:600px;">
           <div class="table-card-header">
             <h2>Thông báo toàn trang (Banner)</h2>
@@ -1716,7 +2309,7 @@
               <label style="font-size:13px;font-weight:600;color:var(--text);min-width:80px;">Trạng thái</label>
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                 <input type="checkbox" id="settingAnnoEnabled" style="width:16px;height:16px;accent-color:#0ea5e9;">
-                <span style="font-size:13px;color:var(--text)">Hiển thị banner thông báo trên trang Bảng tin</span>
+                <span style="font-size:13px;color:var(--text)">Hiển thị banner thông báo trên trang Feed</span>
               </label>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
@@ -1748,9 +2341,60 @@
             </div>
           </div>
         </div>
+        </div>
+
+        <!-- Challenge hero banner -->
+        <div class="settings-tab-panel" data-tab="challenge">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>🎯 Banner trang Thử thách</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+              Tuỳ chỉnh tiêu đề và mô tả hiển thị ở đầu trang <strong>challenge.html</strong>.
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);min-width:80px;">Icon</label>
+              <input id="settingChallengeIcon" type="text" class="search-input"
+                style="width:80px;text-align:center;font-size:18px;" placeholder="⚡" maxlength="4">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Tiêu đề</label>
+              <input id="settingChallengeTitle" type="text" class="search-input" maxlength="80"
+                style="width:100%" placeholder="Thử thách AI Agent">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Mô tả</label>
+              <textarea id="settingChallengeDesc" rows="3"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"
+                placeholder="Chọn thử thách phù hợp với bạn..."></textarea>
+            </div>
+            <!-- Preview -->
+            <div>
+              <div
+                style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">
+                Xem trước</div>
+              <div id="settingChallengePreview"
+                style="background:linear-gradient(135deg,#0c1e3e,#123a63);border-radius:14px;padding:20px 24px;">
+                <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px;">
+                  <span id="settingChallengePreviewIcon">⚡</span> <span id="settingChallengePreviewTitle">Thử thách AI Agent</span>
+                </div>
+                <div id="settingChallengePreviewDesc" style="font-size:13px;color:#cbd5e1;line-height:1.5;">
+                  Chọn thử thách phù hợp với bạn. Mỗi ngày một task thực chiến — từ prompt engineering đến deploy agent thật.
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveChallengeHero()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
 
         <!-- Email Automation Toggles -->
-        <div class="table-card" style="max-width:600px;margin-top:20px;">
+        <div class="settings-tab-panel" data-tab="email">
+        <div class="table-card" style="max-width:600px;">
           <div class="table-card-header">
             <h2>⚙️ Email Automation</h2>
           </div>
@@ -1771,6 +2415,67 @@
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
             </div>
           </div>
+        </div>
+        </div>
+
+        <!-- Google Calendar -->
+        <div class="settings-tab-panel" data-tab="calendar">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>📅 Lịch cộng đồng (Google Calendar)</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Link nhúng Google Calendar</label>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:2px;">
+                Vào Google Calendar → hover vào lịch cần nhúng ở sidebar trái → menu 3 chấm → <strong>Cài đặt và chia sẻ</strong>.
+              </div>
+              <div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;line-height:1.5;">
+                ⚠️ Bước bắt buộc: trong mục <strong>"Quyền truy cập sự kiện"</strong>, bật <strong>"Công khai"</strong> (Make available to public). Nếu không bật, người xem sẽ thấy lỗi
+                <em>"Không có quyền xem"</em> dù link nhúng đúng.
+              </div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+                Sau đó cuộn xuống <strong>"Tích hợp lịch"</strong> → sao chép <strong>Nhúng mã liên kết (Embed URL)</strong> rồi dán vào đây.
+              </div>
+              <input id="settingCalendarUrl" type="text" class="search-input"
+                style="width:100%" placeholder="https://calendar.google.com/calendar/embed?src=...">
+            </div>
+            <div id="calendarPreviewWrap" style="display:none;">
+              <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">Xem trước</div>
+              <iframe id="calendarPreviewFrame" style="width:100%;height:280px;border:1px solid var(--border);border-radius:8px;" frameborder="0"></iframe>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveCalendarSettings()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- About page -->
+        <div class="settings-tab-panel" data-tab="about">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>ℹ️ Trang giới thiệu (About)</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Giới thiệu ngắn</label>
+              <textarea id="settingAboutIntro" rows="4"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"
+                placeholder="Vài dòng giới thiệu về cộng đồng, hiển thị trên trang About..."></textarea>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Ảnh / Video giới thiệu</label>
+              <div id="aboutMediaList" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <button class="btn-sm" onclick="addAboutMediaRow()" type="button">+ Thêm ảnh/video</button>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveAboutSettings()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
         </div>
       </section>
 
@@ -1796,7 +2501,7 @@
                   <option value="system">⚙️ Hệ thống</option>
                   <option value="challenge">🔥 Thử thách</option>
                   <option value="course">📚 Khóa học</option>
-                  <option value="feed">💬 Bảng tin</option>
+                  <option value="feed">💬 Feed</option>
                   <option value="marketplace">🛍️ Chợ</option>
                 </select>
               </div>
@@ -1813,7 +2518,7 @@
                 <select id="notifLink" class="search-input" style="width:100%">
                   <option value="">Không dẫn đến trang nào</option>
                   <option value="challenge.html">Trang Thử thách</option>
-                  <option value="feed.html">Trang Bảng tin</option>
+                  <option value="feed.html">Trang Feed</option>
                   <option value="marketplace.html">Trang Chợ sản phẩm</option>
                   <option value="leaderboard.html">Trang Bảng xếp hạng</option>
                   <option value="profile.html">Trang Hồ sơ cá nhân</option>
@@ -2170,6 +2875,142 @@
     </div>
   </div>
 
+  <!-- ── Lesson exercise detail modal (read-only) ───────────────────── -->
+  <div id="exerciseDetailModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div
+      style="background:#fff;border-radius:12px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <h3 style="font-size:16px;font-weight:700;">Chi tiết bài tập AI đã chấm</h3>
+        <button onclick="closeExerciseDetail()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <div id="exDetailInfo"
+          style="margin-bottom:16px;padding:12px 14px;background:#f8fafc;border-radius:8px;font-size:13px;"></div>
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Nội dung học viên nộp</div>
+        <div id="exDetailAnswer"
+          style="background:#f1f5f9;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:160px;overflow-y:auto;color:#1e293b;margin-bottom:14px;">
+        </div>
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">AI chỉ ra vấn đề</div>
+        <ul id="exDetailIssues" style="margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.7;color:#991b1b;"></ul>
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Gợi ý AI đưa ra</div>
+        <ul id="exDetailHints" style="margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.7;color:#1e293b;"></ul>
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Tiêu chí chấm điểm (nội bộ)</div>
+        <div id="exDetailRubric"
+          style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:160px;overflow-y:auto;color:#78350f;">
+        </div>
+      </div>
+      <div id="exDetailActions" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeExerciseDetail()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quiz question add/edit modal ───────────────────── -->
+  <div id="quizQuestionModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <h3 id="qqModalTitle" style="font-size:16px;font-weight:700;">Thêm câu hỏi</h3>
+        <button onclick="closeQuizQuestionModal()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Câu hỏi</label>
+          <textarea class="search-input" style="width:100%;min-height:60px;resize:vertical;" id="qqText" placeholder="VD: 'She ___ to school every day.' — chọn từ đúng"></textarea>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Đáp án (chọn radio để đánh dấu đáp án đúng)</label>
+          <div id="qqOptionsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <button class="btn-sm" type="button" style="margin-top:6px;" onclick="addQuizOptionRowUI()">+ Thêm đáp án</button>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Giải thích (hiện khi học viên chọn sai câu này — tuỳ chọn)</label>
+          <textarea class="search-input" style="width:100%;min-height:50px;resize:vertical;" id="qqExplanation" placeholder="VD: Dùng thì hiện tại đơn vì đây là thói quen hàng ngày."></textarea>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeQuizQuestionModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="saveQuizQuestion()">Lưu câu hỏi</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ieltsQuestionModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <h3 id="iqModalTitle" style="font-size:16px;font-weight:700;">Thêm câu hỏi</h3>
+        <button onclick="closeIeltsQuestionModal()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Dạng câu hỏi</label>
+            <select class="search-input" style="width:100%" id="iqType" onchange="onIeltsQuestionTypeChange()">
+              <option value="mc">Trắc nghiệm (mc)</option>
+              <option value="tfng">True/False/Not Given</option>
+              <option value="gap_fill">Điền từ (gap_fill)</option>
+              <option value="matching">Nối câu (matching)</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;" id="iqPassageRefLabel">Thuộc bài đọc</label>
+            <select class="search-input" style="width:100%" id="iqPassageRef"></select>
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Câu hỏi</label>
+          <textarea class="search-input" style="width:100%;min-height:60px;resize:vertical;" id="iqText"></textarea>
+        </div>
+        <div id="iqOptionsWrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Lựa chọn (tick ô để đánh dấu đáp án đúng)</label>
+            <button class="btn-sm" type="button" onclick="fillIeltsTfngOptions()">Điền sẵn TRUE/FALSE/NOT GIVEN</button>
+          </div>
+          <div id="iqOptionsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <button class="btn-sm" type="button" style="margin-top:6px;" onclick="addIeltsOptionRowUI()">+ Thêm lựa chọn</button>
+        </div>
+        <div id="iqGapFillWrap" style="display:none;">
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Đáp án chấp nhận được (mỗi ô là 1 cách viết đúng, VD: "skin" và "grape skin")</label>
+          <div id="iqGapAnswersList" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <button class="btn-sm" type="button" style="margin-top:6px;" onclick="addIeltsGapAnswerRowUI()">+ Thêm đáp án chấp nhận</button>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Giải thích (tuỳ chọn)</label>
+          <textarea class="search-input" style="width:100%;min-height:50px;resize:vertical;" id="iqExplanation"></textarea>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeIeltsQuestionModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="saveIeltsQuestion()">Lưu câu hỏi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── IELTS test preview modal ───────────────────── -->
+  <div id="ieltsPreviewModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <h3 style="font-size:16px;font-weight:700;">👁️ Xem trước đề (kèm đáp án để bạn kiểm tra)</h3>
+        <button onclick="closeIeltsPreview()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div id="ieltsPreviewBody" style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;"></div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+        <button class="btn-sm" onclick="closeIeltsPreview()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Course create/edit modal ───────────────────── -->
   <div id="courseModal"
     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;align-items:center;justify-content:center;padding:16px;">
@@ -2227,11 +3068,178 @@
             </select>
           </div>
         </div>
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Loại khóa học</label>
+          <select id="crsVisibility" class="search-input" style="width:100%" onchange="toggleCoursePriceField()">
+            <option value="public">🌐 Công khai — vào học ngay, miễn phí</option>
+            <option value="private">🔒 Riêng tư — trả phí để tham gia</option>
+          </select>
+        </div>
+        <div id="crsPriceWrap" style="display:none;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label
+              style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Giá trị thật (đ)</label>
+            <input class="search-input" style="width:100%" type="number" id="crsComparePrice" placeholder="499000" min="0" step="1000">
+          </div>
+          <div>
+            <label
+              style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Giá bán (đ)</label>
+            <input class="search-input" style="width:100%" type="number" id="crsPrice" placeholder="299000" min="0" step="1000">
+          </div>
+        </div>
+        <div id="crsPriceHint" style="display:none;font-size:11px;color:var(--muted);margin-top:-8px;">Giá trị thật hiển thị gạch ngang bên cạnh giá bán để làm nổi bật ưu đãi (để 0 nếu không cần). Học viên phải thanh toán qua trang checkout mới được vào học; thanh toán thành công sẽ tự động được tham gia, không cần admin duyệt.</div>
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Gắn vào Space / Group</label>
+          <select id="crsSpace" class="search-input" style="width:100%">
+            <option value="">— Không gắn (không hiện ở sidebar) —</option>
+          </select>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Gắn vào 1 Space: chỉ thành viên Space đó thấy khóa học. Gắn vào cả Group: mọi thành viên thuộc bất kỳ Space nào trong Group đều thấy.</div>
+        </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
           <button class="btn-sm" onclick="closeCourseModal()">Hủy</button>
           <button class="btn-sm primary" onclick="saveCourse()">💾 Lưu</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Space modal ─────────────────────────────────── -->
+  <div id="spaceModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:500px;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:16px;font-weight:700;" id="spaceModalTitle">Tạo Space mới</h3>
+        <button onclick="closeSpaceModal()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Group
+            *</label>
+          <select id="spcGroup" class="search-input" style="width:100%"></select>
+        </div>
+        <div style="display:grid;grid-template-columns:70px 1fr;gap:12px;">
+          <div>
+            <label
+              style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Icon</label>
+            <input class="search-input" style="width:100%;text-align:center;font-size:18px;" id="spcIcon" maxlength="4" placeholder="💬">
+          </div>
+          <div>
+            <label
+              style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Tên
+              Space *</label>
+            <input class="search-input" style="width:100%" id="spcName" placeholder="VD: Thảo luận chung">
+          </div>
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Mô
+            tả</label>
+          <textarea id="spcDesc" rows="2"
+            style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;"
+            placeholder="Không gian này dùng để làm gì..."></textarea>
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Hiển
+            thị</label>
+          <select id="spcVisibility" class="search-input" style="width:100%" onchange="toggleSpaceVisibilityHint()">
+            <option value="public">🌐 Public — ai cũng thấy, bấm Tham gia là vào ngay</option>
+            <option value="private">🔒 Private — ai cũng thấy, phải gửi yêu cầu và chờ Admin duyệt</option>
+            <option value="secret">🕵️ Secret — không hiển thị, Admin tự thêm thành viên</option>
+          </select>
+        </div>
+        <div id="spcAllowJoinWrap" style="display:none;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;">
+            <input type="checkbox" id="spcAllowJoin" checked style="width:16px;height:16px;">
+            Cho phép người dùng gửi yêu cầu tham gia
+          </label>
+        </div>
+        <div id="spcSecretHint" style="display:none;font-size:12px;color:var(--muted);background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:8px 10px;">
+          Space Secret không hiển thị trong danh sách và không nhận yêu cầu tự tham gia. Dùng nút "👥 Thành viên" bên dưới để thêm người theo email sau khi tạo.
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Thứ
+            tự hiển thị</label>
+          <input class="search-input" style="width:100%" type="number" id="spcOrder" value="0" min="0">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+          <button class="btn-sm" onclick="closeSpaceModal()">Hủy</button>
+          <button class="btn-sm primary" onclick="saveSpace()">💾 Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Space Group modal ───────────────────────────── -->
+  <div id="groupModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:440px;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:16px;font-weight:700;" id="groupModalTitle">Tạo Group mới</h3>
+        <button onclick="closeGroupModal()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Tên
+            Group *</label>
+          <input class="search-input" style="width:100%" id="grpName" placeholder="VD: Dưỡng Hóa Cơ Thể">
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Thứ
+            tự hiển thị</label>
+          <input class="search-input" style="width:100%" type="number" id="grpOrder" value="0" min="0">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+          <button class="btn-sm" onclick="closeGroupModal()">Hủy</button>
+          <button class="btn-sm primary" onclick="saveGroup()">💾 Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Space Members modal ─────────────────────────────── -->
+  <div id="membersModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:16px;font-weight:700;" id="membersModalTitle">Thành viên</h3>
+        <button onclick="closeMembersModal()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
+        <input class="search-input" style="flex:1" id="memberAddEmail" placeholder="Thêm bằng email...">
+        <button class="btn-sm primary" onclick="addMemberByEmail()">+ Thêm</button>
+      </div>
+      <div style="padding:8px 22px 20px;overflow-y:auto;flex:1;" id="membersList"></div>
+    </div>
+  </div>
+
+  <!-- ── Course enrollments modal ──────────────────── -->
+  <div id="courseMembersModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:400;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div
+        style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:16px;font-weight:700;" id="courseMembersModalTitle">Học viên</h3>
+        <button onclick="closeCourseMembersModal()"
+          style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
+        <input class="search-input" style="flex:1" id="courseMemberAddEmail" placeholder="Thêm học viên bằng email...">
+        <button class="btn-sm primary" onclick="addCourseMemberByEmail()">+ Thêm</button>
+      </div>
+      <div style="padding:8px 22px 20px;overflow-y:auto;flex:1;" id="courseMembersList"></div>
     </div>
   </div>
 
@@ -2336,6 +3344,7 @@
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('shell').style.display = 'flex';
         loadDashboard();
+        loadSettings();
       } catch (e) {
         showLoginErr('Không kết nối được server. Chạy: node server.js');
       }
@@ -2364,10 +3373,14 @@
       settings: ['Cài đặt', 'Banner thông báo'],
       courses: ['Khóa học', ''],
       'course-lessons': ['Bài học', ''],
+      'lesson-exercises': ['Bài tập AI đã chấm', 'Giám sát chất lượng chấm điểm của AI'],
       marketplace: ['Marketplace', 'Sản phẩm & Đơn hàng'],
       notifications: ['Thông báo', 'Gửi thông báo đến thành viên'],
       crm: ['Email CRM', 'Lists · Tags · Sequences · Templates'],
       'challenge-progress': ['Tiến độ 21 ngày', 'Theo dõi tiến độ từng thành viên'],
+      'ielts-bank': ['Kho đề IELTS', 'Ngân hàng đề dùng chung — gắn vào bài học qua "Chọn đề"'],
+      topics: ['Topics', 'Chủ đề đăng bài trong từng Space'],
+      pillars: ['Trụ cột', 'Phân loại nội dung bài đăng'],
     };
 
     function showPage(name) {
@@ -2387,15 +3400,38 @@
       if (name === 'challenges') loadChallenges();
       if (name === 'enrollments') loadEnrollments();
       if (name === 'submissions') loadSubmissions();
+      if (name === 'lesson-exercises') loadLessonExercises();
+      if (name === 'ielts-bank') loadIeltsBankList();
       if (name === 'settings') loadSettings();
+      if (name === 'spaces') loadAdminSpaces();
+      if (name === 'topics') loadAdminTopics();
+      if (name === 'pillars') loadAdminPillars();
       if (name === 'courses') loadAdminCourses();
-      if (name === 'marketplace') loadAdminMarketplace();
+      if (name === 'marketplace') { loadAdminMarketplace(); loadMpSettings(); }
       if (name === 'notifications') { loadAdminNotifications(); loadNotifUserDropdown(); }
       if (name === 'crm') loadCRM();
       if (name === 'challenge-progress') loadChallengeProgress();
     }
 
     function refreshCurrent() { showPage(currentPage); }
+
+    // ── Collapsible sidebar sections ────────────────────────────────
+    function toggleSbarGroup(btn) {
+      const key = btn.dataset.key;
+      const group = document.querySelector(`.sbar-group[data-key="${key}"]`);
+      const collapsed = btn.classList.toggle('collapsed');
+      if (group) group.classList.toggle('collapsed', collapsed);
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      try { localStorage.setItem('adminSbarCollapsed:' + key, collapsed ? '1' : '0'); } catch (e) {}
+    }
+
+    (function restoreSbarGroups() {
+      document.querySelectorAll('.sbar-section-toggle').forEach(btn => {
+        let collapsed = false;
+        try { collapsed = localStorage.getItem('adminSbarCollapsed:' + btn.dataset.key) === '1'; } catch (e) {}
+        if (collapsed) toggleSbarGroup(btn);
+      });
+    })();
 
     // ── API helper ────────────────────────────────────────────────
     async function api(path, opts = {}) {
@@ -2480,7 +3516,7 @@
 
       const tbody = document.getElementById('usersTbody');
       if (!d.users.length) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke-linecap="round"/>
         <circle cx="9" cy="7" r="4"/>
@@ -2512,6 +3548,11 @@
       <td><span class="badge badge-${u.status}">${statusLabel(u.status)}</span></td>
       <td style="color:var(--muted)">${fmtDate(u.created_at)}</td>
       <td>
+        <button class="act-btn ${u.is_admin ? 'danger' : 'success'}" onclick="toggleAdmin(${u.id},${u.is_admin ? 0 : 1})">
+          ${u.is_admin ? '👑 Bỏ Admin' : 'Đặt làm Admin'}
+        </button>
+      </td>
+      <td>
         ${u.status === 'active'
           ? `<button class="act-btn warn" onclick="setStatus(${u.id},'suspended')">Khóa tạm</button>
              <button class="act-btn danger" onclick="setStatus(${u.id},'banned')">Ban</button>`
@@ -2541,6 +3582,12 @@
     async function setStatus(id, status) {
       await api(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
       showToast(`Đã cập nhật trạng thái.`, 'green');
+      loadUsers(false);
+    }
+
+    async function toggleAdmin(id, isAdmin) {
+      await api(`/admin/users/${id}/admin`, { method: 'PATCH', body: JSON.stringify({ is_admin: isAdmin }) });
+      showToast(isAdmin ? 'Đã đặt làm Admin cộng đồng.' : 'Đã bỏ quyền Admin cộng đồng.', 'green');
       loadUsers(false);
     }
 
@@ -3299,24 +4346,158 @@
       } catch (e) { showToast('Lỗi kết nối.', 'red'); }
     }
 
+    // ── Lesson exercises (AI-graded, read-only) ─────────────────────
+    let exOffset = 0;
+    const EX_LIMIT = 20;
+    let exSubmissionsCache = [];
+
+    async function loadLessonExercises(reset = true) {
+      if (reset) exOffset = 0;
+      const passed = document.getElementById('exPassedFilter').value;
+      const d = await api(`/admin/lesson-exercise-submissions?passed=${passed}&limit=${EX_LIMIT}&offset=${exOffset}`);
+      exSubmissionsCache = d.submissions;
+
+      const tbody = document.getElementById('exTbody');
+      if (!d.submissions.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Chưa có bài tập nào được AI chấm.</div></td></tr>`;
+        document.getElementById('exPager').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = d.submissions.map((s, i) => `
+    <tr>
+      <td style="color:var(--muted)">${exOffset + i + 1}</td>
+      <td>
+        <div class="av" style="background:${avatarColor(s.user_id)};display:inline-flex;margin-right:6px;vertical-align:middle;">${s.first_name[0]}</div>
+        <span style="font-weight:600;">${s.first_name} ${s.last_name}</span>
+        <div style="font-size:11px;color:var(--muted)">${s.email}</div>
+      </td>
+      <td>
+        <div style="font-size:12px;font-weight:600;">${s.course_title}</div>
+        <div style="font-size:11px;color:var(--muted);">${s.lesson_title}</div>
+      </td>
+      <td>${s.score}/${s.max_score}</td>
+      <td>
+        <span class="badge" style="${s.passed ? 'background:#dcfce7;color:#166534;' : 'background:#fee2e2;color:#991b1b;'}">${s.passed ? '✅ Đạt' : '❌ Chưa đạt'}</span>
+        ${s.status === 'needs_resubmit' ? '<span class="badge" style="background:#fef3c7;color:#92400e;margin-left:4px;">🔄 Chờ nộp lại</span>' : ''}
+        ${s.status === 'finalized' ? '<span class="badge" style="background:#e0e7ff;color:#3730a3;margin-left:4px;">🔒 Đã chốt</span>' : ''}
+      </td>
+      <td style="color:var(--muted)">${fmtDate(s.submitted_at)}</td>
+      <td>
+        <button class="act-btn" onclick="openExerciseDetail(${s.id})">Xem chi tiết</button>
+      </td>
+    </tr>`).join('');
+
+      const page = Math.floor(exOffset / EX_LIMIT) + 1;
+      const pages = Math.ceil(d.total / EX_LIMIT);
+      document.getElementById('exPager').innerHTML = `
+    <span>Tổng: <strong>${d.total}</strong> bài tập đã chấm</span>
+    <span style="flex:1"></span>
+    <button onclick="exPage(-1)" ${page <= 1 ? 'disabled' : ''}>← Trước</button>
+    <span>Trang ${page}/${pages || 1}</span>
+    <button onclick="exPage(1)" ${page >= pages ? 'disabled' : ''}>Tiếp →</button>`;
+    }
+
+    function exPage(dir) {
+      exOffset = Math.max(0, exOffset + dir * EX_LIMIT);
+      loadLessonExercises(false);
+    }
+
+    function openExerciseDetail(id) {
+      const s = exSubmissionsCache.find(x => x.id === id);
+      if (!s) { showToast('Không tìm thấy bài nộp.', 'red'); return; }
+
+      const statusLabel = { needs_resubmit: '🔄 Đang chờ học viên nộp lại', finalized: '🔒 Đã chốt điểm — kết thúc' };
+      document.getElementById('exDetailInfo').innerHTML = `
+    <div style="font-weight:600;">${s.first_name} ${s.last_name} — ${s.email}</div>
+    <div style="color:var(--muted);margin-top:4px;">${s.course_title} · ${s.lesson_title}</div>
+    <div style="margin-top:6px;">Điểm: <strong>${s.score}/${s.max_score}</strong> (đạt ${s.pass_score}) — ${s.passed ? '✅ Đạt' : '❌ Chưa đạt'}${s.xp_awarded ? ` · +${s.xp_awarded} XP` : ''}</div>
+    <div style="margin-top:4px;">Nộp lúc: ${fmtDate(s.submitted_at)}</div>
+    ${statusLabel[s.status] ? `<div style="margin-top:6px;font-weight:600;">${statusLabel[s.status]}</div>` : ''}
+    ${s.teacher_note ? `<div style="margin-top:4px;color:var(--muted);">Ghi chú giáo viên: ${escHtml(s.teacher_note)}</div>` : ''}`;
+      if (s.quiz_review) {
+        document.getElementById('exDetailAnswer').innerHTML = s.quiz_review.map((q, i) =>
+          `<div style="margin-bottom:10px;">` +
+          `<div style="font-weight:600;">Câu ${i + 1}: ${escHtml(q.question_text)}</div>` +
+          `<div style="color:${q.is_correct ? '#166534' : '#991b1b'};">Học viên chọn: ${escHtml(q.picked_option ?? '(không trả lời)')} ${q.is_correct ? '✅' : '❌'}</div>` +
+          (!q.is_correct ? `<div style="color:var(--muted);">Đáp án đúng: ${escHtml(q.correct_option)}</div>` : '') +
+          `</div>`
+        ).join('');
+      } else {
+        document.getElementById('exDetailAnswer').textContent = s.answer_text;
+      }
+      document.getElementById('exDetailIssues').innerHTML = s.issues.length
+        ? s.issues.map(i => `<li>${escHtml(i)}</li>`).join('')
+        : '<li style="color:var(--muted);list-style:none;margin-left:-18px;">Không có vấn đề nào.</li>';
+      document.getElementById('exDetailHints').innerHTML = s.hints.length
+        ? s.hints.map(h => `<li>${escHtml(h)}</li>`).join('')
+        : '<li style="color:var(--muted);list-style:none;margin-left:-18px;">Không có gợi ý nào.</li>';
+      document.getElementById('exDetailRubric').textContent = s.quiz_review
+        ? '(Không áp dụng — bài trắc nghiệm chấm tự động theo đáp án đúng, không dùng tiêu chí AI.)'
+        : (s.exercise_rubric || '(Chưa cấu hình tiêu chí chấm điểm)');
+      document.getElementById('exDetailActions').innerHTML = s.status === 'finalized'
+        ? `<button class="btn-sm" onclick="closeExerciseDetail()">Đóng</button>`
+        : `<button class="btn-sm" onclick="closeExerciseDetail()">Đóng</button>
+           <button class="btn-sm warn" onclick="requestResubmit(${s.id})">🔄 Yêu cầu nộp lại</button>
+           <button class="btn-sm primary" onclick="finalizeGrade(${s.id})">✏️ Chấm điểm lại</button>`;
+      document.getElementById('exerciseDetailModal').style.display = 'flex';
+    }
+
+    function closeExerciseDetail() {
+      document.getElementById('exerciseDetailModal').style.display = 'none';
+    }
+
+    async function requestResubmit(id) {
+      const note = prompt('Ghi chú gửi cho học viên (lý do yêu cầu nộp lại):');
+      if (note === null) return;
+      const res = await api(`/admin/lesson-exercise-submissions/${id}`, { method: 'PATCH', body: JSON.stringify({ action: 'request_resubmit', note }) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã yêu cầu học viên nộp lại.', 'green');
+      closeExerciseDetail();
+      loadLessonExercises(false);
+    }
+
+    async function finalizeGrade(id) {
+      const sub = exSubmissionsCache.find(x => x.id === id);
+      const scoreStr = prompt(`Nhập điểm (0-${sub.max_score}):`, String(sub.score));
+      if (scoreStr === null) return;
+      const score = Number(scoreStr);
+      if (!Number.isFinite(score) || score < 0 || score > sub.max_score) { showToast('Điểm không hợp lệ.', 'red'); return; }
+      const note = prompt('Ghi chú / nhận xét:') || '';
+      const res = await api(`/admin/lesson-exercise-submissions/${id}`, { method: 'PATCH', body: JSON.stringify({ action: 'finalize', score, note }) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã chấm điểm — bài tập kết thúc.', 'green');
+      closeExerciseDetail();
+      loadLessonExercises(false);
+    }
+
     function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
     // ── Rich Text Editor ──────────────────────────────────────────
     function buildRteHtml(initialHtml, placeholder, minHeight) {
       return `<div class="rte-wrap">
         <div class="rte-toolbar">
-          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('bold')" title="Đậm (Ctrl+B)"><b>B</b></button>
-          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('italic')" title="Nghiêng (Ctrl+I)"><i>I</i></button>
-          <span class="rte-sep"></span>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'h1')" title="Heading 1" style="font-weight:700;">H1</button>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'h2')" title="Heading 2" style="font-weight:700;">H2</button>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'h3')" title="Heading 3" style="font-weight:700;">H3</button>
-          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'p')" title="Đoạn văn bình thường">¶</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'h4')" title="Heading 4" style="font-weight:700;">H4</button>
+          <span class="rte-sep"></span>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('bold')" title="Đậm (Ctrl+B)"><b>B</b></button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('italic')" title="Nghiêng (Ctrl+I)"><i>I</i></button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('strikeThrough')" title="Gạch ngang" style="text-decoration:line-through;">S</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="rteInlineCode(this)" title="Inline code" style="font-family:monospace;">&lt;/&gt;</button>
           <span class="rte-sep"></span>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('insertUnorderedList')" title="Danh sách dấu chấm">• —</button>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('insertOrderedList')" title="Danh sách đánh số">1.</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'blockquote')" title="Trích dẫn">❝</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('formatBlock',false,'pre')" title="Khối code" style="font-family:monospace;">▤</button>
           <span class="rte-sep"></span>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="rteInsertImage(this)" title="Chèn ảnh">🖼️</button>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="rteInsertLink(this)" title="Chèn link">🔗</button>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('unlink')" title="Xóa link">🔗̶</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('insertHorizontalRule')" title="Đường kẻ ngang">—</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="rteInsertVideo(this)" title="Chèn video">▶️</button>
+          <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="rteInsertDoc(this)" title="Chèn tài liệu (PDF/DOCX/Slides)">📄</button>
           <span class="rte-sep"></span>
           <button type="button" class="rte-btn" onmousedown="event.preventDefault()" onclick="document.execCommand('removeFormat')" title="Xóa định dạng" style="text-decoration:line-through;">T</button>
         </div>
@@ -3340,6 +4521,90 @@
         const linkHtml = `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
         document.execCommand('insertHTML', false, linkHtml);
       }
+    }
+
+    function rteInlineCode(btn) {
+      const editor = btn.closest('.rte-wrap').querySelector('.rte-editor');
+      editor.focus();
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const text = range.toString();
+      if (!text) return;
+      const code = document.createElement('code');
+      code.textContent = text;
+      range.deleteContents();
+      range.insertNode(code);
+      sel.collapseToEnd();
+    }
+
+    function rteInsertImage(btn) {
+      const editor = btn.closest('.rte-wrap').querySelector('.rte-editor');
+      const url = prompt('Nhập URL ảnh:', 'https://');
+      if (!url || url === 'https://') return;
+      editor.focus();
+      document.execCommand('insertHTML', false, `<img src="${escHtml(url)}" style="max-width:100%;border-radius:8px;margin:6px 0;">`);
+    }
+
+    function rteEmbedUrl(raw) {
+      const srcMatch = raw.match(/\bsrc=["']([^"']+)["']/i);
+      const url = srcMatch ? srcMatch[1] : raw.trim();
+      try {
+        const u = new URL(url);
+        if (u.pathname.startsWith('/embed/')) return u.toString();
+        if (u.hostname === 'youtu.be') return `https://www.youtube-nocookie.com/embed${u.pathname}`;
+        const v = u.searchParams.get('v');
+        if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+        return url;
+      } catch { return url; }
+    }
+
+    function rteInsertVideo(btn) {
+      const editor = btn.closest('.rte-wrap').querySelector('.rte-editor');
+      const raw = prompt('Dán link video (YouTube/Loom...) hoặc thẻ <iframe>:', 'https://');
+      if (!raw || raw === 'https://') return;
+      const embedUrl = rteEmbedUrl(raw);
+      editor.focus();
+      document.execCommand('insertHTML', false,
+        `<div contenteditable="false" style="position:relative;padding-top:56.25%;margin:8px 0;border-radius:8px;overflow:hidden;background:#0f172a;">
+          <iframe src="${escHtml(embedUrl)}" style="position:absolute;inset:0;width:100%;height:100%;border:0;" allowfullscreen></iframe>
+        </div><p><br></p>`);
+    }
+
+    function rteDocEmbedUrl(raw) {
+      const srcMatch = raw.match(/\bsrc=["']([^"']+)["']/i);
+      const url = (srcMatch ? srcMatch[1] : raw.trim());
+      try {
+        const u = new URL(url);
+        // Link chia sẻ Google Drive dạng /view hoặc /edit -> chuyển sang /preview để nhúng được
+        const driveMatch = u.pathname.match(/^\/file\/d\/([^/]+)/);
+        if (u.hostname.includes('drive.google.com') && driveMatch) {
+          return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+        }
+        // Google Docs/Sheets/Slides -> ép về /preview
+        if (u.hostname === 'docs.google.com') {
+          return u.toString().replace(/\/(edit|view)([?#].*)?$/, '/preview');
+        }
+        // Đã là link nhúng sẵn (Drive/Docs preview, hoặc Google Docs Viewer) -> dùng luôn
+        if (url.includes('/preview') || u.hostname === 'docs.google.com') return url;
+        // File PDF/Office host ở nơi khác -> nhúng qua Google Docs Viewer
+        if (/\.(pdf|docx?|pptx?|xlsx?)(\?|#|$)/i.test(u.pathname)) {
+          return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+        }
+        return url;
+      } catch { return url; }
+    }
+
+    function rteInsertDoc(btn) {
+      const editor = btn.closest('.rte-wrap').querySelector('.rte-editor');
+      const raw = prompt('Dán link Google Drive/Docs (đã bật "Bất kỳ ai có link"), link PDF/DOCX/PPTX công khai, hoặc thẻ <iframe>:', 'https://');
+      if (!raw || raw === 'https://') return;
+      const embedUrl = rteDocEmbedUrl(raw);
+      editor.focus();
+      document.execCommand('insertHTML', false,
+        `<div contenteditable="false" style="margin:8px 0;border-radius:8px;overflow:hidden;border:1px solid var(--border,#e2e8f0);">
+          <iframe src="${escHtml(embedUrl)}" style="width:100%;height:600px;border:0;display:block;"></iframe>
+        </div><p><br></p>`);
     }
 
     function initRTE(containerId, initialHtml, minHeight) {
@@ -3383,12 +4648,24 @@
       document.getElementById('shell').style.display = 'flex';
       loadDashboard();
       loadChallengeFilter();
+      loadSettings();
     }
 
     // ── Settings ──────────────────────────────────────────────────
+    function showSettingsTab(name, btn) {
+      document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.settings-tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector(`.settings-tab-panel[data-tab="${name}"]`)?.classList.add('active');
+    }
+
+    let aboutMedia = [];
+
     async function loadSettings() {
       try {
         const s = await fetch(`${API}/settings`).then(r => r.json());
+        document.getElementById('settingCommunityName').value = s.community_name || 'AI AGENTS CC';
+        applyCommunityName(s.community_name);
         document.getElementById('settingAnnoEnabled').checked = s.announcement_enabled === '1';
         document.getElementById('settingAnnoIcon').value = s.announcement_icon || '📢';
         document.getElementById('settingAnnoText').value = s.announcement_text || '';
@@ -3397,7 +4674,133 @@
         document.getElementById('settingLateReminderEnabled').checked = lrOn;
         document.getElementById('settingLateReminderLabel').textContent = lrOn ? 'Bật' : 'Tắt';
         document.getElementById('settingLateReminderLabel').style.color = lrOn ? '#10b981' : 'var(--muted)';
+
+        document.getElementById('settingCalendarUrl').value = s.calendar_embed_url || '';
+        updateCalendarPreview();
+
+        document.getElementById('settingChallengeIcon').value = s.challenge_hero_icon || '⚡';
+        document.getElementById('settingChallengeTitle').value = s.challenge_hero_title || 'Thử thách AI Agent';
+        document.getElementById('settingChallengeDesc').value = s.challenge_hero_desc ||
+          'Chọn thử thách phù hợp với bạn. Mỗi ngày một task thực chiến — từ prompt engineering đến deploy agent thật.';
+        updateChallengeHeroPreview();
+
+        document.getElementById('settingAboutIntro').value = s.about_intro || '';
+        try { aboutMedia = JSON.parse(s.about_media || '[]'); } catch { aboutMedia = []; }
+        renderAboutMediaList();
       } catch (e) { showToast('Không tải được cài đặt.', 'red'); }
+    }
+
+    async function saveCommunityName() {
+      const name = document.getElementById('settingCommunityName').value.trim() || 'AI AGENTS CC';
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ community_name: name })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      document.getElementById('settingCommunityName').value = name;
+      applyCommunityName(name);
+      showToast('Đã lưu tên cộng đồng.', 'green');
+    }
+
+    function applyCommunityName(name) {
+      const el = document.querySelector('.sbar-logo-name');
+      if (!el) return;
+      if (name && name !== 'AI AGENTS CC') {
+        el.textContent = name;
+      }
+    }
+
+    function updateCalendarPreview() {
+      const url = document.getElementById('settingCalendarUrl').value.trim();
+      const wrap = document.getElementById('calendarPreviewWrap');
+      const frame = document.getElementById('calendarPreviewFrame');
+      if (url) { frame.src = url; wrap.style.display = 'block'; }
+      else { frame.src = ''; wrap.style.display = 'none'; }
+    }
+
+    async function saveCalendarSettings() {
+      const url = document.getElementById('settingCalendarUrl').value.trim();
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ calendar_embed_url: url })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      updateCalendarPreview();
+      showToast('Đã lưu cài đặt lịch.', 'green');
+    }
+
+    function updateChallengeHeroPreview() {
+      const icon = document.getElementById('settingChallengeIcon').value.trim() || '⚡';
+      const title = document.getElementById('settingChallengeTitle').value.trim() || 'Thử thách AI Agent';
+      const desc = document.getElementById('settingChallengeDesc').value.trim() ||
+        'Chọn thử thách phù hợp với bạn. Mỗi ngày một task thực chiến — từ prompt engineering đến deploy agent thật.';
+      document.getElementById('settingChallengePreviewIcon').textContent = icon;
+      document.getElementById('settingChallengePreviewTitle').textContent = title;
+      document.getElementById('settingChallengePreviewDesc').textContent = desc;
+    }
+
+    async function saveChallengeHero() {
+      const icon = document.getElementById('settingChallengeIcon').value.trim() || '⚡';
+      const title = document.getElementById('settingChallengeTitle').value.trim() || 'Thử thách AI Agent';
+      const desc = document.getElementById('settingChallengeDesc').value.trim();
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ challenge_hero_icon: icon, challenge_hero_title: title, challenge_hero_desc: desc })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      updateChallengeHeroPreview();
+      showToast('Đã lưu banner trang Thử thách.', 'green');
+    }
+
+    function renderAboutMediaList() {
+      const wrap = document.getElementById('aboutMediaList');
+      if (!aboutMedia.length) {
+        wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);">Chưa có ảnh/video nào.</div>';
+        return;
+      }
+      wrap.innerHTML = aboutMedia.map((m, i) => `
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select onchange="setAboutMediaField(${i},'type',this.value)" style="border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--card);color:var(--text);">
+            <option value="image" ${m.type === 'image' ? 'selected' : ''}>🖼️ Ảnh</option>
+            <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 Video</option>
+          </select>
+          <input type="text" value="${escHtmlAttr(m.url || '')}" placeholder="URL ảnh hoặc video..."
+            oninput="setAboutMediaField(${i},'url',this.value)"
+            style="flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;background:var(--card);color:var(--text);">
+          <button type="button" onclick="removeAboutMediaRow(${i})"
+            style="border:none;background:none;color:#ef4444;cursor:pointer;font-size:16px;padding:2px 6px;">×</button>
+        </div>`).join('');
+    }
+
+    function escHtmlAttr(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function addAboutMediaRow() {
+      aboutMedia.push({ type: 'image', url: '' });
+      renderAboutMediaList();
+    }
+
+    function setAboutMediaField(i, field, value) {
+      if (aboutMedia[i]) aboutMedia[i][field] = value;
+    }
+
+    function removeAboutMediaRow(i) {
+      aboutMedia.splice(i, 1);
+      renderAboutMediaList();
+    }
+
+    async function saveAboutSettings() {
+      const intro = document.getElementById('settingAboutIntro').value.trim();
+      const media = aboutMedia.filter(m => m.url && m.url.trim());
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ about_intro: intro, about_media: JSON.stringify(media) })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      aboutMedia = media;
+      renderAboutMediaList();
+      showToast('Đã lưu trang giới thiệu.', 'green');
     }
 
     function updateAnnoPreview() {
@@ -3436,6 +4839,7 @@
       ['settingAnnoIcon', 'settingAnnoText'].forEach(id => {
         document.getElementById(id)?.addEventListener('input', updateAnnoPreview);
       });
+      document.getElementById('settingCalendarUrl')?.addEventListener('input', updateCalendarPreview);
     });
 
     // ── Admin Notifications ───────────────────────────────────────
@@ -3510,32 +4914,571 @@
       }
     }
 
+    // ── Admin Space Groups ───────────────────────────────────────────
+    let editingSpaceId = null;
+    let editingGroupId = null;
+    let currentSpaceGroups = [];
+    let currentAdminSpacesFlat = [];
+    const groupCollapsed = new Set();
+
+    async function loadAdminSpaces() {
+      const data = await api('/admin/space-groups');
+      currentSpaceGroups = data.groups || [];
+      const totalSpaces = currentSpaceGroups.reduce((n, g) => n + g.spaces.length, 0);
+      document.getElementById('groupsSummary').textContent = `${currentSpaceGroups.length} Groups • ${totalSpaces} Spaces`;
+      const countEl = document.getElementById('sbSpaceCount');
+      if (countEl) countEl.textContent = totalSpaces;
+
+      const list = document.getElementById('groupsList');
+      if (!currentSpaceGroups.length) {
+        list.innerHTML = '<div class="table-card" style="padding:30px;text-align:center;color:var(--muted);font-size:13px;">Chưa có Group nào. Bấm "+ Tạo Group" để bắt đầu.</div>';
+        return;
+      }
+      list.innerHTML = currentSpaceGroups.map(g => {
+        const collapsed = groupCollapsed.has(g.id);
+        const rows = g.spaces.map(s => `
+      <tr>
+        <td style="white-space:nowrap;"><span style="font-size:16px;margin-right:6px;">${escHtml(s.icon || '💬')}</span><strong>${escHtml(s.name)}</strong></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(s.description || '')}">${escHtml(s.description || '—')}</td>
+        <td style="text-align:center">${s.post_count}</td>
+        <td>${s.visibility === 'secret'
+          ? `<span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;background:#e0e7ff;color:#3730a3">🕵️ Secret</span>`
+          : s.visibility === 'private'
+          ? `<span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;background:#fef3c7;color:#92400e">🔒 Private</span>`
+          : `<span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;background:#d1fae5;color:#065f46">🌐 Public</span>`}</td>
+        <td style="white-space:nowrap;display:flex;gap:6px;padding:10px 16px;">
+          <button class="btn-sm" onclick="openMembersModal(${s.id},'${escHtml(s.name).replace(/'/g, "\\'")}')">👥 Thành viên</button>
+          <button class="btn-sm primary" onclick="openSpaceModal(${s.id})">Sửa</button>
+          <button class="btn-sm" style="color:#ef4444" onclick="deleteSpace(${s.id})">Xoá</button>
+        </td>
+      </tr>`).join('');
+        return `
+    <div class="table-card" style="margin-bottom:12px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:${collapsed ? '0' : '1px solid var(--border)'};cursor:pointer;" onclick="toggleGroupCollapse(${g.id})">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="transition:transform .15s;transform:rotate(${collapsed ? '-90' : '0'}deg);flex-shrink:0;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+        <h2 style="flex:1;">Group: ${escHtml(g.name)} <span style="font-weight:400;color:var(--muted);font-size:12px;">${g.spaces.length} items</span></h2>
+        <button class="btn-sm primary" onclick="event.stopPropagation();openSpaceModal(null, ${g.id})">+ Space</button>
+        <button class="btn-sm" onclick="event.stopPropagation();openGroupModal(${g.id})">Sửa</button>
+        <button class="btn-sm" style="color:#ef4444" onclick="event.stopPropagation();deleteGroup(${g.id})">Xoá</button>
+      </div>
+      <div style="overflow-x:auto;${collapsed ? 'display:none;' : ''}">
+        ${g.spaces.length ? `<table>
+          <thead><tr><th>Space</th><th>Mô tả</th><th>Bài đăng</th><th>Hiển thị</th><th>Hành động</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>` : '<div class="empty-state" style="padding:16px 20px;">Chưa có Space nào trong Group này.</div>'}
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function toggleGroupCollapse(id) {
+      if (groupCollapsed.has(id)) groupCollapsed.delete(id); else groupCollapsed.add(id);
+      loadAdminSpaces();
+    }
+
+    // ── Group modal ──────────────────────────────────────────────────
+    function openGroupModal(id = null) {
+      editingGroupId = id;
+      document.getElementById('groupModalTitle').textContent = id ? 'Sửa Group' : 'Tạo Group mới';
+      document.getElementById('grpName').value = '';
+      document.getElementById('grpOrder').value = '0';
+      if (id) {
+        const g = currentSpaceGroups.find(x => x.id === id);
+        if (g) {
+          document.getElementById('grpName').value = g.name;
+          document.getElementById('grpOrder').value = g.order_num || 0;
+        }
+      }
+      document.getElementById('groupModal').style.display = 'flex';
+    }
+    function closeGroupModal() { document.getElementById('groupModal').style.display = 'none'; }
+
+    async function saveGroup() {
+      const body = {
+        name: document.getElementById('grpName').value.trim(),
+        order_num: Number(document.getElementById('grpOrder').value) || 0,
+      };
+      if (!body.name) { showToast('Vui lòng nhập tên Group.', 'red'); return; }
+      let res;
+      if (editingGroupId) {
+        res = await api(`/admin/space-groups/${editingGroupId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      } else {
+        res = await api('/admin/space-groups', { method: 'POST', body: JSON.stringify(body) });
+      }
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(editingGroupId ? 'Đã cập nhật Group.' : 'Đã tạo Group mới.', 'green');
+      closeGroupModal();
+      loadAdminSpaces();
+    }
+
+    async function deleteGroup(id) {
+      if (!confirm('Xoá Group này? Toàn bộ Space bên trong cũng sẽ bị xoá.')) return;
+      await api(`/admin/space-groups/${id}`, { method: 'DELETE' });
+      showToast('Đã xoá Group.', 'green');
+      loadAdminSpaces();
+    }
+
+    // ── Space modal ──────────────────────────────────────────────────
+    function toggleSpaceVisibilityHint() {
+      const v = document.getElementById('spcVisibility').value;
+      document.getElementById('spcAllowJoinWrap').style.display = v === 'private' ? 'block' : 'none';
+      document.getElementById('spcSecretHint').style.display = v === 'secret' ? 'block' : 'none';
+    }
+
+    function openSpaceModal(id = null, presetGroupId = null) {
+      editingSpaceId = id;
+      document.getElementById('spaceModalTitle').textContent = id ? 'Sửa Space' : 'Tạo Space mới';
+      const groupSel = document.getElementById('spcGroup');
+      groupSel.innerHTML = currentSpaceGroups.map(g => `<option value="${g.id}">${escHtml(g.name)}</option>`).join('');
+      document.getElementById('spcIcon').value = '💬';
+      document.getElementById('spcName').value = '';
+      document.getElementById('spcDesc').value = '';
+      document.getElementById('spcVisibility').value = 'public';
+      document.getElementById('spcAllowJoin').checked = true;
+      document.getElementById('spcOrder').value = '0';
+      toggleSpaceVisibilityHint();
+      if (presetGroupId) groupSel.value = presetGroupId;
+      if (id) {
+        let s = null;
+        currentSpaceGroups.forEach(g => { const f = g.spaces.find(x => x.id === id); if (f) s = f; });
+        if (s) {
+          groupSel.value = s.group_id;
+          document.getElementById('spcIcon').value = s.icon || '💬';
+          document.getElementById('spcName').value = s.name;
+          document.getElementById('spcDesc').value = s.description || '';
+          document.getElementById('spcVisibility').value = s.visibility;
+          document.getElementById('spcAllowJoin').checked = !!s.allow_join_requests;
+          document.getElementById('spcOrder').value = s.order_num;
+          toggleSpaceVisibilityHint();
+        }
+      }
+      document.getElementById('spaceModal').style.display = 'flex';
+    }
+    function closeSpaceModal() { document.getElementById('spaceModal').style.display = 'none'; }
+
+    async function saveSpace() {
+      const body = {
+        group_id: Number(document.getElementById('spcGroup').value) || null,
+        name: document.getElementById('spcName').value.trim(),
+        icon: document.getElementById('spcIcon').value.trim() || '💬',
+        description: document.getElementById('spcDesc').value.trim(),
+        visibility: document.getElementById('spcVisibility').value,
+        allow_join_requests: document.getElementById('spcAllowJoin').checked,
+        order_num: Number(document.getElementById('spcOrder').value) || 0,
+      };
+      if (!body.name) { showToast('Vui lòng nhập tên Space.', 'red'); return; }
+      if (!body.group_id) { showToast('Vui lòng tạo ít nhất 1 Group trước.', 'red'); return; }
+      let res;
+      if (editingSpaceId) {
+        res = await api(`/admin/spaces/${editingSpaceId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      } else {
+        res = await api('/admin/spaces', { method: 'POST', body: JSON.stringify(body) });
+      }
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(editingSpaceId ? 'Đã cập nhật Space.' : 'Đã tạo Space mới.', 'green');
+      closeSpaceModal();
+      loadAdminSpaces();
+    }
+
+    // ── Space members modal ────────────────────────────────────────
+    let managingMembersSpaceId = null;
+
+    async function openMembersModal(spaceId, spaceName) {
+      managingMembersSpaceId = spaceId;
+      document.getElementById('membersModalTitle').textContent = `Thành viên — ${spaceName}`;
+      document.getElementById('memberAddEmail').value = '';
+      await loadSpaceMembers();
+      document.getElementById('membersModal').style.display = 'flex';
+    }
+    function closeMembersModal() { document.getElementById('membersModal').style.display = 'none'; }
+
+    async function loadSpaceMembers() {
+      const el = document.getElementById('membersList');
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Đang tải...</div>';
+      const data = await api(`/admin/spaces/${managingMembersSpaceId}/members`);
+      const members = data.members || [];
+      if (!members.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Chưa có thành viên hoặc yêu cầu nào.</div>';
+        return;
+      }
+      el.innerHTML = members.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;">${escHtml(m.first_name)} ${escHtml(m.last_name)}</div>
+        <div style="font-size:11px;color:var(--muted);">${escHtml(m.email)}</div>
+      </div>
+      ${m.status === 'pending'
+        ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#fef3c7;color:#92400e;">Chờ duyệt</span>
+           <button class="btn-sm primary" onclick="approveMember(${m.id})">Duyệt</button>
+           <button class="btn-sm" style="color:#ef4444" onclick="removeMember(${m.id})">Từ chối</button>`
+        : `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#d1fae5;color:#065f46;">Thành viên</span>
+           <button class="btn-sm" style="color:#ef4444" onclick="removeMember(${m.id})">Xoá</button>`
+      }
+    </div>`).join('');
+    }
+
+    async function approveMember(memberId) {
+      await api(`/admin/space-members/${memberId}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+      showToast('Đã duyệt thành viên.', 'green');
+      loadSpaceMembers();
+      loadAdminSpaces();
+    }
+
+    async function removeMember(memberId) {
+      await api(`/admin/space-members/${memberId}`, { method: 'DELETE' });
+      showToast('Đã cập nhật.', 'green');
+      loadSpaceMembers();
+      loadAdminSpaces();
+    }
+
+    async function addMemberByEmail() {
+      const email = document.getElementById('memberAddEmail').value.trim();
+      if (!email) { showToast('Vui lòng nhập email.', 'red'); return; }
+      const res = await api(`/admin/spaces/${managingMembersSpaceId}/members`, { method: 'POST', body: JSON.stringify({ email }) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã thêm thành viên.', 'green');
+      document.getElementById('memberAddEmail').value = '';
+      loadSpaceMembers();
+      loadAdminSpaces();
+    }
+
+    // ── Course enrollments ────────────────────────────────────────
+    let managingMembersCourseId = null;
+
+    async function openCourseMembersModal(courseId, courseTitle) {
+      managingMembersCourseId = courseId;
+      document.getElementById('courseMembersModalTitle').textContent = `Học viên — ${courseTitle}`;
+      document.getElementById('courseMemberAddEmail').value = '';
+      await loadCourseEnrollments();
+      document.getElementById('courseMembersModal').style.display = 'flex';
+    }
+    function closeCourseMembersModal() { document.getElementById('courseMembersModal').style.display = 'none'; }
+
+    async function loadCourseEnrollments() {
+      const el = document.getElementById('courseMembersList');
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Đang tải...</div>';
+      const data = await api(`/admin/courses/${managingMembersCourseId}/enrollments`);
+      const enrollments = data.enrollments || [];
+      if (!enrollments.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Chưa có học viên hoặc yêu cầu nào.</div>';
+        return;
+      }
+      el.innerHTML = enrollments.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;">${escHtml(m.first_name)} ${escHtml(m.last_name)}</div>
+        <div style="font-size:11px;color:var(--muted);">${escHtml(m.email)}</div>
+      </div>
+      ${m.status === 'pending'
+        ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#fef3c7;color:#92400e;">Chờ duyệt</span>
+           <button class="btn-sm primary" onclick="approveCourseEnrollment(${m.id})">Duyệt</button>
+           <button class="btn-sm" style="color:#ef4444" onclick="removeCourseEnrollment(${m.id})">Từ chối</button>`
+        : `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#d1fae5;color:#065f46;">Học viên</span>
+           <button class="btn-sm" style="color:#ef4444" onclick="removeCourseEnrollment(${m.id})">Xoá</button>`
+      }
+    </div>`).join('');
+    }
+
+    async function approveCourseEnrollment(enrollmentId) {
+      await api(`/admin/course-enrollments/${enrollmentId}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+      showToast('Đã duyệt học viên.', 'green');
+      loadCourseEnrollments();
+      loadAdminCourses();
+    }
+
+    async function removeCourseEnrollment(enrollmentId) {
+      await api(`/admin/course-enrollments/${enrollmentId}`, { method: 'DELETE' });
+      showToast('Đã cập nhật.', 'green');
+      loadCourseEnrollments();
+      loadAdminCourses();
+    }
+
+    async function addCourseMemberByEmail() {
+      const email = document.getElementById('courseMemberAddEmail').value.trim();
+      if (!email) { showToast('Vui lòng nhập email.', 'red'); return; }
+      const res = await api(`/admin/courses/${managingMembersCourseId}/enrollments`, { method: 'POST', body: JSON.stringify({ email }) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã thêm học viên.', 'green');
+      document.getElementById('courseMemberAddEmail').value = '';
+      loadCourseEnrollments();
+      loadAdminCourses();
+    }
+
+    async function deleteSpace(id) {
+      if (!confirm('Xoá Space này? Các bài đăng trong Space sẽ không bị xoá nhưng không còn thuộc Space nào.')) return;
+      await api(`/admin/spaces/${id}`, { method: 'DELETE' });
+      showToast('Đã xoá Space.', 'green');
+      loadAdminSpaces();
+    }
+
+    // ── Admin Topics ─────────────────────────────────────────────────
+    let currentAdminTopics = [];
+    let editingTopicId = null;
+
+    async function loadAdminTopics() {
+      const [topicsData, spacesData] = await Promise.all([
+        api('/admin/topics'),
+        api('/admin/spaces'),
+      ]);
+      currentAdminTopics = topicsData.topics || [];
+      currentAdminSpacesFlat = spacesData.spaces || [];
+      document.getElementById('topicTotal').textContent = currentAdminTopics.length;
+      const countEl = document.getElementById('sbTopicCount');
+      if (countEl) countEl.textContent = currentAdminTopics.length;
+
+      const tbody = document.getElementById('topicTbody');
+      if (!currentAdminTopics.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Chưa có Topic nào. Bấm "+ Tạo Topic" để bắt đầu.</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = currentAdminTopics.map(t => `
+      <tr>
+        <td><span style="font-size:15px;margin-right:6px;">${escHtml(t.icon || '🏷️')}</span><strong>${escHtml(t.name)}</strong></td>
+        <td>${escHtml(t.space_icon || '💬')} ${escHtml(t.space_name)}</td>
+        <td style="text-align:center">${t.post_count}</td>
+        <td style="text-align:center">${t.order_num}</td>
+        <td style="white-space:nowrap;display:flex;gap:6px;">
+          <button class="btn-sm primary" onclick="openTopicModal(${t.id})">Sửa</button>
+          <button class="btn-sm" style="color:#ef4444" onclick="deleteTopic(${t.id})">Xoá</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function openTopicModal(id = null) {
+      editingTopicId = id;
+      document.getElementById('topicModalTitle').textContent = id ? 'Sửa Topic' : 'Tạo Topic mới';
+      const spaceSel = document.getElementById('tpcSpace');
+      spaceSel.innerHTML = currentAdminSpacesFlat.map(s => `<option value="${s.id}">${escHtml(s.icon || '💬')} ${escHtml(s.name)}</option>`).join('');
+      document.getElementById('tpcIcon').value = '🏷️';
+      document.getElementById('tpcName').value = '';
+      document.getElementById('tpcOrder').value = '0';
+      if (id) {
+        const t = currentAdminTopics.find(x => x.id === id);
+        if (t) {
+          spaceSel.value = t.space_id;
+          document.getElementById('tpcIcon').value = t.icon || '🏷️';
+          document.getElementById('tpcName').value = t.name;
+          document.getElementById('tpcOrder').value = t.order_num || 0;
+        }
+      }
+      document.getElementById('topicModal').style.display = 'flex';
+    }
+    function closeTopicModal() {
+      document.getElementById('topicModal').style.display = 'none';
+      editingTopicId = null;
+    }
+
+    async function saveTopic() {
+      const body = {
+        space_id: Number(document.getElementById('tpcSpace').value) || null,
+        name: document.getElementById('tpcName').value.trim(),
+        icon: document.getElementById('tpcIcon').value.trim() || '🏷️',
+        order_num: Number(document.getElementById('tpcOrder').value) || 0,
+      };
+      if (!body.space_id) { showToast('Vui lòng tạo ít nhất 1 Space trước.', 'red'); return; }
+      if (!body.name) { showToast('Vui lòng nhập tên Topic.', 'red'); return; }
+      let res;
+      if (editingTopicId) {
+        res = await api(`/admin/topics/${editingTopicId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      } else {
+        res = await api('/admin/topics', { method: 'POST', body: JSON.stringify(body) });
+      }
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(editingTopicId ? 'Đã cập nhật Topic.' : 'Đã tạo Topic mới.', 'green');
+      closeTopicModal();
+      loadAdminTopics();
+    }
+
+    async function deleteTopic(id) {
+      if (!confirm('Xoá Topic này? Các bài đăng thuộc Topic sẽ không bị xoá nhưng không còn thuộc Topic nào.')) return;
+      await api(`/admin/topics/${id}`, { method: 'DELETE' });
+      showToast('Đã xoá Topic.', 'green');
+      loadAdminTopics();
+    }
+
+    // ── Admin Pillars (trụ cột) ────────────────────────────────────
+    const PILLAR_COLORS = ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#ec4899', '#0ea5e9', '#ef4444', '#0f172a'];
+    let currentAdminPillars = [];
+    let editingPillarId = null;
+
+    function buildPillarColorPicker() {
+      const wrap = document.getElementById('plrColorPicker');
+      if (wrap.children.length) return;
+      PILLAR_COLORS.forEach((c, i) => {
+        const sw = document.createElement('div');
+        sw.style.cssText = `width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0;`;
+        sw.dataset.color = c;
+        if (i === 0) { sw.style.border = '2px solid #1e293b'; sw.dataset.selected = '1'; }
+        sw.onclick = () => {
+          wrap.querySelectorAll('div').forEach(s => { s.style.border = '2px solid transparent'; delete s.dataset.selected; });
+          sw.style.border = '2px solid #1e293b'; sw.dataset.selected = '1';
+        };
+        wrap.appendChild(sw);
+      });
+    }
+
+    async function loadAdminPillars() {
+      const data = await api('/admin/pillars');
+      currentAdminPillars = data.pillars || [];
+      document.getElementById('pillarTotal').textContent = currentAdminPillars.length;
+      const countEl = document.getElementById('sbPillarCount');
+      if (countEl) countEl.textContent = currentAdminPillars.length;
+
+      const tbody = document.getElementById('pillarTbody');
+      if (!currentAdminPillars.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Chưa có Trụ cột nào. Bấm "+ Tạo Trụ cột" để bắt đầu.</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = currentAdminPillars.map(p => `
+      <tr>
+        <td><span style="font-size:15px;margin-right:6px;">${escHtml(p.icon || '🔥')}</span><strong>${escHtml(p.label)}</strong></td>
+        <td><span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${escHtml(p.color)};vertical-align:middle;"></span></td>
+        <td style="text-align:center">${p.post_count}</td>
+        <td style="text-align:center">${p.order_num}</td>
+        <td style="white-space:nowrap;display:flex;gap:6px;">
+          <button class="btn-sm primary" onclick="openPillarModal(${p.id})">Sửa</button>
+          <button class="btn-sm" style="color:#ef4444" onclick="deletePillar(${p.id})">Xoá</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function openPillarModal(id = null) {
+      buildPillarColorPicker();
+      editingPillarId = id;
+      document.getElementById('pillarModalTitle').textContent = id ? 'Sửa Trụ cột' : 'Tạo Trụ cột mới';
+      document.getElementById('plrIcon').value = '🔥';
+      document.getElementById('plrLabel').value = '';
+      document.getElementById('plrOrder').value = '0';
+      const wrap = document.getElementById('plrColorPicker');
+      let targetColor = PILLAR_COLORS[0];
+      if (id) {
+        const p = currentAdminPillars.find(x => x.id === id);
+        if (p) {
+          document.getElementById('plrIcon').value = p.icon || '🔥';
+          document.getElementById('plrLabel').value = p.label;
+          document.getElementById('plrOrder').value = p.order_num || 0;
+          targetColor = p.color || PILLAR_COLORS[0];
+        }
+      }
+      wrap.querySelectorAll('div').forEach(s => {
+        const match = s.dataset.color === targetColor;
+        s.style.border = match ? '2px solid #1e293b' : '2px solid transparent';
+        if (match) s.dataset.selected = '1';
+        else delete s.dataset.selected;
+      });
+      document.getElementById('pillarModal').style.display = 'flex';
+    }
+    function closePillarModal() {
+      document.getElementById('pillarModal').style.display = 'none';
+      editingPillarId = null;
+    }
+
+    async function savePillar() {
+      const body = {
+        label: document.getElementById('plrLabel').value.trim(),
+        icon: document.getElementById('plrIcon').value.trim() || '🔥',
+        color: document.querySelector('#plrColorPicker div[data-selected="1"]')?.dataset.color || PILLAR_COLORS[0],
+        order_num: Number(document.getElementById('plrOrder').value) || 0,
+      };
+      if (!body.label) { showToast('Vui lòng nhập tên trụ cột.', 'red'); return; }
+      let res;
+      if (editingPillarId) {
+        res = await api(`/admin/pillars/${editingPillarId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      } else {
+        res = await api('/admin/pillars', { method: 'POST', body: JSON.stringify(body) });
+      }
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(editingPillarId ? 'Đã cập nhật Trụ cột.' : 'Đã tạo Trụ cột mới.', 'green');
+      closePillarModal();
+      loadAdminPillars();
+    }
+
+    async function deletePillar(id) {
+      if (!confirm('Xoá Trụ cột này? Các bài đăng thuộc Trụ cột sẽ không bị xoá nhưng không còn thuộc Trụ cột nào.')) return;
+      await api(`/admin/pillars/${id}`, { method: 'DELETE' });
+      showToast('Đã xoá Trụ cột.', 'green');
+      loadAdminPillars();
+    }
+
     // ── Admin Courses ─────────────────────────────────────────────
     let editingCourseId = null;
     let managingCourseId = null;
     let editingLessonId = null;
+    let lsnQuizQuestionsCache = [];
+    let editingQuestionId = null;
+    let ieltsTestsCache = [];
+    let currentIeltsSkillTab = 'reading';
+    let editingIeltsTestId = null;
+    let ieltsPassagesCache = [];
+    let ieltsQuestionsCache = [];
+    let editingIeltsQuestionId = null;
 
     async function loadAdminCourses() {
       const data = await api('/admin/courses');
-      const tbody = document.getElementById('coursesTbody');
+      const grid = document.getElementById('coursesGrid');
       if (!data.courses?.length) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Chưa có khóa học nào.</div></td></tr>';
+        grid.innerHTML = '<div class="empty-state">Chưa có khóa học nào.</div>';
         return;
       }
-      tbody.innerHTML = data.courses.map(c => `
-    <tr>
-      <td>${c.id}</td>
-      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(c.title)}">${escHtml(c.title)}</td>
-      <td>${escHtml(c.instructor || '—')}</td>
-      <td style="text-align:center">${c.lesson_count}</td>
-      <td><span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;background:${c.status === 'published' ? '#d1fae5' : '#f1f5f9'};color:${c.status === 'published' ? '#065f46' : '#64748b'}">${c.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span></td>
-      <td style="text-align:center">${c.order_num}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:10px 16px;">
+      grid.innerHTML = data.courses.map(c => `
+    <div class="course-card">
+      <div class="course-card-cover" style="background:${escHtml(c.cover_color || '#6366f1')}">
+        <span class="cc-order">#${c.order_num}</span>
+        <span style="font-size:28px;font-weight:800;color:rgba(255,255,255,.9);">${escHtml((c.title || '?').trim().charAt(0).toUpperCase())}</span>
+      </div>
+      <div class="course-card-body">
+        <div class="course-card-title" title="${escHtml(c.title)}">${escHtml(c.title)}</div>
+        <div class="course-card-meta">
+          <span>👤 ${escHtml(c.instructor || '—')}</span>
+          <span>${c.group_name ? '🎓 Cả nhóm ' + escHtml(c.group_name) : c.space_name ? '💬 ' + escHtml(c.space_name) : '— Không gắn'}</span>
+          <span>📚 ${c.lesson_count} bài học · 🧑‍🎓 ${c.enrolled_count} học viên</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="course-status-toggle ${c.status === 'published' ? 'published' : 'draft'}"
+            onclick="toggleCourseStatus(${c.id}, '${c.status}')"
+            title="Bấm để ${c.status === 'published' ? 'chuyển về bản nháp' : 'xuất bản'}">
+            ${c.status === 'published' ? '● Đã xuất bản' : '○ Bản nháp'}
+          </button>
+          <span class="course-status-toggle" style="cursor:default;background:${c.visibility === 'private' ? '#fef3c7' : '#e0f2fe'};color:${c.visibility === 'private' ? '#92400e' : '#075985'};">
+            ${c.visibility === 'private' ? `🔒 ${Number(c.price || 0).toLocaleString('vi-VN')}đ` : '🌐 Công khai'}
+          </span>
+        </div>
+      </div>
+      <div class="course-card-actions">
         <button class="btn-sm" onclick="openLessonsModal(${c.id},'${escHtml(c.title).replace(/'/g, "\\'")}')">📚 Bài học</button>
+        <button class="btn-sm" onclick="openCourseMembersModal(${c.id},'${escHtml(c.title).replace(/'/g, "\\'")}')" style="position:relative;">👥 Học viên${c.pending_enrollments > 0 ? ` <span style="background:#ef4444;color:#fff;border-radius:99px;padding:0 5px;font-size:10px;font-weight:700;">${c.pending_enrollments}</span>` : ''}</button>
         <button class="btn-sm primary" onclick="openCourseModal(${c.id})">Sửa</button>
         <button class="btn-sm" style="color:#ef4444" onclick="deleteCourse(${c.id})">Xoá</button>
-      </td>
-    </tr>`).join('');
+      </div>
+    </div>`).join('');
+    }
+
+    async function toggleCourseStatus(id, currentStatus) {
+      const status = currentStatus === 'published' ? 'draft' : 'published';
+      const res = await api(`/admin/courses/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(status === 'published' ? 'Đã xuất bản khóa học.' : 'Đã chuyển về bản nháp.', 'green');
+      loadAdminCourses();
+    }
+
+    async function populateCourseSpaceSelect(selectedValue) {
+      const sel = document.getElementById('crsSpace');
+      const data = await api('/admin/space-groups');
+      sel.innerHTML = '<option value="">— Không gắn (không hiện ở sidebar) —</option>' +
+        (data.groups || []).map(g => `
+          <optgroup label="${escHtml(g.name)}">
+            <option value="group:${g.id}">🎓 Cả nhóm — ${escHtml(g.name)}</option>
+            ${(g.spaces || []).map(s => `<option value="space:${s.id}">${escHtml(s.icon || '💬')} ${escHtml(s.name)}</option>`).join('')}
+          </optgroup>`).join('');
+      sel.value = selectedValue || '';
+    }
+
+    function toggleCoursePriceField() {
+      const isPrivate = document.getElementById('crsVisibility').value === 'private';
+      document.getElementById('crsPriceWrap').style.display = isPrivate ? 'grid' : 'none';
+      document.getElementById('crsPriceHint').style.display = isPrivate ? '' : 'none';
     }
 
     function openCourseModal(id = null) {
@@ -3546,7 +5489,12 @@
       document.getElementById('crsInstructor').value = '';
       document.getElementById('crsCover').value = '#6366f1';
       document.getElementById('crsStatus').value = 'draft';
+      document.getElementById('crsVisibility').value = 'public';
+      document.getElementById('crsPrice').value = '';
+      document.getElementById('crsComparePrice').value = '';
       document.getElementById('crsOrder').value = '0';
+      toggleCoursePriceField();
+      populateCourseSpaceSelect(null);
       if (id) {
         api(`/admin/courses`).then(d => {
           const c = d.courses?.find(x => x.id === id);
@@ -3556,7 +5504,13 @@
           document.getElementById('crsInstructor').value = c.instructor || '';
           document.getElementById('crsCover').value = c.cover_color || '#6366f1';
           document.getElementById('crsStatus').value = c.status;
+          document.getElementById('crsVisibility').value = c.visibility === 'private' ? 'private' : 'public';
+          document.getElementById('crsPrice').value = c.price || '';
+          document.getElementById('crsComparePrice').value = c.compare_price || '';
+          toggleCoursePriceField();
           document.getElementById('crsOrder').value = c.order_num;
+          const selectedValue = c.group_id ? `group:${c.group_id}` : c.space_id ? `space:${c.space_id}` : '';
+          populateCourseSpaceSelect(selectedValue);
         });
       }
       document.getElementById('courseModal').style.display = 'flex';
@@ -3564,13 +5518,19 @@
     function closeCourseModal() { document.getElementById('courseModal').style.display = 'none'; }
 
     async function saveCourse() {
+      const [kind, rawId] = document.getElementById('crsSpace').value.split(':');
       const body = {
         title: document.getElementById('crsTitle').value.trim(),
         description: document.getElementById('crsDesc').value.trim(),
         instructor: document.getElementById('crsInstructor').value.trim(),
         cover_color: document.getElementById('crsCover').value,
         status: document.getElementById('crsStatus').value,
+        visibility: document.getElementById('crsVisibility').value,
+        price: Number(document.getElementById('crsPrice').value) || 0,
+        compare_price: Number(document.getElementById('crsComparePrice').value) || 0,
         order_num: Number(document.getElementById('crsOrder').value) || 0,
+        space_id: kind === 'space' ? Number(rawId) : null,
+        group_id: kind === 'group' ? Number(rawId) : null,
       };
       if (!body.title) { showToast('Vui lòng nhập tên khóa học.', 'red'); return; }
       let res;
@@ -3593,17 +5553,51 @@
     }
 
     // ── Lessons modal ───────────────────────────────────────────
+    const LESSON_STATUS_LABEL = { published: 'Công khai', draft: 'Bản nháp' };
+
     async function openLessonsModal(courseId, courseTitle) {
       managingCourseId = courseId;
       document.getElementById('lessonsModalTitle').textContent = `Bài học — ${courseTitle}`;
-      document.getElementById('lsnTitle').value = '';
-      document.getElementById('lsnContent').value = '';
-      document.getElementById('lsnVideo').value = '';
-      document.getElementById('lsnDuration').value = '';
-      document.getElementById('lsnOrder').value = '';
-      editingLessonId = null;
+      initRTE('lsnContentWrap', '', '140px');
+      await loadIeltsTestOptionsForLessonForm();
+      newLesson();
       showPage('course-lessons');
       await refreshLessons();
+    }
+
+    async function loadIeltsTestOptionsForLessonForm() {
+      const data = await api('/admin/ielts-tests');
+      ieltsTestsCache = data.tests || [];
+      const sel = document.getElementById('lsnIeltsTestSelect');
+      const reading = ieltsTestsCache.filter(t => t.skill === 'reading');
+      const writing = ieltsTestsCache.filter(t => t.skill === 'writing');
+      const listening = ieltsTestsCache.filter(t => t.skill === 'listening');
+      const speaking = ieltsTestsCache.filter(t => t.skill === 'speaking');
+      sel.innerHTML = '<option value="">— Không dùng đề IELTS, tự soạn bài tập bên dưới —</option>'
+        + (reading.length ? `<optgroup label="📖 Reading">${reading.map(t => `<option value="${t.id}">${escHtml(t.title)} (${t.question_count} câu)</option>`).join('')}</optgroup>` : '')
+        + (writing.length ? `<optgroup label="✍️ Writing">${writing.map(t => `<option value="${t.id}">${escHtml(t.title)}</option>`).join('')}</optgroup>` : '')
+        + (listening.length ? `<optgroup label="🎧 Listening">${listening.map(t => `<option value="${t.id}">${escHtml(t.title)} (${t.question_count} câu)</option>`).join('')}</optgroup>` : '')
+        + (speaking.length ? `<optgroup label="🗣️ Speaking">${speaking.map(t => `<option value="${t.id}">${escHtml(t.title)}</option>`).join('')}</optgroup>` : '');
+    }
+
+    function onIeltsTestSelectChange() {
+      const id = document.getElementById('lsnIeltsTestSelect').value;
+      const manualFields = document.getElementById('lsnManualExerciseFields');
+      const maxScoreWrap = document.getElementById('lsnExerciseMaxScoreWrap');
+      const preview = document.getElementById('lsnIeltsTestPreview');
+      if (!id) {
+        manualFields.style.display = 'flex';
+        maxScoreWrap.style.display = '';
+        preview.style.display = 'none';
+        return;
+      }
+      const t = ieltsTestsCache.find(x => String(x.id) === String(id));
+      manualFields.style.display = 'none';
+      maxScoreWrap.style.display = 'none';
+      preview.style.display = 'block';
+      preview.innerHTML = t
+        ? `<strong>${escHtml(t.title)}</strong> — ${(t.skill === 'reading' || t.skill === 'listening') ? `${t.question_count} câu, ` : ''}${t.time_limit_minutes} phút, điểm tối đa ${t.max_score}`
+        : '';
     }
     function closeLessonsModal() { showPage('courses'); }
 
@@ -3621,6 +5615,7 @@
         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(l.title)}</div>
         <div style="font-size:11px;color:#94a3b8;">${l.duration_min ? l.duration_min + ' phút' : ''} ${l.video_url ? '· 🎬 Video' : ''}</div>
       </div>
+      <span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;flex-shrink:0;background:${l.status === 'draft' ? '#f1f5f9' : '#d1fae5'};color:${l.status === 'draft' ? '#64748b' : '#065f46'}">${LESSON_STATUS_LABEL[l.status] || 'Công khai'}</span>
       <button class="btn-sm primary" onclick="editLesson(${l.id})">Sửa</button>
       <button class="btn-sm" style="color:#ef4444" onclick="deleteLesson(${l.id})">Xoá</button>
     </div>`).join('');
@@ -3632,32 +5627,75 @@
       if (!l) return;
       editingLessonId = id;
       document.getElementById('lsnTitle').value = l.title;
-      document.getElementById('lsnContent').value = l.content || '';
+      setRteContent('lsnContentWrap', l.content || '');
       document.getElementById('lsnVideo').value = l.video_url || '';
       document.getElementById('lsnDuration').value = l.duration_min || '';
       document.getElementById('lsnOrder').value = l.order_num || '';
+      document.getElementById('lsnStatus').value = l.status === 'draft' ? 'draft' : 'published';
+      document.getElementById('lsnExerciseEnabled').checked = !!l.exercise_enabled;
+      document.getElementById('lsnExerciseFields').style.display = l.exercise_enabled ? 'flex' : 'none';
+      document.getElementById('lsnExerciseType').value = l.exercise_type === 'quiz' ? 'quiz' : 'text';
+      document.getElementById('lsnExercisePrompt').value = l.exercise_prompt || '';
+      document.getElementById('lsnExerciseRubric').value = l.exercise_rubric || '';
+      document.getElementById('lsnExerciseMaxScore').value = l.exercise_max_score || 100;
+      document.getElementById('lsnExercisePassScore').value = l.exercise_pass_score || 70;
+      document.getElementById('lsnExerciseXpReward').value = l.exercise_xp_reward || 0;
+      document.getElementById('lsnQuizNoLessonMsg').style.display = 'none';
+      document.getElementById('lsnAddQuestionBtn').style.display = '';
+      document.getElementById('lsnIeltsTestSelect').value = l.ielts_test_id || '';
+      onIeltsTestSelectChange();
+      onExerciseTypeChange();
+      await loadQuizQuestions(id);
       document.getElementById('lsnFormTitle').textContent = 'Sửa bài học';
       document.getElementById('lsnSaveBtn').textContent = 'Cập nhật bài học';
     }
 
-    function cancelEditLesson() {
+    function cancelEditLesson() { newLesson(); }
+
+    function newLesson() {
       editingLessonId = null;
       document.getElementById('lsnTitle').value = '';
-      document.getElementById('lsnContent').value = '';
+      setRteContent('lsnContentWrap', '');
       document.getElementById('lsnVideo').value = '';
       document.getElementById('lsnDuration').value = '';
       document.getElementById('lsnOrder').value = '';
+      document.getElementById('lsnStatus').value = 'published';
+      document.getElementById('lsnExerciseEnabled').checked = false;
+      document.getElementById('lsnExerciseFields').style.display = 'none';
+      document.getElementById('lsnExerciseType').value = 'text';
+      document.getElementById('lsnExercisePrompt').value = '';
+      document.getElementById('lsnExerciseRubric').value = '';
+      document.getElementById('lsnExerciseMaxScore').value = '';
+      document.getElementById('lsnExercisePassScore').value = '';
+      document.getElementById('lsnExerciseXpReward').value = '';
+      lsnQuizQuestionsCache = [];
+      document.getElementById('lsnQuizQuestionsList').innerHTML = '';
+      document.getElementById('lsnQuizNoLessonMsg').style.display = '';
+      document.getElementById('lsnAddQuestionBtn').style.display = 'none';
+      document.getElementById('lsnIeltsTestSelect').value = '';
+      onIeltsTestSelectChange();
+      onExerciseTypeChange();
       document.getElementById('lsnFormTitle').textContent = 'Thêm bài học mới';
       document.getElementById('lsnSaveBtn').textContent = 'Thêm bài học';
+      document.getElementById('lsnTitle').focus();
     }
 
     async function saveLesson() {
       const body = {
         title: document.getElementById('lsnTitle').value.trim(),
-        content: document.getElementById('lsnContent').value.trim(),
+        content: getRteContent('lsnContentWrap'),
         video_url: extractVideoUrl(document.getElementById('lsnVideo').value.trim()),
         duration_min: Number(document.getElementById('lsnDuration').value) || 0,
         order_num: Number(document.getElementById('lsnOrder').value) || 0,
+        status: document.getElementById('lsnStatus').value,
+        exercise_enabled: document.getElementById('lsnExerciseEnabled').checked ? 1 : 0,
+        exercise_type: document.getElementById('lsnExerciseType').value,
+        exercise_prompt: document.getElementById('lsnExercisePrompt').value.trim(),
+        exercise_rubric: document.getElementById('lsnExerciseRubric').value.trim(),
+        exercise_max_score: Number(document.getElementById('lsnExerciseMaxScore').value) || 100,
+        exercise_pass_score: Number(document.getElementById('lsnExercisePassScore').value) || 70,
+        exercise_xp_reward: Number(document.getElementById('lsnExerciseXpReward').value) || 0,
+        ielts_test_id: document.getElementById('lsnIeltsTestSelect').value || null,
       };
       if (!body.title) { showToast('Vui lòng nhập tên bài học.', 'red'); return; }
       let res;
@@ -3668,7 +5706,7 @@
       }
       if (res.error) { showToast(res.error, 'red'); return; }
       showToast(editingLessonId ? 'Đã cập nhật bài học.' : 'Đã thêm bài học.', 'green');
-      cancelEditLesson();
+      newLesson();
       await refreshLessons();
       loadAdminCourses();
     }
@@ -3685,6 +5723,523 @@
       showToast('Đã xoá.', 'green');
       await refreshLessons();
       loadAdminCourses();
+    }
+
+    // ── Quiz questions (bài tập trắc nghiệm) ─────────────────────────
+    function onExerciseTypeChange() {
+      const type = document.getElementById('lsnExerciseType').value;
+      document.getElementById('lsnRubricWrap').style.display = type === 'quiz' ? 'none' : 'block';
+      document.getElementById('lsnQuizSection').style.display = type === 'quiz' ? 'flex' : 'none';
+    }
+
+    async function loadQuizQuestions(lessonId) {
+      const data = await api(`/admin/lessons/${lessonId}/questions`);
+      lsnQuizQuestionsCache = data.questions || [];
+      renderQuizQuestionsList();
+    }
+
+    function renderQuizQuestionsList() {
+      const list = document.getElementById('lsnQuizQuestionsList');
+      if (!lsnQuizQuestionsCache.length) {
+        list.innerHTML = '<div style="font-size:12px;color:var(--muted);">Chưa có câu hỏi nào.</div>';
+        return;
+      }
+      list.innerHTML = lsnQuizQuestionsCache.map((q, i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:start;">
+        <div style="font-size:13px;font-weight:600;">Câu ${i + 1}: ${escHtml(q.question_text)}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn-sm" onclick="openQuizQuestionModal(${q.id})">Sửa</button>
+          <button class="btn-sm" style="color:#ef4444" onclick="deleteQuizQuestion(${q.id})">Xoá</button>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:var(--muted);">
+        ${q.options.map((o, oi) => `${oi === q.correct_index ? '✅' : '○'} ${escHtml(o)}`).join('&nbsp;&nbsp;')}
+      </div>
+    </div>`).join('');
+    }
+
+    function addQuizOptionRow(text, checked) {
+      const list = document.getElementById('qqOptionsList');
+      const row = document.createElement('div');
+      row.className = 'qq-option-row';
+      row.style = 'display:flex;align-items:center;gap:8px;';
+      row.innerHTML = `
+    <input type="radio" name="qqCorrect" ${checked ? 'checked' : ''}>
+    <input class="search-input qq-option-text" style="flex:1" value="${escHtml(text || '')}" placeholder="Đáp án">
+    <button type="button" class="btn-sm" style="color:#ef4444" onclick="this.closest('.qq-option-row').remove()">Xoá</button>`;
+      list.appendChild(row);
+    }
+
+    function addQuizOptionRowUI() {
+      const count = document.querySelectorAll('#qqOptionsList .qq-option-row').length;
+      if (count >= 6) { showToast('Tối đa 6 đáp án.', 'red'); return; }
+      addQuizOptionRow('', false);
+    }
+
+    function resetQuizOptionsList(options, correctIndex) {
+      document.getElementById('qqOptionsList').innerHTML = '';
+      options.forEach((opt, i) => addQuizOptionRow(opt, i === correctIndex));
+    }
+
+    function openQuizQuestionModal(questionId) {
+      editingQuestionId = questionId || null;
+      document.getElementById('qqModalTitle').textContent = editingQuestionId ? 'Sửa câu hỏi' : 'Thêm câu hỏi';
+      if (editingQuestionId) {
+        const q = lsnQuizQuestionsCache.find(x => x.id === editingQuestionId);
+        document.getElementById('qqText').value = q.question_text;
+        document.getElementById('qqExplanation').value = q.explanation || '';
+        resetQuizOptionsList(q.options, q.correct_index);
+      } else {
+        document.getElementById('qqText').value = '';
+        document.getElementById('qqExplanation').value = '';
+        resetQuizOptionsList(['', ''], 0);
+      }
+      document.getElementById('quizQuestionModal').style.display = 'flex';
+    }
+
+    function closeQuizQuestionModal() {
+      document.getElementById('quizQuestionModal').style.display = 'none';
+      editingQuestionId = null;
+    }
+
+    async function saveQuizQuestion() {
+      const question_text = document.getElementById('qqText').value.trim();
+      if (!question_text) { showToast('Vui lòng nhập câu hỏi.', 'red'); return; }
+      const rows = [...document.querySelectorAll('#qqOptionsList .qq-option-row')];
+      const options = rows.map(r => r.querySelector('.qq-option-text').value.trim());
+      if (options.some(o => !o)) { showToast('Vui lòng nhập đủ nội dung các đáp án.', 'red'); return; }
+      const correct_index = rows.findIndex(r => r.querySelector('input[type="radio"]').checked);
+      if (correct_index === -1) { showToast('Vui lòng chọn đáp án đúng.', 'red'); return; }
+      const explanation = document.getElementById('qqExplanation').value.trim();
+      const body = { question_text, options, correct_index, explanation };
+      if (!editingQuestionId) body.order_num = lsnQuizQuestionsCache.length;
+      const res = editingQuestionId
+        ? await api(`/admin/questions/${editingQuestionId}`, { method: 'PATCH', body: JSON.stringify(body) })
+        : await api(`/admin/lessons/${editingLessonId}/questions`, { method: 'POST', body: JSON.stringify(body) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã lưu câu hỏi.', 'green');
+      closeQuizQuestionModal();
+      await loadQuizQuestions(editingLessonId);
+    }
+
+    async function deleteQuizQuestion(id) {
+      if (!confirm('Xoá câu hỏi này?')) return;
+      await api(`/admin/questions/${id}`, { method: 'DELETE' });
+      showToast('Đã xoá câu hỏi.', 'green');
+      await loadQuizQuestions(editingLessonId);
+    }
+
+    // ── Kho đề IELTS (ngân hàng đề dùng chung) ───────────────────────
+    async function loadIeltsBankList() {
+      const data = await api(`/admin/ielts-tests?skill=${currentIeltsSkillTab}`);
+      const tests = data.tests || [];
+      const list = document.getElementById('ieltsTestList');
+      if (!tests.length) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Chưa có đề nào.</div>';
+        return;
+      }
+      list.innerHTML = tests.map(t => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.title)}</div>
+        <div style="font-size:11px;color:#94a3b8;">${(t.skill === 'reading' || t.skill === 'listening') ? `${t.question_count} câu · ` : ''}${t.time_limit_minutes} phút · điểm tối đa ${t.max_score}</div>
+      </div>
+      <span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;flex-shrink:0;background:${t.status === 'draft' ? '#f1f5f9' : '#d1fae5'};color:${t.status === 'draft' ? '#64748b' : '#065f46'}">${t.status === 'draft' ? 'Bản nháp' : 'Công khai'}</span>
+      <button class="btn-sm primary" onclick="editIeltsTest(${t.id})">Sửa</button>
+      <button class="btn-sm" style="color:#ef4444" onclick="deleteIeltsTest(${t.id})">Xoá</button>
+    </div>`).join('');
+    }
+
+    function switchIeltsSkillTab(skill) {
+      currentIeltsSkillTab = skill;
+      document.getElementById('ieltsSkillTabReading').classList.toggle('primary', skill === 'reading');
+      document.getElementById('ieltsSkillTabWriting').classList.toggle('primary', skill === 'writing');
+      document.getElementById('ieltsSkillTabListening').classList.toggle('primary', skill === 'listening');
+      document.getElementById('ieltsSkillTabSpeaking').classList.toggle('primary', skill === 'speaking');
+      loadIeltsBankList();
+    }
+
+    function onIeltsSkillChange() {
+      const skill = document.getElementById('ieltsSkill').value;
+      document.getElementById('ieltsWritingFields').style.display = skill === 'writing' ? 'flex' : 'none';
+      document.getElementById('ieltsSpeakingFields').style.display = skill === 'speaking' ? 'flex' : 'none';
+      document.getElementById('ieltsReadingFields').style.display = (skill === 'reading' || skill === 'listening') ? 'flex' : 'none';
+      document.getElementById('ieltsPassagesLabel').textContent = skill === 'listening' ? 'Video theo phần (Part 1-4)' : 'Bài đọc (passages)';
+      document.getElementById('ieltsAddPassageBtn').textContent = skill === 'listening' ? '+ Thêm phần (video)' : '+ Thêm bài đọc';
+      renderIeltsPassagesList();
+    }
+
+    function renderIeltsPassagesList() {
+      const list = document.getElementById('ieltsPassagesList');
+      const isListening = document.getElementById('ieltsSkill').value === 'listening';
+      if (!ieltsPassagesCache.length) {
+        list.innerHTML = `<div style="font-size:12px;color:var(--muted);">Chưa có ${isListening ? 'phần nào' : 'bài đọc nào'}.</div>`;
+        return;
+      }
+      list.innerHTML = ieltsPassagesCache.map((p, i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;gap:8px;">
+        <input class="search-input" style="width:80px" placeholder="Ref" value="${escHtml(p.ref)}" onchange="ieltsPassagesCache[${i}].ref=this.value">
+        <input class="search-input" style="flex:1" placeholder="${isListening ? 'Tên phần (VD: Part 1)' : 'Tên bài đọc'}" value="${escHtml(p.title)}" onchange="ieltsPassagesCache[${i}].title=this.value">
+        <button type="button" class="btn-sm" style="color:#ef4444" onclick="ieltsPassagesCache.splice(${i},1);renderIeltsPassagesList()">Xoá</button>
+      </div>
+      ${isListening ? `<input class="search-input" style="width:100%" placeholder="Link video (YouTube...)" value="${escHtml(p.video_url || '')}" onchange="ieltsPassagesCache[${i}].video_url=this.value">` : ''}
+      <textarea class="search-input" style="width:100%;min-height:80px;resize:vertical;font-family:monospace;font-size:11px;" placeholder="${isListening ? 'Transcript (chỉ để tham khảo, học viên không thấy)' : 'Nội dung bài đọc (HTML)'}" onchange="ieltsPassagesCache[${i}].body_html=this.value">${escHtml(p.body_html || '')}</textarea>
+    </div>`).join('');
+    }
+
+    function addIeltsPassageRowUI() {
+      ieltsPassagesCache.push({ ref: String(ieltsPassagesCache.length + 1), title: '', body_html: '', video_url: '' });
+      renderIeltsPassagesList();
+    }
+
+    function renderIeltsQuestionsList() {
+      const list = document.getElementById('ieltsQuestionsList');
+      if (!ieltsQuestionsCache.length) {
+        list.innerHTML = '<div style="font-size:12px;color:var(--muted);">Chưa có câu hỏi nào.</div>';
+        return;
+      }
+      const typeLabel = { mc: 'Trắc nghiệm', tfng: 'T/F/NG', gap_fill: 'Điền từ', matching: 'Nối câu' };
+      list.innerHTML = ieltsQuestionsCache.map((q, i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:start;">
+        <div style="font-size:13px;font-weight:600;">Câu ${i + 1}${q.passage_ref ? ' (Bài ' + escHtml(q.passage_ref) + ')' : ''}: ${escHtml(q.question_text)}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn-sm" onclick="openIeltsQuestionModal(${q.id})">Sửa</button>
+          <button class="btn-sm" style="color:#ef4444" onclick="deleteIeltsQuestion(${q.id})">Xoá</button>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:var(--muted);">
+        <span style="font-weight:600;">${typeLabel[q.question_type] || q.question_type}</span> — Đáp án: ${q.correct_answer.map(escHtml).join(' / ')}
+      </div>
+    </div>`).join('');
+    }
+
+    function newIeltsTest() {
+      editingIeltsTestId = null;
+      document.getElementById('ieltsSkill').value = currentIeltsSkillTab;
+      document.getElementById('ieltsStatus').value = 'published';
+      document.getElementById('ieltsTitle').value = '';
+      document.getElementById('ieltsDescription').value = '';
+      document.getElementById('ieltsTimeLimit').value = '';
+      document.getElementById('ieltsMaxScore').value = '';
+      document.getElementById('ieltsTaskType').value = 'task2';
+      document.getElementById('ieltsWritingPrompt').value = '';
+      document.getElementById('ieltsWritingImageUrl').value = '';
+      document.getElementById('ieltsWritingRubric').value = '';
+      document.getElementById('ieltsChatgptUrl').value = '';
+      document.getElementById('ieltsImportJson').value = '';
+      ieltsPassagesCache = [];
+      ieltsQuestionsCache = [];
+      renderIeltsPassagesList();
+      renderIeltsQuestionsList();
+      document.getElementById('ieltsQuestionsNoTestMsg').style.display = '';
+      document.getElementById('ieltsAddQuestionBtn').style.display = 'none';
+      onIeltsSkillChange();
+      document.getElementById('ieltsFormTitle').textContent = 'Thêm đề mới';
+      document.getElementById('ieltsSaveBtn').textContent = 'Thêm đề';
+    }
+
+    function cancelEditIeltsTest() { newIeltsTest(); }
+
+    async function editIeltsTest(id) {
+      const data = await api(`/admin/ielts-tests/${id}`);
+      if (data.error) { showToast(data.error, 'red'); return; }
+      const t = data.test;
+      editingIeltsTestId = id;
+      document.getElementById('ieltsSkill').value = t.skill;
+      document.getElementById('ieltsStatus').value = t.status;
+      document.getElementById('ieltsTitle').value = t.title;
+      document.getElementById('ieltsDescription').value = t.description || '';
+      document.getElementById('ieltsTimeLimit').value = t.time_limit_minutes;
+      document.getElementById('ieltsMaxScore').value = t.max_score;
+      document.getElementById('ieltsTaskType').value = t.task_type || 'task2';
+      document.getElementById('ieltsWritingPrompt').value = t.writing_prompt || '';
+      document.getElementById('ieltsWritingImageUrl').value = t.writing_image_url || '';
+      document.getElementById('ieltsWritingRubric').value = t.writing_rubric || '';
+      document.getElementById('ieltsChatgptUrl').value = t.chatgpt_url || '';
+      document.getElementById('ieltsImportJson').value = '';
+      ieltsPassagesCache = t.passages || [];
+      ieltsQuestionsCache = data.questions || [];
+      renderIeltsPassagesList();
+      renderIeltsQuestionsList();
+      document.getElementById('ieltsQuestionsNoTestMsg').style.display = 'none';
+      document.getElementById('ieltsAddQuestionBtn').style.display = '';
+      onIeltsSkillChange();
+      document.getElementById('ieltsFormTitle').textContent = 'Sửa đề';
+      document.getElementById('ieltsSaveBtn').textContent = 'Cập nhật đề';
+    }
+
+    async function saveIeltsTest() {
+      const skill = document.getElementById('ieltsSkill').value;
+      const body = {
+        skill,
+        title: document.getElementById('ieltsTitle').value.trim(),
+        description: document.getElementById('ieltsDescription').value.trim(),
+        time_limit_minutes: Number(document.getElementById('ieltsTimeLimit').value) || 60,
+        status: document.getElementById('ieltsStatus').value,
+        max_score: Number(document.getElementById('ieltsMaxScore').value) || ((skill === 'reading' || skill === 'listening') ? 40 : 100),
+        passages: ieltsPassagesCache,
+        task_type: skill === 'writing' ? document.getElementById('ieltsTaskType').value : null,
+        writing_prompt: document.getElementById('ieltsWritingPrompt').value.trim(),
+        writing_rubric: document.getElementById('ieltsWritingRubric').value.trim(),
+        writing_image_url: document.getElementById('ieltsWritingImageUrl').value.trim(),
+        chatgpt_url: document.getElementById('ieltsChatgptUrl').value.trim(),
+      };
+      if (!body.title) { showToast('Vui lòng nhập tên đề.', 'red'); return; }
+      let res;
+      if (editingIeltsTestId) {
+        res = await api(`/admin/ielts-tests/${editingIeltsTestId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      } else {
+        res = await api('/admin/ielts-tests', { method: 'POST', body: JSON.stringify(body) });
+      }
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(editingIeltsTestId ? 'Đã cập nhật đề.' : 'Đã thêm đề — mở lại để thêm câu hỏi.', 'green');
+      currentIeltsSkillTab = skill;
+      switchIeltsSkillTab(skill);
+      if (editingIeltsTestId) await editIeltsTest(editingIeltsTestId);
+      else newIeltsTest();
+    }
+
+    function openIeltsPreview() {
+      const skill = document.getElementById('ieltsSkill').value;
+      const title = document.getElementById('ieltsTitle').value.trim() || '(chưa đặt tên đề)';
+      const description = document.getElementById('ieltsDescription').value.trim();
+      const chatgptUrl = document.getElementById('ieltsChatgptUrl').value.trim() || 'https://chatgpt.com/';
+      const writingPrompt = document.getElementById('ieltsWritingPrompt').value.trim();
+      const writingImageUrl = document.getElementById('ieltsWritingImageUrl').value.trim();
+      const writingRubric = document.getElementById('ieltsWritingRubric').value.trim();
+
+      const icon = { reading: '📖', writing: '✍️', listening: '🎧', speaking: '🗣️' }[skill] || '📄';
+      let html = `<div style="font-size:18px;font-weight:800;color:var(--text);">${icon} ${escHtml(title)}</div>`;
+      if (description) html += `<div style="font-size:13px;color:var(--text);white-space:pre-wrap;line-height:1.6;">${escHtml(description)}</div>`;
+
+      if (skill === 'writing') {
+        if (writingPrompt) html += `<div style="font-size:13px;white-space:pre-wrap;line-height:1.6;border:1px solid var(--border);border-radius:8px;padding:12px;">${escHtml(writingPrompt)}</div>`;
+        if (writingImageUrl) html += `<img src="${escHtml(writingImageUrl)}" style="max-width:100%;border-radius:8px;">`;
+        html += `<div style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;">
+          <strong>Tiêu chí chấm điểm (nội bộ, học viên không thấy):</strong><br>${escHtml(writingRubric || '(chưa nhập)').replace(/\n/g, '<br>')}
+        </div>`;
+      } else if (skill === 'speaking') {
+        html += `<a href="${escHtml(chatgptUrl)}" target="_blank" rel="noopener" class="btn-sm primary" style="display:inline-block;text-decoration:none;width:fit-content;">🤖 Mở ChatGPT để luyện nói →</a>`;
+      } else {
+        // reading or listening
+        if (!ieltsPassagesCache.length) {
+          html += `<div style="color:var(--muted);font-size:13px;">Chưa có ${skill === 'listening' ? 'phần nào' : 'bài đọc nào'}.</div>`;
+        } else {
+          html += ieltsPassagesCache.map(pg => {
+            let inner = `<div style="font-weight:700;font-size:13px;margin-bottom:8px;">${escHtml(pg.title || 'Phần ' + pg.ref)}</div>`;
+            if (skill === 'listening') {
+              if (pg.video_url) {
+                const embed = rteEmbedUrl(pg.video_url);
+                inner += `<div style="position:relative;padding-top:56.25%;border-radius:8px;overflow:hidden;margin-bottom:8px;background:#000;">
+                  <iframe src="${escHtml(embed)}" style="position:absolute;inset:0;width:100%;height:100%;border:none;" allowfullscreen></iframe>
+                </div>`;
+              } else {
+                inner += `<div style="font-size:12px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 10px;margin-bottom:8px;">⚠️ Phần này chưa có link video.</div>`;
+              }
+              if (pg.body_html) inner += `<details style="font-size:12px;color:var(--muted);"><summary style="cursor:pointer;">Xem transcript (chỉ admin thấy)</summary><div style="margin-top:6px;">${pg.body_html}</div></details>`;
+            } else {
+              inner += `<div style="font-size:13px;line-height:1.7;max-height:220px;overflow-y:auto;">${pg.body_html || '<span style="color:var(--muted)">(chưa có nội dung)</span>'}</div>`;
+            }
+            return `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;">${inner}</div>`;
+          }).join('');
+        }
+
+        if (!ieltsQuestionsCache.length) {
+          html += `<div style="color:var(--muted);font-size:13px;">Chưa có câu hỏi nào.</div>`;
+        } else {
+          html += ieltsQuestionsCache.map((q, i) => `
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:13px;font-weight:600;">Câu ${i + 1}${q.passage_ref ? ' (Phần ' + escHtml(q.passage_ref) + ')' : ''}: ${escHtml(q.question_text)}</div>
+          ${q.options && q.options.length ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">${q.options.map(escHtml).join(' &nbsp;|&nbsp; ')}</div>` : ''}
+          <div style="font-size:12px;margin-top:6px;color:#065f46;background:#d1fae5;display:inline-block;padding:3px 10px;border-radius:99px;">✅ Đáp án: ${q.correct_answer.map(escHtml).join(' / ')}</div>
+          ${q.explanation ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">💡 ${escHtml(q.explanation)}</div>` : ''}
+        </div>`).join('');
+        }
+      }
+
+      document.getElementById('ieltsPreviewBody').innerHTML = html;
+      document.getElementById('ieltsPreviewModal').style.display = 'flex';
+    }
+
+    function closeIeltsPreview() {
+      document.getElementById('ieltsPreviewModal').style.display = 'none';
+    }
+
+    async function deleteIeltsTest(id) {
+      if (!confirm('Xoá đề này?')) return;
+      const res = await api(`/admin/ielts-tests/${id}`, { method: 'DELETE' });
+      if (res.error) {
+        showToast(res.lessons?.length ? `${res.error} (${res.lessons.join(', ')})` : res.error, 'red');
+        return;
+      }
+      showToast('Đã xoá đề.', 'green');
+      if (editingIeltsTestId === id) newIeltsTest();
+      await loadIeltsBankList();
+    }
+
+    // ── IELTS question modal ──────────────────────────────────────
+    function onIeltsQuestionTypeChange() {
+      const type = document.getElementById('iqType').value;
+      document.getElementById('iqOptionsWrap').style.display = type === 'gap_fill' ? 'none' : 'block';
+      document.getElementById('iqGapFillWrap').style.display = type === 'gap_fill' ? 'block' : 'none';
+    }
+
+    function addIeltsOptionRow(text, checked) {
+      const list = document.getElementById('iqOptionsList');
+      const row = document.createElement('div');
+      row.className = 'iq-option-row';
+      row.style = 'display:flex;align-items:center;gap:8px;';
+      row.innerHTML = `
+    <input type="checkbox" ${checked ? 'checked' : ''}>
+    <input class="search-input iq-option-text" style="flex:1" value="${escHtml(text || '')}" placeholder="Lựa chọn">
+    <button type="button" class="btn-sm" style="color:#ef4444" onclick="this.closest('.iq-option-row').remove()">Xoá</button>`;
+      list.appendChild(row);
+    }
+
+    function addIeltsOptionRowUI() { addIeltsOptionRow('', false); }
+
+    function fillIeltsTfngOptions() {
+      document.getElementById('iqType').value = 'tfng';
+      onIeltsQuestionTypeChange();
+      document.getElementById('iqOptionsList').innerHTML = '';
+      ['TRUE', 'FALSE', 'NOT GIVEN'].forEach(o => addIeltsOptionRow(o, false));
+    }
+
+    function addIeltsGapAnswerRow(text) {
+      const list = document.getElementById('iqGapAnswersList');
+      const row = document.createElement('div');
+      row.className = 'iq-gap-row';
+      row.style = 'display:flex;align-items:center;gap:8px;';
+      row.innerHTML = `
+    <input class="search-input iq-gap-text" style="flex:1" value="${escHtml(text || '')}" placeholder="Đáp án chấp nhận">
+    <button type="button" class="btn-sm" style="color:#ef4444" onclick="this.closest('.iq-gap-row').remove()">Xoá</button>`;
+      list.appendChild(row);
+    }
+
+    function addIeltsGapAnswerRowUI() { addIeltsGapAnswerRow(''); }
+
+    function populateIqPassageRefSelect(selected) {
+      const sel = document.getElementById('iqPassageRef');
+      sel.innerHTML = ieltsPassagesCache.map(p => `<option value="${escHtml(p.ref)}">${escHtml(p.title || p.ref)}</option>`).join('');
+      if (selected) sel.value = selected;
+      document.getElementById('iqPassageRefLabel').textContent =
+        document.getElementById('ieltsSkill').value === 'listening' ? 'Thuộc phần (video)' : 'Thuộc bài đọc';
+    }
+
+    function openIeltsQuestionModal(questionId) {
+      editingIeltsQuestionId = questionId || null;
+      document.getElementById('iqModalTitle').textContent = editingIeltsQuestionId ? 'Sửa câu hỏi' : 'Thêm câu hỏi';
+      document.getElementById('iqOptionsList').innerHTML = '';
+      document.getElementById('iqGapAnswersList').innerHTML = '';
+      if (editingIeltsQuestionId) {
+        const q = ieltsQuestionsCache.find(x => x.id === editingIeltsQuestionId);
+        document.getElementById('iqType').value = q.question_type;
+        document.getElementById('iqText').value = q.question_text;
+        document.getElementById('iqExplanation').value = q.explanation || '';
+        populateIqPassageRefSelect(q.passage_ref);
+        if (q.question_type === 'gap_fill') {
+          (q.correct_answer || ['']).forEach(a => addIeltsGapAnswerRow(a));
+        } else {
+          (q.options || []).forEach(o => addIeltsOptionRow(o, q.correct_answer.includes(o)));
+        }
+      } else {
+        document.getElementById('iqType').value = 'mc';
+        document.getElementById('iqText').value = '';
+        document.getElementById('iqExplanation').value = '';
+        populateIqPassageRefSelect();
+        addIeltsOptionRow('', false);
+        addIeltsOptionRow('', false);
+        addIeltsGapAnswerRow('');
+      }
+      onIeltsQuestionTypeChange();
+      document.getElementById('ieltsQuestionModal').style.display = 'flex';
+    }
+
+    function closeIeltsQuestionModal() {
+      document.getElementById('ieltsQuestionModal').style.display = 'none';
+      editingIeltsQuestionId = null;
+    }
+
+    async function saveIeltsQuestion() {
+      if (!editingIeltsTestId) { showToast('Vui lòng lưu đề trước.', 'red'); return; }
+      const question_type = document.getElementById('iqType').value;
+      const question_text = document.getElementById('iqText').value.trim();
+      if (!question_text) { showToast('Vui lòng nhập câu hỏi.', 'red'); return; }
+      const passage_ref = document.getElementById('iqPassageRef').value || '';
+      const explanation = document.getElementById('iqExplanation').value.trim();
+      let options = null, correct_answer;
+      if (question_type === 'gap_fill') {
+        correct_answer = [...document.querySelectorAll('#iqGapAnswersList .iq-gap-text')].map(i => i.value.trim()).filter(Boolean);
+        if (!correct_answer.length) { showToast('Vui lòng nhập ít nhất 1 đáp án chấp nhận.', 'red'); return; }
+      } else {
+        const rows = [...document.querySelectorAll('#iqOptionsList .iq-option-row')];
+        options = rows.map(r => r.querySelector('.iq-option-text').value.trim());
+        if (options.some(o => !o) || options.length < 2) { showToast('Vui lòng nhập đủ nội dung các lựa chọn (tối thiểu 2).', 'red'); return; }
+        correct_answer = rows.filter(r => r.querySelector('input[type="checkbox"]').checked).map(r => r.querySelector('.iq-option-text').value.trim());
+        if (!correct_answer.length) { showToast('Vui lòng tick ít nhất 1 đáp án đúng.', 'red'); return; }
+      }
+      const body = { question_type, passage_ref, question_text, options, correct_answer, explanation };
+      if (!editingIeltsQuestionId) body.order_num = ieltsQuestionsCache.length;
+      const res = editingIeltsQuestionId
+        ? await api(`/admin/ielts-test-questions/${editingIeltsQuestionId}`, { method: 'PATCH', body: JSON.stringify(body) })
+        : await api(`/admin/ielts-tests/${editingIeltsTestId}/questions`, { method: 'POST', body: JSON.stringify(body) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã lưu câu hỏi.', 'green');
+      closeIeltsQuestionModal();
+      await editIeltsTest(editingIeltsTestId);
+    }
+
+    async function deleteIeltsQuestion(id) {
+      if (!confirm('Xoá câu hỏi này?')) return;
+      await api(`/admin/ielts-test-questions/${id}`, { method: 'DELETE' });
+      showToast('Đã xoá câu hỏi.', 'green');
+      await editIeltsTest(editingIeltsTestId);
+    }
+
+    async function extractIeltsFromFile() {
+      const fileInput = document.getElementById('ieltsExtractFile');
+      const file = fileInput.files[0];
+      if (!file) { showToast('Vui lòng chọn file PDF hoặc DOCX.', 'red'); return; }
+      const btn = document.getElementById('ieltsExtractBtn');
+      btn.disabled = true;
+      btn.textContent = '🤖 AI đang đọc file...';
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch(`${API}/admin/ielts-tests/extract-from-file`, {
+          method: 'POST',
+          headers: { 'x-admin-key': adminKey },
+          body: form,
+        }).then(r => r.json());
+        if (res.error) { showToast(res.error, 'red'); return; }
+        document.getElementById('ieltsImportJson').value = JSON.stringify(res.extracted, null, 2);
+        showToast(
+          (res.truncated ? '⚠️ File dài, nội dung đã bị cắt bớt. ' : '') + 'AI đã trích xuất xong — vui lòng kiểm tra kỹ JSON bên dưới trước khi bấm "Nhập JSON".',
+          'green'
+        );
+        fileInput.value = '';
+      } catch (e) {
+        showToast('Lỗi kết nối khi tải file.', 'red');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'AI trích xuất từ file';
+      }
+    }
+
+    async function importIeltsJson() {
+      const raw = document.getElementById('ieltsImportJson').value.trim();
+      if (!raw) { showToast('Vui lòng dán nội dung JSON.', 'red'); return; }
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch (e) { showToast('JSON không hợp lệ: ' + e.message, 'red'); return; }
+      const res = await api('/admin/ielts-tests/import', { method: 'POST', body: JSON.stringify(parsed) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(`Đã nhập đề — ${res.question_count} câu hỏi.`, 'green');
+      currentIeltsSkillTab = parsed.test?.skill || currentIeltsSkillTab;
+      switchIeltsSkillTab(currentIeltsSkillTab);
+      await editIeltsTest(res.id);
     }
 
     // ── Marketplace ────────────────────────────────────────────────
@@ -3707,6 +6262,47 @@
       removed:        { bg: '#fce7f3', color: '#9d174d', label: 'Đã gỡ' },
     };
 
+    function showMpTab(name, btn) {
+      document.querySelectorAll('.mp-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.mp-tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector(`.mp-tab-panel[data-tab="${name}"]`)?.classList.add('active');
+    }
+
+    async function loadMpSettings() {
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        document.getElementById('mpSettingStoreName').value = s.mp_store_name || '';
+        document.getElementById('mpSettingStoreDesc').value = s.mp_store_desc || '';
+        document.getElementById('mpSettingBankName').value = s.mp_bank_name || '';
+        document.getElementById('mpSettingBankAccountName').value = s.mp_bank_account_name || '';
+        document.getElementById('mpSettingBankAccountNumber').value = s.mp_bank_account_number || '';
+      } catch (e) { showToast('Không tải được cài đặt marketplace.', 'red'); }
+    }
+
+    async function saveMpGeneralSettings() {
+      const mp_store_name = document.getElementById('mpSettingStoreName').value.trim();
+      const mp_store_desc = document.getElementById('mpSettingStoreDesc').value.trim();
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ mp_store_name, mp_store_desc })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã lưu cài đặt chung.', 'green');
+    }
+
+    async function saveMpPaymentSettings() {
+      const mp_bank_name = document.getElementById('mpSettingBankName').value.trim();
+      const mp_bank_account_name = document.getElementById('mpSettingBankAccountName').value.trim();
+      const mp_bank_account_number = document.getElementById('mpSettingBankAccountNumber').value.trim();
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ mp_bank_name, mp_bank_account_name, mp_bank_account_number })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã lưu cài đặt thanh toán.', 'green');
+    }
+
     async function loadAdminMarketplace() {
       const [products, orders] = await Promise.all([
         api('/admin/products'),
@@ -3724,7 +6320,7 @@
           const st = PROD_STATUS_COLORS[p.status] || PROD_STATUS_COLORS.draft;
           return `<tr>
         <td>${p.id}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(p.title)}">${escHtml(p.title)}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(p.title)}">${p.is_featured ? '🌟 ' : ''}${escHtml(p.title)}</td>
         <td>${escHtml(p.first_name + ' ' + p.last_name)}</td>
         <td style="text-align:right;font-weight:600;color:#7c3aed">${p.price === 0 ? 'Miễn phí' : p.price.toLocaleString('vi-VN') + '₫'}</td>
         <td>${CAT_LABELS[p.category] || p.category}</td>
@@ -3826,9 +6422,12 @@
       document.getElementById('mpProdTitle').value = product?.title || '';
       document.getElementById('mpProdCat').value = product?.category || 'prompt';
       document.getElementById('mpProdPrice').value = product?.price ?? '';
+      document.getElementById('mpProdComparePrice').value = product?.compare_price || '';
+      document.getElementById('mpProdDetailUrl').value = product?.detail_url || '';
       document.getElementById('mpProdDesc').value = product?.description || '';
       document.getElementById('mpProdLong').value = product?.long_description || '';
       document.getElementById('mpProdStatus').value = product?.status || 'published';
+      document.getElementById('mpProdFeatured').checked = !!product?.is_featured;
       // Set color swatch
       const targetColor = product?.cover_color || MP_COLORS[0];
       const wrap = document.getElementById('mpProdColorPicker');
@@ -4178,20 +6777,24 @@
       const title = document.getElementById('mpProdTitle').value.trim();
       const category = document.getElementById('mpProdCat').value;
       const price = parseInt(document.getElementById('mpProdPrice').value || '0');
+      const compare_price = parseInt(document.getElementById('mpProdComparePrice').value || '0');
+      const detail_url = document.getElementById('mpProdDetailUrl').value.trim();
       const description = document.getElementById('mpProdDesc').value.trim();
       const long_description = document.getElementById('mpProdLong').value.trim();
       const status = document.getElementById('mpProdStatus').value;
+      const is_featured = document.getElementById('mpProdFeatured').checked;
       const cover_color = document.querySelector('#mpProdColorPicker div[data-selected="1"]')?.dataset.color || MP_COLORS[0];
 
       if (!title) return showToast('Vui lòng nhập tên sản phẩm.', 'red');
       if (!description) return showToast('Vui lòng nhập mô tả ngắn.', 'red');
       if (isNaN(price) || price < 0) return showToast('Giá không hợp lệ.', 'red');
+      if (isNaN(compare_price) || compare_price < 0) return showToast('Giá trị không hợp lệ.', 'red');
 
       const btn = document.getElementById('mpProdSaveBtn');
       btn.disabled = true; btn.textContent = 'Đang lưu...';
 
       try {
-        const body = JSON.stringify({ title, description, long_description, price, category, cover_color, status });
+        const body = JSON.stringify({ title, description, long_description, price, compare_price, detail_url, is_featured, category, cover_color, status });
         if (editingMpProductId) {
           await api(`/admin/products/${editingMpProductId}`, { method: 'PATCH', body });
           showToast('Đã cập nhật sản phẩm.', 'green');

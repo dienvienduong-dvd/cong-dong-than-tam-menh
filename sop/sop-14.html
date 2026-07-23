@@ -1,0 +1,1553 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngày 14 — Website Lên VPS + Trao Cánh Tay Cho Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1612;
+    --ink-soft: #4a4038;
+    --ink-mute: #8a7f75;
+    --paper: #faf7f2;
+    --paper-warm: #f2ece0;
+    --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f;
+    --accent-soft: #fce4dc;
+    --gold: #b8882d;
+    --gold-soft: #f8ecd0;
+    --sage: #5c6b4d;
+    --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200, 68, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184, 136, 45, 0.04) 0%, transparent 40%);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(250, 247, 242, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+    z-index: 100;
+    padding: 14px 0;
+  }
+
+  .topbar-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .topbar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  .topbar-nav {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .topbar-nav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 100px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .topbar-nav a:hover {
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+  }
+
+  .hero {
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+
+  .day-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .day-tag::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+
+  h1 .mcp-flag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.32em;
+    vertical-align: middle;
+    padding: 4px 10px;
+    background: var(--accent);
+    color: white;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-left: 8px;
+    transform: translateY(-6px);
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .goal-box {
+    background: var(--paper-warm);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin: 32px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .goal-box-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .goal-box p {
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .goal-box em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--accent);
+    display: block;
+    margin: 10px 0 4px;
+    font-weight: 500;
+  }
+
+  section {
+    margin-bottom: 56px;
+  }
+
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 64px 0 20px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink);
+  }
+
+  h2 .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+  }
+
+  .phase-header {
+    text-align: center;
+    margin: 80px 0 40px;
+    position: relative;
+  }
+
+  .phase-header::before,
+  .phase-header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .phase-header::before { left: 20%; }
+  .phase-header::after { right: 20%; }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .phase-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: var(--ink-soft);
+  }
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .story {
+    background: var(--gold-soft);
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    position: relative;
+    border: 1px solid rgba(184, 136, 45, 0.2);
+  }
+
+  .story-label {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .story p {
+    color: var(--ink);
+    font-size: 16px;
+  }
+
+  .story p:last-child { margin-bottom: 0; }
+
+  .metaphor {
+    background: var(--sage-soft);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 10px;
+    border-left: 3px solid var(--sage);
+    position: relative;
+  }
+
+  .metaphor::before {
+    content: "💡";
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  .metaphor-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sage);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .metaphor blockquote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-top: 8px;
+    border: none;
+    padding: 0;
+  }
+
+  .tip {
+    background: var(--accent-soft);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 10px;
+    position: relative;
+    border-left: 3px solid var(--accent);
+  }
+
+  .tip::before {
+    content: "🔥";
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 18px;
+  }
+
+  .tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+    padding-right: 30px;
+  }
+
+  .tip p {
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .tip p:last-child { margin-bottom: 0; }
+
+  .prompt-box {
+    background: var(--ink);
+    color: #f5ede0;
+    padding: 0;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+
+  .prompt-header {
+    background: rgba(255,255,255,0.04);
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+
+  .copy-btn.copied {
+    background: var(--sage);
+    color: white;
+    border-color: var(--sage);
+  }
+
+  .prompt-body {
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #f5ede0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  ul, ol {
+    margin: 16px 0 20px 4px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin-bottom: 10px;
+    color: var(--ink-soft);
+  }
+
+  li::marker {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  .checklist {
+    background: white;
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--rule);
+  }
+
+  .checklist-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--rule);
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+
+  .check-box {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--ink-mute);
+    border-radius: 5px;
+    margin-top: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: white;
+  }
+
+  .check-item.done .check-box {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+
+  .check-item.done .check-box::after {
+    content: "✓";
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .check-item.done .check-text {
+    color: var(--ink-mute);
+    text-decoration: line-through;
+  }
+
+  .check-text {
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .warning {
+    background: #fff4e6;
+    border: 1px solid #e8b77a;
+    padding: 18px 22px;
+    margin: 20px 0;
+    border-radius: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .warning-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .warning-text {
+    color: #7a4a15;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .warning-text strong {
+    color: #5a3610;
+  }
+
+  .success {
+    background: linear-gradient(135deg, var(--sage-soft) 0%, #f0f4e8 100%);
+    padding: 28px 32px;
+    margin: 32px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(92, 107, 77, 0.2);
+  }
+
+  .success-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sage);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .success-title::before {
+    content: "✓";
+    background: var(--sage);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+  }
+
+  .success ul {
+    margin: 0;
+    padding-left: 4px;
+    list-style: none;
+  }
+
+  .success li {
+    padding: 6px 0;
+    color: var(--ink);
+    font-weight: 500;
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .success li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--sage);
+    font-weight: bold;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--paper-deep);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Architecture diagram */
+  .arch {
+    background: white;
+    padding: 24px;
+    margin: 24px 0;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink);
+    overflow-x: auto;
+  }
+
+  .arch-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .arch pre {
+    margin: 0;
+    white-space: pre;
+    font-family: inherit;
+  }
+
+  /* Use case cards */
+  .use-cases {
+    display: grid;
+    gap: 14px;
+    margin: 24px 0;
+  }
+
+  .use-case {
+    background: white;
+    padding: 18px 22px;
+    border-radius: 10px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+  }
+
+  .use-case-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .use-case-title {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .use-case-desc {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .use-case-funcs {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+  }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    text-align: center;
+    border-top: 1px solid var(--rule);
+  }
+
+  .footer-quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .footer-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 32px 20px 100px; }
+    .hero { margin-bottom: 40px; padding-bottom: 28px; }
+    h1 { font-size: 34px; }
+    h1 .mcp-flag { font-size: 11px; display: inline-block; margin-top: 6px; }
+    h2 { font-size: 24px; margin-top: 48px; }
+    h3 { font-size: 19px; }
+    .phase-title { font-size: 26px; }
+    .phase-header::before, .phase-header::after { width: 30px; }
+    .phase-header::before { left: 10%; }
+    .phase-header::after { right: 10%; }
+    .topbar-nav { gap: 2px; }
+    .topbar-nav a { padding: 6px 8px; font-size: 12px; }
+    .topbar-label { display: none; }
+    .story, .success { padding: 22px 22px; }
+    .metaphor, .tip, .checklist { padding: 20px 22px; }
+    .prompt-body { font-size: 13px; padding: 16px 20px; }
+    .arch { font-size: 11px; padding: 18px; }
+  }
+
+  @media print {
+    .topbar, .copy-btn { display: none; }
+    body { background: white; }
+    .prompt-box { background: #f0f0f0; color: #000; border: 1px solid #ccc; }
+    .prompt-body { color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">21-Day Challenge</div>
+    <nav class="topbar-nav">
+      <a href="#phase1">Phần 1 · Lên VPS</a>
+      <a href="#phase2">Phần 2 · MCP</a>
+      <a href="#submit">Nộp bài</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 14 · Tuần 3</div>
+  <h1>
+    Website Lên VPS Thật<br>
+    + Trao Cánh Tay Cho Agent
+    <span class="mcp-flag">MCP</span>
+  </h1>
+  <p class="hero-sub">
+    Từ hôm nay bạn không còn chơi demo trên Vercel nữa. Website chạy trên VPS thật, database thật, và AI agent có cánh tay để làm việc thật — tất cả qua một câu nhắn Telegram.
+  </p>
+</header>
+
+<div class="metaphor" style="margin-top: 0;">
+  <div class="metaphor-label">Đọc trước khi bắt đầu</div>
+  <blockquote style="font-style: normal; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px;">
+    <strong>Nhiệm vụ trước đã có meeting hướng dẫn dùng VPS và trỏ domain</strong> — đó là nền tảng của hôm nay. Nếu bạn đã nắm được 2 thứ đó, phần còn lại rất đơn giản: <strong>mở agent coding ngay trong thư mục dự án website, cung cấp thông tin VPS cho nó, là nó tự deploy toàn bộ source website lên VPS giúp bạn</strong>.
+    <br><br>
+    Sau khi website đã chạy trên VPS, bạn có thể <strong>tạo thêm CRM, admin panel, email flow, hay BẤT CỨ tính năng nào</strong> cho website. Và đây là lúc MCP bước vào — mỗi tính năng mới bạn vibe ra, chỉ cần build 1 MCP tool tương ứng, là bạn đã có thể điều khiển nó qua Telegram. <em>Business bạn càng lớn, cánh tay AI càng dài.</em>
+  </blockquote>
+</div>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Bạn ngồi cà phê, nảy ra ý tưởng, mở Telegram nhắn một câu kiểu:</p>
+  <em>"Đổi tiêu đề landing thành 'Flash sale cuối tuần 30%'"</em>
+  <p>→ goClaw gọi tool MCP → file <code>index.html</code> trên VPS được sửa → khách đang truy cập website refresh là thấy tiêu đề mới. <strong>Tất cả trong 3 giây, không mở laptop.</strong></p>
+</div>
+
+<div class="story">
+  <div class="story-label">Tại sao hôm nay đặc biệt</div>
+  <p>Từ Ngày 2 đến giờ, website của bạn sống trên <strong>Vercel</strong> — nhanh, tiện, miễn phí, nhưng nó là <em>"cửa hàng giấy"</em>: đẹp để chụp hình, nhưng <strong>không ghi được sổ sách thật</strong>. Database trên Vercel là file tĩnh, khách không vào thay đổi được gì.</p>
+  <p>Ở <strong>nhiệm vụ trước</strong> bạn mua VPS, cài goClaw. Hôm nay bạn <strong>kéo cả cửa hàng về VPS</strong> — để nó trở thành <em>cửa hàng thật</em>: có kho hàng, có sổ cái, có nhân viên AI đứng trong đó làm việc 24/7.</p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Mẹo của Nghĩa trước khi bắt đầu</div>
+  <p>Hôm nay là ngày dài nhất trong chuỗi — có 2 phần lớn. Copy toàn bộ SOP này, mở <strong>agent coding trên máy</strong> (Antigravity/Cursor/Claude Code) và paste:</p>
+  <div class="prompt-box" style="margin: 12px 0 0;">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt mở đầu · Paste vào agent trên máy</span>
+      <button class="copy-btn" data-copy="intro">COPY</button>
+    </div>
+    <div class="prompt-body" id="intro">Đây là SOP tôi cần làm hôm nay, có 2 phần lớn: (1) kéo website từ Vercel lên VPS thật, (2) build MCP server cho AI agent có tay chân.
+
+Bạn hướng dẫn tôi từng bước một — mỗi lần 1 bước, chờ tôi báo lại rồi mới tiếp. Lỗi gì bạn fix luôn. Bắt đầu bằng việc đọc code website hiện tại của tôi để biết đang dùng ngôn ngữ/framework gì.</div>
+  </div>
+</div>
+
+<div class="arch">
+  <div class="arch-title">Sau Ngày 14 sẽ nhìn thế này</div>
+<pre>        1 VPS duy nhất chạy 3 thứ cùng lúc
+    ┌────────────────────────────────────────┐
+    │  goClaw  (AI gateway)   :18790         │
+    │  Website (landing+admin):3000          │
+    │  MCP     (cánh tay AI)  :3001 local    │
+    │  ─────── chung brain.db ───────        │
+    └────────────────────────────────────────┘
+                    ▲
+                    │ Nginx + SSL auto
+                    ▼
+    ┌────────────────────────────────────────┐
+    │  app.yourdomain.com  → goClaw          │
+    │  yourdomain.com      → Website         │
+    └────────────────────────────────────────┘
+
+    Telegram ──→ goClaw ──→ MCP ──→ brain.db ──→ Web</pre>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Đừng sợ diagram này</div>
+  <p><strong>Bạn không cần hiểu hết các port và mũi tên.</strong> Diagram chỉ để bạn biết "ở cuối ngày, VPS của tôi sẽ chạy 3 thứ cùng lúc, và tất cả đi qua 1 domain". Agent coding lo phần kỹ thuật — bạn chỉ cần biết đích đến trông như vậy.</p>
+</div>
+
+<div class="warning">
+  <div class="warning-icon">📋</div>
+  <div class="warning-text">
+    <strong>Chuẩn bị trước khi bắt đầu (mất 1 phút):</strong> Mở agent coding ở thư mục website, paste prompt này để agent tự tìm và show ra các secret bạn cần. Không cần tự đi lục thư mục.
+  </div>
+</div>
+
+<div class="prompt-box">
+  <div class="prompt-header">
+    <span class="prompt-label">Prompt · Show các secret ra để chuẩn bị</span>
+    <button class="copy-btn" data-copy="prep">COPY</button>
+  </div>
+  <div class="prompt-body" id="prep">Tôi sắp deploy website này lên VPS. Trước khi bắt đầu, hãy tìm và hiển thị ra cho tôi TẤT CẢ các giá trị bí mật tôi đang dùng trong dự án này — bao gồm nhưng không giới hạn: API keys, bot tokens, database URLs, email service keys, payment keys, bất kỳ biến môi trường nào.
+
+Tìm trong các file thường có: .env, .env.local, .env.production, config.js, config.json, và trong các hardcode giữa code.
+
+Hiển thị theo format:
+TÊN_BIẾN = giá trị thật
+[ghi rõ đang nằm ở file nào]
+
+Nếu chưa có file .env (secrets đang hardcode trong code), báo tôi biết để xử lý.</div>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Tại sao làm bước này trước</div>
+  <p>Khi deploy lên VPS, agent sẽ cần dán các secret này vào server. Có sẵn danh sách = không bị dừng giữa chừng đi tìm. <strong>Bạn chỉ cần copy output của agent và để sẵn bên cạnh</strong> — lúc agent hỏi "Resend key là gì?", bạn paste ngay.</p>
+</div>
+
+<!-- ========= PHẦN 1 ========= -->
+<div class="phase-header" id="phase1">
+  <span class="phase-label">Phần Một</span>
+  <div class="phase-title">Kéo website về nhà mới</div>
+</div>
+
+<div class="story">
+  <div class="story-label">Nếu bạn có nhiều dự án nằm rải rác</div>
+  <p>Qua các ngày trước, có thể bạn đã tạo <strong>nhiều thư mục source khác nhau</strong> cho nhiều dự án khác nhau — ví dụ 1 landing page bán khóa, 1 blog cá nhân, 1 trang portfolio, 1 form waitlist cho sản phẩm mới... Mỗi cái một thư mục riêng.</p>
+  <p><strong>Tin vui:</strong> bạn hoàn toàn có thể <strong>copy tất cả các thư mục đó dồn vào 1 thư mục lớn, deploy chung lên 1 VPS</strong>. Nếu các dự án có liên quan nhau (cùng khách hàng, cùng database, cùng luồng bán) — bạn còn có thể <em>mix chúng lại</em> thành một hệ thống thống nhất, chia sẻ cùng <code>brain.db</code>, cùng CRM, cùng email flow.</p>
+  <p style="margin-bottom: 0;">Không bắt buộc — nếu thấy phức tạp, cứ bắt đầu với <strong>1 dự án chính</strong> hôm nay. Các dự án khác đưa lên sau cũng được. Nhưng nếu bạn thấy logic thì làm luôn, tiết kiệm thời gian về sau.</p>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Dọn code sẵn sàng cho production
+  </h2>
+
+  <p>Trước khi dọn nhà, phải gói đồ đạc lại cho gọn. Mở agent coding trên máy (Antigravity/Cursor), mở thư mục website, paste:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Dọn code</span>
+      <button class="copy-btn" data-copy="p1">COPY</button>
+    </div>
+    <div class="prompt-body" id="p1">Tôi sắp deploy website này lên VPS Ubuntu chạy production. Hãy kiểm tra và làm giúp tôi:
+
+1. Đọc toàn bộ cấu trúc — tôi đang dùng ngôn ngữ/framework gì? (HTML tĩnh, Node.js, Python...). Nếu là HTML tĩnh thuần, wrap vào 1 Express server đơn giản để có /admin, API endpoints, kết nối brain.db.
+
+2. Check xem thư mục này đã là git repo và đã có remote GitHub chưa. Nếu chưa, tạo repo private tên my-website trên GitHub của tôi và push lên.
+
+3. Tách tất cả bí mật (API key, bot token, Resend key...) ra file .env. Thêm .env và brain.db vào .gitignore. Tạo file .env.example có mẫu các biến cần set.
+
+4. Đảm bảo server listen port từ biến môi trường (process.env.PORT || 3000).
+
+5. Tạo file deploy_notes.md liệt kê: các biến .env cần có trên VPS, lệnh để chạy server, cổng đang lắng nghe.
+
+6. Commit và push lên GitHub.
+
+Xong bước này báo tôi trước khi qua bước 2.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Tại sao phải làm bước này</div>
+    <p>Vercel "tha thứ" mọi thứ — thiếu env cũng chạy, không có server cũng chạy. VPS không. Lên VPS phải chuẩn từ đầu: env riêng, server rõ ràng, không leak secret. <strong>Agent làm hết, bạn chỉ duyệt.</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Để agent deploy code lên VPS giúp bạn
+  </h2>
+
+  <p>Đây là bước "kéo đồ về nhà mới". Vẫn trong agent coding trên máy, paste:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Deploy lên VPS</span>
+      <button class="copy-btn" data-copy="p2">COPY</button>
+    </div>
+    <div class="prompt-body" id="p2">Giờ deploy website lên VPS của tôi.
+
+THÔNG TIN VPS (điền trước khi gửi):
+- IP: [điền IP VPS]
+- SSH user: [thường là root hoặc ubuntu]
+- SSH port: [thường là 22]
+- Cách xác thực: [SSH key ở đường dẫn nào, hoặc password]
+
+CÁC SECRET/ENV CẦN SET TRÊN VPS:
+[paste danh sách secret mà bạn đã cho tôi show ra ở bước chuẩn bị đầu ngày]
+
+Làm các việc sau, từng bước một, chờ tôi xác nhận từng bước:
+
+1. SSH vào VPS. Cài Node.js (hoặc runtime phù hợp với code của tôi) nếu chưa có.
+
+2. Clone repo my-website từ GitHub về /opt/my-website trên VPS.
+
+3. npm install (hoặc tương đương). Tạo file .env trên VPS với các giá trị thật ở trên.
+
+4. Upload file brain.db hiện tại của tôi từ máy lên /opt/my-website/brain.db (dùng scp). Đây là database có data thật — KHÔNG lấy từ GitHub.
+
+5. Tạo systemd service tên "mywebsite" để website chạy 24/7 trên port 3000, tự restart nếu crash. Enable và start service.
+
+6. Test: curl http://localhost:3000 trên VPS — phải trả HTML về. Nếu lỗi, fix.
+
+7. Báo tôi khi xong, kèm trạng thái service.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Vì sao phải điền thông tin VPS lại</div>
+    <p>Agent coding <strong>không có trí nhớ giữa các phiên</strong> — phiên trước khác phiên này. Nhiệm vụ trước bạn đã đưa thông tin rồi, nhưng nếu mở phiên mới, agent sẽ không biết. Luôn paste thông tin vào prompt để chắc.</p>
+    <p><strong>Nếu sợ paste credentials vào chat:</strong> bảo agent đọc từ file <code>~/.ssh/config</code> (nếu bạn đã setup SSH alias cho VPS), an toàn hơn.</p>
+  </div>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Giải thích kiểu trẻ con</div>
+    <blockquote>
+      VPS giống như <strong>căn phòng trống trên mây</strong>. Agent coding là người chuyển nhà — nó tự bước vào phòng (SSH), lắp đặt đồ điện (Node.js), mang đồ đạc lên (git clone + scp), cắm điện chạy (systemd). Bạn chỉ đứng ngoài đưa chìa khóa và xác nhận.
+    </blockquote>
+  </div>
+
+  <div class="warning">
+    <div class="warning-icon">⚠️</div>
+    <div class="warning-text">
+      <strong>File brain.db không nằm trong GitHub.</strong> Đây là data khách thật — bạn đã thêm vào <code>.gitignore</code> ở Bước 1. Phải upload tay bằng scp. Agent sẽ tự chạy lệnh scp, bạn chỉ cần gật đầu.
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Gắn domain + HTTPS tự động
+  </h2>
+
+  <p>Website giờ chạy trên VPS nhưng vẫn nghe port 3000 — khách vào <code>http://VPS_IP:3000</code> mới thấy. Giờ gắn domain + SSL xanh.</p>
+
+  <div class="story">
+    <div class="story-label">Quy tắc đơn giản</div>
+    <p><strong>goClaw luôn ở subdomain, website luôn ở domain chính.</strong> Ví dụ bạn có domain <code>nghia.com</code>:</p>
+    <ul style="margin-top: 8px;">
+      <li><code>nghia.com</code> → website (khách vào mua hàng)</li>
+      <li><code>app.nghia.com</code> → goClaw (chỉ bạn vào quản lý)</li>
+    </ul>
+    <p style="margin-top: 10px;">Lý do: website là bộ mặt công khai, phải dễ nhớ; goClaw là phòng kỹ thuật, ẩn đằng sau subdomain.</p>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Setup domain + HTTPS</span>
+      <button class="copy-btn" data-copy="p3">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3">Setup reverse proxy + HTTPS cho VPS của tôi.
+
+THÔNG TIN:
+- VPS đã có goClaw chạy ở port 18790 (từ nhiệm vụ trước)
+- VPS vừa có website chạy ở port 3000 (vừa deploy)
+- Domain chính của tôi: [điền domain].com
+- Tôi mua domain tại: [điền 123host/Namecheap/Cloudflare/GoDaddy...]
+
+Tôi muốn kết quả cuối:
+- [domain chính].com → website (port 3000)
+- app.[domain chính].com → goClaw (port 18790)
+
+Làm giúp tôi:
+
+1. Hướng dẫn tôi cách thêm/đổi A record tại nhà cung cấp domain của tôi, chỉ rõ từng click. Cần 2 A record:
+   - @ (hoặc domain chính) → IP VPS của tôi
+   - app → IP VPS của tôi
+
+2. Trong khi chờ DNS propagate, cài Caddy trên VPS (dễ nhất — tự lo SSL Let's Encrypt miễn phí). Nếu nhiệm vụ trước tôi đã cài Nginx thì giữ Nginx, chỉ thêm server block mới.
+
+3. Tạo Caddyfile (hoặc Nginx config) với 2 block — 1 cho domain chính trỏ về port 3000, 1 cho subdomain app trỏ về port 18790.
+
+4. Reload Caddy/Nginx. Test curl cả 2 URL — phải trả đúng response.
+
+5. Nếu test fail vì DNS chưa propagate, hướng dẫn tôi cách check bằng dig hoặc công cụ online như dnschecker.org.
+
+Bắt đầu bước 1. Chờ tôi xác nhận xong mới qua bước 2.</div>
+  </div>
+
+  <div class="warning">
+    <div class="warning-icon">⏱️</div>
+    <div class="warning-text">
+      <strong>DNS propagate có thể mất 5 phút đến 24 giờ.</strong> Đa số trường hợp xong trong 10-30 phút. Nếu lâu hơn — đừng hoảng, cứ làm việc khác (Bước 4 trở đi) trong khi chờ. Test lại sau vài giờ.
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Caddy hay Nginx?</div>
+    <p>Caddy tự lo SSL — không cần chạy certbot, không cần config 100 dòng. Chỉ 2 dòng là xong HTTPS. Đây là cách docs goClaw khuyên dùng.</p>
+    <p><strong>Nếu nhiệm vụ trước bạn đã cài Nginx:</strong> giữ nguyên, chỉ thêm server block mới cho website. Đừng đổi nếu đang ổn.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    Xác nhận Vercel đã tự ngắt
+  </h2>
+
+  <div class="story">
+    <div class="story-label">Chuyện đã xảy ra một cách âm thầm</div>
+    <p>Khi bạn đổi A record ở Bước 3 để domain trỏ về IP VPS, thì <strong>Vercel về bản chất đã bị ngắt kết nối</strong> — không phải bạn phải tự "tắt" gì cả. Domain đã rời khỏi Vercel, trỏ về nhà mới. Vercel chỉ còn là project cũ nằm trong dashboard, không còn phục vụ domain của bạn nữa.</p>
+    <p>Giờ chỉ cần <em>xác nhận</em> mọi thứ đã đúng — không phải sửa gì thêm.</p>
+  </div>
+
+  <h3>Cách test bằng trình duyệt ẩn danh</h3>
+
+  <p>Phải dùng <strong>chế độ ẩn danh</strong> (Incognito/Private) vì browser thường nó cache version cũ của Vercel, test trên tab thường có thể lừa bạn.</p>
+
+  <ol>
+    <li><strong>Mở trình duyệt ẩn danh:</strong>
+      <ul style="margin-top: 6px;">
+        <li>Chrome/Edge: <code>Ctrl+Shift+N</code> (Windows) hoặc <code>Cmd+Shift+N</code> (Mac)</li>
+        <li>Safari: <code>Cmd+Shift+N</code></li>
+        <li>Firefox: <code>Ctrl+Shift+P</code> (Windows) hoặc <code>Cmd+Shift+P</code> (Mac)</li>
+      </ul>
+    </li>
+    <li><strong>Vào</strong> <code>https://yourdomain.com</code> — phải thấy:
+      <ul style="margin-top: 6px;">
+        <li>✓ Ổ khóa xanh HTTPS trên thanh địa chỉ</li>
+        <li>✓ Nội dung là website của bạn</li>
+        <li>✓ Form điền được, các button hoạt động</li>
+      </ul>
+    </li>
+    <li><strong>Thử luôn</strong> <code>https://app.yourdomain.com</code> — phải vào được Dashboard goClaw.</li>
+    <li><strong>Project Vercel</strong> bạn có thể để lại làm backup hoặc xóa — tùy bạn. Nó không còn phục vụ ai nữa.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Nếu tab ẩn danh vẫn thấy Vercel cũ</div>
+    <p>Có nghĩa DNS chưa propagate xong. Không phải lỗi — chờ thêm 10-30 phút rồi test lại. Trong lúc chờ, đi tiếp Phần 2 (MCP) được rồi, không ảnh hưởng.</p>
+  </div>
+</section>
+
+<!-- ========= PHẦN 2 ========= -->
+<div class="phase-header" id="phase2">
+  <span class="phase-label">Phần Hai</span>
+  <div class="phase-title">Trao Cánh Tay Cho Agent</div>
+</div>
+
+<div class="story">
+  <div class="story-label">Nghỉ 5 phút trước khi qua Phần 2</div>
+  <p>Phần 1 vừa xong là một <strong>thành tựu lớn</strong> — bạn đã có website thật trên VPS thật, không phải ai cũng làm được trong 1 ngày. Đứng dậy, duỗi người, uống nước.</p>
+  <p>Phần 2 sẽ <em>nhẹ hơn về kỹ thuật</em> nhưng <em>hấp dẫn hơn về trải nghiệm</em> — vì đây là lúc bạn thấy AI thực sự "làm việc" thay vì chỉ "trò chuyện". Sẵn sàng thì đi tiếp.</p>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Hiểu MCP — và nghĩ xem bạn cần "tay" làm gì
+  </h2>
+
+  <div class="story">
+    <div class="story-label">Hãy tưởng tượng</div>
+    <p>goClaw + agent bạn tạo ở nhiệm vụ trước = <strong>nhân viên giỏi nhưng đang ngồi ở văn phòng kế bên</strong>, nhìn qua cửa kính vào cửa hàng của bạn. Nó <em>thấy</em> mọi thứ nhưng <strong>không thò tay vào được</strong>.</p>
+    <p><strong>MCP = cái ô cửa nhỏ giữa 2 phòng.</strong> Qua ô cửa đó, nhân viên thò tay vào cửa hàng làm việc thật.</p>
+  </div>
+
+  <div class="metaphor">
+    <div class="metaphor-label">MCP là gì về mặt kỹ thuật</div>
+    <blockquote>
+      Một server nhỏ chạy song song website, expose ra vài "nút bấm" cho AI. AI bấm nút nào → server chạy function đó → ghi database, sửa file, gọi API.
+    </blockquote>
+  </div>
+
+  <h3>Ví dụ thực tế để hiểu rõ hơn</h3>
+
+  <p>Giả sử bạn vừa nảy ý tưởng chạy flash sale cuối tuần. Bạn muốn đổi tiêu đề landing ngay để khách vào thấy deal mới. <strong>Không có MCP</strong>:</p>
+
+  <ul>
+    <li>Bạn chat với AI: <em>"Đổi tiêu đề landing thành 'Flash sale cuối tuần 30%'"</em></li>
+    <li>AI: <em>"Dạ, em đã đổi tiêu đề rồi ạ!"</em></li>
+    <li><strong>Nhưng thực tế</strong>: AI chỉ "nói miệng", file <code>index.html</code> trên VPS không đổi chữ nào. Bạn vẫn phải mở laptop, SSH vào, sửa file, reload.</li>
+  </ul>
+
+  <p><strong>Có MCP</strong>:</p>
+
+  <ul>
+    <li>Bạn chat với AI: <em>"Đổi tiêu đề landing thành 'Flash sale cuối tuần 30%'"</em></li>
+    <li>AI nhìn vào "hộp tools" MCP, thấy có function <code>đổi_tiêu_đề(nội_dung_mới)</code> → gọi nó</li>
+    <li>Function chạy thật trên VPS → mở file <code>index.html</code> → thay dòng tiêu đề → lưu lại</li>
+    <li>AI: <em>"Đã đổi tiêu đề. Khách đang truy cập website refresh là thấy."</em></li>
+    <li><strong>Thực tế</strong>: mở website trong trình duyệt ẩn danh, refresh → tiêu đề mới hiện ra thật.</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">Ví dụ khác cho dễ mường tượng</div>
+    <p><strong>MCP giống như bộ điều khiển từ xa</strong>. Tivi (website) + bạn (AI) ở 2 đầu phòng. Remote (MCP) là thứ duy nhất khiến bạn bật/tắt/đổi kênh từ xa được.</p>
+    <p>Không có remote → bạn phải đứng dậy đi tới tivi. Có remote → ngồi yên cũng điều khiển được tivi.</p>
+  </div>
+
+  <h3>Nghĩ xem bạn cần "tay" làm gì</h3>
+
+  <p>Đây là phần quan trọng — <strong>không có đáp án chung</strong>. Tùy vào thứ bạn đã vibe code các ngày trước, MCP sẽ khác. Dưới đây là 4 mẫu để bạn tham khảo:</p>
+
+  <div class="use-cases">
+    <div class="use-case">
+      <div class="use-case-tag">Use Case · E-commerce</div>
+      <div class="use-case-title">Nếu bạn bán sản phẩm + có admin panel</div>
+      <div class="use-case-desc">Báo cáo đơn hôm nay, gửi email cảm ơn khách vừa mua, đổi giá sản phẩm trên web, thêm khách VIP vào danh sách chăm sóc riêng.</div>
+      <div class="use-case-funcs">→ today_orders · thank_customer · update_price · tag_vip</div>
+    </div>
+
+    <div class="use-case">
+      <div class="use-case-tag">Use Case · Content / Blog</div>
+      <div class="use-case-title">Nếu bạn làm blog, landing bài viết</div>
+      <div class="use-case-desc">Nhắn ý tưởng → AI viết nháp → lưu vào database chờ duyệt → 1 câu "đăng bài số 3" là publish.</div>
+      <div class="use-case-funcs">→ save_draft · list_drafts · publish_post · schedule_post</div>
+    </div>
+
+    <div class="use-case">
+      <div class="use-case-tag">Use Case · Brain.db / Ghi chú</div>
+      <div class="use-case-title">Nếu bạn dùng brain.db làm second brain</div>
+      <div class="use-case-desc">Nhắn idea bất chợt → lưu vào đúng table → hỏi lại lúc nào cũng được → AI tự phân loại.</div>
+      <div class="use-case-funcs">→ add_note · query_brain · update_brand_voice · search_knowledge</div>
+    </div>
+
+    <div class="use-case">
+      <div class="use-case-tag">Use Case · Landing dynamic</div>
+      <div class="use-case-title">Nếu bạn có form waitlist, email sequence</div>
+      <div class="use-case-desc">Sửa tiêu đề landing qua Telegram, xem ai mới điền form, gửi email thủ công cho 1 người.</div>
+      <div class="use-case-funcs">→ update_hero · list_waitlist · send_email · update_price_table</div>
+    </div>
+  </div>
+
+  <p>Không trong 4 mẫu trên? Không sao. <strong>Bạn vibe cái gì, MCP phục vụ cái đó.</strong></p>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Để AI tự gợi ý tool MCP cho bạn
+  </h2>
+
+  <p>Mở agent coding trên máy (vẫn ở thư mục website), paste:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Gợi ý MCP tools</span>
+      <button class="copy-btn" data-copy="p6">COPY</button>
+    </div>
+    <div class="prompt-body" id="p6">Đọc toàn bộ codebase website này. Dựa vào những gì tôi đã build (database, form, admin panel, email flow, content...), gợi ý cho tôi 3-5 MCP function hữu ích nhất — những thứ mà tôi sẽ thực sự muốn làm qua Telegram hàng ngày.
+
+Với mỗi function, ghi:
+- Tên function (snake_case)
+- Input params (tên + kiểu dữ liệu)
+- Output dự kiến
+- Tình huống dùng hàng ngày (1 câu)
+- Độ ưu tiên (1-5)
+
+Xếp theo độ ưu tiên giảm dần. Tôi sẽ chọn 3 cái để build đầu tiên.
+
+Lưu vào file mcp_functions_draft.md.</div>
+  </div>
+
+  <p>Agent sẽ đọc code bạn, hiểu bạn làm gì, gợi ý function phù hợp. Đọc kỹ, chọn 3 cái quan trọng nhất. Paste vào chat tiếp:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chốt danh sách</span>
+      <button class="copy-btn" data-copy="p6b">COPY</button>
+    </div>
+    <div class="prompt-body" id="p6b">Tôi chọn 3 function sau để build MCP: [điền 3 tên function]. Cập nhật mcp_functions_draft.md chỉ giữ 3 cái này, viết thêm phần "ví dụ câu nhắn Telegram sẽ trigger function này".</div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Vibe code MCP server
+  </h2>
+
+  <p>Giờ là phần vui — để agent viết hẳn MCP server.</p>
+
+  <div class="tip">
+    <div class="tip-label">Tinh thần AI-First — chọn 1 trong 2 cách</div>
+    <p><strong>Cách 1 (khuyên dùng) — Nói ngắn gọn, tự nhiên:</strong></p>
+    <p style="margin: 8px 0;">Mở agent coding ngay trong thư mục dự án website, nói đơn giản:</p>
+    <div class="prompt-box" style="margin: 8px 0;">
+      <div class="prompt-header">
+        <span class="prompt-label">Prompt AI-First · Nói tự nhiên</span>
+        <button class="copy-btn" data-copy="p7-simple">COPY</button>
+      </div>
+      <div class="prompt-body" id="p7-simple">Giờ tôi có agent goClaw và đây là docs của nền tảng này: https://docs.goclaw.sh/
+
+Tôi muốn build MCP server để kết nối agent trong goClaw với hệ thống website này. Đọc docs goClaw về MCP integration trước, rồi đọc codebase của tôi, sau đó đề xuất kế hoạch build và làm giúp tôi. Làm từng bước, chờ tôi xác nhận.</div>
+    </div>
+    <p>Chỉ 2 câu, agent tự đọc docs, tự đọc code, tự đề xuất, tự làm. Bạn chỉ duyệt. Đây là cách <em>thực sự AI-First</em> — tin tưởng agent và giao phó.</p>
+    <p style="margin-top: 14px;"><strong>Cách 2 — Prompt chi tiết (nếu bạn muốn kiểm soát chặt):</strong></p>
+    <p>Nếu lần đầu làm MCP và muốn chắc ăn về từng chi tiết, paste prompt đầy đủ dưới đây. Nhưng sau khi hiểu rồi, bạn nên quay lại Cách 1 cho những lần sau.</p>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Build MCP server (chi tiết)</span>
+      <button class="copy-btn" data-copy="p7">COPY</button>
+    </div>
+    <div class="prompt-body" id="p7">Tạo MCP server trong chính repo my-website này, thư mục /mcp. Dùng transport streamable-http (vì goClaw sẽ gọi qua HTTP localhost).
+
+Yêu cầu:
+
+1. Tech stack: cùng ngôn ngữ với website (Node.js dùng @modelcontextprotocol/sdk, Python dùng mcp package). Nếu website Node, dùng Node.
+
+2. Server listen port 3001, chỉ bind 127.0.0.1 (localhost only, KHÔNG public ra internet).
+
+3. Expose đúng 3 function tôi đã chọn trong mcp_functions_draft.md. Mỗi function phải:
+   - Kết nối cùng brain.db với website (cùng file, không tạo DB mới)
+   - Validate input kỹ càng
+   - Trả về kết quả rõ ràng (success/error + message)
+   - Log mọi lần gọi ra console với timestamp
+
+4. Tạo file mcp/README.md hướng dẫn deploy, kèm systemd service file mẫu.
+
+5. Bạn tự chạy MCP server local và tự gọi curl test cả 3 function để đảm bảo chạy được. TÔI KHÔNG chạy test — bạn tự làm và báo kết quả.
+
+6. Sau khi test pass, commit+push lên GitHub.
+
+Làm từng bước, chờ tôi xác nhận từng bước.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Chú ý về "cửa vào" MCP server — và kịch bản của bạn</div>
+    <p>Trong prompt có dòng <em>"chỉ bind 127.0.0.1"</em> — đây là mặc định an toàn khi goClaw và MCP cùng VPS. Hiểu kiểu trẻ con:</p>
+    <p style="margin-top: 8px;"><strong>MCP server giống một căn phòng nhỏ trong VPS của bạn</strong>, có quyền ghi vào database. Căn phòng này có thể mở cửa theo 2 cách:</p>
+    <ul style="margin: 8px 0 8px 4px; padding-left: 20px;">
+      <li><strong>Cửa trong nhà</strong> (127.0.0.1): chỉ người <em>đang ở cùng VPS</em> mới vào được. goClaw cũng ở trong VPS → vẫn vào tốt. Người lạ trên internet → không thấy cửa luôn. ✅ An toàn.</li>
+      <li><strong>Cửa ngoài đường</strong> (0.0.0.0): bất kỳ ai trên internet cũng thấy và vào được. Không có bảo mật → hacker xóa sạch database. ❌ Nguy hiểm nếu không kèm auth.</li>
+    </ul>
+    <p style="margin-top: 10px;"><strong>Kịch bản A — goClaw và MCP cùng VPS:</strong> giữ nguyên prompt, bind <code>127.0.0.1</code>. Xong.</p>
+    <p><strong>Kịch bản B — goClaw ở VPS khác:</strong> bạn cần sửa prompt — bảo agent bind <code>0.0.0.0</code> thay vì <code>127.0.0.1</code>, và <strong>luôn kèm lớp auth token</strong> cho MCP server. Chi tiết cách làm sẽ ở Bước 8 khi connect vào Dashboard.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    Deploy MCP lên VPS + connect vào goClaw
+  </h2>
+
+  <p>Paste vào agent coding:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Deploy MCP</span>
+      <button class="copy-btn" data-copy="p8">COPY</button>
+    </div>
+    <div class="prompt-body" id="p8">Deploy MCP server vừa build lên VPS:
+
+1. SSH vào VPS, vào /opt/my-website (đã có sẵn từ Bước 2).
+
+2. git pull để lấy code MCP mới.
+
+3. npm install các package MCP cần.
+
+4. Tạo systemd service "mcp-server" chạy MCP server ở 127.0.0.1:3001, tự restart. Enable và start.
+
+5. Test trên VPS: curl http://127.0.0.1:3001/mcp (hoặc endpoint health check) — phải phản hồi.
+
+6. Báo tôi trạng thái service.
+
+Xong bước này tôi sẽ vào Dashboard goClaw tự thêm MCP server.</div>
+  </div>
+
+  <h3>Thêm MCP vào goClaw Dashboard</h3>
+
+  <p>Phần này <strong>bạn tự làm trên UI</strong> — không paste prompt:</p>
+
+  <ol>
+    <li>Mở <code>https://app.yourdomain.com</code> (goClaw Dashboard đã setup) → đăng nhập.</li>
+    <li>Sidebar bên trái → <strong>Capabilities</strong> → <strong>MCP Servers</strong>.</li>
+    <li>Bấm <strong>Add MCP Server</strong>. Điền:
+      <ul style="margin-top: 8px;">
+        <li><strong>Name:</strong> <code>my-business</code></li>
+        <li><strong>Transport:</strong> <code>streamable-http</code></li>
+        <li><strong>URL:</strong> tùy kịch bản của bạn (xem box <em>"3 cách nói địa chỉ một máy"</em> ngay bên dưới). Mặc định nếu cùng VPS: <code>http://127.0.0.1:3001/mcp</code></li>
+        <li><strong>Tool prefix:</strong> <code>biz</code> (goClaw sẽ tự thêm <code>__</code> vào giữa — tool cuối sẽ có dạng <code>biz__update_hero</code>)</li>
+        <li><strong>Enabled:</strong> ✓</li>
+      </ul>
+    </li>
+    <li>Lưu. goClaw sẽ tự connect và hiện ra list tool đã detect được. Nếu status không phải <strong>Connected</strong>, chụp màn hình báo lỗi → paste vào agent coding → "fix."</li>
+    <li><strong>Cho agent dùng tool MCP:</strong> Sidebar → <strong>Core</strong> → <strong>Agents</strong> → chọn agent Telegram của bạn → tab <strong>Config</strong> → phần <strong>Tools</strong> → đảm bảo profile là <code>full</code>, hoặc trong <code>alsoAllow</code> thêm các tool <code>biz__*</code>. Lưu.</li>
+  </ol>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Lần đầu vào Dashboard lạ lẫm?</div>
+    <blockquote>
+      Chụp màn hình chỗ bạn đang đứng trong Dashboard → ném vào Claude → hỏi <em>"tôi cần thêm MCP server, chỉ tôi bấm nút gì tiếp?"</em>. Claude nhìn ảnh và chỉ đường trong 5 giây.
+    </blockquote>
+  </div>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Hiểu cái URL http://127.0.0.1:3001/mcp</div>
+    <blockquote>
+      Đây không phải URL lạ — chỉ là cách đọc <strong>địa chỉ máy chứa MCP + cổng vào</strong>. Cấu trúc:<br>
+      <code style="font-size: 14px;">http://[địa chỉ máy]:[số cổng]/[đường dẫn]</code>
+    </blockquote>
+  </div>
+
+  <div class="story">
+    <div class="story-label">Trước khi điền URL — trả lời 1 câu hỏi</div>
+    <p><strong>goClaw và MCP server của bạn đang ở cùng VPS, hay khác VPS?</strong></p>
+    <ul style="margin-top: 8px;">
+      <li><strong>Cùng VPS</strong> — bạn cài goClaw ở nhiệm vụ trước, rồi hôm nay deploy website + MCP vào chính VPS đó. <em>Phổ biến nhất</em> với người mới.</li>
+      <li><strong>Khác VPS</strong> — bạn có 1 VPS chỉ dành cho goClaw, và 1 VPS khác cho website/business. 2 máy khác nhau, chỉ nối qua internet.</li>
+    </ul>
+    <p style="margin-top: 10px;">Hai kịch bản có URL điền khác nhau — đọc phần bên dưới để chọn đúng.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">3 cách "nói" địa chỉ một máy — và cách chọn URL cho MCP</div>
+    <p>Cùng 1 máy có thể có 3 "tên gọi":</p>
+    <ul style="margin: 10px 0 10px 4px; padding-left: 20px;">
+      <li><code>127.0.0.1</code> — cách gọi <em>"nhà mình"</em> khi đang đứng <strong>ở trong nhà</strong>. Chỉ chương trình cùng máy dùng được.</li>
+      <li><code>45.76.100.20</code> (IP public) — địa chỉ nhà <em>nhìn từ ngoài đường</em>. Ai trên internet biết IP đều có thể gọi tới.</li>
+      <li><code>mcp.yourdomain.com</code> — tên nhà thân thiện, trỏ về IP public.</li>
+    </ul>
+
+    <p style="margin-top: 14px;"><strong>➜ KỊCH BẢN A — goClaw và MCP cùng VPS:</strong></p>
+    <p>Điền URL: <code>http://127.0.0.1:3001/mcp</code></p>
+    <p>Lý do: goClaw gọi MCP mà không cần đi vòng ra internet — gọi "nhà mình" là nhanh và an toàn nhất. Bind MCP ở <code>127.0.0.1</code> như đã làm ở Bước 7 là đúng.</p>
+
+    <p style="margin-top: 14px;"><strong>➜ KỊCH BẢN B — goClaw và MCP khác VPS:</strong></p>
+    <p>Điền URL: <code>https://mcp.yourdomain.com/mcp</code> (hoặc IP public: <code>http://45.76.100.20:3001/mcp</code>)</p>
+    <p>Lý do: goClaw đang ở một VPS khác — nó phải "đi ra đường" để gọi MCP. Phải có địa chỉ công khai thì mới gọi tới được.</p>
+    <p>Cần làm thêm 2 việc:</p>
+    <ul style="margin: 8px 0 0 4px; padding-left: 20px;">
+      <li>Bảo agent coding đổi bind MCP từ <code>127.0.0.1</code> sang <code>0.0.0.0</code> — để MCP nghe được cuộc gọi từ ngoài.</li>
+      <li>Thêm subdomain <code>mcp.yourdomain.com</code> + Caddy reverse proxy + <strong>auth token bắt buộc</strong> — vì giờ cửa đã mở ra internet, không có token thì ai cũng vào được.</li>
+    </ul>
+    <p style="margin-top: 10px;">Hoặc an toàn hơn: dùng <strong>VPN/Tailscale</strong> để 2 VPS "nhìn thấy nhau" như trong mạng nội bộ, không cần lộ ra internet. Bảo agent coding setup Tailscale nếu bạn muốn cách này — docs goClaw có hỗ trợ sẵn.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Test qua Telegram — khoảnh khắc "wow"
+  </h2>
+
+  <p>Mở Telegram, vào chat với bot agent của bạn (đã setup từ nhiệm vụ trước). Nhắn thử các câu <strong>tự nhiên</strong> — đừng nhắn kiểu code lạnh lùng. Vài ví dụ:</p>
+
+  <ul>
+    <li>Nếu bạn build <code>biz__update_hero</code>: <em>"Đổi tiêu đề landing thành 'Flash sale cuối tuần 30%'"</em></li>
+    <li>Nếu bạn build <code>biz__today_orders</code>: <em>"Hôm nay có bao nhiêu đơn rồi?"</em></li>
+    <li>Nếu bạn build <code>biz__thank_customer</code>: <em>"Gửi email cảm ơn 3 khách mới nhất"</em></li>
+    <li>Nếu bạn build <code>biz__save_draft</code>: <em>"Ghi lại idea: blog post về 7 sai lầm khi làm landing page"</em></li>
+    <li>Nếu bạn build <code>biz__list_waitlist</code>: <em>"Ai mới điền form hôm nay?"</em></li>
+  </ul>
+
+  <p>Agent sẽ hiểu ý, chọn tool đúng, gọi MCP, báo kết quả về Telegram. Sau đó:</p>
+
+  <ul>
+    <li><strong>Mở website trên browser</strong> → refresh → xác nhận thay đổi đã diễn ra thật (tiêu đề mới, draft đã lưu, email đã gửi...)</li>
+    <li><strong>Muốn xem MCP có thực sự chạy không?</strong> Bảo agent coding: <em>"SSH vào VPS, xem log của MCP server, cho tôi biết lần gọi gần nhất là khi nào và function nào."</em></li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">Nếu agent không gọi tool mà trả lời text thường</div>
+    <p>Vào Dashboard goClaw → agent detail → tab <strong>Files</strong> → mở <code>AGENTS.md</code> hoặc <code>SOUL.md</code> → thêm 1 dòng: <em>"Khi user yêu cầu sửa/xoá/báo cáo data, LUÔN gọi tool MCP thay vì chỉ trả lời text."</em></p>
+    <p>Hoặc nhắn thẳng trong chat: <em>"Dùng tool biz__update_hero để đổi tiêu đề."</em> — lần sau nó nhớ.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 10</span>
+    Đăng bài khoe thành quả
+  </h2>
+
+  <div class="story">
+    <div class="story-label">🎁 Phần quà cho người khoe đúng cách</div>
+    <p><strong>Bài đăng phải tag Facebook Dương Trọng Nghĩa</strong> — ai tag đúng sẽ được tặng <strong>1 bộ skills xịn xò trị giá 2 triệu đồng</strong>. Đây là phần thưởng cho người thực sự đi đến Ngày 14 — bạn xứng đáng.</p>
+    <p>Link Facebook để tag: <a href="https://www.facebook.com/duongtrongnghia.theKP3/" target="_blank" style="color: var(--accent); font-weight: 600;">facebook.com/duongtrongnghia.theKP3</a></p>
+  </div>
+
+  <p>Mở agent coding ở bất kỳ thư mục nào có <code>brain.db</code> (thường là <code>my-brain</code> từ Ngày 5, hoặc thư mục website nếu bạn đã gộp). Paste:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Viết bài khoe</span>
+      <button class="copy-btn" data-copy="p10">COPY</button>
+    </div>
+    <div class="prompt-body" id="p10">Đọc brand voice trong brain.db. Viết 1 bài đăng kể về trải nghiệm hôm nay:
+
+- Sáng nay website còn ở Vercel — chiều tối đã chạy trên VPS của chính mình, database thật.
+- Ngồi cà phê nhắn 1 câu Telegram, AI agent tự làm việc thật trên website: [kể 1 use case cụ thể bạn vừa test thành công, ví dụ "đổi tiêu đề landing chỉ bằng 1 câu nhắn" hoặc "báo cáo đơn hôm nay ngay trong chat"].
+- Cảm giác lần đầu thấy AI không chỉ nói — mà LÀM.
+
+Tone tự nhiên, không khoe khoang kỹ thuật. Nhấn mạnh cảm giác "kiểm soát" và "tự do" — không cần mở laptop vẫn vận hành được business.
+
+Cuối bài NHỚ tag Dương Trọng Nghĩa (link: https://www.facebook.com/duongtrongnghia.theKP3/) — cảm ơn vì chuỗi thử thách này.
+
+Lưu vào day14_post.txt.</div>
+  </div>
+
+  <p><strong>Không có brain.db riêng?</strong> Không sao — paste brand voice đã dùng từ các ngày trước vào thẳng trong prompt. Hoặc kể lại cảm nhận bằng chính giọng của bạn, dùng AI chỉ để format lại. <em>Bài đăng đầu do bạn, AI chỉ là trợ lý viết.</em></p>
+
+  <p>Đăng ít nhất 2 kênh. <strong>Nhớ tag Dương Trọng Nghĩa</strong> ở Facebook — đây là điều kiện bắt buộc để nhận bộ skills 2tr.</p>
+</section>
+
+<!-- ========= NỘP BÀI ========= -->
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Chụp màn hình browser ẩn danh</strong> mở <code>https://yourdomain.com</code> — hiện website đang chạy từ VPS (URL có ổ khóa xanh HTTPS, nội dung là website của bạn, không phải Vercel cũ)</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Chụp màn hình goClaw Dashboard</strong> — trang <em>MCP Servers</em> hiển thị server <code>my-business</code> với status <em>Connected</em> và list các tool đã detect</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Chụp 2 ảnh cạnh nhau</strong>: (1) chat Telegram — bạn nhắn 1 câu tự nhiên, bot báo đã làm xong; (2) website hoặc admin panel — hiển thị thay đổi đã diễn ra thật (đơn mới, tiêu đề mới, draft mới...)</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Link bài đăng khoe thành quả</strong> — ít nhất 2 kênh, link public xem được, <strong>bài trên Facebook có tag <a href="https://www.facebook.com/duongtrongnghia.theKP3/" target="_blank" style="color: var(--accent);">Dương Trọng Nghĩa</a></strong> để nhận bộ skills xịn xò trị giá 2 triệu đồng. <em>Đây là phần chốt hạ của ngày — vừa đánh dấu cột mốc, vừa để cộng đồng thấy hành trình thật của bạn.</em></div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Website chạy trên VPS thật với domain + HTTPS — không còn Vercel</li>
+      <li>Nhắn 1 câu tự nhiên qua Telegram → AI gọi MCP → website/database thay đổi thật</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top: 32px;">
+    <div class="tip-label">Mẹo AI-First tổng cho cả ngày</div>
+    <p><strong>Hôm nay là ngày nặng nhất — nhưng KHÔNG phải vì bạn làm nhiều. Vì agent làm nhiều.</strong></p>
+    <ol style="margin: 12px 0; padding-left: 20px;">
+      <li><strong>Đừng đọc từng lệnh bash, npm, systemd.</strong> Agent viết gì kệ agent. Bạn chỉ duyệt, xác nhận, và báo lỗi khi có.</li>
+      <li><strong>Lỗi = cơ hội dạy lại.</strong> Copy nguyên lỗi → paste vào agent → "fix." Đừng Google, đừng hỏi Stack Overflow.</li>
+      <li><strong>"Không biết" là câu thần chú.</strong> Gặp từ lạ (systemd, Caddy, reverse proxy, streamable-http)? Paste: <em>"Giải thích [từ đó] cho tôi như trẻ con 10 tuổi."</em></li>
+      <li><strong>Chụp màn hình thay mô tả.</strong> Đặc biệt khi vào Dashboard goClaw lần đầu — chụp ảnh thay vì mô tả bằng chữ.</li>
+      <li><strong>Chia việc thành nhiều phiên.</strong> Nếu mệt sau Phần 1, nghỉ 1 tiếng rồi làm Phần 2. Không cần xong hết trong 1 lèo.</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "Vercel là căn hộ thuê. VPS là ngôi nhà của mình.<br>
+    Hôm nay bạn dọn về nhà — và cho AI một chỗ làm việc thật."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 14 of 21</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-copy');
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      const text = target.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'COPY';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

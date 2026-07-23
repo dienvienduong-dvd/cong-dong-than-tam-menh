@@ -1,0 +1,1179 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngày 20 — Bản Kế Hoạch Kinh Doanh + Full Funnel Sẵn Sàng Launch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ink: #1a1612; --ink-soft: #4a4038; --ink-mute: #8a7f75;
+    --paper: #faf7f2; --paper-warm: #f2ece0; --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f; --accent-soft: #fce4dc;
+    --gold: #b8882d; --gold-soft: #f8ecd0;
+    --sage: #5c6b4d; --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+    line-height: 1.65; font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200,68,31,0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184,136,45,0.04) 0%, transparent 40%);
+  }
+  .topbar {
+    position: sticky; top: 0;
+    background: rgba(250,247,242,0.92);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule); z-index: 100; padding: 14px 0;
+  }
+  .topbar-inner {
+    max-width: 780px; margin: 0 auto; padding: 0 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  }
+  .topbar-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--ink-mute); text-transform:uppercase; }
+  .topbar-nav { display:flex; gap:6px; font-size:13px; }
+  .topbar-nav a { color:var(--ink-soft); text-decoration:none; padding:6px 12px; border-radius:100px; transition:all 0.2s; white-space:nowrap; font-weight:500; }
+  .topbar-nav a:hover { background:var(--paper-deep); color:var(--ink); }
+  main { max-width:720px; margin:0 auto; padding:48px 24px 120px; }
+  .hero { margin-bottom:56px; padding-bottom:40px; border-bottom:1px solid var(--rule); }
+  .day-tag { display:inline-flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase; margin-bottom:20px; font-weight:600; }
+  .day-tag::before { content:""; width:32px; height:1px; background:var(--accent); }
+  h1 { font-family:'Fraunces',serif; font-size:clamp(32px,6vw,48px); font-weight:600; line-height:1.05; letter-spacing:-0.02em; margin-bottom:24px; color:var(--ink); }
+  .hero-sub { font-family:'Fraunces',serif; font-style:italic; font-size:19px; color:var(--ink-soft); line-height:1.5; }
+  .goal-box { background:var(--paper-warm); border-left:3px solid var(--accent); padding:24px 28px; margin:32px 0; border-radius:0 8px 8px 0; }
+  .goal-box-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase; margin-bottom:10px; font-weight:600; }
+  .goal-box p { font-size:16px; color:var(--ink); }
+  .goal-box em { font-family:'Fraunces',serif; font-style:italic; font-size:18px; color:var(--accent); display:block; margin:10px 0 4px; font-weight:500; }
+  section { margin-bottom:56px; }
+  h2 { font-family:'Fraunces',serif; font-size:28px; font-weight:600; line-height:1.15; letter-spacing:-0.015em; margin:64px 0 20px; padding-top:24px; border-top:1px solid var(--rule); color:var(--ink); }
+  h2 .step-num { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-mute); display:block; margin-bottom:6px; letter-spacing:0.15em; font-weight:500; }
+  .phase-header { text-align:center; margin:80px 0 40px; position:relative; }
+  .phase-header::before,.phase-header::after { content:""; position:absolute; top:50%; width:60px; height:1px; background:var(--rule); }
+  .phase-header::before { left:20%; } .phase-header::after { right:20%; }
+  .phase-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.25em; color:var(--ink-mute); text-transform:uppercase; display:block; margin-bottom:8px; }
+  .phase-title { font-family:'Fraunces',serif; font-style:italic; font-size:32px; color:var(--ink); font-weight:500; letter-spacing:-0.01em; }
+  h3 { font-family:'Fraunces',serif; font-size:21px; font-weight:600; margin:32px 0 12px; color:var(--ink); line-height:1.3; }
+  p { margin-bottom:16px; color:var(--ink-soft); }
+  strong { color:var(--ink); font-weight:600; }
+  em { font-family:'Fraunces',serif; font-style:italic; color:var(--ink); }
+  ul,ol { margin:16px 0 20px 4px; padding-left:24px; }
+  li { margin-bottom:10px; color:var(--ink-soft); }
+  li::marker { color:var(--accent); font-family:'JetBrains Mono',monospace; font-weight:600; }
+  code { font-family:'JetBrains Mono',monospace; font-size:13px; background:var(--paper-deep); padding:2px 7px; border-radius:4px; color:var(--accent); font-weight:500; word-break:break-word; }
+  pre { background:var(--paper-deep); padding:14px 18px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.6; color:var(--ink); margin:12px 0; overflow-x:auto; border-left:3px solid var(--accent); }
+  pre code { background:transparent; padding:0; color:var(--ink); font-weight:400; }
+
+  /* Components */
+  .story { background:var(--gold-soft); padding:28px 32px; margin:28px 0; border-radius:12px; border:1px solid rgba(184,136,45,0.2); }
+  .story-label { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--gold); text-transform:uppercase; margin-bottom:14px; font-weight:600; }
+  .story p { color:var(--ink); font-size:16px; }
+  .story p:last-child { margin-bottom:0; }
+  .metaphor { background:var(--sage-soft); padding:24px 28px; margin:24px 0; border-radius:10px; border-left:3px solid var(--sage); position:relative; }
+  .metaphor::before { content:"💡"; position:absolute; top:20px; right:24px; font-size:20px; opacity:0.6; }
+  .metaphor-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--sage); text-transform:uppercase; margin-bottom:8px; font-weight:600; }
+  .metaphor blockquote { font-family:'Fraunces',serif; font-style:italic; font-size:18px; color:var(--ink); line-height:1.5; margin-top:8px; border:none; padding:0; }
+  .tip { background:var(--accent-soft); padding:20px 24px; margin:24px 0; border-radius:10px; position:relative; border-left:3px solid var(--accent); }
+  .tip::before { content:"🔥"; position:absolute; top:16px; right:20px; font-size:18px; }
+  .tip-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--accent); text-transform:uppercase; margin-bottom:10px; font-weight:600; padding-right:30px; }
+  .tip p { color:var(--ink); font-size:15px; }
+  .tip p:last-child { margin-bottom:0; }
+  .warning { background:#fff4e6; border-left:3px solid #e8a544; padding:20px 24px; margin:24px 0; border-radius:10px; position:relative; }
+  .warning::before { content:"⚠️"; position:absolute; top:16px; right:20px; font-size:18px; }
+  .warning-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:#b97318; text-transform:uppercase; margin-bottom:10px; font-weight:600; padding-right:30px; }
+  .warning p { color:var(--ink); font-size:15px; }
+  .warning p:last-child { margin-bottom:0; }
+  .verify { background:white; border:2px dashed var(--sage); padding:18px 22px; margin:18px 0; border-radius:8px; }
+  .verify-label { display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:var(--sage); text-transform:uppercase; margin-bottom:10px; font-weight:700; }
+  .verify-label::before { content:"✓"; background:var(--sage); color:white; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; }
+  .verify p { color:var(--ink); font-size:15px; margin-bottom:0; }
+  .prompt-box { background:var(--ink); margin:20px 0; border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  .prompt-header { background:rgba(255,255,255,0.04); padding:10px 20px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
+  .prompt-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:rgba(255,255,255,0.5); text-transform:uppercase; font-weight:500; }
+  .copy-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); font-family:'JetBrains Mono',monospace; font-size:11px; padding:4px 10px; border-radius:4px; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em; }
+  .copy-btn:hover { background:rgba(255,255,255,0.15); color:white; }
+  .copy-btn.copied { background:var(--sage); color:white; border-color:var(--sage); }
+  .prompt-body { padding:20px 24px; font-family:'JetBrains Mono',monospace; font-size:13.5px; line-height:1.65; color:#f5ede0; white-space:pre-wrap; word-wrap:break-word; }
+  .click-path { background:var(--paper-deep); padding:12px 16px; margin:12px 0; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink); line-height:1.5; border-left:3px solid var(--accent); overflow-x:auto; }
+  .click-path strong { color:var(--accent); }
+  .ui-mock { background:white; border:1px solid var(--rule); padding:16px 20px; margin:14px 0; border-radius:8px; box-shadow:var(--shadow); font-size:14px; }
+  .ui-mock-title { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:var(--ink-mute); text-transform:uppercase; margin-bottom:8px; font-weight:600; }
+  .ui-mock-content { background:var(--paper-warm); padding:12px 14px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink); line-height:1.55; white-space:pre-wrap; }
+  .troubleshoot { background:white; border:1px solid var(--rule); margin:20px 0; border-radius:10px; overflow:hidden; box-shadow:var(--shadow); }
+  .troubleshoot-header { background:#fff4e6; padding:12px 18px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; color:#b97318; text-transform:uppercase; font-weight:600; border-bottom:1px solid #e8a544; display:flex; align-items:center; gap:8px; }
+  .troubleshoot-body { padding:16px 22px; }
+  .troubleshoot-body details { margin:8px 0; border-bottom:1px dashed var(--rule); padding-bottom:8px; }
+  .troubleshoot-body details:last-child { border-bottom:none; }
+  .troubleshoot-body summary { cursor:pointer; font-weight:600; color:var(--ink); padding:6px 0; font-size:14.5px; }
+  .troubleshoot-body summary:hover { color:var(--accent); }
+  .troubleshoot-body details[open] summary { color:var(--accent); }
+  .troubleshoot-body details > p,.troubleshoot-body details > ul { margin-top:8px; color:var(--ink-soft); font-size:14px; }
+
+  /* Agent table */
+  .agent-table { width:100%; border-collapse:separate; border-spacing:0; margin:20px 0; background:white; border-radius:10px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--rule); }
+  .agent-table th { background:var(--paper-warm); padding:10px 14px; text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:var(--ink-mute); text-transform:uppercase; font-weight:600; border-bottom:1px solid var(--rule); }
+  .agent-table td { padding:10px 14px; font-size:14px; border-bottom:1px solid var(--paper-warm); color:var(--ink); }
+  .agent-table tr:last-child td { border-bottom:none; }
+  .agent-table .agent-num { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--accent); width:36px; }
+  .agent-table .agent-name { font-weight:600; }
+  .agent-table .agent-out { font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--sage); }
+
+  /* Stage card */
+  .stage-card { background:white; padding:24px 28px; margin:18px 0; border-radius:12px; border:1px solid var(--rule); box-shadow:var(--shadow); border-left:4px solid var(--accent); }
+  .stage-card-tag { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase; font-weight:600; margin-bottom:6px; }
+  .stage-card-title { font-family:'Fraunces',serif; font-size:20px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .stage-card-agents { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--sage); margin-bottom:10px; font-weight:500; }
+  .stage-card-desc { font-size:14.5px; color:var(--ink-soft); line-height:1.55; }
+
+  /* Folder structure */
+  .folder-tree { background:var(--ink); color:#f5ede0; padding:18px 24px; margin:14px 0; border-radius:10px; font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1.7; white-space:pre; overflow-x:auto; }
+  .folder-tree .comment { color:rgba(245,237,224,0.5); }
+
+  /* Checklist */
+  .checklist { background:white; padding:28px 32px; margin:28px 0; border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--rule); }
+  .checklist-title { font-family:'Fraunces',serif; font-size:20px; font-weight:600; margin-bottom:18px; color:var(--ink); }
+  .check-item { display:flex; align-items:flex-start; gap:14px; padding:12px 0; border-bottom:1px dashed var(--rule); cursor:pointer; user-select:none; }
+  .check-item:last-child { border-bottom:none; }
+  .check-box { flex-shrink:0; width:22px; height:22px; border:2px solid var(--ink-mute); border-radius:5px; margin-top:3px; position:relative; transition:all 0.2s; background:white; }
+  .check-item.done .check-box { background:var(--sage); border-color:var(--sage); }
+  .check-item.done .check-box::after { content:"✓"; color:white; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:14px; font-weight:bold; }
+  .check-item.done .check-text { color:var(--ink-mute); text-decoration:line-through; }
+  .check-text { color:var(--ink); font-size:15px; line-height:1.55; }
+  .success { background:linear-gradient(135deg,var(--sage-soft) 0%,#f0f4e8 100%); padding:28px 32px; margin:32px 0; border-radius:12px; border:1px solid rgba(92,107,77,0.2); }
+  .success-title { font-family:'Fraunces',serif; font-size:22px; font-weight:600; color:var(--sage); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+  .success-title::before { content:"✓"; background:var(--sage); color:white; width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:15px; font-weight:bold; }
+  .success ul { margin:0; padding-left:4px; list-style:none; }
+  .success li { padding:6px 0; color:var(--ink); font-weight:500; padding-left:22px; position:relative; }
+  .success li::before { content:"→"; position:absolute; left:0; color:var(--sage); font-weight:bold; }
+  footer { max-width:720px; margin:0 auto; padding:48px 24px 64px; text-align:center; border-top:1px solid var(--rule); }
+  .footer-quote { font-family:'Fraunces',serif; font-style:italic; font-size:20px; color:var(--ink-soft); line-height:1.5; margin-bottom:12px; }
+  .footer-sig { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:var(--ink-mute); text-transform:uppercase; }
+
+  @media (max-width:640px) {
+    main { padding:32px 20px 100px; }
+    h1 { font-size:32px; } h2 { font-size:24px; margin-top:48px; } h3 { font-size:19px; }
+    .phase-title { font-size:26px; }
+    .phase-header::before,.phase-header::after { width:30px; }
+    .phase-header::before { left:10%; } .phase-header::after { right:10%; }
+    .topbar-nav a { padding:6px 8px; font-size:12px; }
+    .topbar-label { display:none; }
+    .story,.success { padding:22px; }
+    .prompt-body { font-size:12.5px; padding:16px 20px; }
+    .agent-table { font-size:12px; }
+    .agent-table th, .agent-table td { padding:8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">21-Day Challenge</div>
+    <nav class="topbar-nav">
+      <a href="#phase1">1 · Setup</a>
+      <a href="#phase2">2 · Chạy 12 Agent</a>
+      <a href="#phase3">3 · Roadmap</a>
+      <a href="#phase4">4 · Pitch HTML</a>
+      <a href="#phase5">5 · Deploy</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 20 · Tuần 4</div>
+  <h1>
+    Bản Kế Hoạch Kinh Doanh +<br>
+    Full Funnel Sẵn Sàng Launch
+  </h1>
+  <p class="hero-sub">
+    Hôm nay bạn dùng trọn bộ <em>12 agent ASSP</em> tôi đã tặng để vạch ra full chiến lược kinh doanh + tạo ra full copywriting funnel thật. Cuối ngày bạn có một bản kế hoạch hoàn chỉnh, mang đi pitch tại Demo Day Ngày 21.
+  </p>
+</header>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Cuối hôm nay bạn có:</p>
+  <em>Một thư mục đầy đủ ~12 file thật — từ avatar khách hàng đến sales script — do AI tạo, bạn duyệt</em>
+  <em>Một file HTML thuyết trình tổng hợp toàn bộ kế hoạch — có nút mở từng asset thật</em>
+  <em>Bản kế hoạch deploy được — gửi link cho Nghĩa xem trước Demo Day</em>
+</div>
+
+<div class="story">
+  <div class="story-label">Tinh thần ngày hôm nay</div>
+  <p>19 ngày qua bạn build công cụ — website, agent, automation, sản phẩm số đầu tiên. Bạn đã chứng minh được mình LÀM được. Hôm nay là ngày bạn lùi lại 1 bước, lên cao 1 chút, để trả lời câu hỏi quan trọng nhất:</p>
+  <p><strong>"Tôi đang xây cái gì? Đi đâu? Bằng cách nào?"</strong></p>
+  <p>Khác với "kế hoạch kinh doanh" thông thường — kế hoạch của bạn không phải tài liệu word khô khan. Nó gồm <em>chiến lược + assets thật</em>: avatar thật, copy thật, ads thật, email sequence thật, sales script thật. Sẵn sàng bấm nút launch. Chỉ chưa bấm thôi.</p>
+  <p>Đây là thứ bạn sẽ pitch ở Demo Day Ngày 21. Không phải slides trống — mà là cỗ máy đã build xong.</p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">AI-First xuyên suốt — nguyên tắc vàng hôm nay</div>
+  <p><strong>12 agent làm — bạn duyệt và lắp ráp.</strong> Bạn không tự nghĩ avatar, không tự viết copy, không tự design funnel. Mỗi agent có nhiệm vụ riêng — bạn chỉ cần gọi đúng agent, cung cấp đủ input, đọc output, duyệt hoặc bảo agent refine.</p>
+  <p>Bạn là <em>tổng đạo diễn</em>. Agent là <em>diễn viên</em>. Đây là pattern Operator KP3 ở mức cao nhất.</p>
+</div>
+
+<div class="warning">
+  <div class="warning-label">Bẫy phổ biến — đọc trước khi bắt đầu</div>
+  <p><strong>"Tôi cần làm chỉn chu cả 12 agent rồi mới chuyển sang agent tiếp theo"</strong> — không cần. Mục tiêu hôm nay là <em>rough draft của trọn bộ funnel</em>, không phải phiên bản hoàn hảo của 1 phần. Chạy nhanh, ra v1, tổng hợp lại. Refine sau khi có feedback từ Nghĩa ở Demo Day.</p>
+  <p>Hoàn thành > Hoàn hảo. Có cả bộ rough draft > Có 3 phần xuất sắc + 9 phần trống.</p>
+</div>
+
+<!-- ============ DIAGRAM TỔNG THỂ ============ -->
+<div class="story">
+  <div class="story-label">Bức tranh tổng thể — flow toàn bộ Ngày 20</div>
+  <pre style="margin:12px 0;background:white;padding:16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;color:var(--ink);border-left:3px solid var(--accent);white-space:pre-wrap;">PHẦN 1 · Setup
+  Hiểu 12 agent + tạo thư mục ke-hoach-kinh-doanh/
+  Chuẩn bị business context (sản phẩm Ngày 19 + brain.db)
+↓
+PHẦN 2 · Chạy 12 agent theo 5 chặng
+  Chặng 1: Hiểu khách + brand (Agent 01-03) → 3 file MD
+  Chặng 2: Money + Offer + Lead Magnet (Agent 04-06) → 3 file MD
+  Chặng 3: Funnel Blueprint (Agent 07) → blueprint + visual HTML
+  Chặng 4: Copywriting (Agent 08-10) → ads + landing + VSL + email
+  Chặng 5: Sales tools (Agent 11-12) → follow-up + sales script
+↓
+PHẦN 3 · Roadmap + ASKS
+  90 ngày tới làm gì + bạn cần gì để đi nhanh hơn
+↓
+PHẦN 4 · Vibe file HTML thuyết trình
+  index.html — tổng hợp + nút "View" mở từng asset thật
+↓
+PHẦN 5 · Deploy
+  Đẩy lên web → gửi link Nghĩa trước Demo Day</pre>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 1: SETUP -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase1">
+  <span class="phase-label">Phần Một</span>
+  <div class="phase-title">Setup & Hiểu Bộ 12 Agent</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Hiểu bộ 12 agent ASSP — và thứ tự chạy
+  </h2>
+
+  <p>Bộ 12 agent ASSP của tôi không phải 12 prompt rời rạc — chúng là 1 framework có thứ tự. Output của agent trước là input của agent sau. Chạy đúng thứ tự thì mỗi agent chỉ mất ít công, vì context đã được xây dần.</p>
+
+  <table class="agent-table">
+    <thead>
+      <tr><th>#</th><th>Tên agent</th><th>Output file</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="agent-num">01</td><td class="agent-name">Avatar Builder</td><td class="agent-out">avatar.md</td></tr>
+      <tr><td class="agent-num">02</td><td class="agent-name">Brand Voice Builder</td><td class="agent-out">brand-voice.md</td></tr>
+      <tr><td class="agent-num">03</td><td class="agent-name">Hero Mechanism Builder</td><td class="agent-out">hero-mechanism.md</td></tr>
+      <tr><td class="agent-num">04</td><td class="agent-name">Money Model Architect</td><td class="agent-out">money-model.md</td></tr>
+      <tr><td class="agent-num">05</td><td class="agent-name">Offer Architect</td><td class="agent-out">offer.md</td></tr>
+      <tr><td class="agent-num">06</td><td class="agent-name">HVCO Creator</td><td class="agent-out">hvco-leadmagnet.md</td></tr>
+      <tr><td class="agent-num">07</td><td class="agent-name">Funnel Strategist</td><td class="agent-out">funnel-blueprint.md + visual.html</td></tr>
+      <tr><td class="agent-num">08</td><td class="agent-name">Ad Copy Machine</td><td class="agent-out">ads-copy.md + landing.html</td></tr>
+      <tr><td class="agent-num">09</td><td class="agent-name">VSL Scriptwriter</td><td class="agent-out">vsl-script.md</td></tr>
+      <tr><td class="agent-num">10</td><td class="agent-name">Email Closer</td><td class="agent-out">email-sequence.md</td></tr>
+      <tr><td class="agent-num">11</td><td class="agent-name">Follow-Up Engine</td><td class="agent-out">follow-up.md</td></tr>
+      <tr><td class="agent-num">12</td><td class="agent-name">Sales Call Script</td><td class="agent-out">sales-script.md</td></tr>
+    </tbody>
+  </table>
+
+  <div class="metaphor">
+    <div class="metaphor-label">12 agent như dây chuyền sản xuất</div>
+    <blockquote>
+      Tưởng tượng 12 chuyên gia ngồi cạnh nhau, mỗi người có nhiệm vụ riêng. <strong>Avatar Builder</strong> nói "khách hàng là ai" → đưa cho <strong>Brand Voice</strong> nói "viết cho họ kiểu gì" → đưa tiếp cho <strong>Offer Architect</strong> nói "bán cho họ gì"... cứ thế đến cuối. Bạn không cần là chuyên gia — bạn là người điều hành dây chuyền.
+    </blockquote>
+  </div>
+
+  <h3>1.1 — Tạo cấu trúc thư mục chuẩn</h3>
+
+  <p>Trước khi chạy agent đầu tiên, tạo thư mục để lưu output. Mở agent coding trong thư mục dự án (nơi bạn lưu code/skills) và bảo:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Tạo thư mục kế hoạch kinh doanh</span>
+      <button class="copy-btn" data-copy="p1">COPY</button>
+    </div>
+    <div class="prompt-body" id="p1">Tạo cho tôi 1 thư mục mới tên ke-hoach-kinh-doanh/ trong workspace hiện tại.
+
+Cấu trúc:
+
+ke-hoach-kinh-doanh/
+├── README.md (giải thích thư mục này là gì)
+├── 01-avatar.md (placeholder)
+├── 02-brand-voice.md (placeholder)
+├── 03-hero-mechanism.md (placeholder)
+├── 04-money-model.md (placeholder)
+├── 05-offer.md (placeholder)
+├── 06-hvco-leadmagnet.md (placeholder)
+├── 07-funnel-blueprint.md (placeholder)
+├── 07-funnel-visual.html (placeholder)
+├── 08-ads-copy.md (placeholder)
+├── 08-landing.html (placeholder)
+├── 09-vsl-script.md (placeholder)
+├── 10-email-sequence.md (placeholder)
+├── 11-follow-up.md (placeholder)
+├── 12-sales-script.md (placeholder)
+└── index.html (placeholder — file thuyết trình tổng)
+
+Mỗi file MD/HTML chỉ cần có 1 dòng comment ở đầu ghi tên + agent nào sẽ tạo nội dung.
+
+Sau khi tạo xong: list ra cho tôi xem cấu trúc thư mục.</div>
+  </div>
+
+  <div class="folder-tree">ke-hoach-kinh-doanh/
+├── README.md                    <span class="comment"># giới thiệu thư mục</span>
+├── 01-avatar.md                 <span class="comment"># Agent 01</span>
+├── 02-brand-voice.md            <span class="comment"># Agent 02</span>
+├── 03-hero-mechanism.md         <span class="comment"># Agent 03</span>
+├── 04-money-model.md            <span class="comment"># Agent 04</span>
+├── 05-offer.md                  <span class="comment"># Agent 05</span>
+├── 06-hvco-leadmagnet.md        <span class="comment"># Agent 06</span>
+├── 07-funnel-blueprint.md       <span class="comment"># Agent 07</span>
+├── 07-funnel-visual.html        <span class="comment"># Agent 07 (visual)</span>
+├── 08-ads-copy.md               <span class="comment"># Agent 08</span>
+├── 08-landing.html              <span class="comment"># Agent 08 (landing page)</span>
+├── 09-vsl-script.md             <span class="comment"># Agent 09</span>
+├── 10-email-sequence.md         <span class="comment"># Agent 10</span>
+├── 11-follow-up.md              <span class="comment"># Agent 11</span>
+├── 12-sales-script.md           <span class="comment"># Agent 12</span>
+└── index.html                   <span class="comment"># Thuyết trình tổng</span></div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Chạy <code>ls ke-hoach-kinh-doanh/</code> → thấy đủ 16 file (15 placeholder + README.md). Cấu trúc số đầu tên file giúp tự sắp xếp theo thứ tự agent — không bị lẫn.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Chuẩn bị business context — input cho 12 agent
+  </h2>
+
+  <p>Trước khi chạy agent đầu tiên, ngồi 5-10 phút trả lời 4 câu hỏi nền tảng. Tất cả 12 agent đều cần biết những thứ này — chuẩn bị 1 lần dùng cho cả ngày.</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Tổng hợp business context</span>
+      <button class="copy-btn" data-copy="p2">COPY</button>
+    </div>
+    <div class="prompt-body" id="p2">Tạo file ke-hoach-kinh-doanh/00-business-context.md với nội dung sau (tôi sẽ điền):
+
+# Business Context — [Tên bạn / Tên thương hiệu]
+
+## 1. Sản phẩm / dịch vụ chính
+- Tên sản phẩm: [tên — có thể là sản phẩm Ngày 19 hoặc sản phẩm khác]
+- Dạng: [ebook / khóa học / dịch vụ / SaaS / bộ skills / ...]
+- Đang ở giai đoạn: [chưa bán / đã bán vài đơn / đã có khách đều / đang scale]
+- Giá hiện tại: [giá]
+- Link sản phẩm (nếu có): [link]
+
+## 2. Khách hàng đang có (nếu có)
+- Đã bán cho ai? [mô tả 2-3 khách thật, hoặc ghi "chưa có khách thật, đang đoán"]
+- Họ tìm đến qua kênh nào? [FB / referral / search / ...]
+- Họ trả tiền vì điều gì? [insight gì có giá trị nhất với họ]
+
+## 3. Tài sản đã có sau 19 ngày
+- Website chạy trên VPS với: [list module — Sepay, agent Telegram, skills, brain.db, ...]
+- Bộ skills đã có: [list các skill đã build/dùng]
+- Brand voice đã định hình trong brain.db: [yes/no]
+
+## 4. Mục tiêu kinh doanh 12 tháng tới
+- Mô hình kinh doanh tôi muốn xây: [info products / dịch vụ / hybrid / ...]
+- Doanh thu mong muốn 12 tháng: [con số cụ thể, dù chỉ là dự kiến]
+- 1 năm nữa tôi muốn vị trí của mình trên thị trường VN là: [...]
+
+Sau khi tôi điền xong: lưu file lại, đây là input chung cho cả 12 agent.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — agent giúp bạn điền nếu kẹt</div>
+    <p>Câu nào không biết trả lời? Bảo agent: <em>"Đọc brain.db và sản phẩm tôi đã làm Ngày 19. Gợi ý cho tôi câu trả lời cho [câu X], rồi tôi điều chỉnh."</em> Agent biết business của bạn — không phải bạn ngồi nhìn trang trắng.</p>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>File <code>00-business-context.md</code> đã có đủ 4 phần được điền (dù còn rough). Đây là "passport" của bạn — paste vào mỗi agent ASSP khi cần.</p>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 2: CHẠY 12 AGENT -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase2">
+  <span class="phase-label">Phần Hai</span>
+  <div class="phase-title">Chạy 12 Agent Theo 5 Chặng</div>
+</div>
+
+<div class="warning">
+  <div class="warning-label">Quy tắc chung khi chạy mỗi agent</div>
+  <p><strong>1. Mở chat mới cho từng chặng</strong> — context riêng, không bị nhiễu.<br>
+  <strong>2. Inject skill bằng <code>@filename</code></strong> hoặc đọc thẳng SKILL.md trong context.<br>
+  <strong>3. Paste 00-business-context.md trước</strong> — agent biết bạn là ai.<br>
+  <strong>4. Output từ agent trước → paste làm input cho agent sau.</strong><br>
+  <strong>5. Lưu output vào file đúng tên</strong> theo bảng ở Bước 01.</p>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Chặng 1 — Hiểu khách hàng + Brand (Agent 01-03)
+  </h2>
+
+  <div class="stage-card">
+    <div class="stage-card-tag">Chặng 1 · Foundation</div>
+    <div class="stage-card-title">Bạn đang phục vụ ai? Bằng giọng văn nào? Khác biệt thế nào?</div>
+    <div class="stage-card-agents">Agent 01 Avatar Builder · 02 Brand Voice Builder · 03 Hero Mechanism Builder</div>
+    <div class="stage-card-desc">3 agent đầu xác định nền tảng — không có nền tảng đúng thì 9 agent sau làm cũng không hiệu quả. Output là 3 file MD: avatar, brand voice, hero mechanism.</div>
+  </div>
+
+  <h3>3.1 — Agent 01: Avatar Builder</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy Avatar Builder</span>
+      <button class="copy-btn" data-copy="p3a">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3a">@assp-avatar-builder/SKILL.md
+
+Đọc skill ASSP Avatar Builder. Sau đó đọc file business context của tôi:
+@ke-hoach-kinh-doanh/00-business-context.md
+
+Chạy quy trình Avatar Builder. Tôi đã có khách thật / chưa có khách / có một ít — hỏi tôi nếu cần làm rõ.
+
+Cuối: lưu output vào ke-hoach-kinh-doanh/01-avatar.md.</div>
+  </div>
+
+  <h3>3.2 — Agent 02: Brand Voice Builder</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy Brand Voice Builder</span>
+      <button class="copy-btn" data-copy="p3b">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3b">@assp-brand-voice-builder/SKILL.md
+
+Đọc skill ASSP Brand Voice Builder. Đọc thêm:
+- @ke-hoach-kinh-doanh/00-business-context.md
+- @ke-hoach-kinh-doanh/01-avatar.md
+- @my-brain/brand_voice (nếu đã có trong brain.db)
+
+Chạy quy trình. Nếu tôi đã có brand_voice trong brain.db — refine nó dựa trên avatar mới. Nếu chưa có — xây từ đầu.
+
+Cuối: lưu vào ke-hoach-kinh-doanh/02-brand-voice.md.</div>
+  </div>
+
+  <h3>3.3 — Agent 03: Hero Mechanism Builder</h3>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy Hero Mechanism Builder</span>
+      <button class="copy-btn" data-copy="p3c">COPY</button>
+    </div>
+    <div class="prompt-body" id="p3c">@assp-hero-mechanism-builder/SKILL.md
+
+Đọc skill. Đọc thêm:
+- @ke-hoach-kinh-doanh/00-business-context.md
+- @ke-hoach-kinh-doanh/01-avatar.md
+- @ke-hoach-kinh-doanh/02-brand-voice.md
+
+Chạy quy trình Hero Mechanism. Mục tiêu: tìm cơ chế khác biệt — vì sao là tôi chứ không phải đối thủ.
+
+Cuối: lưu vào ke-hoach-kinh-doanh/03-hero-mechanism.md.</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — kết thúc Chặng 1</div>
+    <p>Bạn có 3 file thật trong thư mục: <code>01-avatar.md</code>, <code>02-brand-voice.md</code>, <code>03-hero-mechanism.md</code>. Đọc qua 3 file — bạn có đồng ý với những gì agent viết không? Nếu chỗ nào sai — bảo agent refine ngay, đừng để đến cuối ngày.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — refine output thay vì viết lại</div>
+    <p>Output agent chưa ưng? Đừng tự sửa từng câu. Bảo agent: <em>"Đọc lại file 01-avatar.md. Phần [X] chưa đúng vì [Y]. Refine lại theo hướng [Z]."</em> Nhanh hơn nhiều.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    Chặng 2 — Money Model + Offer + Lead Magnet (Agent 04-06)
+  </h2>
+
+  <div class="stage-card">
+    <div class="stage-card-tag">Chặng 2 · Mô hình tiền</div>
+    <div class="stage-card-title">Bạn kiếm tiền từ đâu? Bán gì cụ thể? Mồi nhử miễn phí là gì?</div>
+    <div class="stage-card-agents">Agent 04 Money Model · 05 Offer Architect · 06 HVCO Creator</div>
+    <div class="stage-card-desc">3 agent này định nghĩa "máy in tiền" của bạn. Agent 04 vạch bản đồ doanh thu (one-time / recurring / upsell). Agent 05 thiết kế offer chính thật chi tiết. Agent 06 tạo lead magnet (mồi nhử miễn phí) để thu lead.</div>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy Money Model + Offer + HVCO</span>
+      <button class="copy-btn" data-copy="p4">COPY</button>
+    </div>
+    <div class="prompt-body" id="p4">@assp-money-model-architect/SKILL.md
+@assp-offer-architect/SKILL.md
+@assp-hvco-creator/SKILL.md
+
+Đọc 3 skill trên. Đọc thêm context:
+- @ke-hoach-kinh-doanh/00-business-context.md
+- @ke-hoach-kinh-doanh/01-avatar.md
+- @ke-hoach-kinh-doanh/02-brand-voice.md
+- @ke-hoach-kinh-doanh/03-hero-mechanism.md
+
+Chạy 3 agent theo thứ tự, từng agent một (chờ tôi duyệt giữa các agent):
+
+1. Money Model Architect → vạch bản đồ doanh thu của tôi.
+   Lưu output vào ke-hoach-kinh-doanh/04-money-model.md.
+
+2. Offer Architect → build offer chính chi tiết. Có thể dựa trên sản phẩm Ngày 19 hoặc tạo offer mới (rộng hơn) tùy money model.
+   Lưu output vào ke-hoach-kinh-doanh/05-offer.md.
+
+3. HVCO Creator → tạo lead magnet (mồi nhử miễn phí) phù hợp với offer chính.
+   Lưu output vào ke-hoach-kinh-doanh/06-hvco-leadmagnet.md.
+
+Sau mỗi agent — pause để tôi đọc và duyệt.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — chạy 3 agent trong 1 chat tiết kiệm thời gian</div>
+    <p>Đừng mở 3 chat riêng cho 3 agent. Mở 1 chat, inject cả 3 SKILL.md + business context — agent tự chạy tuần tự, bạn chỉ cần duyệt giữa các agent. Context tích lũy giúp agent sau hiểu sâu hơn.</p>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — kết thúc Chặng 2</div>
+    <p>3 file mới: <code>04-money-model.md</code>, <code>05-offer.md</code>, <code>06-hvco-leadmagnet.md</code>. Đến giờ bạn đã có nửa bản kế hoạch — biết khách hàng là ai, brand voice thế nào, bán gì, kiếm tiền ra sao, mồi nhử gì.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Chặng 3 — Funnel Blueprint (Agent 07)
+  </h2>
+
+  <div class="stage-card">
+    <div class="stage-card-tag">Chặng 3 · Bản thiết kế</div>
+    <div class="stage-card-title">Hành trình khách hàng từ "người lạ" đến "khách hàng" gồm những bước gì?</div>
+    <div class="stage-card-agents">Agent 07 Funnel Strategist (key bridge)</div>
+    <div class="stage-card-desc">Đây là agent quan trọng nhất — vạch blueprint funnel chi tiết. Output là input cho 5 agent copywriting còn lại. Nếu blueprint sai — copy sau đó cũng lệch.</div>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy Funnel Strategist</span>
+      <button class="copy-btn" data-copy="p5">COPY</button>
+    </div>
+    <div class="prompt-body" id="p5">@assp-funnel-strategist/SKILL.md
+
+Đọc skill. Đọc thêm:
+- @ke-hoach-kinh-doanh/00-business-context.md
+- @ke-hoach-kinh-doanh/04-money-model.md
+- @ke-hoach-kinh-doanh/05-offer.md
+- @ke-hoach-kinh-doanh/06-hvco-leadmagnet.md
+
+Chạy quy trình Funnel Strategist đầy đủ:
+
+1. Trình bày 11 loại funnel + Larger Market Formula
+2. Gợi ý 2-3 loại phù hợp với offer + budget của tôi (hỏi tôi nếu cần data về budget/khách mục tiêu/tháng)
+3. Sau khi tôi confirm → tính unit economics
+4. Vạch chi tiết từng bước
+5. Xuất 2 file:
+   - Visual funnel HTML đẹp (theo màu loại trang) → ke-hoach-kinh-doanh/07-funnel-visual.html
+   - Blueprint chi tiết MD → ke-hoach-kinh-doanh/07-funnel-blueprint.md
+
+Blueprint phải đủ để Agent 08-12 viết toàn bộ copy không cần hỏi thêm.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — không tự chọn loại funnel</div>
+    <p>Agent 07 sẽ show 11 loại funnel + tự gợi ý 2-3 loại phù hợp với bạn. <strong>Đừng tự chọn theo cảm tính</strong> — nghe agent giải thích Larger Market Formula trước, hỏi thêm nếu chưa rõ, rồi mới quyết. Agent có lý do của nó.</p>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — kết thúc Chặng 3</div>
+    <p>Mở file <code>07-funnel-visual.html</code> trong browser → thấy sơ đồ funnel có màu, từng trang có mục đích rõ. File <code>07-funnel-blueprint.md</code> chi tiết từng bước. Đến đây bạn đã có "bản thiết kế cỗ máy" — chỉ còn lắp linh kiện vào.</p>
+  </div>
+
+  <div class="warning">
+    <div class="warning-label">Đây là điểm dừng cuối để điều chỉnh chiến lược</div>
+    <p>Sau Chặng 3 là viết copy hàng loạt. Nếu blueprint sai — sửa ngay tại đây. Đọc kỹ funnel-blueprint.md, tự hỏi: <em>"Nếu là khách hàng của tôi, tôi có đi qua flow này không?"</em> Không đồng ý chỗ nào — bảo Agent 07 refine.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Chặng 4 — Copywriting funnel (Agent 08-10)
+  </h2>
+
+  <div class="stage-card">
+    <div class="stage-card-tag">Chặng 4 · Sản xuất copy hàng loạt</div>
+    <div class="stage-card-title">Viết toàn bộ copy theo blueprint — ads, landing, VSL, email</div>
+    <div class="stage-card-agents">Agent 08 Ad Copy Machine · 09 VSL Scriptwriter · 10 Email Closer</div>
+    <div class="stage-card-desc">3 agent này dùng blueprint từ Chặng 3 để viết copy thật cho từng trang/asset. Output: ads-copy.md, landing.html, vsl-script.md, email-sequence.md.</div>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy 3 agent copywriting tuần tự</span>
+      <button class="copy-btn" data-copy="p6">COPY</button>
+    </div>
+    <div class="prompt-body" id="p6">@assp-ad-copy-machine/SKILL.md
+@assp-vsl-scriptwriter/SKILL.md
+@assp-email-closer/SKILL.md
+
+Đọc 3 skill. Đọc thêm context đầy đủ:
+- @ke-hoach-kinh-doanh/00-business-context.md
+- @ke-hoach-kinh-doanh/01-avatar.md
+- @ke-hoach-kinh-doanh/02-brand-voice.md
+- @ke-hoach-kinh-doanh/03-hero-mechanism.md
+- @ke-hoach-kinh-doanh/05-offer.md
+- @ke-hoach-kinh-doanh/06-hvco-leadmagnet.md
+- @ke-hoach-kinh-doanh/07-funnel-blueprint.md
+
+Chạy 3 agent theo thứ tự, lưu output đúng file:
+
+1. Ad Copy Machine → viết:
+   - Ad copy cho Facebook + Google (theo blueprint funnel)
+   - Landing page copy (HTML đầy đủ, sẵn deploy được)
+   Lưu: ke-hoach-kinh-doanh/08-ads-copy.md + 08-landing.html
+
+2. VSL Scriptwriter → viết kịch bản VSL nếu funnel có VSL.
+   Nếu funnel KHÔNG có VSL — agent ghi rõ "funnel này không cần VSL" và skip.
+   Lưu: ke-hoach-kinh-doanh/09-vsl-script.md
+
+3. Email Closer → viết chuỗi email theo blueprint.
+   Lưu: ke-hoach-kinh-doanh/10-email-sequence.md
+
+Tự rà context hiện tại từ các file đã đọc, hỏi thêm khi cần. Output phải dùng được ngay, không phải ví dụ minh họa.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — copy không ưng → bảo agent refine theo brand voice</div>
+    <p>Đọc xong copy thấy generic? Bảo agent: <em>"Đọc lại 02-brand-voice.md. Phần [X] đang viết quá AI/quá chung. Refine lại đúng giọng văn brand của tôi — câu ngắn hơn, có cá tính, kể chuyện thay vì liệt kê."</em> Agent sửa nhanh hơn bạn tự viết.</p>
+  </div>
+
+  <h3>Landing page — 2 hướng để bạn chọn</h3>
+
+  <p>Agent 08 sẽ tạo landing page mới. Bạn có 2 hướng — chọn 1:</p>
+
+  <ul>
+    <li><strong>Hướng A — Tạo mới hoàn toàn:</strong> landing trong funnel chính (cho offer rộng hơn sản phẩm Ngày 19). Bảo agent: <em>"Tạo landing page mới hoàn toàn cho offer chính trong funnel."</em></li>
+    <li><strong>Hướng B — Refine landing Ngày 19:</strong> dùng output Agent 08 để cải thiện landing đã có. Bảo agent: <em>"Tôi đã có landing tại [yourdomain.com/san-pham/...]. Đọc landing đó, viết lại theo copy chuẩn ASSP, output thành phiên bản nâng cấp."</em></li>
+  </ul>
+
+  <p>Chọn Hướng B nếu sản phẩm Ngày 19 chính là offer chính trong funnel này. Chọn Hướng A nếu funnel này là cho offer khác/rộng hơn.</p>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — kết thúc Chặng 4</div>
+    <p>Bạn có thêm ~4 file: <code>08-ads-copy.md</code>, <code>08-landing.html</code>, <code>09-vsl-script.md</code> (hoặc note skip), <code>10-email-sequence.md</code>. Mở landing.html trong browser → render đẹp được, đọc được copy.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Chặng 5 — Sales tools (Agent 11-12)
+  </h2>
+
+  <div class="stage-card">
+    <div class="stage-card-tag">Chặng 5 · Khép vòng</div>
+    <div class="stage-card-title">Khách lạnh re-engage thế nào? Gọi điện chốt deal nói gì?</div>
+    <div class="stage-card-agents">Agent 11 Follow-Up Engine · 12 Sales Call Script</div>
+    <div class="stage-card-desc">2 agent cuối phục vụ 2 tình huống: (1) khách đã quan tâm nhưng chưa mua → nuôi dưỡng tiếp; (2) khách high-ticket cần gọi điện 1-1 chốt. Nếu mô hình của bạn không gọi điện chốt — Agent 12 có thể skip.</div>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Chạy Follow-Up + Sales Call</span>
+      <button class="copy-btn" data-copy="p7">COPY</button>
+    </div>
+    <div class="prompt-body" id="p7">@assp-follow-up-engine/SKILL.md
+@assp-sales-call-script/SKILL.md
+
+Đọc 2 skill. Đọc thêm:
+- @ke-hoach-kinh-doanh/00-business-context.md
+- @ke-hoach-kinh-doanh/01-avatar.md
+- @ke-hoach-kinh-doanh/05-offer.md
+- @ke-hoach-kinh-doanh/07-funnel-blueprint.md
+- @ke-hoach-kinh-doanh/10-email-sequence.md
+
+Chạy:
+
+1. Follow-Up Engine → viết chuỗi nuôi dưỡng cho lead lạnh (chưa mua sau N ngày).
+   Lưu: ke-hoach-kinh-doanh/11-follow-up.md
+
+2. Sales Call Script:
+   - Nếu mô hình của tôi CÓ gọi điện chốt deal (high-ticket / dịch vụ / coaching) → viết script đầy đủ.
+   - Nếu mô hình KHÔNG gọi điện (chỉ self-service qua web) → ghi 1 file ngắn nói rõ "mô hình này không cần sales call, output skip" và đề xuất hình thức khép deal khác (chat support, demo call ngắn, ...)
+   Lưu: ke-hoach-kinh-doanh/12-sales-script.md</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — kết thúc Chặng 5 (xong 12 agent!)</div>
+    <p>Bạn có đủ ~12 file MD/HTML trong thư mục. Chạy <code>ls ke-hoach-kinh-doanh/</code> → đếm — không file nào còn là placeholder trống. Đây là toàn bộ funnel của bạn, sẵn để launch khi nào bạn muốn.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — agent biết khi nào cần skip</div>
+    <p>Agent 12 (Sales Call) tự nhận diện được mô hình của bạn có cần gọi điện hay không — bằng cách đọc money-model.md và offer.md. Tin agent. Nếu agent nói "không cần script gọi điện cho mô hình self-service này" — đó là câu trả lời đúng.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Không chạy đủ 12 agent — không sao</div>
+    <p>Mục tiêu là <em>kế hoạch đủ thuyết phục để pitch</em>, không phải checklist 12/12. Nếu bạn không kịp 1-2 agent (VD: VSL nếu funnel không có video, Sales Call nếu không gọi điện) — skip. Trong file thuyết trình ở Phần 4, ghi rõ phần đó "skip — không phù hợp với mô hình" + lý do.</p>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 3: ROADMAP + ASKS -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase3">
+  <span class="phase-label">Phần Ba</span>
+  <div class="phase-title">Roadmap 90 Ngày + ASKS</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    Vibe roadmap 90 ngày + xác định ASKS cho Demo Day
+  </h2>
+
+  <p>Bạn đã có chiến lược + assets. Giờ vạch ra: <strong>90 ngày tới làm gì cụ thể</strong> để biến những file kia thành doanh thu thật. Và quan trọng — <strong>bạn cần gì để đi nhanh hơn</strong>. Phần ASKS này là cái Nghĩa sẽ chú ý nhất ở Demo Day.</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe Roadmap + ASKS</span>
+      <button class="copy-btn" data-copy="p8">COPY</button>
+    </div>
+    <div class="prompt-body" id="p8">Đọc toàn bộ thư mục ke-hoach-kinh-doanh/ — tất cả 12 file output từ ASSP agents.
+
+Tạo file ke-hoach-kinh-doanh/13-roadmap-asks.md với 2 phần:
+
+═══════════════════════════════════════
+PHẦN 1: ROADMAP 90 NGÀY
+═══════════════════════════════════════
+
+Chia làm 3 tháng × 3 milestone mỗi tháng:
+
+THÁNG 1 — [tên giai đoạn, VD: "Validation"]
+  Milestone 1.1: [...]
+  Milestone 1.2: [...]
+  Milestone 1.3: [...]
+
+THÁNG 2 — [tên giai đoạn, VD: "Scale traffic"]
+  ...
+
+THÁNG 3 — [tên giai đoạn, VD: "Optimize conversion"]
+  ...
+
+Với mỗi milestone:
+- Mục tiêu cụ thể (đo được)
+- Hành động chính
+- Dùng asset nào trong thư mục (VD: "deploy 08-landing.html lên prod")
+
+═══════════════════════════════════════
+PHẦN 2: ASKS — Tôi cần gì để đi nhanh hơn
+═══════════════════════════════════════
+
+Tự nhìn lại 12 agent output + roadmap. Trả lời thẳng thắn:
+
+1. ĐIỂM YẾU LỚN NHẤT của tôi hiện tại là gì?
+   (VD: chưa biết chạy ads / chưa có audience / chưa biết tối ưu funnel / thiếu kỹ thuật)
+
+2. NẾU CÓ THỂ NHỜ NGHĨA / KP3 — tôi muốn được hỗ trợ về:
+   □ Coaching 1-1 về chiến lược kinh doanh
+   □ Done-for-you setup ads/funnel
+   □ Cộng đồng cùng level để học hỏi
+   □ Khoá Pro về [chủ đề cụ thể]
+   □ Khác: [...]
+
+3. TRONG 90 NGÀY TỚI — 3 vấn đề tôi sợ kẹt nhất:
+   1. [...]
+   2. [...]
+   3. [...]
+
+Trả lời thẳng, không cần tỏ ra "đã sẵn sàng". Càng cụ thể về điểm yếu — Nghĩa càng có thể hỗ trợ đúng cái bạn cần.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">ASKS không phải dấu hiệu yếu — là dấu hiệu rõ ràng</div>
+    <p>Người làm business giỏi không phải người tự làm hết — là người biết <em>mình mạnh chỗ nào, yếu chỗ nào, cần gì để đi tiếp</em>. Phần ASKS càng cụ thể, càng chứng minh bạn đã suy nghĩ kỹ — không phải "không biết gì".</p>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>File <code>13-roadmap-asks.md</code> có đủ 2 phần. Roadmap 9 milestone cụ thể. ASKS có ít nhất 3 điểm yếu/yêu cầu cụ thể — không vague.</p>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 4: VIBE FILE HTML THUYẾT TRÌNH -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase4">
+  <span class="phase-label">Phần Bốn</span>
+  <div class="phase-title">Vibe File HTML Thuyết Trình Tổng</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Vibe index.html — file thuyết trình link đến mọi asset
+  </h2>
+
+  <p>File này không phải tóm tắt. Nó là <strong>navigation hub</strong> — Nghĩa và bạn ở Demo Day click vào từng section, mở tab mới xem asset thật. Avatar thật, copy thật, landing render thật, email thật.</p>
+
+  <div class="metaphor">
+    <div class="metaphor-label">index.html như mục lục của 1 cuốn sách</div>
+    <blockquote>
+      Bạn không in toàn bộ sách lên slide — bạn có 1 mục lục đẹp, ai muốn đọc chương nào thì lật tới chương đó. <strong>index.html là mục lục</strong>. 12 file thật là 12 chương. Khi pitch, bạn lướt qua mục lục, dừng ở chương nào quan trọng — Nghĩa muốn xem chương đó kỹ hơn thì click vào.
+    </blockquote>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe index.html — pitch deck tổng</span>
+      <button class="copy-btn" data-copy="p9">COPY</button>
+    </div>
+    <div class="prompt-body" id="p9">Đọc toàn bộ thư mục ke-hoach-kinh-doanh/.
+
+Tạo file ke-hoach-kinh-doanh/index.html — file thuyết trình tổng hợp toàn bộ kế hoạch của tôi.
+
+Cấu trúc 9 sections:
+
+1. HERO
+   - Tên kế hoạch (VD: "Bản kế hoạch kinh doanh — [Tên thương hiệu]")
+   - Tagline 1 câu (lấy từ hero-mechanism)
+   - Tên tác giả + ngày tạo
+   - Nút "Bắt đầu" scroll xuống section 2
+
+2. AVATAR
+   - Tóm tắt 3-4 câu (rút từ 01-avatar.md)
+   - Nút "View full avatar" → mở 01-avatar.md trong tab mới
+
+3. BRAND VOICE
+   - Tóm tắt + 2-3 câu ví dụ giọng văn
+   - Nút "View brand voice" → mở 02-brand-voice.md
+
+4. HERO MECHANISM
+   - Tóm tắt cơ chế khác biệt (3-4 câu)
+   - Nút "View" → 03-hero-mechanism.md
+
+5. MONEY MODEL + OFFER STACK
+   - Bảng/visual money model (giá, recurring, upsell)
+   - Box offer chính
+   - 2 nút: "View money model" → 04-money-model.md, "View offer detail" → 05-offer.md
+
+6. FUNNEL BLUEPRINT
+   - Embed visual funnel (07-funnel-visual.html) — dùng iframe hoặc copy SVG vào
+   - Nút "View blueprint chi tiết" → 07-funnel-blueprint.md
+   - Nút "View lead magnet" → 06-hvco-leadmagnet.md
+
+7. FULL FUNNEL ASSETS — phần quan trọng nhất
+   Hiển thị grid các asset thật:
+   - Card "Ad Copy" → "View ads" mở 08-ads-copy.md
+   - Card "Landing Page" → "View live" mở 08-landing.html
+   - Card "VSL Script" → "View script" mở 09-vsl-script.md (hoặc note skip)
+   - Card "Email Sequence" → "View emails" mở 10-email-sequence.md
+   - Card "Follow-up" → 11-follow-up.md
+   - Card "Sales Script" → 12-sales-script.md (hoặc note skip)
+   Mỗi card có: tên + 1 dòng mô tả + nút View
+
+8. ROADMAP 90 NGÀY
+   - Visual 3 tháng × 3 milestone (timeline)
+   - Lấy nội dung từ 13-roadmap-asks.md phần 1
+
+9. ASKS — Tôi cần gì để đi nhanh hơn
+   - 3 box: Điểm yếu / Hỗ trợ mong muốn / Vấn đề trong 90 ngày tới
+   - Lấy nội dung từ 13-roadmap-asks.md phần 2
+   - CTA cuối: "Tôi sẵn sàng pitch ở Demo Day Ngày 21"
+
+Yêu cầu design:
+- Style: chuyên nghiệp nhưng có cá tính (KHÔNG generic AI design)
+- Màu chủ đạo: theo brand voice của tôi (đọc 02-brand-voice.md)
+- Font: 1 serif đẹp cho heading + 1 sans-serif dễ đọc cho body
+- Mobile responsive
+- Mỗi nút "View" có target="_blank" (mở tab mới)
+- Smooth scroll giữa sections
+- Topbar nav cố định với 9 anchor
+
+Single file HTML — tất cả CSS/JS inline. Không phụ thuộc CDN ngoài (font có thể dùng Google Fonts).
+
+Sau khi tạo xong: hướng dẫn tôi mở file trong browser để preview.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — đừng tự thiết kế từng section</div>
+    <p>Agent đọc tất cả 12 file output → tự rút tóm tắt cho mỗi section. Bạn chỉ cần đọc kết quả, sửa chỗ nào sai. <strong>Không tự copy-paste từ MD vào HTML</strong> — đó là việc của agent. Bạn là tổng đạo diễn.</p>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Mở <code>ke-hoach-kinh-doanh/index.html</code> trong browser → thấy 9 sections đẹp, scroll mượt, mỗi nút "View" mở tab mới với asset thật. Test trên cả desktop và mobile.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 09</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Nút View mở tab mới nhưng file MD hiển thị code raw"</summary>
+        <p>File MD không render đẹp trong browser. 2 cách fix: <strong>(A)</strong> Bảo agent convert tất cả MD → HTML (dùng markdown renderer). <strong>(B)</strong> Đơn giản hơn: deploy lên web có markdown rendering (GitHub Pages tự render MD, hoặc dùng Notion publish).</p>
+      </details>
+      <details>
+        <summary>"index.html quá dài, load chậm"</summary>
+        <p>Bảo agent: <em>"Tách CSS/JS ra file riêng, dùng lazy loading cho ảnh, minify HTML."</em> Nhưng nếu file vẫn dưới 500KB và load < 3s — không cần lo.</p>
+      </details>
+      <details>
+        <summary>"Design generic AI quá, không có cá tính"</summary>
+        <p>Bảo agent: <em>"Đọc lại 02-brand-voice.md. Áp dụng đúng tone đó vào design — chọn màu, font, cách viết heading. Sau đó refine lại CSS để nhìn ra ngay 'đây là brand X', không phải template AI."</em></p>
+      </details>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- PHẦN 5: DEPLOY -->
+<!-- ============================================================ -->
+
+<div class="phase-header" id="phase5">
+  <span class="phase-label">Phần Năm</span>
+  <div class="phase-title">Deploy + Sẵn Sàng Demo Day</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 10</span>
+    Deploy lên web — gửi link cho Nghĩa
+  </h2>
+
+  <p>Bản kế hoạch trên máy không pitch được. Cần deploy lên web để Nghĩa xem trước Demo Day, có link click vào được, các nút "View" hoạt động thật.</p>
+
+  <h3>Đề xuất — deploy thành subpath website của bạn</h3>
+
+  <p>Bạn đã có website chạy trên VPS từ Ngày 14. Cách đơn giản và chuyên nghiệp nhất là deploy thư mục <code>ke-hoach-kinh-doanh/</code> thành subpath của website đó:</p>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">URL kết quả mong đợi</div>
+    <div class="ui-mock-content">yourdomain.com/ke-hoach
+       ↓ (mở ra index.html)
+   Trang thuyết trình tổng
+
+yourdomain.com/ke-hoach/01-avatar.md
+yourdomain.com/ke-hoach/08-landing.html
+yourdomain.com/ke-hoach/...
+       ↓
+   Các asset thật, click "View" từ index là mở</div>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Deploy thư mục lên subpath website</span>
+      <button class="copy-btn" data-copy="p10">COPY</button>
+    </div>
+    <div class="prompt-body" id="p10">Tôi cần deploy thư mục ke-hoach-kinh-doanh/ lên website đang chạy của tôi (VPS từ Ngày 14).
+
+URL mong muốn: yourdomain.com/ke-hoach
+- Truy cập yourdomain.com/ke-hoach → render index.html
+- Các file MD/HTML khác truy cập qua: yourdomain.com/ke-hoach/[tên file]
+- File MD nên render đẹp (không hiển thị code raw)
+
+Đọc setup web hiện tại của tôi (Nginx/Apache/Laravel/Next.js/...) → chọn cách deploy phù hợp:
+
+OPTION A — Static subpath:
+- Copy thư mục lên VPS
+- Config web server serve static cho path /ke-hoach
+- Setup markdown rendering nếu cần (có thể dùng marked.js hoặc tương tự)
+
+OPTION B — Subdomain riêng (nếu phức tạp hơn):
+- pitch.yourdomain.com → trỏ về thư mục này
+
+OPTION C — GitHub Pages (nếu không muốn động vào VPS):
+- Push lên repo → enable GitHub Pages → URL dạng username.github.io/ke-hoach
+
+Chọn option phù hợp với setup hiện tại của tôi, hướng dẫn từng bước. Đề xuất Option A nếu khả thi (chuyên nghiệp + dùng domain chính của tôi).
+
+Sau khi deploy xong:
+1. Test trên điện thoại — index.html load đẹp
+2. Click thử mỗi nút View — mở đúng asset
+3. Gửi tôi URL hoàn chỉnh</div>
+  </div>
+
+  <h3>Các cách deploy khác (nếu cần)</h3>
+
+  <ul>
+    <li><strong>Subdomain riêng:</strong> <code>pitch.yourdomain.com</code> — tách biệt với web chính, đẹp nhưng cần config DNS</li>
+    <li><strong>GitHub Pages:</strong> miễn phí, tự render markdown, không động vào VPS — <code>username.github.io/ke-hoach</code></li>
+    <li><strong>Vercel/Netlify:</strong> drag-drop folder → ra link công khai trong 30 giây</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">Gợi ý mạnh — chọn Option A</div>
+    <p>Deploy subpath vào website chính của bạn (<code>yourdomain.com/ke-hoach</code>) là <strong>chuyên nghiệp nhất cho Demo Day</strong>. Nghĩa nhìn URL đã thấy bạn có hệ thống đầy đủ. Nhưng nếu Option A phức tạp với stack hiện tại — Option C (GitHub Pages) là backup tốt.</p>
+  </div>
+
+  <h3>Gửi link cho Nghĩa</h3>
+
+  <p>Sau khi deploy thành công, gửi tin nhắn ngắn cho Nghĩa qua Telegram (hoặc kênh đã thoả thuận):</p>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Mẫu tin nhắn gửi Nghĩa</div>
+    <div class="ui-mock-content">Chào anh Nghĩa,
+
+Em đã hoàn thành Nhiệm vụ Ngày 20 — chạy trọn bộ 12 agent ASSP.
+
+Bản kế hoạch + full funnel của em ở đây:
+→ yourdomain.com/ke-hoach
+
+Anh xem trước Demo Day Ngày 21 nhé. Em đã ghi rõ phần ASKS
+(điểm yếu + cần hỗ trợ) trong section cuối — em rất muốn
+nghe phản hồi của anh khi pitch.
+
+Cảm ơn anh!
+[Tên bạn]</div>
+  </div>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — quan trọng nhất ngày hôm nay</div>
+    <p>URL <code>yourdomain.com/ke-hoach</code> mở được trên điện thoại của Nghĩa — index render đẹp, các nút "View" mở đúng asset, không có file nào bị lỗi 404. Tin nhắn đã gửi cho Nghĩa.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 10</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Subpath /ke-hoach bị 404"</summary>
+        <p>Cấu hình web server chưa serve thư mục đó. Bảo agent: <em>"Đọc config Nginx/Apache đang dùng, thêm location block cho /ke-hoach trỏ về thư mục đã upload."</em> Hoặc nếu dùng framework (Laravel/Next.js) — agent biết cách thêm static route.</p>
+      </details>
+      <details>
+        <summary>"File MD vẫn hiển thị code raw, không render"</summary>
+        <p>Cách nhanh nhất: bảo agent convert tất cả MD → HTML, deploy phiên bản HTML thay vì MD. Hoặc thêm marked.js vào index.html — nhưng phức tạp hơn.</p>
+      </details>
+      <details>
+        <summary>"Deploy lên VPS phức tạp quá, hết giờ rồi"</summary>
+        <p>Switch sang GitHub Pages: tạo repo public mới, push thư mục lên, enable Pages trong Settings → có URL trong 5 phút. Backup chấp nhận được cho Demo Day.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- CHECKLIST NỘP BÀI -->
+<!-- ============================================================ -->
+
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Thư mục ke-hoach-kinh-doanh/ có đủ ~12 file thật</strong> — không còn placeholder rỗng (skip 1-2 agent không phù hợp được, ghi rõ lý do).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã chạy đủ 5 chặng</strong> — Foundation / Money & Offer / Funnel Blueprint / Copywriting / Sales Tools.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>File 13-roadmap-asks.md có đủ Roadmap 90 ngày + ASKS</strong> — ASKS cụ thể, không vague.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>index.html mở được</strong> — 9 sections đẹp, mỗi nút "View" mở đúng asset thật.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã deploy lên web</strong> — URL công khai (gợi ý: yourdomain.com/ke-hoach), test mở được trên điện thoại.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã gửi link cho Nghĩa qua Telegram</strong> — sẵn sàng cho Demo Day Ngày 21.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã đọc lại pitch deck của mình</strong> — tự hỏi: nếu là Nghĩa nhìn vào, mình có thấy thuyết phục không? Nếu chưa — refine.</div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Có 1 thư mục đầy đủ assets thật — không phải tóm tắt, không phải mô tả</li>
+      <li>Có 1 URL công khai để pitch — Nghĩa click là xem được mọi thứ</li>
+      <li>Phần ASKS rõ ràng cụ thể — biết mình cần gì để đi tiếp</li>
+      <li>Sẵn sàng pitch 5-10 phút tại Demo Day Ngày 21</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top:32px;">
+    <div class="tip-label">Tinh thần ngày 20</div>
+    <p>Hôm nay bạn đã làm thứ mà <strong>99% người làm business chưa từng làm</strong>: dùng AI để tự build full funnel + chiến lược trong 1 ngày. Không phải mô tả — là asset thật, sẵn sàng launch.</p>
+    <p>Ngày mai bạn pitch. Không phải pitch ý tưởng. Pitch <em>cỗ máy đã build xong</em>.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "19 ngày bạn build hệ thống.<br>
+    Hôm nay bạn có <em>bản đồ + cỗ máy bán hàng</em> sẵn sàng launch."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 20 of 21</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const target = document.getElementById(btn.getAttribute('data-copy'));
+      if (!target) return;
+      navigator.clipboard.writeText(target.textContent).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'COPIED'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = target.textContent; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        btn.textContent = 'COPIED'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1500);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

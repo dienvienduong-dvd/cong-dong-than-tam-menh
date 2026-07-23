@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khóa học — AI AGENTS CC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <style>
+    /* ── Course view layout ──────────────────────────── */
+    .cv-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .cv-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .cv-back:hover { color: var(--text); }
+    .cv-header-title {
+      font-family: var(--font-heading);
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cv-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .cv-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Landing (not-yet-enrolled) state ────────────── */
+    .cv-landing-cover {
+      height: 160px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; margin-bottom: 18px;
+    }
+    .cv-landing-body {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 640px;
+    }
+    .cv-landing-title {
+      font-family: var(--font-heading);
+      font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 8px;
+    }
+    .cv-landing-desc {
+      font-size: var(--fs-base); color: var(--text-muted); line-height: 1.7; margin-bottom: 14px;
+    }
+    .cv-landing-meta {
+      display: flex; flex-wrap: wrap; gap: 14px;
+      font-size: var(--fs-sm); color: var(--text-muted);
+      margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border);
+    }
+    .cv-price-row {
+      display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;
+    }
+    .cv-price-now { font-size: 24px; font-weight: 800; color: var(--color-primary); }
+    .cv-price-compare { font-size: 15px; color: var(--text-muted); text-decoration: line-through; }
+    .cv-price-off {
+      font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2;
+      padding: 2px 8px; border-radius: 99px;
+    }
+    .cv-enroll-btn {
+      background: var(--color-primary); color: #fff; border: none;
+      border-radius: var(--radius-md); padding: 10px 20px; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: var(--font-body); display: inline-block; text-decoration: none;
+      transition: filter .15s;
+    }
+    .cv-enroll-btn:hover { filter: brightness(0.92); }
+    .cv-enroll-btn:disabled { cursor: default; opacity: .6; }
+    .cv-enroll-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: var(--radius-md);
+    }
+    .cv-enroll-badge.approved { background: #d1fae5; color: #065f46; }
+    .cv-enroll-badge.pending { background: #fef3c7; color: #92400e; }
+
+    .cv-lessons-col {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 90px);
+      overflow-y: auto;
+    }
+    @media (max-width: 860px) {
+      .cv-lessons-col { position: static; max-height: none; }
+    }
+    .cv-lessons-title {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      padding: 4px 6px 10px;
+    }
+
+    .cv-content-col {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      min-height: 300px;
+    }
+    .cv-lesson-title {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .cv-nav-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Lesson list (mirrors courses.html) ──────────── */
+    .lesson-list { display: flex; flex-direction: column; gap: 6px; }
+    .lesson-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border: 1px solid transparent; border-radius: 10px;
+      cursor: pointer; transition: background .12s, border-color .12s;
+    }
+    .lesson-row:hover { background: var(--bg-hover); border-color: var(--color-primary); }
+    .lesson-row.active { background: var(--bg-active); border-color: var(--color-primary); }
+    .lesson-num {
+      width: 26px; height: 26px; border-radius: 8px;
+      background: var(--bg-hover); color: var(--color-primary); font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .lesson-row.active .lesson-num { background: var(--color-primary); color: #fff; }
+    .lesson-info { flex: 1; min-width: 0; }
+    .lesson-title {
+      font-size: var(--fs-sm); font-weight: 600; color: var(--text);
+      margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lesson-dur { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Video + rich content (mirrors courses.html) ─── */
+    .video-wrap {
+      position: relative; padding-bottom: 56.25%; height: 0;
+      overflow: hidden; border-radius: 10px; background: #0f172a; margin-bottom: 20px;
+    }
+    .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; border-radius: 10px; }
+
+    .lesson-content { font-size: var(--fs-base); color: var(--text); line-height: 1.75; }
+    .lesson-content h1 { font-size: 22px; font-weight: 700; margin: 16px 0 8px; }
+    .lesson-content h2 { font-size: 19px; font-weight: 700; margin: 14px 0 6px; }
+    .lesson-content h3 { font-size: 16px; font-weight: 700; margin: 12px 0 6px; }
+    .lesson-content h4 { font-size: 15px; font-weight: 700; margin: 10px 0 4px; }
+    .lesson-content p { margin: 6px 0; }
+    .lesson-content ul, .lesson-content ol { padding-left: 22px; margin: 8px 0; }
+    .lesson-content li { margin: 3px 0; }
+    .lesson-content a { color: var(--color-primary); text-decoration: underline; }
+    .lesson-content blockquote { margin: 10px 0; padding: 6px 14px; border-left: 3px solid var(--border); color: var(--text-muted); }
+    .lesson-content pre { margin: 10px 0; padding: 10px 12px; background: #0f172a; color: #e2e8f0; border-radius: 8px; font-family: monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; }
+    .lesson-content code { background: var(--bg-hover); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+    .lesson-content pre code { background: transparent; padding: 0; }
+    .lesson-content img { max-width: 100%; border-radius: 8px; margin: 6px 0; }
+    .lesson-content hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+
+    .ex-block { margin: 20px 0 4px; padding: 16px 18px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 10px; }
+    .ex-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+    .ex-prompt { font-size: var(--fs-base); color: var(--text); line-height: 1.7; margin-bottom: 12px; white-space: pre-wrap; }
+    .ex-textarea { width: 100%; min-height: 100px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: var(--fs-base); resize: vertical; outline: none; background: var(--bg-card); color: var(--text); }
+    .ex-textarea:focus { border-color: var(--color-primary); }
+    .ex-error { color: #ef4444; font-size: 13px; margin: 8px 0; }
+    .ex-block .btn { margin-top: 10px; }
+    .ex-result-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .ex-score { font-size: 16px; font-weight: 700; color: var(--text); }
+    .ex-badge { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
+    .ex-badge.pass { background: #dcfce7; color: #166534; }
+    .ex-badge.fail { background: #fee2e2; color: #991b1b; }
+    .ex-xp { font-size: 12px; font-weight: 700; color: var(--accent-green); background: #d1fae5; padding: 3px 10px; border-radius: 99px; }
+    .ex-sub-heading { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; margin: 12px 0 4px; }
+    .ex-list { padding-left: 20px; margin: 0; font-size: var(--fs-base); line-height: 1.7; }
+    .ex-list.issues li { color: #b91c1c; }
+    .ex-list.hints li { color: var(--text); }
+
+    .ex-quiz-q { margin: 14px 0; }
+    .ex-quiz-q-text { font-weight: 600; margin-bottom: 8px; }
+    .ex-quiz-options { display: flex; flex-direction: column; gap: 6px; }
+    .ex-quiz-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; background: var(--bg-card); }
+    .ex-quiz-option:hover { border-color: var(--color-primary); }
+    .ex-quiz-option input { flex-shrink: 0; }
+
+    .ex-resubmit-banner { background: #fef3c7; color: #92400e; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: var(--fs-base); }
+    .ex-teacher-note { margin-top: 12px; padding: 10px 14px; background: #e0e7ff; color: #3730a3; border-radius: 8px; font-size: var(--fs-base); }
+
+    .ex-answer-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: var(--fs-base); white-space: pre-wrap; margin-bottom: 4px; }
+    .ex-quiz-option-result { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); font-size: var(--fs-base); }
+    .ex-quiz-option-result.correct { border-color: #10b981; background: #ecfdf5; color: #065f46; font-weight: 600; }
+    .ex-quiz-option-result.wrong { border-color: #ef4444; background: #fef2f2; color: #991b1b; font-weight: 600; }
+
+    .ex-ielts-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .ex-ielts-tab { padding: 6px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--bg-card); color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .ex-ielts-tab.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+    .ex-ielts-passage { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; max-height: 320px; overflow-y: auto; }
+    .ex-ielts-passage-title { font-weight: 700; margin-bottom: 8px; }
+    .ex-ielts-passage-body { font-size: var(--fs-base); line-height: 1.7; }
+    .ex-ielts-passage-body table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+    .ex-ielts-passage-body td, .ex-ielts-passage-body th { border: 1px solid var(--border); padding: 6px 8px; }
+    .ex-ielts-input { width: 100%; max-width: 320px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: var(--fs-base); background: var(--bg-card); color: var(--text); }
+    .ex-ielts-guidance { margin-top: 6px; padding: 8px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: var(--fs-base); color: #92400e; line-height: 1.6; }
+    .ex-band-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 4px; }
+    .ex-band-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .ex-band-item span { font-size: 11px; color: var(--text-muted); }
+    .ex-band-item strong { font-size: 16px; color: var(--text); }
+  </style>
+</head>
+
+<body>
+
+  <div id="app">
+    <aside id="sidebar">
+      <div id="sidebar-logo">
+        <div class="sidebar-logo-mark">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="3" fill="currentColor" />
+            <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M5.5 5.5l1.5 1.5M13 13l1.5 1.5M14.5 5.5L13 7M7 13l-1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="sidebar-logo-text">AI AGENTS <span>CC</span></div>
+      </div>
+      <nav id="sidebar-nav">
+        <div class="nav-section-label">Cộng đồng</div>
+        <a href="feed.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+          </svg>
+          Feed
+        </a>
+        <div class="nav-section-label" style="margin-top:8px;">Học tập</div>
+        <a href="challenge.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+          </svg>
+          Challenge
+        </a>
+        <div class="nav-section-label" style="margin-top:8px;">Khác</div>
+        <a href="marketplace.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+          Marketplace
+        </a>
+      </nav>
+      <div id="sidebar-user">
+        <div class="user-avatar-wrap">
+          <div class="avatar-placeholder avatar-md" id="sbAvatar" style="background:#7c3aed;"></div>
+          <div class="user-status-dot"></div>
+        </div>
+        <div class="user-info">
+          <div class="user-name" id="sbName">—</div>
+          <div class="user-level" id="sbLevel">—</div>
+        </div>
+        <a href="index.html" class="icon-btn" title="Đăng xuất" style="margin-left:auto;" onclick="doLogout()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </a>
+      </div>
+    </aside>
+
+    <div id="main">
+      <div id="mobile-topbar">
+        <button class="mob-menu-btn" onclick="openSidebar()" aria-label="Menu">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <span style="flex:1;font-size:var(--fs-md);font-weight:600;color:var(--text)" id="mobTitle">Khóa học</span>
+      </div>
+      <nav id="subnav-bar" class="subnav-bar" aria-label="Điều hướng nhanh">
+        <a href="feed.html" class="subnav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Feed
+        </a>
+        <a href="spaces.html" class="subnav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+          Spaces
+        </a>
+        <a href="courses.html" class="subnav-item active">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+          Courses
+        </a>
+        <a href="members.html" class="subnav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Members
+        </a>
+        <a href="leaderboard.html" class="subnav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          Leaderboard
+        </a>
+        <a href="calendar.html" class="subnav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Calendar
+        </a>
+        <a href="about.html" class="subnav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          About
+        </a>
+        <div class="topbar-right">
+          <button class="icon-btn" id="themeToggle" type="button" aria-label="Chuyển chế độ sáng/tối">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg>
+          </button>
+          <div style="position:relative;">
+            <button class="icon-btn" id="notifBell" aria-label="Thông báo" style="position:relative;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span id="notifBadge" style="display:none;position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:99px;min-width:16px;height:16px;padding:0 4px;line-height:16px;text-align:center;">0</span>
+            </button>
+            <div id="notifDropdown" style="display:none;"></div>
+          </div>
+          <a href="#" class="icon-btn" aria-label="Tin nhắn">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </a>
+          <div class="topbar-search" role="button" tabindex="0">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            Tìm kiếm...
+          </div>
+          <div id="topbarAvatar"
+            style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;background:#7c3aed;cursor:pointer;flex-shrink:0;">
+          </div>
+        </div>
+      </nav>
+
+      <div id="topbar">
+        <div class="topbar-title" id="topbarTitle">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+          Đang tải...
+        </div>
+      </div>
+
+      <div id="content-row">
+        <main id="feed">
+          <div class="cv-header">
+            <a href="courses.html" class="cv-back">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Khóa học
+            </a>
+            <div class="cv-header-title" id="cvCourseTitle">Đang tải...</div>
+          </div>
+
+          <div id="cvLanding" style="display:none;">
+            <div class="cv-landing-cover" id="cvCover">🎓</div>
+            <div class="cv-landing-body">
+              <h1 class="cv-landing-title" id="cvLandingTitle">—</h1>
+              <p class="cv-landing-desc" id="cvLandingDesc"></p>
+              <div class="cv-landing-meta">
+                <span>👤 Giảng viên: <strong id="cvInstructor">—</strong></span>
+                <span id="cvLessonCountMeta"></span>
+              </div>
+              <div class="cv-price-row" id="cvPriceRow" style="display:none;"></div>
+              <div id="cvEnrollWrap"></div>
+            </div>
+          </div>
+
+          <div class="cv-grid" id="cvGrid" style="display:none;">
+            <aside class="cv-lessons-col">
+              <div class="cv-lessons-title">Danh sách bài học</div>
+              <div class="lesson-list" id="cvLessonList"></div>
+            </aside>
+            <section class="cv-content-col" id="cvContentCol"></section>
+          </div>
+
+          <div id="cvLoading" style="text-align:center;padding:60px 20px;color:var(--text-muted);">Đang tải...</div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="mob-overlay"></div>
+  <div id="mob-sidebar">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:var(--fs-md);font-weight:700;color:var(--text);">Menu</div>
+    <nav style="flex:1;overflow-y:auto;padding:8px;">
+      <a href="feed.html" class="nav-item">Feed</a>
+      <a href="challenge.html" class="nav-item">Challenge</a>
+    </nav>
+  </div>
+  <!-- Mobile main menu (full site navigation) -->
+  <div id="mob-mainmenu-overlay" onclick="closeMainMenu()"></div>
+  <div id="mob-mainmenu">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:var(--fs-md);font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;background:var(--color-primary);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="16" height="16" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3" fill="#fff"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      Menu chính
+    </div>
+    <nav style="flex:1;overflow-y:auto;padding:8px;">
+      <a href="feed.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Feed
+      </a>
+      <a href="spaces.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+        Spaces
+      </a>
+      <a href="courses.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+        Courses
+      </a>
+      <a href="members.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Members
+      </a>
+      <a href="leaderboard.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+        Leaderboard
+      </a>
+      <a href="calendar.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendar
+      </a>
+      <a href="about.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        About
+      </a>
+    </nav>
+  </div>
+
+  <nav id="mobile-nav">
+    <a href="feed.html" class="mob-nav-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Home
+    </a>
+    <a href="courses.html" class="mob-nav-btn active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+      Khóa học
+    </a>
+    <a href="leaderboard.html" class="mob-nav-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4"/></svg>
+      BXH
+    </a>
+  </nav>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    const API = '/api';
+    const AV_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444', '#14b8a6'];
+    const LEVELS = [
+      { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Học viên', xpMin: 45, xpMax: 120 },
+      { level: 3, name: 'Thực hành', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Nâng cao', xpMin: 250, xpMax: 450 },
+      { level: 5, name: 'Chuyên gia', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Master', xpMin: 700, xpMax: 1000 },
+      { level: 7, name: 'Elite', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Legend', xpMin: 1500, xpMax: 2200 },
+      { level: 9, name: 'Grandmaster', xpMin: 2200, xpMax: 3000 },
+    ];
+    function getLevel(xp) { for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i].xpMin) return LEVELS[i]; return LEVELS[0]; }
+    function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    let currentUser = null;
+    let courseId = null;
+    let lessons = [];
+    let activeLessonId = null;
+
+    // ── Auth ──────────────────────────────────────────────────
+    (function () {
+      const raw = sessionStorage.getItem('currentUser');
+      if (!raw) { window.location.href = 'index.html'; return; }
+      currentUser = JSON.parse(raw);
+      const initials = (currentUser.first_name[0] + (currentUser.last_name || '')[0]).toUpperCase();
+      const color = AV_COLORS[currentUser.id % AV_COLORS.length];
+      document.getElementById('sbAvatar').textContent = initials;
+      document.getElementById('sbAvatar').style.background = color;
+      document.getElementById('sbName').textContent = currentUser.first_name + ' ' + currentUser.last_name;
+      const lv = getLevel(currentUser.xp || 0);
+      document.getElementById('sbLevel').textContent = lv.name + ' · Lv.' + lv.level;
+      const tbAv = document.getElementById('topbarAvatar');
+      if (tbAv) { tbAv.textContent = initials; tbAv.style.background = color; }
+      ['sbAvatar', 'sbName', 'topbarAvatar'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.cursor = 'pointer'; el.onclick = () => location.href = `profile.html?id=${currentUser.id}`; } });
+    })();
+
+    function doLogout() {
+      sessionStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    }
+
+    function toEmbedUrl(raw) {
+      if (!raw) return null;
+      const srcMatch = raw.match(/\bsrc=["']([^"']+)["']/i);
+      const url = srcMatch ? srcMatch[1] : raw.trim();
+      try {
+        const u = new URL(url);
+        if (u.pathname.startsWith('/embed/')) return u.toString();
+        if (u.hostname === 'youtu.be') return `https://www.youtube-nocookie.com/embed${u.pathname}`;
+        const v = u.searchParams.get('v');
+        if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+        const shorts = u.pathname.match(/\/shorts\/([^/?]+)/);
+        if (shorts) return `https://www.youtube-nocookie.com/embed/${shorts[1]}`;
+      } catch { /**/ }
+      return url;
+    }
+
+    function selectLesson(id) {
+      const lesson = lessons.find(l => l.id === id);
+      if (!lesson) return;
+      activeLessonId = id;
+      document.querySelectorAll('#cvLessonList .lesson-row').forEach(row => {
+        row.classList.toggle('active', Number(row.dataset.id) === id);
+      });
+
+      let html = `<div class="cv-lesson-title">${escHtml(lesson.title)}</div>`;
+      if (lesson.video_url) {
+        html += `<div class="video-wrap"><iframe src="${escHtml(toEmbedUrl(lesson.video_url))}" allowfullscreen
+          allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div>`;
+      }
+      if (lesson.content?.trim()) {
+        const isHtml = /<[a-z][\s\S]*>/i.test(lesson.content);
+        html += `<div class="lesson-content">${isHtml ? lesson.content : escHtml(lesson.content).replace(/\n/g, '<br>')}</div>`;
+      }
+      if (!lesson.video_url && !lesson.content?.trim()) {
+        html += `<div style="text-align:center;padding:30px;color:var(--text-muted);">📄 Bài học chưa có nội dung.</div>`;
+      }
+      if (lesson.exercise_enabled) {
+        html += renderExerciseBlock(lesson);
+      }
+
+      const idx = lessons.findIndex(l => l.id === id);
+      const prev = lessons[idx - 1];
+      const next = lessons[idx + 1];
+      html += `<div class="cv-nav-row">
+        ${prev ? `<button class="btn btn-secondary" onclick="selectLesson(${prev.id})">← ${escHtml(prev.title)}</button>` : '<span></span>'}
+        ${next ? `<button class="btn btn-primary" onclick="selectLesson(${next.id})">${escHtml(next.title)} →</button>` : '<span></span>'}
+      </div>`;
+
+      document.getElementById('cvContentCol').innerHTML = html;
+    }
+
+    function renderExerciseBlock(lesson) {
+      if (lesson.ielts_test) return renderIeltsExerciseBlock(lesson);
+
+      const s = lesson.my_submission;
+      const isResubmit = s && s.status === 'needs_resubmit';
+
+      if (s && !isResubmit) {
+        const issuesHtml = s.issues.length
+          ? s.issues.map(i => `<li>${escHtml(i)}</li>`).join('')
+          : '<li style="list-style:none;margin-left:-18px;color:var(--text-muted);">Không có vấn đề nào — làm tốt lắm!</li>';
+        const hintsHtml = s.hints.length
+          ? s.hints.map(h => `<li>${escHtml(h)}</li>`).join('')
+          : '<li style="list-style:none;margin-left:-18px;color:var(--text-muted);">Không có gợi ý thêm.</li>';
+
+        let submittedHtml;
+        if (s.quiz_review) {
+          submittedHtml = s.quiz_review.map((q, i) => `
+      <div class="ex-quiz-q">
+        <div class="ex-quiz-q-text">Câu ${i + 1}: ${escHtml(q.question_text)}</div>
+        <div class="ex-quiz-options">
+          ${q.options.map((opt, oi) => {
+            const isCorrect = oi === q.correct_index;
+            const isPicked = oi === q.picked_index;
+            const cls = isCorrect ? 'correct' : (isPicked ? 'wrong' : '');
+            const marker = isCorrect && isPicked ? ' ✅' : isCorrect ? ' (đáp án đúng)' : isPicked ? ' ❌' : '';
+            return `<div class="ex-quiz-option-result ${cls}">${escHtml(opt)}${marker}</div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
+        } else {
+          submittedHtml = `
+      <div class="ex-prompt">${escHtml(lesson.exercise_prompt || '')}</div>
+      <div class="ex-sub-heading">Bài làm của bạn</div>
+      <div class="ex-answer-box">${escHtml(s.answer_text)}</div>`;
+        }
+
+        return `
+      <div class="ex-block">
+        <div class="ex-title">📝 ${s.quiz_review ? 'Bài tập trắc nghiệm' : 'Bài tập'}</div>
+        ${submittedHtml}
+        <div class="ex-sub-heading">AI chấm & phân tích</div>
+        <div class="ex-result-header">
+          <span class="ex-score">${s.score}/${s.max_score} điểm</span>
+          <span class="ex-badge ${s.passed ? 'pass' : 'fail'}">${s.passed ? '✅ Đạt' : '❌ Chưa đạt'}</span>
+          ${s.xp_awarded ? `<span class="ex-xp">+${s.xp_awarded} XP</span>` : ''}
+        </div>
+        <div class="ex-sub-heading">Vấn đề cần sửa</div>
+        <ul class="ex-list issues">${issuesHtml}</ul>
+        <div class="ex-sub-heading">Gợi ý để bạn tự sửa</div>
+        <ul class="ex-list hints">${hintsHtml}</ul>
+        ${s.status === 'finalized' && s.teacher_note ? `<div class="ex-teacher-note">👩‍🏫 Nhận xét giáo viên: ${escHtml(s.teacher_note)}</div>` : ''}
+      </div>`;
+      }
+
+      const resubmitBanner = isResubmit
+        ? `<div class="ex-resubmit-banner">⚠️ Giáo viên yêu cầu bạn nộp lại${s.teacher_note ? ': ' + escHtml(s.teacher_note) : '.'}</div>`
+        : '';
+
+      if (lesson.exercise_type === 'quiz') {
+        const questions = lesson.quiz_questions || [];
+        if (!questions.length) {
+          return `<div class="ex-block"><div class="ex-title">📝 Bài tập</div><div style="color:var(--text-muted);">Bài tập trắc nghiệm chưa có câu hỏi.</div></div>`;
+        }
+        const questionsHtml = questions.map((q, i) => `
+      <div class="ex-quiz-q">
+        <div class="ex-quiz-q-text">Câu ${i + 1}: ${escHtml(q.question_text)}</div>
+        <div class="ex-quiz-options">
+          ${q.options.map((opt, oi) => `
+          <label class="ex-quiz-option">
+            <input type="radio" name="q_${q.id}" value="${oi}">
+            <span>${escHtml(opt)}</span>
+          </label>`).join('')}
+        </div>
+      </div>`).join('');
+        return `
+      <div class="ex-block">
+        <div class="ex-title">📝 Bài tập trắc nghiệm</div>
+        ${resubmitBanner}
+        ${lesson.exercise_prompt ? `<div class="ex-prompt">${escHtml(lesson.exercise_prompt)}</div>` : ''}
+        ${questionsHtml}
+        <div class="ex-error" id="exError_${lesson.id}" style="display:none;"></div>
+        <button class="btn btn-primary" id="exSubmitBtn_${lesson.id}" onclick="handleExerciseSubmit(${lesson.id})">Nộp bài trắc nghiệm</button>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">⚠️ Bạn chỉ được nộp 1 lần cho bài tập này.</div>
+      </div>`;
+      }
+      return `
+      <div class="ex-block">
+        <div class="ex-title">📝 Bài tập</div>
+        ${resubmitBanner}
+        <div class="ex-prompt">${escHtml(lesson.exercise_prompt || '')}</div>
+        <textarea class="ex-textarea" id="exAnswer_${lesson.id}" placeholder="Nhập bài làm của bạn...">${isResubmit ? escHtml(s.answer_text) : ''}</textarea>
+        <div class="ex-error" id="exError_${lesson.id}" style="display:none;"></div>
+        <button class="btn btn-primary" id="exSubmitBtn_${lesson.id}" onclick="handleExerciseSubmit(${lesson.id})">Nộp bài tập</button>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">⚠️ Bạn chỉ được nộp 1 lần cho bài tập này — AI sẽ chấm điểm ngay khi nộp.</div>
+      </div>`;
+    }
+
+    function normalizeClientAnswer(s) { return String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' '); }
+
+    function renderIeltsQuestionInput(q) {
+      if (q.question_type === 'gap_fill') {
+        return `<input type="text" class="ex-ielts-input" id="ielts_q_${q.id}" placeholder="Nhập đáp án...">`;
+      }
+      if (q.question_type === 'tfng') {
+        return `<select class="ex-ielts-input" id="ielts_q_${q.id}"><option value="">— Chọn —</option>${(q.options || ['TRUE', 'FALSE', 'NOT GIVEN']).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('')}</select>`;
+      }
+      if (q.question_type === 'matching') {
+        return `<select class="ex-ielts-input" id="ielts_q_${q.id}"><option value="">— Chọn —</option>${(q.options || []).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('')}</select>`;
+      }
+      return `<div class="ex-quiz-options">${(q.options || []).map(o => `
+          <label class="ex-quiz-option">
+            <input type="radio" name="ielts_q_${q.id}" value="${escHtml(o)}">
+            <span>${escHtml(o)}</span>
+          </label>`).join('')}</div>`;
+    }
+
+    function switchIeltsPassageTab(lessonId, ref, btnEl) {
+      const block = btnEl.closest('.ex-block');
+      block.querySelectorAll('.ex-ielts-tab').forEach(b => b.classList.toggle('active', b === btnEl));
+      block.querySelectorAll('.ex-ielts-passage').forEach(p => p.style.display = p.dataset.ref === ref ? '' : 'none');
+      block.querySelectorAll('.ex-ielts-q').forEach(q => q.style.display = (!q.dataset.ref || q.dataset.ref === ref) ? '' : 'none');
+    }
+
+    function renderIeltsQuestionReview(q, i, hiddenStyle) {
+      const isCorrect = q.correct_answer.some(a => normalizeClientAnswer(a) === normalizeClientAnswer(q.submitted));
+      const guidance = q.explanation && q.explanation.trim()
+        ? q.explanation
+        : `Hãy đọc lại đoạn văn liên quan để hiểu vì sao đáp án đúng là "${q.correct_answer.join(' / ')}".`;
+
+      let bodyHtml;
+      if (q.options && q.options.length) {
+        bodyHtml = `<div class="ex-quiz-options">${q.options.map(opt => {
+          const isThisCorrect = q.correct_answer.some(a => normalizeClientAnswer(a) === normalizeClientAnswer(opt));
+          const isPicked = normalizeClientAnswer(opt) === normalizeClientAnswer(q.submitted);
+          const cls = isThisCorrect ? 'correct' : (isPicked ? 'wrong' : '');
+          const marker = isThisCorrect && isPicked ? ' ✅' : isThisCorrect ? ' (đáp án đúng)' : isPicked ? ' ❌' : '';
+          return `<div class="ex-quiz-option-result ${cls}">${escHtml(opt)}${marker}</div>`;
+        }).join('')}</div>`;
+      } else {
+        bodyHtml = `<div class="ex-quiz-option-result ${isCorrect ? 'correct' : 'wrong'}">Bạn trả lời: ${escHtml(String(q.submitted ?? '—'))}${isCorrect ? ' ✅' : ''}</div>`;
+      }
+
+      return `
+      <div class="ex-quiz-q ex-ielts-q" data-ref="${escHtml(q.passage_ref || '')}" style="${hiddenStyle || ''}">
+        <div class="ex-quiz-q-text">Câu ${i + 1}: ${escHtml(q.question_text)}</div>
+        ${bodyHtml}
+        ${!isCorrect ? `
+        <div class="ex-ielts-guidance">
+          <strong>✅ Đáp án đúng:</strong> ${escHtml(q.correct_answer.join(' / '))}<br>
+          <strong>💡 Hướng dẫn:</strong> ${escHtml(guidance)}
+        </div>` : ''}
+      </div>`;
+    }
+
+    function buildSpeakingPrompt(test) {
+      const topic = (test.title || '').trim();
+      const guide = (test.description || '').trim();
+      return `Bạn hãy đóng vai giám khảo chấm thi IELTS Speaking. Chủ đề hôm nay: "${topic}".${guide ? `\n\nHướng dẫn thêm từ giáo viên: ${guide}` : ''}
+
+Hãy làm theo các bước sau:
+1. Đặt câu hỏi bằng tiếng Anh về chủ đề trên, theo phong cách phỏng vấn IELTS Speaking — hỏi từng câu một, chờ tôi trả lời rồi mới hỏi câu tiếp theo để khai thác sâu hơn.
+2. Sau khoảng 4-5 câu hỏi, nhận xét về từ vựng, ngữ pháp và độ trôi chảy trong các câu trả lời của tôi.
+3. Chấm điểm band ước lượng (thang 0-9) và đưa ra 2-3 gợi ý cụ thể để tôi cải thiện.
+
+Hãy bắt đầu bằng câu hỏi đầu tiên ngay bây giờ.`;
+    }
+
+    function copySpeakingPrompt(lessonId) {
+      const el = document.getElementById(`speakingPrompt_${lessonId}`);
+      const btn = document.getElementById(`copyPromptBtn_${lessonId}`);
+      if (!el || !btn) return;
+      navigator.clipboard.writeText(el.textContent).then(() => {
+        const original = btn.textContent;
+        btn.textContent = '✅ Đã sao chép!';
+        setTimeout(() => { btn.textContent = original; }, 2000);
+      }).catch(() => {});
+    }
+
+    function renderIeltsExerciseBlock(lesson) {
+      const test = lesson.ielts_test;
+      const s = lesson.my_submission;
+      const isResubmit = s && s.status === 'needs_resubmit';
+      const isSubmitted = !!(s && !isResubmit);
+      const resubmitBanner = isResubmit
+        ? `<div class="ex-resubmit-banner">⚠️ Giáo viên yêu cầu bạn nộp lại${s.teacher_note ? ': ' + escHtml(s.teacher_note) : '.'}</div>`
+        : '';
+
+      if (!test) {
+        return `<div class="ex-block"><div class="ex-title">📖 Bài tập</div><div style="color:var(--text-muted);">Đề thi không còn tồn tại.</div></div>`;
+      }
+
+      const resultHeaderHtml = isSubmitted ? `
+      <div class="ex-sub-heading">Kết quả</div>
+      <div class="ex-result-header">
+        <span class="ex-score">${s.score}/${s.max_score} điểm</span>
+        <span class="ex-badge ${s.passed ? 'pass' : 'fail'}">${s.passed ? '✅ Đạt' : '❌ Chưa đạt'}</span>
+        ${s.xp_awarded ? `<span class="ex-xp">+${s.xp_awarded} XP</span>` : ''}
+      </div>
+      ${s.status === 'finalized' && s.teacher_note ? `<div class="ex-teacher-note">👩‍🏫 Nhận xét giáo viên: ${escHtml(s.teacher_note)}</div>` : ''}` : '';
+
+      if (test.skill === 'reading' || test.skill === 'listening') {
+        const isListening = test.skill === 'listening';
+        const icon = isListening ? '🎧' : '📖';
+        const questionsSource = isSubmitted ? (s.ielts_review || []) : (lesson.ielts_questions || []);
+        if (!questionsSource.length) {
+          return `<div class="ex-block"><div class="ex-title">${icon} ${escHtml(test.title)}</div><div style="color:var(--text-muted);">Đề thi chưa có câu hỏi.</div></div>`;
+        }
+        const passages = test.passages || [];
+        const passageTabsHtml = passages.length > 1 ? `
+      <div class="ex-ielts-tabs">
+        ${passages.map((p, i) => `<button type="button" class="ex-ielts-tab ${i === 0 ? 'active' : ''}" data-ref="${escHtml(p.ref)}" onclick="switchIeltsPassageTab(${lesson.id}, '${escHtml(p.ref)}', this)">${escHtml(p.title || 'Bài ' + p.ref)}</button>`).join('')}
+      </div>` : '';
+        const passagesHtml = passages.map((p, i) => `
+      <div class="ex-ielts-passage" data-ref="${escHtml(p.ref)}" style="${i === 0 ? '' : 'display:none;'}">
+        <div class="ex-ielts-passage-title">${escHtml(p.title || '')}</div>
+        ${isListening
+          ? (p.video_url ? `<div class="video-wrap"><iframe src="${escHtml(toEmbedUrl(p.video_url))}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div>` : '')
+          : `<div class="ex-ielts-passage-body">${p.body_html || ''}</div>`}
+      </div>`).join('');
+        const firstRef = passages[0]?.ref;
+        const questionsHtml = questionsSource.map((q, i) => {
+          const hiddenStyle = passages.length > 1 && q.passage_ref && q.passage_ref !== firstRef ? 'display:none;' : '';
+          return isSubmitted
+            ? renderIeltsQuestionReview(q, i, hiddenStyle)
+            : `
+      <div class="ex-quiz-q ex-ielts-q" data-ref="${escHtml(q.passage_ref || '')}" style="${hiddenStyle}">
+        <div class="ex-quiz-q-text">Câu ${i + 1}: ${escHtml(q.question_text)}</div>
+        ${renderIeltsQuestionInput(q)}
+      </div>`;
+        }).join('');
+
+        const actionHtml = isSubmitted ? '' : `
+      <div class="ex-error" id="exError_${lesson.id}" style="display:none;"></div>
+      <button class="btn btn-primary" id="exSubmitBtn_${lesson.id}" onclick="handleExerciseSubmit(${lesson.id})">${isListening ? 'Nộp bài nghe' : 'Nộp bài đọc'}</button>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">⚠️ Bạn chỉ được nộp 1 lần cho bài tập này.</div>`;
+
+        return `
+      <div class="ex-block">
+        <div class="ex-title">${icon} ${escHtml(test.title)}</div>
+        ${resubmitBanner}
+        ${test.description ? `<div class="ex-prompt">${escHtml(test.description)}</div>` : ''}
+        ${passageTabsHtml}
+        ${passagesHtml}
+        ${questionsHtml}
+        ${resultHeaderHtml}
+        ${actionHtml}
+      </div>`;
+      }
+
+      if (test.skill === 'speaking') {
+        const chatUrl = test.chatgpt_url && test.chatgpt_url.trim() ? test.chatgpt_url.trim() : 'https://chatgpt.com/';
+        const speakingPrompt = buildSpeakingPrompt(test);
+        const actionHtml = isSubmitted ? '' : `
+      <div class="ex-error" id="exError_${lesson.id}" style="display:none;"></div>
+      <button class="btn btn-primary" id="exSubmitBtn_${lesson.id}" onclick="handleExerciseSubmit(${lesson.id})">✅ Đã hoàn thành</button>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Tự luyện xong thì bấm nút này để nhận XP — không có bài chấm điểm.</div>`;
+
+        return `
+      <div class="ex-block">
+        <div class="ex-title">🗣️ ${escHtml(test.title)}</div>
+        ${resubmitBanner}
+        ${test.description ? `<div class="ex-prompt">${escHtml(test.description)}</div>` : ''}
+        <div class="ex-sub-heading">Prompt luyện nói cùng ChatGPT — sao chép rồi dán vào ChatGPT</div>
+        <div class="ex-answer-box" id="speakingPrompt_${lesson.id}">${escHtml(speakingPrompt)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button type="button" class="btn btn-secondary" id="copyPromptBtn_${lesson.id}" onclick="copySpeakingPrompt(${lesson.id})">📋 Sao chép prompt</button>
+          <a class="btn btn-primary" href="${escHtml(chatUrl)}" target="_blank" rel="noopener">🤖 Mở ChatGPT để luyện nói →</a>
+        </div>
+        ${resultHeaderHtml}
+        ${actionHtml}
+      </div>`;
+      }
+
+      // Writing
+      const bf = s?.ielts_band_feedback;
+      const bandHtml = bf ? `
+      <div class="ex-sub-heading">Band-score theo tiêu chí</div>
+      <div class="ex-band-grid">
+        <div class="ex-band-item"><span>Overall</span><strong>${bf.band_overall ?? '—'}</strong></div>
+        <div class="ex-band-item"><span>Task Response</span><strong>${bf.band_task_response ?? '—'}</strong></div>
+        <div class="ex-band-item"><span>Coherence &amp; Cohesion</span><strong>${bf.band_coherence_cohesion ?? '—'}</strong></div>
+        <div class="ex-band-item"><span>Lexical Resource</span><strong>${bf.band_lexical_resource ?? '—'}</strong></div>
+        <div class="ex-band-item"><span>Grammar</span><strong>${bf.band_grammar ?? '—'}</strong></div>
+      </div>` : '';
+
+      const answerAreaHtml = isSubmitted ? `
+      <div class="ex-sub-heading">Bài làm của bạn</div>
+      <div class="ex-answer-box">${escHtml(s.answer_text)}</div>
+      ${bandHtml}
+      ${resultHeaderHtml}
+      <div class="ex-sub-heading">Vấn đề cần sửa</div>
+      <ul class="ex-list issues">${s.issues.length ? s.issues.map(i => `<li>${escHtml(i)}</li>`).join('') : '<li style="list-style:none;margin-left:-18px;color:var(--text-muted);">Không có vấn đề nào — làm tốt lắm!</li>'}</ul>
+      <div class="ex-sub-heading">Gợi ý để bạn tự sửa</div>
+      <ul class="ex-list hints">${s.hints.length ? s.hints.map(h => `<li>${escHtml(h)}</li>`).join('') : '<li style="list-style:none;margin-left:-18px;color:var(--text-muted);">Không có gợi ý thêm.</li>'}</ul>` : `
+      <textarea class="ex-textarea" id="exAnswer_${lesson.id}" placeholder="Nhập bài luận của bạn...">${isResubmit ? escHtml(s.answer_text) : ''}</textarea>
+      <div class="ex-error" id="exError_${lesson.id}" style="display:none;"></div>
+      <button class="btn btn-primary" id="exSubmitBtn_${lesson.id}" onclick="handleExerciseSubmit(${lesson.id})">Nộp bài viết</button>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">⚠️ Bạn chỉ được nộp 1 lần cho bài tập này — AI sẽ chấm điểm ngay khi nộp.</div>`;
+
+      return `
+      <div class="ex-block">
+        <div class="ex-title">✍️ ${escHtml(test.title)}</div>
+        ${resubmitBanner}
+        ${test.description ? `<div class="ex-prompt">${escHtml(test.description)}</div>` : ''}
+        ${test.writing_prompt ? `<div class="ex-prompt">${escHtml(test.writing_prompt)}</div>` : ''}
+        ${test.writing_image_url ? `<img src="${escHtml(test.writing_image_url)}" style="max-width:100%;border-radius:8px;margin-bottom:12px;">` : ''}
+        ${answerAreaHtml}
+      </div>`;
+    }
+
+    async function handleExerciseSubmit(lessonId) {
+      const lesson = lessons.find(l => l.id === lessonId);
+      const errorEl = document.getElementById(`exError_${lessonId}`);
+      const btn = document.getElementById(`exSubmitBtn_${lessonId}`);
+      const ieltsSkill = lesson.ielts_test?.skill;
+      const isIeltsReading = ieltsSkill === 'reading' || ieltsSkill === 'listening';
+      const isIeltsSpeaking = ieltsSkill === 'speaking';
+      const isQuiz = !lesson.ielts_test && lesson.exercise_type === 'quiz';
+      const submitLabel = isIeltsReading ? (ieltsSkill === 'listening' ? 'Nộp bài nghe' : 'Nộp bài đọc')
+        : isIeltsSpeaking ? '✅ Đã hoàn thành'
+        : isQuiz ? 'Nộp bài trắc nghiệm' : (lesson.ielts_test ? 'Nộp bài viết' : 'Nộp bài tập');
+      errorEl.style.display = 'none';
+
+      let body;
+      if (isIeltsSpeaking) {
+        body = { user_id: currentUser.id };
+      } else if (isIeltsReading) {
+        const answers = {};
+        let allAnswered = true;
+        (lesson.ielts_questions || []).forEach(q => {
+          let val;
+          if (q.question_type === 'mc') {
+            const picked = document.querySelector(`input[name="ielts_q_${q.id}"]:checked`);
+            val = picked ? picked.value : '';
+          } else {
+            val = (document.getElementById(`ielts_q_${q.id}`)?.value || '').trim();
+          }
+          if (!val) allAnswered = false; else answers[q.id] = val;
+        });
+        if (!allAnswered) {
+          errorEl.textContent = 'Vui lòng trả lời tất cả câu hỏi.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        body = { user_id: currentUser.id, answers };
+      } else if (isQuiz) {
+        const answers = {};
+        let allAnswered = true;
+        (lesson.quiz_questions || []).forEach(q => {
+          const picked = document.querySelector(`input[name="q_${q.id}"]:checked`);
+          if (!picked) allAnswered = false; else answers[q.id] = Number(picked.value);
+        });
+        if (!allAnswered) {
+          errorEl.textContent = 'Vui lòng trả lời tất cả câu hỏi.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        body = { user_id: currentUser.id, answers };
+      } else {
+        const textarea = document.getElementById(`exAnswer_${lessonId}`);
+        const answer = textarea.value.trim();
+        if (!answer) {
+          errorEl.textContent = 'Vui lòng nhập bài làm trước khi nộp.';
+          errorEl.style.display = 'block';
+          textarea.focus();
+          return;
+        }
+        body = { user_id: currentUser.id, answer };
+      }
+
+      btn.disabled = true;
+      btn.textContent = isIeltsSpeaking ? 'Đang lưu...' : (isQuiz || isIeltsReading) ? 'Đang chấm...' : '🤖 AI đang chấm bài...';
+      try {
+        const res = await fetch(`${API}/courses/lessons/${lessonId}/exercise/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }).then(r => r.json());
+        if (res.error) {
+          errorEl.textContent = res.error;
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = submitLabel;
+          return;
+        }
+        lesson.my_submission = res.my_submission;
+        if (res.my_submission.xp_awarded && currentUser) {
+          currentUser.xp = (currentUser.xp || 0) + res.my_submission.xp_awarded;
+          sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+        selectLesson(lessonId);
+      } catch (e) {
+        errorEl.textContent = 'Có lỗi xảy ra. Vui lòng thử lại.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = submitLabel;
+      }
+    }
+
+    function renderLessonList() {
+      document.getElementById('cvLessonList').innerHTML = lessons.map(l => `
+    <div class="lesson-row" data-id="${l.id}" onclick="selectLesson(${l.id})">
+      <div class="lesson-num">${l.order_num || '—'}</div>
+      <div class="lesson-info">
+        <div class="lesson-title">${escHtml(l.title)}</div>
+        <div class="lesson-dur">${l.duration_min ? l.duration_min + ' phút' : ''}${l.video_url ? ' · 🎬 Video' : ''}</div>
+      </div>
+    </div>`).join('');
+    }
+
+    function fmtPrice(p) { return !p ? 'Miễn phí' : Number(p).toLocaleString('vi-VN') + '₫'; }
+
+    function renderEnrollWrap(c) {
+      const wrap = document.getElementById('cvEnrollWrap');
+      if (c.enroll_status === 'pending') {
+        wrap.innerHTML = `<span class="cv-enroll-badge pending">⏳ Đang chờ admin duyệt</span>`;
+      } else if (c.visibility === 'private') {
+        const href = c.checkout_product_id ? `checkout.html?id=${c.checkout_product_id}` : '#';
+        wrap.innerHTML = `<a href="${href}" class="cv-enroll-btn">THANH TOÁN KHÓA HỌC</a>`;
+      } else {
+        wrap.innerHTML = `<button class="cv-enroll-btn" onclick="enrollCourse()">Đăng ký khóa học</button>`;
+      }
+    }
+
+    async function enrollCourse() {
+      const wrap = document.getElementById('cvEnrollWrap');
+      wrap.innerHTML = `<button class="cv-enroll-btn" disabled>Đang gửi...</button>`;
+      try {
+        const res = await fetch(`${API}/courses/${courseId}/enroll`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: currentUser.id }),
+        }).then(r => r.json());
+        if (res.error) {
+          wrap.innerHTML = `<div style="color:#ef4444;font-size:13px;">${escHtml(res.error)}</div>`;
+          return;
+        }
+        // Enrolled — reload so the page switches straight into the 2-column lesson view.
+        location.reload();
+      } catch (e) {
+        wrap.innerHTML = `<div style="color:#ef4444;font-size:13px;">Có lỗi xảy ra. Vui lòng thử lại.</div>`;
+      }
+    }
+
+    function renderLanding(c, lessonCount) {
+      document.getElementById('cvCover').style.background = c.cover_color || 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+      document.getElementById('cvLandingTitle').textContent = c.title || 'Khóa học';
+      document.getElementById('cvLandingDesc').textContent = c.description || '';
+      document.getElementById('cvInstructor').textContent = c.instructor || 'Admin';
+      document.getElementById('cvLessonCountMeta').textContent = `📚 ${lessonCount} bài học`;
+      const priceRow = document.getElementById('cvPriceRow');
+      if (c.visibility === 'private') {
+        const hasDiscount = c.compare_price > c.price;
+        const offPct = hasDiscount ? Math.round((1 - c.price / c.compare_price) * 100) : 0;
+        priceRow.innerHTML = `
+          <span class="cv-price-now">${fmtPrice(c.price)}</span>
+          ${hasDiscount ? `<span class="cv-price-compare">${fmtPrice(c.compare_price)}</span><span class="cv-price-off">-${offPct}%</span>` : ''}`;
+        priceRow.style.display = 'flex';
+      } else {
+        priceRow.style.display = 'none';
+      }
+      renderEnrollWrap(c);
+      document.getElementById('cvLanding').style.display = '';
+    }
+
+    async function loadPage() {
+      const params = new URLSearchParams(location.search);
+      courseId = Number(params.get('id'));
+      if (!courseId) { location.href = 'courses.html'; return; }
+
+      try {
+        const data = await fetch(`${API}/courses/${courseId}?user_id=${currentUser.id}`).then(r => r.json());
+        if (data.error || !data.course) { location.href = 'courses.html'; return; }
+        const c = data.course;
+
+        document.title = `${c.title} — AI AGENTS CC`;
+        document.getElementById('topbarTitle').innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>${escHtml(c.title)}`;
+        document.getElementById('mobTitle').textContent = c.title;
+        document.getElementById('cvCourseTitle').textContent = c.title;
+        document.getElementById('cvLoading').style.display = 'none';
+
+        lessons = data.lessons || [];
+
+        // Not enrolled yet — show the course landing (info + enroll/checkout) instead of content.
+        if (c.enroll_status !== 'approved') {
+          renderLanding(c, data.lesson_count || 0);
+          return;
+        }
+
+        if (!lessons.length) {
+          document.getElementById('cvGrid').style.display = '';
+          document.getElementById('cvLessonList').innerHTML = '<div style="padding:10px 6px;color:var(--text-muted);font-size:var(--fs-sm);">Chưa có bài học nào.</div>';
+          document.getElementById('cvContentCol').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Khóa học này chưa có bài học nào.</div>';
+          return;
+        }
+
+        document.getElementById('cvGrid').style.display = '';
+        renderLessonList();
+        selectLesson(lessons[0].id);
+      } catch (e) {
+        document.getElementById('cvLoading').innerHTML = '<div style="color:#ef4444;">⚠️ Không kết nối được server. Chạy: node server.js</div>';
+      }
+    }
+
+    loadPage();
+  </script>
+</body>
+
+</html>

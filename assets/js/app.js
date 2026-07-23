@@ -15,6 +15,45 @@ function closeSidebar() {
   document.body.style.overflow = '';
 }
 
+function openMainMenu() {
+  document.getElementById('mob-mainmenu')?.classList.add('open');
+  document.getElementById('mob-mainmenu-overlay')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMainMenu() {
+  document.getElementById('mob-mainmenu')?.classList.remove('open');
+  document.getElementById('mob-mainmenu-overlay')?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Dynamic community branding ─────────────────────────────
+(function applyCommunityBranding() {
+  const DEFAULT_NAME = 'AI AGENTS CC';
+
+  function replaceInTitle(name) {
+    if (document.title.includes(DEFAULT_NAME)) {
+      document.title = document.title.split(DEFAULT_NAME).join(name);
+    }
+  }
+
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    const name = (s.community_name || '').trim();
+    if (!name || name === DEFAULT_NAME) return;
+
+    replaceInTitle(name);
+    document.querySelectorAll('.sidebar-logo-text, .form-logo-name, .mob-brand-name, #aboutCommunityName').forEach(el => {
+      el.textContent = name;
+    });
+
+    // Some pages set document.title asynchronously after their own data loads
+    const titleEl = document.querySelector('title');
+    if (titleEl) {
+      new MutationObserver(() => replaceInTitle(name)).observe(titleEl, { childList: true });
+    }
+  }).catch(() => {});
+})();
+
 // Tab switching
 function setActiveTab(tabEl, groupSelector = '.tab-item') {
   const group = tabEl.closest('.tab-nav') || document.querySelector('.tab-nav');
@@ -93,6 +132,242 @@ document.addEventListener('DOMContentLoaded', () => {
     tab.addEventListener('click', () => setActiveTab(tab));
   });
 });
+
+// ── Theme toggle (sáng/tối) ──────────────────────────────────
+(function initThemeToggle() {
+  const MOON = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+  const SUN  = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke-linecap="round"/>';
+
+  function applyIcon(btn, isDark) {
+    const svg = btn.querySelector('svg');
+    if (svg) svg.innerHTML = isDark ? SUN : MOON;
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('theme', theme); } catch (e) {}
+    const btn = document.getElementById('themeToggle');
+    if (btn) applyIcon(btn, theme === 'dark');
+  }
+
+  function setup() {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    applyIcon(btn, document.documentElement.getAttribute('data-theme') === 'dark');
+    btn.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
+
+// ── Spaces sidebar section ───────────────────────────────────
+(function initSpacesNav() {
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function currentSpaceId() {
+    if (!location.pathname.endsWith('space.html')) return null;
+    return new URLSearchParams(location.search).get('id');
+  }
+
+  function insertInto(navEl, groups) {
+    if (!navEl) return;
+    navEl.querySelectorAll('.spaces-nav-group').forEach(el => el.remove());
+    if (!groups.length) return;
+
+    let target = null;
+    navEl.querySelectorAll('.nav-section-label').forEach(l => {
+      if (l.textContent.trim() === 'Học tập') target = l;
+    });
+    if (!target) return;
+
+    const activeId = currentSpaceId();
+    groups.forEach(g => {
+      const hasActive = g.spaces.some(s => String(s.id) === activeId);
+      const storeKey = 'spacesNavCollapsed:' + g.id;
+      const collapsed = !hasActive && localStorage.getItem(storeKey) === '1';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'spaces-nav-group' + (collapsed ? ' collapsed' : '');
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nav-section-label spaces-nav-label';
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      btn.innerHTML = `<span>${esc(g.name)}</span><svg class="spaces-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+      btn.addEventListener('click', () => {
+        const isCollapsed = wrap.classList.toggle('collapsed');
+        btn.setAttribute('aria-expanded', String(!isCollapsed));
+        localStorage.setItem(storeKey, isCollapsed ? '1' : '0');
+      });
+
+      const itemsWrap = document.createElement('div');
+      itemsWrap.className = 'spaces-nav-items';
+      g.spaces.forEach(s => {
+        const a = document.createElement('a');
+        a.href = `space.html?id=${s.id}`;
+        a.className = 'nav-item spaces-nav-item' + (String(s.id) === activeId ? ' active' : '');
+        a.innerHTML = `<span style="width:17px;flex-shrink:0;text-align:center;font-size:14px;">${esc(s.icon || '💬')}</span>${esc(s.name)}`;
+        itemsWrap.appendChild(a);
+      });
+
+      wrap.appendChild(btn);
+      wrap.appendChild(itemsWrap);
+      target.parentNode.insertBefore(wrap, target);
+    });
+  }
+
+  async function setup() {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+      const qs = user ? `?user_id=${user.id}` : '';
+      const { groups } = await fetch(`/api/space-groups${qs}`).then(r => r.json());
+      insertInto(document.getElementById('sidebar-nav'), groups || []);
+      insertInto(document.querySelector('#mob-sidebar nav'), groups || []);
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
+
+// ── Courses sidebar section (only courses the user has joined) ─
+(function initCoursesNav() {
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function currentCourseId() {
+    if (!location.pathname.endsWith('courses.html')) return null;
+    return new URLSearchParams(location.search).get('course_id');
+  }
+
+  function insertInto(navEl, courses) {
+    if (!navEl) return;
+    navEl.querySelectorAll('.courses-nav-item').forEach(el => el.remove());
+    if (!courses.length) return;
+
+    let anchor = null;
+    navEl.querySelectorAll('.nav-section-label').forEach(l => {
+      if (l.textContent.trim() === 'Học tập') anchor = l;
+    });
+    if (!anchor) return;
+
+    const activeId = currentCourseId();
+    let ref = anchor;
+    courses.forEach(c => {
+      const a = document.createElement('a');
+      a.href = `courses.html?course_id=${c.id}`;
+      a.className = 'nav-item courses-nav-item' + (String(c.id) === activeId ? ' active' : '');
+      a.innerHTML = `<span style="width:17px;flex-shrink:0;text-align:center;font-size:14px;">📖</span>${esc(c.title)}`;
+      ref.parentNode.insertBefore(a, ref.nextSibling);
+      ref = a;
+    });
+  }
+
+  async function setup() {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+      if (!user) return;
+      const { courses } = await fetch(`/api/courses?user_id=${user.id}`).then(r => r.json());
+      const mine = (courses || []).filter(c => c.enroll_status === 'approved');
+      insertInto(document.getElementById('sidebar-nav'), mine);
+      insertInto(document.querySelector('#mob-sidebar nav'), mine);
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
+
+// ── Collapsible "Học tập" sidebar section ────────────────────
+(function initLearningNavCollapse() {
+  const STORE_KEY = 'navCollapsed:hoctap';
+  const LABEL_TEXT = 'Học tập';
+
+  function findLabel(navEl) {
+    if (!navEl) return null;
+    return Array.from(navEl.querySelectorAll('.nav-section-label'))
+      .find(l => l.textContent.trim() === LABEL_TEXT) || null;
+  }
+
+  function setupLabel(label) {
+    if (!label || label.dataset.collapsible === '1') return;
+    label.dataset.collapsible = '1';
+    label.classList.add('nav-section-toggle');
+    label.setAttribute('role', 'button');
+    label.setAttribute('tabindex', '0');
+    label.innerHTML = `<span>${label.textContent.trim()}</span>` +
+      `<svg class="spaces-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">` +
+      `<path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+
+    function toggle() {
+      setState(localStorage.getItem(STORE_KEY) !== '1');
+    }
+    label.addEventListener('click', toggle);
+    label.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  }
+
+  function markItems(navEl, label) {
+    navEl.querySelectorAll('.nav-item.group-hoctap').forEach(el => el.classList.remove('group-hoctap'));
+    let sib = label.nextElementSibling;
+    while (sib && !sib.classList.contains('nav-section-label')) {
+      if (sib.classList.contains('nav-item')) sib.classList.add('group-hoctap');
+      sib = sib.nextElementSibling;
+    }
+  }
+
+  function applyState(collapsed) {
+    document.querySelectorAll('.nav-section-label.nav-section-toggle').forEach(label => {
+      label.classList.toggle('collapsed', collapsed);
+      label.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+
+  function setState(collapsed) {
+    try { localStorage.setItem(STORE_KEY, collapsed ? '1' : '0'); } catch (e) {}
+    applyState(collapsed);
+  }
+
+  function refresh() {
+    [document.getElementById('sidebar-nav'), document.querySelector('#mob-sidebar nav')].forEach(navEl => {
+      const label = findLabel(navEl);
+      if (!label) return;
+      setupLabel(label);
+      markItems(navEl, label);
+    });
+    applyState(localStorage.getItem(STORE_KEY) === '1');
+  }
+
+  function setup() {
+    refresh();
+    [document.getElementById('sidebar-nav'), document.querySelector('#mob-sidebar nav')].forEach(navEl => {
+      if (navEl) new MutationObserver(refresh).observe(navEl, { childList: true });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
 
 // ── Notification Bell ────────────────────────────────────────
 (function initNotifSystem() {

@@ -1,0 +1,1311 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngày 15 — Agent Trở Thành Cộng Sự Tức Thì</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1612;
+    --ink-soft: #4a4038;
+    --ink-mute: #8a7f75;
+    --paper: #faf7f2;
+    --paper-warm: #f2ece0;
+    --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f;
+    --accent-soft: #fce4dc;
+    --gold: #b8882d;
+    --gold-soft: #f8ecd0;
+    --sage: #5c6b4d;
+    --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200, 68, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184, 136, 45, 0.04) 0%, transparent 40%);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(250, 247, 242, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+    z-index: 100;
+    padding: 14px 0;
+  }
+
+  .topbar-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .topbar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  .topbar-nav {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .topbar-nav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 100px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .topbar-nav a:hover {
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+  }
+
+  .hero {
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .day-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .day-tag::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .goal-box {
+    background: var(--paper-warm);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin: 32px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .goal-box-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .goal-box p {
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .goal-box em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--accent);
+    display: block;
+    margin: 10px 0 4px;
+    font-weight: 500;
+  }
+
+  section {
+    margin-bottom: 56px;
+  }
+
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 64px 0 20px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink);
+  }
+
+  h2 .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+  }
+
+  .phase-header {
+    text-align: center;
+    margin: 80px 0 40px;
+    position: relative;
+  }
+
+  .phase-header::before,
+  .phase-header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .phase-header::before { left: 20%; }
+  .phase-header::after { right: 20%; }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .phase-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: var(--ink-soft);
+  }
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .story {
+    background: var(--gold-soft);
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(184, 136, 45, 0.2);
+  }
+
+  .story-label {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .story p {
+    color: var(--ink);
+    font-size: 16px;
+  }
+
+  .story p:last-child { margin-bottom: 0; }
+
+  .metaphor {
+    background: var(--sage-soft);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 10px;
+    border-left: 3px solid var(--sage);
+    position: relative;
+  }
+
+  .metaphor::before {
+    content: "💡";
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  .metaphor-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sage);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .metaphor blockquote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-top: 8px;
+    border: none;
+    padding: 0;
+  }
+
+  .tip {
+    background: var(--accent-soft);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 10px;
+    position: relative;
+    border-left: 3px solid var(--accent);
+  }
+
+  .tip::before {
+    content: "🔥";
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 18px;
+  }
+
+  .tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+    padding-right: 30px;
+  }
+
+  .tip p {
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .tip p:last-child { margin-bottom: 0; }
+
+  .prompt-box {
+    background: var(--ink);
+    color: #f5ede0;
+    padding: 0;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .prompt-header {
+    background: rgba(255,255,255,0.04);
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+
+  .copy-btn.copied {
+    background: var(--sage);
+    color: white;
+    border-color: var(--sage);
+  }
+
+  .prompt-body {
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #f5ede0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  ul, ol {
+    margin: 16px 0 20px 4px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin-bottom: 10px;
+    color: var(--ink-soft);
+  }
+
+  li::marker {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  .checklist {
+    background: white;
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--rule);
+  }
+
+  .checklist-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--rule);
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+
+  .check-box {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--ink-mute);
+    border-radius: 5px;
+    margin-top: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: white;
+  }
+
+  .check-item.done .check-box {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+
+  .check-item.done .check-box::after {
+    content: "✓";
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .check-item.done .check-text {
+    color: var(--ink-mute);
+    text-decoration: line-through;
+  }
+
+  .check-text {
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .success {
+    background: linear-gradient(135deg, var(--sage-soft) 0%, #f0f4e8 100%);
+    padding: 28px 32px;
+    margin: 32px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(92, 107, 77, 0.2);
+  }
+
+  .success-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sage);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .success-title::before {
+    content: "✓";
+    background: var(--sage);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+  }
+
+  .success ul {
+    margin: 0;
+    padding-left: 4px;
+    list-style: none;
+  }
+
+  .success li {
+    padding: 6px 0;
+    color: var(--ink);
+    font-weight: 500;
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .success li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--sage);
+    font-weight: bold;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--paper-deep);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .signal-card {
+    background: white;
+    padding: 20px 24px;
+    margin: 14px 0;
+    border-radius: 10px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+  }
+
+  .signal-card-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .signal-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .signal-card-desc {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+
+  .signal-card-example {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 15px;
+    padding: 10px 14px;
+    background: var(--accent-soft);
+    border-radius: 6px;
+    margin: 0;
+  }
+
+  .file-card {
+    background: white;
+    padding: 18px 22px;
+    margin: 14px 0;
+    border-radius: 10px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+  }
+
+  .file-card-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .file-card-role {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .file-card-desc {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    text-align: center;
+    border-top: 1px solid var(--rule);
+  }
+
+  .footer-quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .footer-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 32px 20px 100px; }
+    .hero { margin-bottom: 40px; padding-bottom: 28px; }
+    h1 { font-size: 34px; }
+    h2 { font-size: 24px; margin-top: 48px; }
+    h3 { font-size: 19px; }
+    .phase-title { font-size: 26px; }
+    .phase-header::before, .phase-header::after { width: 30px; }
+    .phase-header::before { left: 10%; }
+    .phase-header::after { right: 10%; }
+    .topbar-nav { gap: 2px; }
+    .topbar-nav a { padding: 6px 8px; font-size: 12px; }
+    .topbar-label { display: none; }
+    .story, .success { padding: 22px 22px; }
+    .metaphor, .tip, .checklist { padding: 20px 22px; }
+    .prompt-body { font-size: 13px; padding: 16px 20px; }
+  }
+
+  @media print {
+    .topbar, .copy-btn { display: none; }
+    body { background: white; }
+    .prompt-box { background: #f0f0f0; color: #000; border: 1px solid #ccc; }
+    .prompt-body { color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">21-Day Challenge</div>
+    <nav class="topbar-nav">
+      <a href="#phase1">1 · Việc</a>
+      <a href="#phase2">2 · Bộ não</a>
+      <a href="#phase3">3 · Giọng</a>
+      <a href="#phase4">4 · Thói quen</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 15 · Tuần 3</div>
+  <h1>
+    Agent Trở Thành<br>
+    Cộng Sự Tức Thì
+  </h1>
+  <p class="hero-sub">
+    Nhiệm vụ trước bạn cho agent <em>cánh tay</em> (MCP). Hôm nay cho nó <em>việc cụ thể</em>, <em>giọng riêng</em>, và <em>thói quen chủ động</em>. Lần đầu agent không đợi bạn nhắn — nó tự nhắn khi có chuyện xảy ra.
+  </p>
+</header>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Đang làm việc khác, bỗng Telegram tự bật một trong những tin kiểu này:</p>
+  <em>"Có đơn mới vừa vào: 450k của chị Hà, 2 sản phẩm."</em>
+  <em>"Có người mới điền form: anh Minh, SĐT 0903xxx. Đây là khách thứ 5 hôm nay."</em>
+  <em>"8h sáng. Tối qua chốt 3 đơn, tổng 1.2tr. Hôm nay bạn chưa có việc nào đang chờ xử lý."</em>
+  <p>→ Agent tự theo dõi business, tự nhắn bạn khi có chuyện — <strong>không cần bạn hỏi trước</strong>.</p>
+</div>
+
+<div class="story">
+  <div class="story-label">Sự khác biệt của ngày hôm nay</div>
+  <p>Đến giờ agent <strong>phản ứng</strong> — bạn nhắn gì, nó làm đó. Hôm nay agent <strong>chủ động</strong> — tự biết chuyện và tự báo.</p>
+  <p>Nếu bạn chưa có team, <strong>agent chính là cộng sự đầu tiên</strong> của bạn. Nếu bạn đã có team, agent thành người giữ mắt giúp cả team — không bao giờ ngủ quên việc.</p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Tinh thần AI-First (để AI làm — mình chỉ duyệt) cho cả ngày</div>
+  <p>Hôm nay <strong>nhẹ hơn nhiệm vụ trước</strong>. Không phải đưa code mới lên VPS, không đụng VPS, không SSL. Bạn chỉ cần:</p>
+  <ol style="margin: 10px 0; padding-left: 20px;">
+    <li><strong>Agent coding</strong> thêm 1 MCP function nhỏ (không tạo bảng mới)</li>
+    <li><strong>Agent coding</strong> viết nháp các file MD cho goClaw</li>
+    <li><strong>Bạn</strong> tải file + thiết lập Heartbeat qua Dashboard (bấm chuột, không gõ lệnh)</li>
+  </ol>
+  <p>Tổng thời gian: ~2-3 giờ. Chỗ duy nhất bạn phải tự quyết: <strong>"Agent cần nhắn tôi khi có chuyện gì?"</strong></p>
+</div>
+
+<!-- ========= PHẦN 1: CÔNG VIỆC ========= -->
+
+<div class="phase-header" id="phase1">
+  <span class="phase-label">Phần Một</span>
+  <div class="phase-title">Cho agent một việc dễ nhất để bắt đầu</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Chọn 1 tín hiệu để agent theo dõi
+  </h2>
+
+  <p>Không cần nghĩ lớn. Ngày đầu tiên agent làm việc <em>chủ động</em>, mục tiêu chỉ là <strong>một tín hiệu đơn giản</strong> — khi nó xảy ra, agent nhắn bạn.</p>
+
+  <p>3 lựa chọn dễ nhất — chọn 1 hợp với business của bạn:</p>
+
+  <div class="signal-card">
+    <div class="signal-card-tag">Tín hiệu 01 · Đơn mới</div>
+    <div class="signal-card-title">Có đơn hàng vừa vào</div>
+    <div class="signal-card-desc">Data bạn đã có sẵn (bảng <code>orders</code> từ nhiệm vụ Sepay). Chỉ cần thêm 1 MCP function đọc đơn mới trong X phút gần đây. Agent nhắn bạn khi có đơn.</div>
+    <p class="signal-card-example">"Đơn mới: chị Hà, 450k, 2 sản phẩm. Tổng hôm nay: 3 đơn."</p>
+  </div>
+
+  <div class="signal-card">
+    <div class="signal-card-tag">Tín hiệu 02 · Form/lead mới</div>
+    <div class="signal-card-title">Có người mới điền form</div>
+    <div class="signal-card-desc">Data bạn đã có sẵn (bảng <code>waitlist</code> hoặc <code>customers</code> từ nhiệm vụ form). Chỉ cần thêm 1 MCP function đọc lead mới. Agent nhắn bạn.</div>
+    <p class="signal-card-example">"Anh Minh vừa điền form, SĐT 0903xxx. Khách thứ 5 hôm nay."</p>
+  </div>
+
+  <div class="signal-card">
+    <div class="signal-card-tag">Tín hiệu 03 · Báo cáo sáng</div>
+    <div class="signal-card-title">Tổng kết 24h qua</div>
+    <div class="signal-card-desc">Đơn giản nhất — không cần theo dõi tức thì. Cron chạy 8h mỗi sáng, agent tổng hợp đơn + khách + doanh thu tối qua. Phù hợp nếu business bạn chậm, không cần biết ngay lập tức.</div>
+    <p class="signal-card-example">"8h sáng. Tối qua chốt 3 đơn, 1.2tr. 2 khách mới điền form."</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Nên chọn Tín hiệu 01 hoặc 02</div>
+    <p>Vì <strong>nó bắn ra tức thì khi có chuyện</strong> — cho bạn thấy ngay tính tức thì. Tín hiệu 03 dễ nhất nhưng chỉ chạy 1 lần/ngày, ít cảm giác bất ngờ.</p>
+    <p>Muốn hăng hái? <strong>Làm cả 3</strong> — 1 nhắn tức thì (01 hoặc 02) + 1 báo sáng (03).</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Vibe thêm 1 MCP function
+  </h2>
+
+  <p>Mở agent coding ngay trong thư mục website trên máy. Dán đoạn hướng dẫn đơn giản này vào agent:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Thêm MCP function (AI-First)</span>
+      <button class="copy-btn" data-copy="p2">COPY</button>
+    </div>
+    <div class="prompt-body" id="p2">Tôi muốn agent AI của tôi (qua goClaw + Telegram) tự nhắn tôi khi có chuyện xảy ra trong business.
+
+Tín hiệu tôi chọn: [điền Tín hiệu 01, 02, 03 — hoặc mô tả ngắn use case riêng]
+
+Trước khi code, hãy:
+
+1. ĐỌC codebase hiện tại — brain.db + MCP server từ nhiệm vụ trước. Cho tôi biết đang có bảng gì, function MCP gì.
+
+2. ĐỀ XUẤT plan:
+   - Có cần thêm cột nào vào bảng hiện có không (ví dụ: cờ "đã_nhắn" để không nhắn trùng)?
+   - Cần thêm MCP function nào? (tên + input + output)
+   - KHÔNG tạo bảng mới, KHÔNG tạo trang admin mới — chỉ mở rộng cái đã có.
+
+3. Sau khi tôi duyệt plan, code + đưa lên VPS + thử nhanh để chắc function trả đúng.
+
+Mục tiêu: giữ đơn giản nhất có thể. Tôi không cần tính năng phức tạp — chỉ cần 1 function để agent đọc được tín hiệu này.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Đừng tự viết prompt dài hơn</div>
+    <p>Agent coding đã hiểu codebase của bạn. Bạn chỉ cần <strong>nói mục tiêu ngắn gọn</strong>. Prompt dài quá sẽ làm nó bị bó khuôn, khó sáng tạo giải pháp phù hợp.</p>
+  </div>
+</section>
+
+<!-- ========= PHẦN 2: BỘ NÃO ========= -->
+
+<div class="phase-header" id="phase2">
+  <span class="phase-label">Phần Hai</span>
+  <div class="phase-title">Nâng cấp bộ não thứ 2</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Hiểu sự nâng cấp
+  </h2>
+
+  <div class="story">
+    <div class="story-label">Bộ não thứ 2 của bạn đang ở đâu?</div>
+    <p>Từ <strong>Ngày 5</strong> bạn đã xây <em>bộ não thứ 2</em> — file <code>brain.db</code> chứa brand voice, knowledge, business info. Nó đang <strong>nằm trên máy bạn</strong>, im lặng.</p>
+    <p>Hôm nay bạn <strong>đánh thức nó dậy và kết nối với goClaw</strong>. Từ giờ, agent đọc được brand voice, biết giọng bạn, biết nguyên tắc bạn — lần đầu agent nói chuyện <em>"như bạn"</em>, không phải ChatGPT generic.</p>
+  </div>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Hiểu kiểu đơn giản nhất</div>
+    <blockquote>
+      brain.db = <strong>cuốn sổ tay của bạn ở nhà</strong>. goClaw = <strong>cộng sự ở văn phòng</strong>. Hôm nay bạn <em>photocopy cuốn sổ, mang qua văn phòng, đưa cho cộng sự đọc</em>. Vậy thôi.
+    </blockquote>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    Export brain.db ra markdown
+  </h2>
+
+  <p>goClaw đọc được markdown, không đọc được SQLite trực tiếp. Cần chuyển đổi. AI làm giúp:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Export brain.db → MD</span>
+      <button class="copy-btn" data-copy="p4">COPY</button>
+    </div>
+    <div class="prompt-body" id="p4">Mở thư mục my-brain trên máy tôi. Đọc file brain.db.
+
+Làm giúp tôi:
+
+1. Tạo thư mục vault-ready/ mới.
+
+2. Đọc các table trong brain.db và xuất ra file markdown — mỗi table 1 file:
+   - brand_voice → brand-voice.md (giọng văn, tone, từ hay dùng/tránh)
+   - knowledge → knowledge-base.md (kiến thức chuyên môn)
+   - business → my-business.md (sản phẩm, khách hàng mục tiêu)
+   - các table khác có gì thì xuất hết (faq, objections, products...)
+
+3. Dùng cú pháp [[wikilinks]] khi 1 file nhắc tới nội dung của file khác — giúp goClaw liên kết các khái niệm.
+
+4. Viết file index.md — mục lục liệt kê tất cả file, có wikilink.
+
+5. Báo tôi có bao nhiêu file, bao nhiêu từ.
+
+Không có table nào thì skip. Không tự tạo data giả.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Không có brain.db?</div>
+    <p>Có thể bạn đã skip Ngày 5 hoặc lưu brand voice ở chỗ khác. Dùng prompt này thay thế:</p>
+    <p style="margin-top: 8px;"><em>"Tạo thư mục vault-ready/ với 3 file markdown: brand-voice.md, my-business.md, knowledge-base.md. Hỏi tôi từng câu ngắn (tone, từ dùng, sản phẩm, USP, 3 kiến thức quan trọng), viết file dựa trên câu trả lời. Làm từng file một."</em></p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Upload vào Knowledge Vault
+  </h2>
+
+  <p>Knowledge Vault là thư viện tài liệu trong goClaw. Agent dùng nó để <strong>tra cứu mỗi khi trả lời</strong> — giống Google search riêng cho agent.</p>
+
+  <h3>Cách 1 — Tải lên qua Dashboard (đơn giản nhất)</h3>
+
+  <ol>
+    <li>Mở <code>https://app.yourdomain.com</code> → đăng nhập goClaw Dashboard.</li>
+    <li>Sidebar → <strong>Core</strong> → <strong>Knowledge Vault</strong> (hoặc <strong>Documents</strong> tùy phiên bản).</li>
+    <li>Bấm <strong>Upload</strong> → chọn từng file trong thư mục <code>vault-ready/</code>.</li>
+    <li>Chờ trạng thái chuyển <em>đã xử lý xong</em>.</li>
+  </ol>
+
+  <h3>Cách 2 — Đồng bộ hệ thống file (nếu Cách 1 không có giao diện tải lên)</h3>
+
+  <p>Bảo agent coding làm giúp:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Đồng bộ hệ thống file</span>
+      <button class="copy-btn" data-copy="p5">COPY</button>
+    </div>
+    <div class="prompt-body" id="p5">Tôi muốn nạp các file MD vào Knowledge Vault của goClaw qua đồng bộ hệ thống file.
+
+Thông tin VPS: [điền IP, SSH user]
+
+Làm giúp:
+1. Đọc tài liệu tại https://docs.goclaw.sh/ tìm đường dẫn thư mục vault (thường ~/.goclaw/vault/ hoặc /opt/goclaw/vault/).
+2. SSH vào VPS, kiểm tra thư mục. Chưa có thì tạo.
+3. SCP tất cả file trong vault-ready/ lên thư mục vault trên VPS.
+4. Kiểm tra goClaw đã tự xử lý chưa (qua Dashboard hoặc nhật ký). Nếu chưa, hướng dẫn tôi tải lại.
+
+Làm từng bước một.</div>
+  </div>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Lạc trong Dashboard?</div>
+    <blockquote>
+      Chụp màn hình chỗ bạn đang đứng → dán vào Claude → hỏi <em>"tôi đang tìm Knowledge Vault để tải file, bấm đâu tiếp?"</em>. Nhanh hơn đi tìm menu.
+    </blockquote>
+  </div>
+</section>
+
+<!-- ========= PHẦN 3: GIỌNG ========= -->
+
+<div class="phase-header" id="phase3">
+  <span class="phase-label">Phần Ba</span>
+  <div class="phase-title">Cho agent giọng riêng</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Hiểu 4 Context Files cốt lõi
+  </h2>
+
+  <p>Ngoài Knowledge Vault (tra cứu khi cần), mỗi agent có một bộ <strong>file định nghĩa nó là ai</strong> — gọi là Context Files. Đây là file agent <em>đọc mỗi lần trước khi trả lời</em>. Hôm nay viết 4 file quan trọng nhất:</p>
+
+  <div class="file-card">
+    <div class="file-card-name">SOUL.md</div>
+    <div class="file-card-role">Linh hồn — "Tôi là ai"</div>
+    <div class="file-card-desc">Cá tính, giọng điệu, phong cách nói chuyện. Đây là file quyết định agent nói <em>"như chị Lan bán khóa tự tin, gần gũi"</em> hay <em>"như trợ lý robot cứng nhắc"</em>.</div>
+  </div>
+
+  <div class="file-card">
+    <div class="file-card-name">USER.md</div>
+    <div class="file-card-role">Về bạn — "Tôi đang làm việc với ai"</div>
+    <div class="file-card-desc">Tên bạn, business đang làm, cách giao tiếp ưa thích. Agent gọi bạn đúng tên, nhớ bạn là ai, adjust theo thói quen.</div>
+  </div>
+
+  <div class="file-card">
+    <div class="file-card-name">AGENTS.md</div>
+    <div class="file-card-role">Nguyên tắc — "Tôi được/không được làm gì"</div>
+    <div class="file-card-desc">Hướng dẫn vận hành — agent được phép làm gì (nhắn báo đơn mới, trả lời khách), không được làm gì (giảm giá tự tiện, hứa ngày ship, xóa dữ liệu). Hàng rào an toàn.</div>
+  </div>
+
+  <div class="file-card">
+    <div class="file-card-name">HEARTBEAT.md</div>
+    <div class="file-card-role">Thói quen — "Tôi tự kiểm tra gì mỗi 5-10 phút"</div>
+    <div class="file-card-desc">Checklist agent đọc mỗi lần "tim đập". Đây là file <em>kích hoạt tính tức thì</em> — nó bảo agent tự gọi MCP function đã build ở Phần 1 để kiểm tra có tín hiệu mới không.</div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Để AI viết nháp 4 file
+  </h2>
+
+  <p>Không tự viết — để AI đọc brain.db và soạn sẵn 4 file. Dán vào agent coding:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Draft 4 Context Files</span>
+      <button class="copy-btn" data-copy="p7">COPY</button>
+    </div>
+    <div class="prompt-body" id="p7">Tôi cần bạn viết nháp 4 Context Files cho agent goClaw. Đọc brain.db trong thư mục my-brain/ trước.
+
+Quan trọng: ở Phần 1 hôm nay tôi đã thêm MCP function: [tên function + ý nghĩa, ví dụ: "get_new_orders_since_last_check() — đọc đơn mới trong X phút gần đây"]. File HEARTBEAT.md phải gắn với function này.
+
+Tạo thư mục context-files/ mới, viết 4 file:
+
+1. SOUL.md — personality agent dựa trên brand_voice trong brain.db. Các phần: # Who I Am, # How I Talk, # What I Care About, # Phrases I Use, # Phrases I Avoid.
+
+2. USER.md — về tôi (user), dựa trên business + brand_voice. Các phần: # My Name, # What I'm Building, # How I Like To Be Talked To.
+
+3. AGENTS.md — hướng dẫn vận hành. Các phần: # What You CAN Do (5 việc agent được phép, BAO GỒM gọi MCP function để chủ động nhắn tôi), # What You MUST NOT Do (3 việc cấm), # When Uncertain (mặc định: hỏi tôi trước khi hành động).
+
+4. HEARTBEAT.md — file QUAN TRỌNG NHẤT. Nội dung:
+
+# Every Heartbeat Check
+
+Bạn là cộng sự của tôi. Mỗi lần tim đập:
+
+1. Gọi [tên MCP function đã build ở Phần 1]
+2. Nếu có kết quả (có đơn mới / form mới / vv):
+   → Nhắn tôi trên Telegram, kèm đầy đủ context cần thiết
+   → Giọng theo SOUL.md
+3. Nếu không có gì mới: im lặng, không spam.
+
+Quy tắc vàng:
+- Chỉ nhắn khi có VIỆC GIÁ TRỊ — không nhắn "không có gì mới"
+- Không nhắn cùng 1 thứ 2 lần — cơ chế đã_nhắn trong database lo việc đó
+- Tone luôn theo SOUL.md
+
+Mỗi file ngắn (50-150 dòng), tiếng Việt, giọng tự nhiên theo brand_voice.
+
+Sau khi xong, show nội dung từng file, hỏi tôi có chỉnh gì không — đặc biệt HEARTBEAT.md vì nó quyết định cách agent làm việc.</div>
+  </div>
+
+  <p><strong>Sau khi AI viết nháp xong:</strong> đọc kỹ, chỉnh 10-20% cho đúng giọng thật. Chỗ nào nghe <em>"giống AI viết"</em> thì viết lại.</p>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    Upload 4 file vào agent
+  </h2>
+
+  <ol>
+    <li>Dashboard → Sidebar → <strong>Core</strong> → <strong>Agents</strong>.</li>
+    <li>Chọn agent Telegram bạn đã tạo ở nhiệm vụ trước.</li>
+    <li>Tab <strong>Files</strong> (hoặc <strong>Context</strong> tùy phiên bản).</li>
+    <li>Tải lên (hoặc dán nội dung) từng file: <code>SOUL.md</code>, <code>USER.md</code>, <code>AGENTS.md</code>, <code>HEARTBEAT.md</code>.</li>
+    <li>Lưu.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Không thấy thẻ Files?</div>
+    <p>Chụp màn hình Dashboard agent của bạn → dán vào Claude → <em>"tôi muốn tải lên 4 file MD làm context cho agent này, thẻ nào?"</em>. Mỗi version goClaw bố cục hơi khác.</p>
+    <p>Nếu không có UI: bảo agent coding SSH vào VPS, copy file vào thư mục context của agent (thường <code>~/.goclaw/agents/[tên-agent]/</code>).</p>
+  </div>
+</section>
+
+<!-- ========= PHẦN 4: THÓI QUEN ========= -->
+
+<div class="phase-header" id="phase4">
+  <span class="phase-label">Phần Bốn</span>
+  <div class="phase-title">Cho agent thói quen chủ động</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Bật Heartbeat
+  </h2>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Heartbeat là gì?</div>
+    <blockquote>
+      Giống <strong>tim đập</strong> — cứ đều đặn N phút một lần, agent tự đọc file <code>HEARTBEAT.md</code> và làm theo checklist. Đây là cơ chế biến agent từ <em>phản ứng</em> thành <em>chủ động</em>.
+    </blockquote>
+  </div>
+
+  <ol>
+    <li>Dashboard → Agent detail (trang chi tiết agent) → thẻ <strong>Config</strong> (cấu hình).</li>
+    <li>Phần <strong>Heartbeat</strong> → bật <em>Enabled</em> (kích hoạt).</li>
+    <li><strong>Interval</strong> (khoảng thời gian giữa 2 lần tim đập): đặt <code>5m</code> (5 phút) — đủ tức thì để cảm nhận, chưa tốn nhiều chi phí AI.</li>
+    <li><strong>Active Hours</strong> (giờ hoạt động): chọn giờ agent làm việc (ví dụ 7h-23h) — tránh chạy lúc 3h sáng tốn chi phí AI vô ích.</li>
+    <li><strong>Model</strong> (chọn mô hình AI): chọn model rẻ cho Heartbeat (Haiku hoặc GPT-4o-mini) — Heartbeat chỉ kiểm tra nhẹ, không cần Sonnet.</li>
+    <li>Lưu.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 10</span>
+    (Tùy chọn) Thêm cron báo sáng
+  </h2>
+
+  <p>Heartbeat lo việc bất ngờ. Cron lo việc đúng giờ. Nếu bạn muốn có thêm <strong>báo sáng cố định 8h</strong> mỗi ngày, thiết lập thêm 1 cron:</p>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Cron là gì?</div>
+    <blockquote>
+      Giống <strong>đồng hồ báo thức công ty</strong> — đặt <em>"đúng 8h sáng rung chuông"</em>, agent nghe chuông là chạy task đã giao. Khác Heartbeat ở chỗ Cron <em>đúng giờ cố định</em>, Heartbeat <em>đều đặn không cố định</em>.
+    </blockquote>
+  </div>
+
+  <ol>
+    <li>Dashboard → <strong>Automation</strong> (tự động hoá) hoặc <strong>Cron Jobs</strong> (lịch tự động).</li>
+    <li>Bấm <strong>Add</strong> (thêm mới). Điền:
+      <ul style="margin-top: 6px;">
+        <li><strong>Name</strong> (tên): <code>morning-briefing</code></li>
+        <li><strong>Schedule</strong> (lịch chạy): <code>0 8 * * *</code> (8h sáng mỗi ngày)</li>
+        <li><strong>Timezone</strong> (múi giờ): <code>Asia/Ho_Chi_Minh</code></li>
+        <li><strong>Agent</strong>: chọn agent Telegram của bạn</li>
+        <li><strong>Message</strong> (tin nhắn giao cho agent): <code>Chào sáng. Tổng kết 24h qua: có bao nhiêu đơn, doanh thu, khách mới. Báo ngắn gọn.</code></li>
+        <li><strong>Channel / Target</strong> (kênh gửi / người nhận): Telegram chat của bạn</li>
+      </ul>
+    </li>
+    <li>Lưu.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Không biết cú pháp cron?</div>
+    <p>Hỏi AI: <em>"Cho tôi cron expression cho 8h sáng mỗi ngày, Việt Nam."</em> → AI trả <code>0 8 * * *</code> + timezone. Xong.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 11</span>
+    Test 3 cấp
+  </h2>
+
+  <p>Đừng đợi mai test. Làm 3 thử nhanh ngay bây giờ:</p>
+
+  <h3>Test 1 — Giọng (kiểm tra Context Files)</h3>
+  <p>Trong Telegram, hỏi agent:</p>
+  <ul>
+    <li><em>"Bạn là ai?"</em> → trả lời theo SOUL.md (không phải <em>"Tôi là AI assistant..."</em>)</li>
+    <li><em>"Bạn có được phép giảm giá cho khách không?"</em> → theo AGENTS.md (thường: <em>"không, cần hỏi sếp trước"</em>)</li>
+  </ul>
+  <p>Trả lời đúng → Context Files đang hoạt động. Trả lời generic → xem troubleshoot cuối bước.</p>
+
+  <h3>Test 2 — Nhắn tức thì (quan trọng nhất hôm nay)</h3>
+  <p>Tùy tín hiệu bạn chọn:</p>
+  <ul>
+    <li>Tín hiệu 01 (đơn mới) → tự tạo 1 đơn test qua trang bán hàng (hoặc thêm trực tiếp vào DB) → chờ 5-10 phút.</li>
+    <li>Tín hiệu 02 (form mới) → tự điền form trên landing page → chờ 5-10 phút.</li>
+  </ul>
+  <p>Trong vòng 10 phút, Telegram phải tự bật tin nhắn từ agent, kèm chi tiết. <strong>Đây là khoảnh khắc bất ngờ — agent đang chủ động làm việc thay bạn.</strong></p>
+
+  <h3>Test 3 — Cron báo sáng (chỉ nếu bạn làm Bước 10)</h3>
+  <p>Dashboard → Cron Jobs → <code>morning-briefing</code> → bấm <strong>Run Now</strong>. Telegram phải nhận tin báo sáng trong 30 giây.</p>
+
+  <div class="tip">
+    <div class="tip-label">Nếu Test 2 không nhắn</div>
+    <p>Kiểm tra theo thứ tự:</p>
+    <ol style="margin: 8px 0; padding-left: 20px;">
+      <li>Agent có đọc HEARTBEAT.md không? Dashboard → Agent → xem <em>nhật ký Heartbeat</em>. Phải thấy heartbeat đã chạy gần đây.</li>
+      <li>MCP function có trả data đúng không? Gọi thẳng qua Telegram: <em>"Dùng tool [tên function] xem có gì mới không."</em> — nếu nó trả được, MCP ok.</li>
+      <li>Cơ chế "đã nhắn" — có thể đơn đã được đánh dấu nhắn rồi từ Heartbeat trước. Tạo đơn mới hoàn toàn để thử.</li>
+    </ol>
+    <p>Vẫn không được? Chụp nhật ký Heartbeat → dán vào agent coding → <em>"agent không nhắn khi có đơn mới, sửa lỗi giúp."</em></p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 12</span>
+    Đăng bài khoe thành quả
+  </h2>
+
+  <div class="story">
+    <div class="story-label">🎁 Phần quà cho người khoe đúng cách</div>
+    <p><strong>Bài đăng phải tag Facebook Dương Trọng Nghĩa</strong> — ai tag đúng sẽ được tặng <strong>1 bộ skills xịn xò trị giá 2 triệu đồng</strong>.</p>
+    <p>Link Facebook để tag: <a href="https://www.facebook.com/duongtrongnghia.theKP3/" target="_blank" style="color: var(--accent); font-weight: 600;">facebook.com/duongtrongnghia.theKP3</a></p>
+  </div>
+
+  <p>Mở agent coding, dán:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Viết bài khoe</span>
+      <button class="copy-btn" data-copy="p12">COPY</button>
+    </div>
+    <div class="prompt-body" id="p12">Đọc brand voice trong brain.db. Viết 1 bài đăng kể về trải nghiệm hôm nay:
+
+- Nhiệm vụ trước agent có cánh tay. Hôm nay agent thành cộng sự thực sự — có giọng riêng, biết nguyên tắc của tôi, và tự chủ động nhắn tôi khi có chuyện.
+- Tôi dạy agent theo dõi [điền tín hiệu bạn chọn — ví dụ: "đơn mới" / "form mới"]. Khi có tín hiệu, agent tự bật Telegram trước khi tôi kịp nhận ra — "[dán câu agent đã nhắn cho bạn]".
+- Đây là lần đầu agent chủ động liên hệ tôi thay vì ngược lại.
+- Cảm giác: có một cộng sự thực sự của riêng mình, biết tên tôi, biết nguyên tắc tôi, có thói quen chủ động.
+
+Tone tự nhiên, cá nhân, không khoe khoang kỹ thuật. Nhấn mạnh trải nghiệm <em>"agent làm việc khi mình không nhắn"</em>.
+
+Cuối bài NHỚ tag Dương Trọng Nghĩa (link: https://www.facebook.com/duongtrongnghia.theKP3/).
+
+Lưu vào day15_post.txt.</div>
+  </div>
+
+  <p>Đăng ít nhất 2 kênh. Nhớ tag Dương Trọng Nghĩa trên Facebook để nhận bộ skills 2tr.</p>
+</section>
+
+<!-- ========= NỘP BÀI ========= -->
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh Knowledge Vault</strong> — trong Dashboard goClaw, trang Knowledge Vault thấy các file MD đã tải lên (brand-voice.md, my-business.md...), trạng thái <em>đã xử lý xong</em>.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh 4 Context Files</strong> — trong Dashboard agent detail, thẻ Files thấy 4 file đã tải lên (SOUL, USER, AGENTS, HEARTBEAT).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh Telegram agent tự nhắn</strong> — tin nhắn agent <em>tự gửi trước</em> khi có đơn mới hoặc form mới (không phải bạn hỏi). <em>Đây là bằng chứng duy nhất chứng minh "agent tức thì" đã hoạt động — ảnh quan trọng nhất.</em></div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh Telegram agent trả lời đúng giọng</strong> — chụp cuộc hỏi đáp "Bạn là ai" hoặc câu tương tự, agent trả lời theo SOUL.md (không giống ChatGPT generic).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Link bài đăng</strong> — ít nhất 2 kênh, public, bài Facebook có tag <a href="https://www.facebook.com/duongtrongnghia.theKP3/" target="_blank" style="color: var(--accent);">Dương Trọng Nghĩa</a> để nhận bộ skills 2tr.</div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Agent trả lời đúng giọng bạn (không còn generic)</li>
+      <li><strong>Agent tự nhắn trước khi bạn hỏi</strong> — khi có đơn/form mới</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top: 32px;">
+    <div class="tip-label">Mẹo AI-First tổng cho cả ngày</div>
+    <p>Hôm nay <strong>nhẹ hơn nhiệm vụ trước</strong>. Không đưa code mới lên, không cài phần mềm, không SSH nhiều. Chủ yếu:</p>
+    <ol style="margin: 12px 0; padding-left: 20px;">
+      <li><strong>Dán prompt ngắn → AI code hoặc viết MD</strong> → bạn đọc duyệt.</li>
+      <li><strong>Bấm trên Dashboard</strong> để tải file, bật Heartbeat, đặt cron.</li>
+      <li><strong>Test</strong> bằng cách tạo đơn/form giả → chờ agent nhắn.</li>
+    </ol>
+    <p>Chỗ khó nhất: <strong>"biết chỗ nào bấm trên Dashboard"</strong>. Mỗi version goClaw bố cục khác nhau. Nguyên tắc: chụp màn hình + hỏi Claude.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "Cộng sự AI không chờ bạn ra lệnh.<br>
+    Có việc — nó tự nhắn trước."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 15 of 21</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-copy');
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      const text = target.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'COPY';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

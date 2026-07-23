@@ -1,0 +1,868 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<title>Ngày 18 — Skill Sản Xuất Video AI (Higgsfield)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ink: #1a1612; --ink-soft: #4a4038; --ink-mute: #8a7f75;
+    --paper: #faf7f2; --paper-warm: #f2ece0; --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f; --accent-soft: #fce4dc;
+    --gold: #b8882d; --gold-soft: #f8ecd0;
+    --sage: #5c6b4d; --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+    line-height: 1.65; font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200, 68, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184, 136, 45, 0.04) 0%, transparent 40%);
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 24px 120px; }
+  .hero { margin-bottom: 56px; padding-bottom: 40px; border-bottom: 1px solid var(--rule); }
+  .day-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.18em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 20px; font-weight: 600;
+  }
+  .day-tag::before { content: ""; width: 32px; height: 1px; background: var(--accent); }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 600; line-height: 1.05;
+    letter-spacing: -0.02em; margin-bottom: 24px; color: var(--ink);
+  }
+  .hero-sub {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 19px; color: var(--ink-soft); line-height: 1.5; font-weight: 400;
+  }
+  .goal-box {
+    background: var(--paper-warm); border-left: 3px solid var(--accent);
+    padding: 24px 28px; margin: 32px 0; border-radius: 0 8px 8px 0;
+  }
+  .goal-box-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.18em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 10px; font-weight: 600;
+  }
+  .goal-box p { font-size: 16px; color: var(--ink); }
+  .goal-box em {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 17px; color: var(--accent);
+    display: block; margin: 10px 0 4px; font-weight: 500;
+  }
+  .story {
+    background: white; padding: 22px 26px; margin: 28px 0;
+    border-radius: 8px; border: 1px solid var(--rule); box-shadow: var(--shadow);
+  }
+  .story-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.15em;
+    color: var(--ink-mute); text-transform: uppercase;
+    margin-bottom: 8px; font-weight: 600;
+  }
+  .story p { font-size: 15.5px; color: var(--ink-soft); line-height: 1.65; margin: 6px 0; }
+  .story strong { color: var(--ink); font-weight: 700; }
+  .tip {
+    background: var(--sage-soft); border-left: 3px solid var(--sage);
+    padding: 18px 22px; margin: 22px 0; border-radius: 0 6px 6px 0;
+  }
+  .tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.15em;
+    color: var(--sage); text-transform: uppercase;
+    margin-bottom: 6px; font-weight: 600;
+  }
+  .tip p { font-size: 14.5px; color: var(--ink-soft); line-height: 1.6; margin: 4px 0; }
+  .tip strong { color: var(--ink); }
+  section { margin-bottom: 56px; }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px; font-weight: 600;
+    line-height: 1.15; letter-spacing: -0.015em;
+    margin: 56px 0 20px; padding-top: 24px;
+    border-top: 1px solid var(--rule); color: var(--ink);
+  }
+  h2 .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--ink-mute);
+    display: block; margin-bottom: 6px; letter-spacing: 0.15em; font-weight: 600;
+  }
+  h3 {
+    font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600;
+    margin: 28px 0 12px; color: var(--ink); line-height: 1.3;
+  }
+  p { margin: 12px 0; font-size: 16px; line-height: 1.65; }
+  p strong { font-weight: 700; }
+  p em { font-style: italic; color: var(--ink-soft); }
+  ul, ol { margin: 12px 0 12px 22px; }
+  li { margin: 6px 0; line-height: 1.55; }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px; background: var(--paper-deep);
+    padding: 2px 7px; border-radius: 4px;
+    color: var(--accent); border: 1px solid var(--rule);
+  }
+  .prompt-box {
+    background: #1a1612; color: #f5ede0;
+    padding: 18px 22px; margin: 18px 0;
+    border-radius: 8px; box-shadow: var(--shadow); position: relative;
+  }
+  .prompt-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #2c2520;
+  }
+  .prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.12em;
+    color: #f8ecd0; text-transform: uppercase; font-weight: 600;
+  }
+  .copy-btn {
+    background: #f5ede0; color: #1a1612;
+    border: none; padding: 5px 12px; border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.05em;
+    cursor: pointer; transition: all 0.2s ease;
+    font-weight: 600;
+  }
+  .copy-btn:hover { background: var(--accent); color: white; }
+  .copy-btn.copied { background: var(--sage); color: white; }
+  .prompt-body {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  }
+  .video-embed {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(26,22,18,0.12), 0 1px 3px rgba(26,22,18,0.06);
+    background: #000;
+    border: 1px solid var(--rule);
+  }
+  .video-embed iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+  .compare-table {
+    background: white; border: 1px solid var(--rule); border-radius: 8px;
+    overflow: hidden; margin: 18px 0; box-shadow: var(--shadow);
+  }
+  .compare-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .compare-table th {
+    background: var(--paper-warm); text-align: left; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; color: var(--ink); text-transform: uppercase;
+    font-weight: 700; border-bottom: 1px solid var(--rule);
+  }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid var(--rule); color: var(--ink-soft); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table strong { color: var(--ink); }
+  .checklist {
+    background: white; padding: 24px 28px; margin: 24px 0;
+    border-radius: 10px; border: 1px solid var(--rule); box-shadow: var(--shadow);
+  }
+  .checklist-title {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+    margin-bottom: 14px; color: var(--ink);
+  }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 12px; padding: 10px 0;
+    border-top: 1px solid var(--rule); cursor: pointer; user-select: none;
+  }
+  .check-item:first-of-type { border-top: none; }
+  .check-box {
+    flex-shrink: 0; width: 18px; height: 18px;
+    border: 1.5px solid var(--ink-mute); border-radius: 4px;
+    margin-top: 2px; transition: all 0.2s ease;
+  }
+  .check-item.done .check-box {
+    background: var(--sage); border-color: var(--sage);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E");
+    background-position: center; background-repeat: no-repeat; background-size: 12px;
+  }
+  .check-text { font-size: 15px; line-height: 1.55; color: var(--ink-soft); }
+  .check-item.done .check-text { color: var(--ink-mute); text-decoration: line-through; }
+  .check-text strong { color: var(--ink); font-weight: 600; }
+  .success {
+    background: var(--sage-soft); border: 1px solid var(--sage);
+    padding: 22px 26px; margin: 22px 0; border-radius: 8px;
+  }
+  .success-title {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+    color: var(--sage); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .success-title::before { content: "✓"; font-weight: 700; }
+  .success ul { margin: 6px 0 0 22px; }
+  .success li { font-size: 14.5px; color: var(--ink); line-height: 1.55; }
+  footer {
+    text-align: center; margin-top: 80px; padding-top: 40px;
+    border-top: 1px solid var(--rule);
+  }
+  .footer-quote {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 18px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 16px;
+  }
+  .footer-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+  @media (max-width: 720px) { main { padding: 32px 18px 80px; } h1 { font-size: 30px; } }
+</style>
+</head>
+<body>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 18 · Tuần 4</div>
+  <h1>
+    Skill Sản Xuất<br>
+    Video AI Trên Higgsfield
+  </h1>
+  <p class="hero-sub">
+    Hôm nay bạn làm <em>1 video AI hoàn chỉnh</em> theo workflow chia sẻ trong workshop private KP3 (Workshop 8, do Hiếu phụ trách). <strong>1 tool duy nhất — Higgsfield AI</strong>: vừa sinh ảnh sản phẩm, vừa biến ảnh thành video chuyển động. Không cần 4-5 tool rời.
+  </p>
+</header>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Cuối hôm nay bạn có:</p>
+  <em>1 video AI 15-25s về <strong>sản phẩm/dịch vụ bạn đang kinh doanh</strong>, hoặc <strong>cái gì đó vui vui tặng bạn bè</strong> — đăng được Reels / TikTok / Shorts (hoặc gửi nhóm chat)</em>
+  <em>Skill <code>tao-video-ai</code> — agent tự lặp quy trình mỗi tuần, không tốn công lần nữa</em>
+  <em>Hiểu prompt + cú máy "orbit nhẹ chậm giữ vai" — công thức thắng nhất 2026</em>
+</div>
+
+<div class="story">
+  <div class="story-label">Tại sao chỉ 1 tool — không phải 4</div>
+  <p>Đa số guide AI video trên mạng dạy ráp <strong>4-5 tool</strong>: tool sinh ảnh + tool animate + tool TTS + tool music + tool edit. Phức tạp, mỗi tool 1 tài khoản, kẹt 1 chỗ là kẹt cả pipeline.</p>
+  <p>Workshop private KP3 — Workshop 8 do Hiếu phụ trách — chia sẻ workflow thực chiến: <strong>Higgsfield AI all-in-one</strong>. Có Stream 4.5 (sinh ảnh) + Kling 2.6/3.0 (animate). Tốn ~30-50 credit / video → với gói 1tr/tháng (1000 credit) làm được <strong>~20-30 video / tháng</strong>.</p>
+  <p>Hôm nay tập trung làm ra <em>nguyên liệu chất lượng</em>. Edit (ghép, key zoom) chỉ là khâu phụ — CapCut 5 phút là xong.</p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Tinh thần Ngày 18</div>
+  <p><strong>Đầu vào quyết định đầu ra.</strong> Ảnh sản phẩm xấu → video xấu, không cứu được. Dành 80% công vào khâu sinh ảnh đẹp, 20% còn lại animate cú máy nhẹ.</p>
+  <p><strong>Không cần đẹp như Hollywood.</strong> TikTok đang không gắn AI tag với content thời trang/lifestyle nhìn như thật — đừng làm lố quá là OK.</p>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">XEM TRƯỚC</span>
+    🎬 Video workshop gốc — xem cùng Hiếu thao tác trực tiếp
+  </h2>
+
+  <p><strong>Trước khi đọc các bước bên dưới, hãy xem video workshop bên dưới.</strong> Hiếu (workshop private KP3 — Workshop 8) thao tác từng bước trên Higgsfield, cho bạn thấy mặt UI thật, ra ảnh thật, lúc nào nên cancel làm lại, prompt thắng-thua khác nhau ở chỗ nào.</p>
+
+  <div class="tip" style="border-left-color: var(--gold); background: var(--gold-soft);">
+    <div class="tip-label" style="color: var(--gold);">⏱ Lưu ý quan trọng — đỡ tốn thời gian</div>
+    <p>Video tổng <strong>~4 tiếng</strong>, nhưng <strong>phần thực sự về sản xuất video AI chỉ ~2 tiếng cuối</strong>. Phần đầu là nội dung khác (Q&A, warm-up, các topic không liên quan Day 18).</p>
+    <p style="margin-top: 6px;"><strong>Khuyến nghị:</strong> tua đến <strong>~2:00:00 (mốc 2 tiếng)</strong> rồi bắt đầu xem. Nếu thấy chưa vào phần Higgsfield → tua thêm vài phút nữa. Đừng phí 2 tiếng đầu.</p>
+  </div>
+
+  <div class="video-embed">
+    <iframe
+      src="https://www.youtube.com/embed/mz6_Anpn5VY?rel=0"
+      title="Workshop 8 KP3 — Sản xuất video AI Higgsfield (do Hiếu phụ trách)"
+      frameborder="0"
+      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      loading="lazy"
+    ></iframe>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Cách xem hiệu quả (~2 tiếng từ mốc 2:00:00)</div>
+    <p><strong>Lần 1 — xem nguyên 2 tiếng phần Higgsfield:</strong> không thao tác, chỉ nắm flow tổng. Nắm được "à workflow là Stream 4.5 → Kling, không cần 4 tool".</p>
+    <p><strong>Lần 2 — xem từng đoạn + làm song song:</strong> mở Higgsfield ra, mỗi đoạn 5-10 phút Hiếu thao tác → bạn pause + làm theo trên account của bạn.</p>
+    <p><em>Phần text bên dưới là tóm tắt + bổ sung context (đăng ký, ChatGPT viết kịch bản, build skill, auto-post). Đừng skip video — text không thay thế được nhịp thao tác thật.</em></p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">CHUẨN BỊ</span>
+    Đăng ký Higgsfield AI + chuẩn bị nguyên liệu
+  </h2>
+
+  <h3>Đăng ký tool — 2 lựa chọn</h3>
+
+  <div class="story" style="border-color: var(--accent);">
+    <div class="story-label" style="color: var(--accent);">✅ Cách rẻ — KHUYẾN NGHỊ để làm bài</div>
+    <p>Mua share account / share gói trong cộng đồng <strong>MMOVN Community</strong> — chỉ <strong>~100-300k/tháng</strong> thay vì 1tr trả tận gốc. Đủ credit để hoàn thành Day 18 + làm thêm vài video.</p>
+    <p style="margin-top: 8px;">👉 <strong><a href="#phan-thuong" style="color: var(--accent);">Cuộn xuống section "Phần thưởng Ngày 18"</a></strong> ở cuối trang — có hướng dẫn chi tiết: vào chợ → tìm "Higgsfield" → check người bán qua bot Cảnh báo scammer → mua an toàn.</p>
+    <p style="margin-top: 8px;"><em>Đọc luôn mục Phần thưởng trước khi mua — tránh dính scammer.</em></p>
+  </div>
+
+  <div class="story">
+    <div class="story-label">💼 Cách trả tận gốc — cho ai dùng dài hạn / kinh doanh</div>
+    <p>👉 <a href="https://higgsfield.ai" target="_blank" rel="noopener"><strong>Higgsfield AI</strong></a> trực tiếp — gói khuyến nghị <strong>1tr/tháng = 1000 credit</strong>. Nếu mua gói unlimited (~1tr1+) thì <strong>Stream 4.5 sinh ảnh không giới hạn</strong>.</p>
+    <p style="margin-top: 8px;">Dùng cho: chạy thực tế kinh doanh, ổn định lâu dài, không sợ logout đột xuất, tự quản tài khoản.</p>
+  </div>
+
+  <p style="margin-top: 16px;"><strong>Cost reference</strong> theo workshop KP3 (cho gói 1000 credit):</p>
+  <ul>
+    <li>1 video cinematic (như "vợt hộp → cận sản phẩm → toàn cảnh"): <strong>~50 credit</strong></li>
+    <li>1 video KOC thời trang (model thử đồ): <strong>~30 credit</strong></li>
+    <li>1 ảnh Stream 4.5: <strong>~3-5 credit</strong> (miễn phí nếu gói unlimited)</li>
+  </ul>
+
+  <h3>Chuẩn bị nguyên liệu input</h3>
+  <p>Đầu vào quyết định đầu ra. <strong>Tuỳ chủ đề bạn chọn</strong>, chuẩn bị các ảnh phù hợp:</p>
+  <ul>
+    <li><strong>Nếu làm video về sản phẩm/dịch vụ:</strong> chụp ảnh sản phẩm chính (góc tổng thể, chính diện), ảnh cận chi tiết (logo, hình in, texture), ảnh hộp/bao bì nếu có. Càng nhiều góc càng tốt — Hiếu dùng từ <em>"càng nhiều nguyên liệu, AI càng đỡ sai"</em>.</li>
+    <li><strong>Nếu làm video tặng bạn bè / fun:</strong> ảnh chân dung bạn (hoặc người nhận), ảnh bối cảnh / kỷ niệm muốn lồng vào. Vài ảnh là đủ.</li>
+    <li><strong>Nếu chưa có ảnh model người thật:</strong> dùng Stream 4.5 generate model AI từ mô tả — bước này nằm trong workflow ở các bước sau.</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">Lưu ý từ workshop private KP3</div>
+    <p>Sản phẩm có <strong>logo nhỏ / chữ nhỏ / lọ hóa chất / mỹ phẩm</strong> → AI dễ sai chữ, sai logo, biến đổi sản phẩm. Giải pháp: dùng <strong>Kling 3.0</strong> (không phải 2.6 hay Sora/Veo) — nó có tính năng <em>element pin</em> upload 10-20 ảnh sản phẩm tham chiếu để AI giữ đúng.</p>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 01 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Pick chủ đề video — sản phẩm bạn / fun cho bạn bè
+  </h2>
+
+  <p><strong>Bạn quyết định làm video về cái gì.</strong> Đừng đóng khung. Bạn pick 1 trong 2 hướng:</p>
+
+  <div class="compare-table">
+    <table>
+      <tr><th>Hướng</th><th>Phù hợp khi</th><th>Lợi ích</th></tr>
+      <tr>
+        <td><strong>A. Sản phẩm/dịch vụ bạn đang kinh doanh</strong> — gen video quảng bá đăng Reels/TikTok/FB Page</td>
+        <td>Bạn có business thật + cần content video</td>
+        <td>ROI thực tế, content bán được hàng, áp dụng skill ngay vào việc kiếm tiền</td>
+      </tr>
+      <tr>
+        <td><strong>B. Video vui tặng bạn bè</strong> — sinh nhật, kỷ niệm, troll vui, lời chúc, video cho người thân</td>
+        <td>Bạn chưa có business sẵn / muốn làm thử nhẹ nhàng / cảm xúc dẫn đầu</td>
+        <td>Áp lực thấp, tập trung học workflow, vẫn có sản phẩm cuối cùng để khoe</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>Dùng ChatGPT viết kịch bản — KHÔNG tự nghĩ</h3>
+  <p>Đừng ngồi nghĩ kịch bản. <strong>ChatGPT viết tốt hơn bạn 10 lần</strong> nếu bạn cho nó context đúng. Mở ChatGPT → paste prompt sau (chọn 1 trong 2 tuỳ hướng đã pick):</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt ChatGPT — Kịch bản video sản phẩm/dịch vụ</span>
+      <button class="copy-btn" data-copy="p-script-biz">COPY</button>
+    </div>
+    <div class="prompt-body" id="p-script-biz">Tôi đang kinh doanh: [MÔ TẢ SẢN PHẨM/DỊCH VỤ — VD: "shop bán váy nữ phong cách Hàn Quốc trên Instagram, giá 300-600k/sản phẩm, tệp khách 22-30 tuổi"].
+
+Hôm nay tôi muốn làm 1 video AI 15-25 giây để đăng Reels / TikTok quảng bá. Tool dùng: Higgsfield (Stream 4.5 sinh ảnh + Kling 2.6/3.0 animate).
+
+Hãy viết cho tôi:
+1. Storyboard 3-5 cảnh, mỗi cảnh 4-5 giây
+2. Prompt tiếng Anh chi tiết để gen ảnh Stream 4.5 cho từng cảnh (tả model/sản phẩm/bối cảnh/lighting)
+3. Prompt tiếng Anh ngắn cho Kling animate từng cảnh (cú máy: orbit, zoom in, pan, dolly...)
+4. Hook 3 giây đầu (text overlay) + caption đăng Reels/TikTok có hashtag
+
+Phong cách video: cinematic / KOC / lifestyle... (bạn đề xuất phù hợp với sản phẩm tôi).</div>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt ChatGPT — Video tặng bạn bè / fun</span>
+      <button class="copy-btn" data-copy="p-script-fun">COPY</button>
+    </div>
+    <div class="prompt-body" id="p-script-fun">Tôi muốn làm 1 video AI 15-25 giây để [TẶNG AI/DỊP GÌ — VD: "tặng sinh nhật cho bạn thân tên Lan, 28 tuổi, thích du lịch và cà phê"].
+
+Bối cảnh / chi tiết về người nhận: [MÔ TẢ — VD: "Lan và tôi có nhiều kỷ niệm đi cà phê quận 1, hay đi Đà Lạt, mèo cưng tên Mochi"].
+
+Tone tôi muốn: [vui / cảm động / hài hước / lãng mạn].
+
+Tool: Higgsfield (Stream 4.5 sinh ảnh + Kling 2.6/3.0 animate).
+
+Hãy viết cho tôi:
+1. Storyboard 3-5 cảnh, mỗi cảnh 4-5 giây — kể 1 câu chuyện ngắn
+2. Prompt tiếng Anh chi tiết để gen ảnh Stream 4.5 cho từng cảnh
+3. Prompt tiếng Anh cho Kling animate (cú máy nhẹ nhàng, cinematic)
+4. Lời chúc / text overlay xuất hiện ở cuối video</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Mẹo dùng ChatGPT cho hiệu quả</div>
+    <p><strong>Càng cụ thể context, kịch bản càng đúng ý.</strong> Đừng viết "tôi bán mỹ phẩm" — viết "tôi bán serum dưỡng da brand Việt, giá 350k, target da dầu mụn 18-25 tuổi". Càng chi tiết, prompt ra càng dùng được luôn không cần sửa.</p>
+    <p>Nếu lần đầu ra kịch bản chưa ưng → reply ChatGPT: <em>"viết lại storyboard concept khác, nhấn vào yếu tố [X]"</em>. ChatGPT iterate vô hạn miễn phí.</p>
+  </div>
+
+  <h3>Tham khảo: 2 format thắng từ workshop KP3</h3>
+  <p>Nếu bạn đang phân vân style nào hợp, đây là 2 format Hiếu chia sẻ thắng nhất hiện tại — dùng làm <em>tham khảo</em>, không phải bắt buộc:</p>
+
+  <div class="compare-table">
+    <table>
+      <tr><th>Format</th><th>Hợp với</th><th>Cost</th></tr>
+      <tr>
+        <td><strong>Cinematic</strong> — vợt hộp → manican → toàn cảnh → cận chi tiết</td>
+        <td>Sản phẩm có hộp đẹp, brand premium, video build hype</td>
+        <td>~50 credit</td>
+      </tr>
+      <tr>
+        <td><strong>KOC fashion</strong> — model mặc đồ trong bối cảnh đời thường</td>
+        <td>Quần áo, váy, túi, giày, mỹ phẩm</td>
+        <td>~30 credit</td>
+      </tr>
+    </table>
+  </div>
+
+  <p><em>Bài demo dưới đây tôi đi theo concept KOC (cho bạn xem cụ thể). Logic Cinematic / video fun tương tự — chỉ khác prompt và bối cảnh.</em></p>
+</section>
+
+<!-- ========= BƯỚC 02 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Viết prompt qua ChatGPT (hoặc Claude / Gemini)
+  </h2>
+
+  <p>Mở ChatGPT (Higgsfield có tích hợp sẵn ChatGPT trong UI nếu chưa có) → paste prompt sau:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Sinh prompt cho Stream 4.5</span>
+      <button class="copy-btn" data-copy="p2">COPY</button>
+    </div>
+    <div class="prompt-body" id="p2">Tôi muốn tạo ảnh AI bằng model Stream 4.5 trên Higgsfield. Hãy viết prompt cho tôi càng chi tiết càng tốt.
+
+Sản phẩm chính: [TÊN SẢN PHẨM, ví dụ: áo polo nam màu be]
+Tham chiếu: như ảnh tham chiếu (tôi sẽ upload)
+
+Yêu cầu cảnh:
+- Một con manican màu trắng đứng trong căn phòng có nắng đẹp
+- Mặc sản phẩm chính (giữ nguyên màu sắc, chi tiết thiết kế, logo / thêu / in như ảnh tham chiếu — KHÔNG được thay đổi)
+- Background: căn phòng tone tối, ánh đèn vàng, phong cách luxury minimal
+- Góc chụp: chính diện, thấy full outfit
+- Phối thêm: quần chinos màu be phối sáng + men dày màu trắng
+- Tỷ lệ: 9:16 (dọc, dùng cho Reels/TikTok)
+- Chất lượng: photorealistic, high detail, ánh sáng tự nhiên
+
+Output:
+1. Prompt chính (tiếng Anh, dùng paste vào Higgsfield)
+2. Negative prompt (loại trừ: wrong shape, sai cổ áo, sai màu, mất nút, thay đổi logo, thêm họa tiết, biến đổi thiết kế)</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Mẹo từ workshop KP3</div>
+    <p>Trò chuyện với ChatGPT <strong>2-3 câu trước khi xin prompt</strong>. Để nó hiểu bối cảnh, ý đồ. Sau đó mỗi lần làm cảnh mới chỉ cần ghi <em>"tiếp theo, cảnh [X]"</em> — nó tự nhớ context.</p>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 03 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Tạo ảnh trên Higgsfield — Stream 4.5
+  </h2>
+
+  <ol>
+    <li>Vào Higgsfield → tab <strong>Image</strong> (giao diện sinh ảnh)</li>
+    <li>Chọn model <strong>Stream 4.5</strong> ở thanh model bên dưới (Hiếu khuyến nghị — tối ưu cho người mới, dễ ra ảnh đẹp ngay lần đầu)</li>
+    <li><strong>Upload nguyên liệu</strong>: kéo thả tất cả ảnh input (sản phẩm + cận chi tiết) vào panel reference</li>
+    <li><strong>Paste prompt + negative prompt</strong> ChatGPT vừa cho</li>
+    <li>Chỉnh tỷ lệ <strong>9:16</strong> (dọc) ở dropdown aspect ratio</li>
+    <li><strong>TẮT chế độ Free</strong> — bấm sang chế độ tốn phí. Free bị xếp hàng, lâu xui rủi. Tốn phí ~3-5 credit / ảnh nhưng nhanh + chen được nhiều ảnh song song</li>
+    <li><strong>Test 1 ảnh trước</strong> — đừng gen batch 4-8 ảnh ngay. Coi cảnh có ổn không → fix prompt → mới batch sau</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Khi ảnh ra sai — fix bằng cách nào</div>
+    <p><strong>Sai chi tiết áo (cổ áo, tay áo, logo)</strong>: thêm ảnh CẬN của chi tiết đó vào panel reference. Stream 4.5 sẽ tham chiếu kỹ hơn.</p>
+    <p><strong>Sai background / mood</strong>: chỉnh prompt, KHÔNG cần đổi nguyên liệu. Bật giữ <em>"warm tone, luxury minimal, ánh đèn vàng"</em> cho consistency.</p>
+    <p><strong>Sai 100% — ra ảnh kì cục</strong>: dùng lại prompt cũ, gen lại 1-2 lần (AI có yếu tố hên xui). Hiếu nói <em>"ra ưng cái nào lụm cái đó, đừng mất công sửa"</em>.</p>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 04 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    (Concept KOC) Mặc đồ cho model
+  </h2>
+
+  <p>Nếu bạn làm KOC fashion: cần ghép gương mặt model + bộ đồ → ra ảnh "model thật đang thử đồ".</p>
+
+  <ol>
+    <li>Trong Higgsfield Image, upload: <strong>1 ảnh gương mặt model</strong> (rõ, chính diện) + <strong>1 ảnh outfit</strong> (đã tách nền nếu có thể)</li>
+    <li>Vẫn dùng model <strong>Stream 4.5</strong></li>
+    <li>Paste prompt:</li>
+  </ol>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Model thử đồ KOC</span>
+      <button class="copy-btn" data-copy="p4">COPY</button>
+    </div>
+    <div class="prompt-body" id="p4">A young female model wearing the outfit shown in reference image, keeping her face EXACTLY the same as reference (lock face, lock skin tone, lock eye color), standing in a bright apartment with natural sunlight through window, casual realistic pose like a real KOC trying on clothes, 9:16 vertical aspect ratio, photorealistic, high detail, natural ambient light, warm tone, shallow depth of field
+
+LOCK: face identity, outfit color, outfit design details, embroidery / print / logo on outfit
+NEGATIVE: wrong face, different person, change outfit color, wrong size, missing buttons, fake plastic look</div>
+  </div>
+
+  <p>Test 1 ảnh → nếu giữ đúng mặt + đúng đồ → batch tiếp các góc khác (cận tay áo, cận cổ, ngược nắng...).</p>
+</section>
+
+<!-- ========= BƯỚC 05 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Tạo video clip — Kling 2.6 (cơ bản) hoặc 3.0 (nâng cao)
+  </h2>
+
+  <p>Có ảnh ưng → vào tab <strong>Video</strong> trên Higgsfield.</p>
+
+  <h3>Chọn model</h3>
+  <ul>
+    <li><strong>Kling 2.6</strong> — phương án tiết kiệm. Tốn ít credit hơn. Đủ dùng cho fashion / lifestyle. Đầu vào chỉ 1 ảnh.</li>
+    <li><strong>Kling 3.0</strong> — nâng cao. Có <em>element pin</em> (upload nhiều ảnh tham chiếu sản phẩm → giữ chính xác logo / chữ / chi tiết). Dùng cho mỹ phẩm, hộp có logo, sản phẩm có chữ.</li>
+  </ul>
+  <p><em>Veo 3 / Seedance 2 / Sora — Hiếu thử rồi không khuyến nghị: Veo/Sora chất lượng OK nhưng chưa tối ưu cost; Seedance đầu ra 720p chứ không full HD.</em></p>
+
+  <h3>Workflow chuẩn (Kling 2.6)</h3>
+  <ol>
+    <li>Upload ảnh đã ok</li>
+    <li>Paste prompt motion (xem dưới)</li>
+    <li><strong>TẮT audio</strong> — không cần (tiết kiệm 2x credit)</li>
+    <li>Thời lượng <strong>5 giây</strong> — đủ cho 1 sim</li>
+    <li>Render → đợi 30-60s → tải MP4</li>
+  </ol>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt motion · Cú máy thắng (workshop KP3)</span>
+      <button class="copy-btn" data-copy="p5">COPY</button>
+    </div>
+    <div class="prompt-body" id="p5">A slow gentle orbit shot, camera moves smoothly around the subject, keeping the model still and elegant, soft warm light, cinematic vibe, luxury feel</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Vì sao "orbit nhẹ chậm" thắng</div>
+    <p>Cú máy <strong>nhẹ + chậm</strong> = AI ít fail. Cú máy mạnh / nhanh / quay 360° = AI không có dữ liệu phía sau model → sinh thêm tay, thêm chân, hoặc warp kỳ cục.</p>
+    <p>Hiếu khuyến nghị: dùng đúng 1 prompt orbit trên cho 90% trường hợp. Đổi style khi quen.</p>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 06 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Multishot trên Kling 3.0 (tiết kiệm credit)
+  </h2>
+
+  <p>Mặc định 1 prompt = 1 cảnh 5s. Kling 3.0 có tính năng <strong>Multishot</strong> để gen <em>nhiều cảnh trong 1 video 5s</em> → tiết kiệm credit + đỡ phải ghép.</p>
+
+  <h3>2 chế độ Multishot</h3>
+
+  <div class="compare-table">
+    <table>
+      <tr><th>Chế độ</th><th>Workflow</th><th>Khi nào dùng</th></tr>
+      <tr>
+        <td><strong>Auto</strong></td>
+        <td>1 prompt → AI tự cắt 2-3 cảnh trong 5s</td>
+        <td>Bạn lười / không có ý tưởng cụ thể</td>
+      </tr>
+      <tr>
+        <td><strong>Custom</strong></td>
+        <td>Bạn ghi rõ "cảnh 1: cận, cảnh 2: toàn"</td>
+        <td>Có concept rõ — vd: cận → toàn → cận chi tiết</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Multishot Custom</span>
+      <button class="copy-btn" data-copy="p6">COPY</button>
+    </div>
+    <div class="prompt-body" id="p6">Scene 1 (0-2.5s): close-up of model's face and upper body, gentle smile, soft warm sunlight from window
+Scene 2 (2.5-5s): wider full-body shot, slow orbit camera move around model, showing the outfit detail clearly
+
+Style: photorealistic, cinematic, luxury KOC vibe</div>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 07 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Edit ghép trong CapCut (5 phút)
+  </h2>
+
+  <p>Higgsfield cho ra video clip 5s. Bạn cần ghép 2-3 clip + thêm vài ảnh tĩnh "key zoom" → ra video 15-25s.</p>
+
+  <h3>Trick từ workshop KP3 — đỡ tốn credit</h3>
+  <p>Không phải cảnh nào cũng cần render thành video. <strong>Cảnh tĩnh chỉ cần key zoom</strong> trên ảnh đã có → tiết kiệm 30 credit / cảnh.</p>
+
+  <ol>
+    <li>Mở <a href="https://www.capcut.com" target="_blank" rel="noopener">CapCut</a> → New project → 9:16</li>
+    <li>Drag thả các <strong>video clip 5s</strong> (Kling output) vào timeline</li>
+    <li>Drag thả các <strong>ảnh tĩnh</strong> giữa các clip → set duration 2-3s mỗi ảnh</li>
+    <li>Chọn ảnh → tab <strong>Animation</strong> → chọn <em>"Zoom in slow"</em> hoặc <em>"Pan right"</em> → ảnh thành chuyển động</li>
+    <li>Nhạc nền (tùy chọn): kéo nhạc free từ thư viện CapCut hoặc Pixabay</li>
+    <li>Tab <strong>Captions</strong> → Auto-captions → tiếng Việt (nếu có voice)</li>
+    <li>Export <strong>1080p, 30fps, MP4</strong></li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Voiceover / music — có cần không?</div>
+    <p>Workshop private KP3 KHÔNG bắt buộc voiceover/music. Nhiều video fashion thắng trên TikTok chỉ có nhạc nền hoặc nhạc beat trending. Bắt đầu đơn giản — voiceover thêm sau khi đã có format thắng.</p>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 08 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    Build skill <code>tao-video-ai</code>
+  </h2>
+
+  <p>Đã làm được 1 video tay. Giờ skill hoá để agent lặp lại quy trình.</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Build skill tao-video-ai</span>
+      <button class="copy-btn" data-copy="p8">COPY</button>
+    </div>
+    <div class="prompt-body" id="p8">Tạo skill mới tên "tao-video-ai" trong thư mục skills/. Cấu trúc Cấp 5:
+
+skills/tao-video-ai/
+  SKILL.md         - Quy trình 7 bước theo workflow KP3/Higgsfield (cho agent đọc khi lặp lại)
+  scripts/
+    gen-prompt.py        - Gọi Claude/ChatGPT API sinh prompt cho Stream 4.5 từ topic
+    list-images.py       - List ảnh sản phẩm trong thư mục product-photos/
+    upload-higgsfield.py    - Wrapper gọi Higgsfield API (nếu có) hoặc hướng dẫn paste tay
+  assets/
+    brand-style.md       - Tone luxury / casual / minimal phù hợp brand bạn
+    camera-prompts.md    - 5 prompt motion thắng: orbit nhẹ, dolly in, pan slow, key zoom, multishot
+    negative-prompt.txt  - Bộ negative prompt mặc định (loại trừ sai logo, sai màu...)
+  references/
+    koc-format.md        - Format KOC fashion thắng trên TikTok 2026
+    cinematic-format.md  - Format cinematic vợt hộp / detail-shot
+    troubleshoot.md      - Gặp sai chi tiết → thêm ảnh cận. Sai logo → dùng Kling 3.0 element pin
+
+Sau khi build, test với 1 sản phẩm mẫu — phải ra video 15-25s hoàn chỉnh không cần can thiệp tay (trừ duyệt cuối).</div>
+  </div>
+</section>
+
+<!-- ========= BƯỚC 09 ========= -->
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Tích hợp auto-post (mở rộng pipeline Day 17)
+  </h2>
+
+  <p>Day 17 bạn đã có <code>tao-creative-fb</code> auto-post text+ảnh. Giờ mở rộng:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Mở rộng pipeline post video</span>
+      <button class="copy-btn" data-copy="p9">COPY</button>
+    </div>
+    <div class="prompt-body" id="p9">Mở rộng skill tao-creative-fb (Day 17): thêm chế độ "video" gọi skill tao-video-ai (Day 18).
+
+Khi tôi nhắn Telegram "video" → agent:
+1. Đọc content plan tuần này, chọn 1 topic phù hợp video (sản phẩm mới, KOC fashion...)
+2. Gọi tao-video-ai → ra file MP4 15-25s
+3. Gửi Telegram preview cho tôi duyệt
+4. Tôi OK → agent đăng:
+   - Reels Facebook (đã setup từ Day 17)
+   - TikTok (cần setup TikTok API hoặc upload manual via mobile)
+   - YouTube Shorts (qua YouTube Data API)
+5. Báo lại link 3 bài
+
+Tần suất: 2 video/tuần (thứ 3 + thứ 6, 9h sáng).</div>
+  </div>
+
+  <p>Setup lịch hẹn 9h sáng thứ 3 + thứ 6. Sáng đầu tiên — agent gen video, gửi preview Telegram.</p>
+</section>
+
+<!-- ========= NỘP BÀI ========= -->
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh tài khoản Higgsfield đã đăng ký</strong> — Settings hiển thị credit còn lại + gói đang dùng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh prompt + ảnh output Stream 4.5</strong> — chụp giao diện Higgsfield Image với prompt bạn dùng + ảnh đã ra ưng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh video output Kling</strong> — chụp giao diện Higgsfield Video với clip 5s đã render xong.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Link video AI hoàn chỉnh</strong> — upload YouTube unlisted hoặc Drive. Video 15-25s, có ít nhất 2 cảnh khác nhau (orbit + key zoom hoặc multishot).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh thư mục skill <code>tao-video-ai</code></strong> — file explorer / agent coding hiển thị folder có SKILL.md + scripts/ + assets/ + references/.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Link bài đăng video</strong> — đăng video lên ÍT NHẤT 1 kênh (Reels FB, TikTok, hoặc YouTube Shorts). Public, xem được.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Lưu screenshot cho Demo Day Ngày 21</strong> — moment ấn tượng (Higgsfield timeline, video preview, Telegram pipeline).</div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Higgsfield AI đã đăng ký + có credit hoạt động</li>
+      <li>Đã làm ra <strong>1 video AI 15-25s hoàn chỉnh</strong> bằng Stream 4.5 + Kling 2.6/3.0</li>
+      <li>Skill <code>tao-video-ai</code> chạy được pipeline end-to-end</li>
+      <li>Tích hợp auto-post — agent đăng video qua Telegram approval flow</li>
+      <li>Đã đăng ít nhất 1 video lên 1 kênh public</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top: 32px;">
+    <div class="tip-label">Tinh thần Ngày 18</div>
+    <p>Lần đầu chạm Higgsfield hơi loay hoay 60-90 phút. <strong>Lần thứ 2 chỉ ~30 phút.</strong> Lần thứ 5 trở đi: agent + skill làm 90%, bạn chỉ duyệt + chia sẻ. Đó chính là pattern Operator.</p>
+    <p>Hiếu nói: <em>"Ra ảnh ưng cái nào lụm cái đó, đừng mất công sửa hoài"</em>. AI có yếu tố hên xui — chấp nhận + di chuyển nhanh.</p>
+  </div>
+</section>
+
+<section id="phan-thuong">
+  <h2>
+    <span class="step-num">PHẦN THƯỞNG · NGÀY 18</span>
+    🎁 Chợ Trời Neverdie — nguồn tài nguyên giá tận gốc
+  </h2>
+
+  <div class="goal-box">
+    <div class="goal-box-label">Tại sao gọi là "phần thưởng"</div>
+    <p>Bạn đã vượt qua Ngày 18 — chỉ còn 3 ngày nữa. Đây là <strong>phần thưởng nội bộ</strong>:</p>
+    <em>Không phải vì tương lai bạn không vô tình biết.</em>
+    <p>Mà vì <strong>trong thời đại này, biết sớm luôn là lợi thế.</strong> Cộng đồng này sẽ biết sớm nhiều thứ hơn thị trường — hãy trân trọng phần thưởng này.</p>
+  </div>
+
+  <h3>Nguồn là gì</h3>
+  <p>👉 <strong><a href="https://t.me/mmothaoluann" target="_blank" rel="noopener">MMOVN Community</a></strong> — supergroup Telegram ~6.700 thành viên, có nhiều topic con. Đây là <strong>nguồn tận gốc</strong> mà <em>hầu hết dân bán tài nguyên ngoài thị trường lên đây mua → bán lại ra Facebook / Shopee / website cá nhân.</em></p>
+  <p>Mua trực tiếp trong cộng đồng = <strong>giá tận gốc, tiết kiệm 30-70%</strong> so với reseller.</p>
+
+  <p>Có sẵn (giá tham khảo từ chợ tại thời điểm viết):</p>
+  <ul>
+    <li><strong>ChatGPT Plus</strong> — từ <strong>65k/tháng</strong> (KBH = không bảo hành) đến <strong>380k/năm</strong> (BHF/ACC CẤP). Gói <strong>250k/tháng (BHF)</strong> là sweet spot — sài tẹt ga, có bảo hành.</li>
+    <li><strong>ChatGPT Go Acc Cấp</strong> — <strong>55k/năm</strong> (BH 30 ngày)</li>
+    <li><strong>YouTube Premium Family slot VN</strong> — 75k-380k tùy gói</li>
+    <li><strong>Spotify Premium</strong> — 250k/6 tháng → 400k/năm</li>
+    <li><strong>Google One, Higgsfield, Veo, Kling, Midjourney, Canva Pro, Adobe Creative…</strong> — tìm trong topic Chợ Giời</li>
+  </ul>
+
+  <div class="story" style="border-color: var(--gold);">
+    <div class="story-label" style="color: var(--gold);">💡 Tip mềm — ChatGPT Plus 250k/tháng "xài tẹt ga"</div>
+    <p>Trong các option trên, <strong>ChatGPT Plus gói 250k/tháng (BHF — bảo hành full time)</strong> là cái đáng tiền nhất nếu bạn dùng nhiều. Sài tẹt ga, không lo logout đột xuất, có support khi gặp sự cố — nguồn có sẵn trong chợ.</p>
+    <p style="margin-top: 8px;"><strong>Bạn cũng nên thử ngay 2 thứ mới của ChatGPT — chưa nhiều người biết, mới đi, cực đẹp:</strong></p>
+    <ul style="margin-top: 6px;">
+      <li><strong>Gen ảnh</strong> — model GPT Image mới ra, ảnh chi tiết + nét chữ trên ảnh đúng (đa số tool ảnh khác sai chữ tiếng Việt). Dùng cho thumbnail, ảnh sản phẩm test, ảnh cover bài đăng — dùng được ngay không cần Higgsfield cho các use case nhẹ.</li>
+      <li><strong>Gen website</strong> — Canvas mode → mô tả landing page bạn muốn → ChatGPT trả về HTML/CSS chạy được, có thể edit live trong UI. Test ý tưởng / build prototype landing trong 5 phút.</li>
+    </ul>
+    <p style="margin-top: 8px;"><em>Biết sớm = lợi thế. Cộng đồng này biết trước thị trường.</em></p>
+  </div>
+
+  <h3>2 topic bạn cần biết</h3>
+
+  <div class="story">
+    <div class="story-label">💰 Topic 1: Chợ Giời Neverdie</div>
+    <p>Nơi người bán đăng tài nguyên + giá. Bạn vào → đọc bài → DM người bán → trao đổi.</p>
+  </div>
+
+  <div class="story" style="border-color: var(--accent);">
+    <div class="story-label" style="color: var(--accent);">📢 Topic 2: Cảnh báo scammer — Check leak <span style="background: var(--accent); color: white; padding: 2px 8px; border-radius: 4px; font-size: 9px; margin-left: 6px;">BẮT BUỘC</span></div>
+    <p><strong>Trước khi chuyển tiền cho bất kỳ ai trong chợ → LUÔN check người bán trong topic này.</strong></p>
+    <p>Search username / SĐT / Telegram ID người bán → bot trả về kết quả check.</p>
+  </div>
+
+  <div class="tip" style="border-left-color: var(--accent); background: var(--accent-soft);">
+    <div class="tip-label" style="color: var(--accent);">⚠️ Quy tắc đọc kết quả check — KHÔNG bỏ qua</div>
+    <p><strong>⭐️ Premium: ❌ No</strong> → <strong>KHÔNG mua người này.</strong> Họ đã có report scam/leak. Bỏ qua = mất tiền.</p>
+    <p><strong>⭐️ Premium: ✅ Yes</strong> → OK, có thể mua. Vẫn nên hỏi rõ chính sách bảo hành: <em>KBH</em> (không BH, rẻ nhất, rủi ro cao), <em>BH GÓI</em> (bảo hành nguyên gói), <em>BHF / Bảo hành Full Time</em> (an toàn nhất).</p>
+    <p style="margin-top: 8px;">Đã có nhiều case scam trong chợ — đó là lý do topic check tồn tại. Đừng tiếc 30 giây check.</p>
+  </div>
+
+  <h3>Áp dụng ngay cho Day 18</h3>
+  <p>Cần Higgsfield mà không muốn trả 1tr/tháng tận gốc? <strong>Vào Chợ Giời → tìm "Higgsfield"</strong> → check người bán qua <strong>Cảnh báo scammer</strong> → mua share account / share gói (giá thường 100-300k/tháng).</p>
+  <p><em>Lưu ý: share account đôi khi bị logout đột xuất khi nhiều người dùng cùng lúc — chấp nhận đánh đổi rẻ ↔ rủi ro. Nếu chạy cho việc kinh doanh thật, mua gói cá nhân (Higgsfield trực tiếp ~1tr/tháng) ổn định hơn.</em></p>
+
+  <div class="tip">
+    <div class="tip-label">Trân trọng phần thưởng</div>
+    <p><strong>Đừng share link MMOVN Community ra Facebook / nhóm ngoài / người không thuộc thử thách.</strong></p>
+    <p>Nguồn này quý là vì <em>hẹp</em> — public ra là mất giá trị, dễ bị spam, admin chặn cho cả thử thách. Cộng đồng này biết sớm = lợi thế. Hãy giữ lợi thế cho mình + người trong thử thách.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "Đầu vào quyết định đầu ra.<br>
+    Cú máy nhẹ chậm. Test 1 ảnh trước. Lụm cái ưng."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 18 of 21 · Workshop private KP3 · Workshop 8 do Hiếu phụ trách</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-copy');
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const text = target.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'COPIED ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove('copied');
+        }, 1800);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

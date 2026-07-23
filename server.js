@@ -14,6 +14,9 @@ const cors      = require('cors');
 const path      = require('path');
 const fs        = require('fs');
 const initSqlJs = require('sql.js');
+const multer    = require('multer');
+const { PDFParse } = require('pdf-parse');
+const mammoth   = require('mammoth');
 
 const https    = require('https');
 const http     = require('http');
@@ -30,6 +33,17 @@ const FROM_EMAIL  = process.env.FROM_EMAIL || 'AI AGENTS CC <congdong@aiagentscc
 const ADMIN_EMAIL = 'tuchinguyen.ctv@gmail.com';
 
 const resendClient = RESEND_KEY ? new Resend(RESEND_KEY) : null;
+
+// Memory-storage upload for IELTS test-bank file extraction (PDF/DOCX) — files are
+// parsed to text immediately and never written to disk.
+const ieltsFileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = /\.(pdf|docx)$/i.test(file.originalname);
+    cb(ok ? null : new Error('Chỉ hỗ trợ file .pdf hoặc .docx'), ok);
+  },
+});
 
 async function sendEmail({ to, subject, html }) {
   if (!resendClient) {
@@ -308,7 +322,119 @@ const SCHEMA = `
     video_url    TEXT,
     duration_min INTEGER DEFAULT 0,
     order_num    INTEGER DEFAULT 0,
+    status       TEXT DEFAULT 'published',
     created_at   TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS course_enrollments (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id    INTEGER NOT NULL REFERENCES courses(id),
+    user_id      INTEGER NOT NULL REFERENCES users(id),
+    status       TEXT DEFAULT 'pending',
+    created_at   TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS lesson_exercise_submissions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id),
+    lesson_id       INTEGER NOT NULL REFERENCES course_lessons(id),
+    course_id       INTEGER NOT NULL REFERENCES courses(id),
+    answer_text     TEXT    NOT NULL,
+    score           INTEGER NOT NULL,
+    max_score       INTEGER NOT NULL,
+    pass_score      INTEGER NOT NULL,
+    passed          INTEGER NOT NULL DEFAULT 0,
+    issues          TEXT,
+    hints           TEXT,
+    ai_feedback_raw TEXT,
+    xp_awarded      INTEGER NOT NULL DEFAULT 0,
+    submitted_at    TEXT DEFAULT (datetime('now','localtime')),
+    UNIQUE(user_id, lesson_id)
+  );
+  CREATE TABLE IF NOT EXISTS lesson_exercise_questions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    lesson_id     INTEGER NOT NULL REFERENCES course_lessons(id),
+    question_text TEXT NOT NULL,
+    options       TEXT NOT NULL,
+    correct_index INTEGER NOT NULL,
+    explanation   TEXT,
+    order_num     INTEGER DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS ielts_tests (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    skill              TEXT NOT NULL,
+    title              TEXT NOT NULL,
+    description        TEXT,
+    time_limit_minutes INTEGER DEFAULT 60,
+    status             TEXT DEFAULT 'published',
+    max_score          INTEGER DEFAULT 100,
+    passages           TEXT,
+    task_type          TEXT,
+    writing_prompt     TEXT,
+    writing_rubric     TEXT,
+    writing_image_url  TEXT,
+    created_at         TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS ielts_test_questions (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    test_id        INTEGER NOT NULL REFERENCES ielts_tests(id),
+    question_type  TEXT NOT NULL,
+    passage_ref    TEXT,
+    question_text  TEXT NOT NULL,
+    options        TEXT,
+    correct_answer TEXT NOT NULL,
+    explanation    TEXT,
+    order_num      INTEGER DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS space_groups (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT    NOT NULL,
+    order_num    INTEGER DEFAULT 0,
+    created_at   TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS spaces (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id            INTEGER REFERENCES space_groups(id),
+    name                TEXT    NOT NULL,
+    icon                TEXT    DEFAULT '💬',
+    description         TEXT,
+    visibility          TEXT    DEFAULT 'public',
+    min_level           INTEGER DEFAULT 1,
+    allow_join_requests INTEGER DEFAULT 1,
+    order_num           INTEGER DEFAULT 0,
+    created_at          TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS space_members (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    space_id     INTEGER NOT NULL REFERENCES spaces(id),
+    user_id      INTEGER NOT NULL REFERENCES users(id),
+    status       TEXT    DEFAULT 'pending',
+    invited_by   INTEGER REFERENCES users(id),
+    created_at   TEXT    DEFAULT (datetime('now','localtime')),
+    UNIQUE(space_id, user_id)
+  );
+  CREATE TABLE IF NOT EXISTS topics (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    space_id     INTEGER NOT NULL REFERENCES spaces(id),
+    name         TEXT    NOT NULL,
+    icon         TEXT    DEFAULT '🏷️',
+    order_num    INTEGER DEFAULT 0,
+    created_at   TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS poll_votes (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id      INTEGER NOT NULL REFERENCES posts(id),
+    user_id      INTEGER NOT NULL REFERENCES users(id),
+    option_index INTEGER NOT NULL,
+    created_at   TEXT    DEFAULT (datetime('now','localtime')),
+    UNIQUE(post_id, user_id)
+  );
+  CREATE TABLE IF NOT EXISTS pillars (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    key        TEXT    UNIQUE NOT NULL,
+    label      TEXT    NOT NULL,
+    icon       TEXT    DEFAULT '🔥',
+    color      TEXT    DEFAULT '#0ea5e9',
+    order_num  INTEGER DEFAULT 0,
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
   );
 `;
 
@@ -583,6 +709,185 @@ const CHALLENGE_DAYS_TEACHER = [
     console.log('  Migrated users: added intake_profile.');
   }
 
+  // Migrate posts: add space_id
+  const postCols = db.all('PRAGMA table_info(posts)').map(c => c.name);
+  if (!postCols.includes('space_id')) {
+    db.exec('ALTER TABLE posts ADD COLUMN space_id INTEGER REFERENCES spaces(id)');
+    console.log('  Migrated posts: added space_id.');
+  }
+  // Migrate posts: add topic_id + rich embed fields (image/video/doc/gif links, poll)
+  if (!postCols.includes('topic_id')) {
+    db.exec('ALTER TABLE posts ADD COLUMN topic_id INTEGER REFERENCES topics(id)');
+    console.log('  Migrated posts: added topic_id.');
+  }
+  if (!postCols.includes('image_url')) {
+    db.exec('ALTER TABLE posts ADD COLUMN image_url TEXT');
+    console.log('  Migrated posts: added image_url.');
+  }
+  if (!postCols.includes('video_url')) {
+    db.exec('ALTER TABLE posts ADD COLUMN video_url TEXT');
+    console.log('  Migrated posts: added video_url.');
+  }
+  if (!postCols.includes('doc_url')) {
+    db.exec('ALTER TABLE posts ADD COLUMN doc_url TEXT');
+    console.log('  Migrated posts: added doc_url.');
+  }
+  if (!postCols.includes('gif_url')) {
+    db.exec('ALTER TABLE posts ADD COLUMN gif_url TEXT');
+    console.log('  Migrated posts: added gif_url.');
+  }
+  if (!postCols.includes('poll_question')) {
+    db.exec('ALTER TABLE posts ADD COLUMN poll_question TEXT');
+    console.log('  Migrated posts: added poll_question.');
+  }
+  if (!postCols.includes('poll_options')) {
+    db.exec('ALTER TABLE posts ADD COLUMN poll_options TEXT');
+    console.log('  Migrated posts: added poll_options.');
+  }
+
+  // Migrate courses: add space_id (course shows in a member's sidebar only if they belong to this space)
+  const courseCols = db.all('PRAGMA table_info(courses)').map(c => c.name);
+  if (!courseCols.includes('space_id')) {
+    db.exec('ALTER TABLE courses ADD COLUMN space_id INTEGER REFERENCES spaces(id)');
+    console.log('  Migrated courses: added space_id.');
+  }
+
+  // Migrate courses: add group_id (attach a course to a whole Space Group instead of a single Space —
+  // anyone approved in ANY space under that group can see the course)
+  if (!courseCols.includes('group_id')) {
+    db.exec('ALTER TABLE courses ADD COLUMN group_id INTEGER REFERENCES space_groups(id)');
+    console.log('  Migrated courses: added group_id.');
+  }
+
+  // Migrate courses: add visibility (public = enroll instantly, private = must pay via a linked product)
+  if (!courseCols.includes('visibility')) {
+    db.exec("ALTER TABLE courses ADD COLUMN visibility TEXT DEFAULT 'public'");
+    console.log('  Migrated courses: added visibility.');
+  }
+  if (!courseCols.includes('price')) {
+    db.exec('ALTER TABLE courses ADD COLUMN price INTEGER DEFAULT 0');
+    console.log('  Migrated courses: added price.');
+  }
+  if (!courseCols.includes('compare_price')) {
+    db.exec('ALTER TABLE courses ADD COLUMN compare_price INTEGER DEFAULT 0');
+    console.log('  Migrated courses: added compare_price.');
+  }
+
+  // Migrate products: add course_id — a product can represent the paid checkout for a private course.
+  // Completing this product's order auto-enrolls the buyer into the course.
+  const productCols = db.all('PRAGMA table_info(products)').map(c => c.name);
+  if (!productCols.includes('course_id')) {
+    db.exec('ALTER TABLE products ADD COLUMN course_id INTEGER REFERENCES courses(id)');
+    console.log('  Migrated products: added course_id.');
+  }
+  if (!productCols.includes('compare_price')) {
+    db.exec('ALTER TABLE products ADD COLUMN compare_price INTEGER DEFAULT 0');
+    console.log('  Migrated products: added compare_price.');
+  }
+  if (!productCols.includes('detail_url')) {
+    db.exec('ALTER TABLE products ADD COLUMN detail_url TEXT');
+    console.log('  Migrated products: added detail_url.');
+  }
+  if (!productCols.includes('is_featured')) {
+    db.exec('ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0');
+    console.log('  Migrated products: added is_featured.');
+  }
+
+  // Migrate course_lessons: add status (draft/published, independent from the parent course's status)
+  const lessonCols = db.all('PRAGMA table_info(course_lessons)').map(c => c.name);
+  if (!lessonCols.includes('status')) {
+    db.exec("ALTER TABLE course_lessons ADD COLUMN status TEXT DEFAULT 'published'");
+    console.log('  Migrated course_lessons: added status.');
+  }
+
+  // Migrate course_lessons: add AI-graded exercise fields
+  if (!lessonCols.includes('exercise_enabled')) {
+    db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_enabled INTEGER DEFAULT 0');
+    db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_prompt TEXT');
+    db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_rubric TEXT');
+    db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_max_score INTEGER DEFAULT 100');
+    db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_pass_score INTEGER DEFAULT 70');
+    db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_xp_reward INTEGER DEFAULT 0');
+    console.log('  Migrated course_lessons: added AI exercise fields.');
+  }
+
+  // Migrate course_lessons: add exercise_type ('text' = AI-graded free text, 'quiz' = auto-graded multiple choice)
+  if (!lessonCols.includes('exercise_type')) {
+    db.exec("ALTER TABLE course_lessons ADD COLUMN exercise_type TEXT DEFAULT 'text'");
+    console.log('  Migrated course_lessons: added exercise_type.');
+  }
+
+  // Migrate lesson_exercise_submissions: add teacher workflow fields (resubmit request / manual final grade)
+  const lesCols = db.all('PRAGMA table_info(lesson_exercise_submissions)').map(c => c.name);
+  if (!lesCols.includes('status')) {
+    db.exec("ALTER TABLE lesson_exercise_submissions ADD COLUMN status TEXT DEFAULT 'graded'");
+    db.exec('ALTER TABLE lesson_exercise_submissions ADD COLUMN teacher_note TEXT');
+    console.log('  Migrated lesson_exercise_submissions: added status, teacher_note.');
+  }
+
+  // Migrate course_lessons: link to a shared IELTS test-bank entry (ielts_tests), replacing
+  // the ad-hoc exercise_* fields for that lesson when set — see server.js docs near the submit endpoint.
+  if (!lessonCols.includes('ielts_test_id')) {
+    db.exec('ALTER TABLE course_lessons ADD COLUMN ielts_test_id INTEGER REFERENCES ielts_tests(id)');
+    console.log('  Migrated course_lessons: added ielts_test_id.');
+  }
+
+  // Migrate lesson_exercise_submissions: add IELTS Writing band-score feedback (null unless
+  // the graded exercise is an attached IELTS Writing test)
+  if (!lesCols.includes('ielts_band_feedback')) {
+    db.exec('ALTER TABLE lesson_exercise_submissions ADD COLUMN ielts_band_feedback TEXT');
+    console.log('  Migrated lesson_exercise_submissions: added ielts_band_feedback.');
+  }
+
+  // Migrate ielts_tests: add chatgpt_url for the Speaking skill (link students open to
+  // practice speaking with an AI chatbot). Listening reuses the existing `passages` JSON
+  // column — each passage gets an optional video_url instead of body_html.
+  const ieltsTestCols = db.all('PRAGMA table_info(ielts_tests)').map(c => c.name);
+  if (!ieltsTestCols.includes('chatgpt_url')) {
+    db.exec('ALTER TABLE ielts_tests ADD COLUMN chatgpt_url TEXT');
+    console.log('  Migrated ielts_tests: added chatgpt_url.');
+  }
+
+  // Migrate users: add is_admin (community-level admin, separate from ADMIN_KEY back office)
+  const userCols2 = db.all('PRAGMA table_info(users)').map(c => c.name);
+  if (!userCols2.includes('is_admin')) {
+    db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0');
+    console.log('  Migrated users: added is_admin.');
+  }
+
+  // Migrate users: add editable profile fields (bio, location, social_links as JSON)
+  if (!userCols2.includes('bio')) {
+    db.exec('ALTER TABLE users ADD COLUMN bio TEXT');
+    db.exec('ALTER TABLE users ADD COLUMN location TEXT');
+    db.exec('ALTER TABLE users ADD COLUMN social_links TEXT');
+    console.log('  Migrated users: added bio, location, social_links.');
+  }
+  if (!userCols2.includes('phone')) {
+    db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
+    console.log('  Migrated users: added phone.');
+  }
+
+  // Migrate spaces: add group_id, backfill a default group for ungrouped spaces
+  const spaceCols = db.all('PRAGMA table_info(spaces)').map(c => c.name);
+  if (!spaceCols.includes('group_id')) {
+    db.exec('ALTER TABLE spaces ADD COLUMN group_id INTEGER REFERENCES space_groups(id)');
+    console.log('  Migrated spaces: added group_id.');
+  }
+  const ungroupedCount = db.get('SELECT COUNT(*) AS n FROM spaces WHERE group_id IS NULL').n;
+  if (ungroupedCount > 0) {
+    let defaultGroup = db.get("SELECT id FROM space_groups WHERE name = 'Chung'");
+    if (!defaultGroup) {
+      const r = db.run("INSERT INTO space_groups (name, order_num) VALUES ('Chung', 0)");
+      defaultGroup = { id: r.lastInsertRowid };
+    }
+    db.run('UPDATE spaces SET group_id = ? WHERE group_id IS NULL', [defaultGroup.id]);
+    console.log(`  Migrated ${ungroupedCount} ungrouped space(s) into default group "Chung".`);
+  }
+  if (!spaceCols.includes('allow_join_requests')) {
+    db.exec('ALTER TABLE spaces ADD COLUMN allow_join_requests INTEGER DEFAULT 1');
+    console.log('  Migrated spaces: added allow_join_requests.');
+  }
+
   const dayCount = db.get('SELECT COUNT(*) AS n FROM challenge_days').n;
   if (dayCount === 0) {
     CHALLENGE_DAYS.forEach(([num, title, desc, instructions, xp]) =>
@@ -624,6 +929,18 @@ const CHALLENGE_DAYS_TEACHER = [
     ['announcement_text',      ''],
     ['announcement_icon',      '📢'],
     ['late_reminder_enabled',  '0'],
+    ['calendar_embed_url',     ''],
+    ['about_intro',            ''],
+    ['about_media',            '[]'],
+    ['community_name',         'AI AGENTS CC'],
+    ['challenge_hero_icon',    '⚡'],
+    ['challenge_hero_title',   'Thử thách AI Agent'],
+    ['challenge_hero_desc',    'Chọn thử thách phù hợp với bạn. Mỗi ngày một task thực chiến — từ prompt engineering đến deploy agent thật.'],
+    ['mp_store_name',          'AI Agents Marketplace'],
+    ['mp_store_desc',          'Chợ sản phẩm số dành cho cộng đồng AI Agent Việt Nam.'],
+    ['mp_bank_name',           'BIDV'],
+    ['mp_bank_account_name',   'TỪ CHÍ NGUYỆN'],
+    ['mp_bank_account_number', '96247NGUYEN'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -652,6 +969,39 @@ const CHALLENGE_DAYS_TEACHER = [
     }
   }
 
+  // Seed flagship featured product — 21-day AI Agent challenge, shown in the marketplace hero
+  const featuredCount = db.get('SELECT COUNT(*) AS n FROM products WHERE is_featured = 1').n;
+  if (featuredCount === 0) {
+    const adminUser = db.get('SELECT id FROM users LIMIT 1');
+    if (adminUser) {
+      db.run(
+        `INSERT INTO products (seller_id, title, description, long_description, price, compare_price, category, cover_color, status, is_featured, detail_url)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+        [adminUser.id, 'Thử Thách 21 Ngày AI Agent',
+         '21 ngày cầm tay chỉ việc xây dựng AI Agent thực chiến — từ số 0 đến có sản phẩm dùng được, kèm mentor và cộng đồng đồng hành.',
+         '## Bạn sẽ nhận được gì\n\n- 21 ngày bài học + bài tập thực hành, chấm bài từng ngày\n- Mentor đồng hành, feedback trực tiếp\n- Cộng đồng học viên hỗ trợ 21 ngày\n- Chứng nhận hoàn thành thử thách\n- Truy cập trọn đời toàn bộ tài liệu & template\n\n**Giá trị thực tế: 56.500.000đ**\n**Giá ưu đãi hôm nay: chỉ 5.000.000đ**',
+         5000000, 56500000, 'agent', '#7c3aed', 'published', 1, 'challenge.html']
+      );
+      console.log('  Seeded featured product: Thử Thách 21 Ngày AI Agent.');
+    }
+  }
+
+  // Seed default pillars (business growth-funnel framework: Offer/Traffic/Conversion/Delivery/Continuity)
+  const pillarCount = db.get('SELECT COUNT(*) AS n FROM pillars').n;
+  if (pillarCount === 0) {
+    const defaultPillars = [
+      ['offer', 'Offer', '🔥', '#f59e0b', 0],
+      ['traffic', 'Thu hút', '✨', '#3b82f6', 1],
+      ['conversion', 'Chuyển đổi', '🎯', '#8b5cf6', 2],
+      ['delivery', 'Cung ứng', '⚙️', '#10b981', 3],
+      ['continuity', 'Continuity', '🔄', '#ec4899', 4],
+    ];
+    defaultPillars.forEach(([key, label, icon, color, order_num]) => {
+      db.run('INSERT INTO pillars (key, label, icon, color, order_num) VALUES (?,?,?,?,?)', [key, label, icon, color, order_num]);
+    });
+    console.log('  Seeded 5 default pillars.');
+  }
+
   // ── Helpers ────────────────────────────────────────────────
   function addXP(userId, amount, source, note = null) {
     db.run('UPDATE users SET xp = xp + ? WHERE id = ?', [amount, userId]);
@@ -659,6 +1009,274 @@ const CHALLENGE_DAYS_TEACHER = [
       'INSERT INTO xp_log (user_id, amount, source, note) VALUES (?,?,?,?)',
       [userId, amount, source, note]
     );
+  }
+
+  function slugify(label) {
+    let s = String(label || '').trim().toLowerCase();
+    s = s.replace(/đ/g, 'd').replace(/Đ/g, 'd');
+    s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    s = s.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    return s || 'pillar';
+  }
+  function uniquePillarKey(base) {
+    let key = base;
+    let i = 2;
+    while (db.get('SELECT id FROM pillars WHERE key = ?', [key])) { key = `${base}_${i}`; i++; }
+    return key;
+  }
+
+  function extractJsonObject(text) {
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const candidate = fenced ? fenced[1] : text;
+    const start = candidate.indexOf('{');
+    const end = candidate.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('No JSON object in AI response');
+    return JSON.parse(candidate.slice(start, end + 1));
+  }
+
+  function gradeQuizExercise(questions, answers, maxScore) {
+    const issues = [];
+    const hints = [];
+    let correctCount = 0;
+    questions.forEach((q, i) => {
+      const picked = answers[q.id];
+      if (picked === q.correct_index) {
+        correctCount++;
+      } else {
+        issues.push(`Câu ${i + 1}: "${q.question_text}" — bạn chọn sai.`);
+        if (q.explanation) hints.push(`Câu ${i + 1}: ${q.explanation}`);
+      }
+    });
+    const score = questions.length ? Math.round((correctCount / questions.length) * maxScore) : 0;
+    return { score, issues, hints };
+  }
+
+  // IELTS reading questions (mc/tfng/gap_fill/matching) all store correct_answer as a JSON
+  // array of acceptable literal strings, so one comparison covers every question type.
+  function normalizeAnswerStr(s) {
+    return String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  function gradeIeltsReadingExercise(questions, answers, maxScore) {
+    const issues = [];
+    const hints = [];
+    let correctCount = 0;
+    questions.forEach((q, i) => {
+      const accepted = JSON.parse(q.correct_answer);
+      const submitted = normalizeAnswerStr(answers[q.id]);
+      const isCorrect = accepted.some(a => normalizeAnswerStr(a) === submitted);
+      if (isCorrect) {
+        correctCount++;
+      } else {
+        issues.push(`Câu ${i + 1}${q.passage_ref ? ' (Bài đọc ' + q.passage_ref + ')' : ''}: "${q.question_text}" — chưa đúng.`);
+        if (q.explanation) hints.push(`Câu ${i + 1}: ${q.explanation}`);
+      }
+    });
+    const score = questions.length ? Math.round((correctCount / questions.length) * maxScore) : 0;
+    return { score, issues, hints };
+  }
+
+  async function gradeExerciseWithGemini({ lessonTitle, exercisePrompt, rubric, maxScore, studentAnswer, ieltsWriting = null }) {
+    if (!OPENROUTER_KEY) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
+
+    const systemPrompt = ieltsWriting
+      ? `Bạn là giám khảo chấm thi IELTS Writing ${ieltsWriting.taskType === 'task1' ? 'Task 1' : 'Task 2'} cho khoá học "${lessonTitle}". Chấm nghiêm túc theo đúng 4 tiêu chí chính thức của IELTS Writing: Task Response/Achievement, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.
+
+Trả lời DUY NHẤT một JSON object theo đúng format sau, không thêm chữ nào khác trước/sau:
+{"score": <số nguyên 0-${maxScore}, quy đổi tương ứng với band_overall>, "band_overall": <số thập phân 0-9, bước 0.5>, "band_task_response": <số thập phân 0-9, bước 0.5>, "band_coherence_cohesion": <số thập phân 0-9, bước 0.5>, "band_lexical_resource": <số thập phân 0-9, bước 0.5>, "band_grammar": <số thập phân 0-9, bước 0.5>, "issues": [<chuỗi tiếng Việt, mỗi phần tử là 1 lỗi/điểm yếu cụ thể trong bài làm>], "hints": [<chuỗi tiếng Việt, mỗi phần tử là 1 gợi ý để học viên TỰ cải thiện>]}
+
+QUY TẮC BẮT BUỘC:
+- Chấm band theo đúng thang điểm và tiêu chí chính thức IELTS Writing, không dễ dãi.
+- "issues" phải cụ thể, chỉ đúng chỗ yếu trong bài làm của học viên, không nói chung chung.
+- "hints" phải mang tính gợi mở, KHÔNG viết sẵn câu/đoạn văn thay học viên.`
+      : `Bạn là trợ giảng chấm bài tập cho khoá học "${lessonTitle}". Chấm nghiêm túc, công bằng theo đúng tiêu chí chấm điểm được cung cấp.
+
+Trả lời DUY NHẤT một JSON object theo đúng format sau, không thêm chữ nào khác trước/sau:
+{"score": <số nguyên 0-${maxScore}>, "issues": [<chuỗi tiếng Việt, mỗi phần tử là 1 lỗi/điểm sai cụ thể trong bài làm>], "hints": [<chuỗi tiếng Việt, mỗi phần tử là 1 gợi ý/câu hỏi dẫn dắt để học viên TỰ nhận ra và TỰ sửa lỗi>]}
+
+QUY TẮC BẮT BUỘC:
+- "issues" phải cụ thể, chỉ đúng chỗ sai trong bài làm của học viên, không nói chung chung.
+- "hints" phải mang tính gợi mở, đặt câu hỏi hoặc chỉ ra hướng suy nghĩ — TUYỆT ĐỐI KHÔNG được viết ra đáp án đúng, lời giải hoàn chỉnh, hay đoạn code/văn bản sửa sẵn. Mục tiêu là để học viên tự hiểu và tự sửa, không phải giải hộ.
+- Nếu bài làm tốt/đúng hoàn toàn, "issues" và "hints" có thể là mảng rỗng.`;
+
+    const userPrompt = `ĐỀ BÀI (học viên thấy):\n${exercisePrompt}\n\nTIÊU CHÍ CHẤM ĐIỂM (nội bộ, học viên không thấy):\n${rubric || '(không có tiêu chí riêng, chấm theo mức độ đúng/đủ so với đề bài)'}\n\nBÀI LÀM CỦA HỌC VIÊN:\n${studentAnswer}`;
+
+    try {
+      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_KEY}`,
+          'HTTP-Referer': 'https://aiagentscc.com',
+          'X-Title': 'AI AGENTS CC Exercise Grading'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          max_tokens: 1500,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ]
+        })
+      });
+
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        console.error('[ExerciseGrade] OpenRouter error:', apiRes.status, errText);
+        return { ok: false, error: 'AI service error' };
+      }
+
+      const data = await apiRes.json();
+      const raw = data.choices?.[0]?.message?.content || '';
+      const parsed = extractJsonObject(raw);
+
+      let score = Number(parsed.score);
+      if (!Number.isFinite(score)) throw new Error('Invalid score in AI response');
+      score = Math.max(0, Math.min(maxScore, Math.round(score)));
+
+      const toStrArray = v => Array.isArray(v) ? v.map(x => String(x).trim()).filter(Boolean) : (v ? [String(v).trim()] : []);
+
+      let bandFeedback = null;
+      if (ieltsWriting) {
+        const clampBand = v => {
+          const n = Number(v);
+          if (!Number.isFinite(n)) return null;
+          return Math.max(0, Math.min(9, Math.round(n * 2) / 2));
+        };
+        bandFeedback = {
+          band_overall: clampBand(parsed.band_overall),
+          band_task_response: clampBand(parsed.band_task_response),
+          band_coherence_cohesion: clampBand(parsed.band_coherence_cohesion),
+          band_lexical_resource: clampBand(parsed.band_lexical_resource),
+          band_grammar: clampBand(parsed.band_grammar),
+        };
+      }
+
+      return { ok: true, score, issues: toStrArray(parsed.issues), hints: toStrArray(parsed.hints), raw, bandFeedback };
+    } catch (err) {
+      console.error('[ExerciseGrade] Error:', err.message);
+      return { ok: false, error: err.message };
+    }
+  }
+
+  // Reads a raw IELTS test dump (extracted from an uploaded PDF/DOCX) and asks the AI to
+  // restructure it into the exact { test, passages, questions } shape POST /ielts-tests/import
+  // expects. The result is returned to the admin for review — it is never saved automatically,
+  // since a misread answer key would silently mis-grade every student who takes the test.
+  async function extractIeltsTestFromText(rawText) {
+    if (!OPENROUTER_KEY) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
+
+    const systemPrompt = `Bạn là trợ lý chuyển đổi đề thi IELTS từ văn bản thô (trích từ file PDF/DOCX, có thể lộn xộn định dạng) sang JSON có cấu trúc để nhập vào ngân hàng đề.
+
+Trước tiên xác định đây là đề dạng nào:
+- LISTENING: văn bản là TRANSCRIPT/lời thoại của audio — ưu tiên chọn skill này nếu thấy BẤT KỲ dấu hiệu nào sau: tiêu đề/đầu file có chữ "Listening", "Transcript", "Audio", "Section" (SECTION 1/2/3/4 kiểu IELTS Listening thật); nội dung là hội thoại giữa 2 người có nhãn tên/vai (VD "RECEPTIONIST:", "CALLER:", "MAN:", "WOMAN:") hoặc một bài nói/thuyết trình liên tục (monologue); câu hỏi dạng "complete the notes/form/table" hoặc điền số điện thoại/tên/địa chỉ nghe được.
+- READING: đoạn văn/passage dạng bài báo, bài luận thông tin để ĐỌC (không có nhãn người nói, không phải hội thoại), kèm câu hỏi và đáp án.
+- WRITING: chỉ có 1 đề bài luận/report, không có câu hỏi trắc nghiệm hay đáp án đúng/sai.
+Nếu văn bản là hội thoại/transcript nhưng bạn không chắc, VẪN chọn "listening" chứ không phải "reading" — đề reading thật của IELTS không bao giờ ở dạng hội thoại có nhãn người nói.
+
+Trả lời DUY NHẤT một JSON object theo đúng schema sau, không thêm chữ nào khác trước/sau, không dùng markdown code fence:
+{
+  "test": {
+    "skill": "reading" hoặc "listening" hoặc "writing",
+    "title": "<tên đề, tự đặt nếu văn bản không có tên rõ ràng>",
+    "description": "<hướng dẫn ngắn cho học viên, có thể để trống>",
+    "time_limit_minutes": <số phút, mặc định 60 cho reading, 30 cho listening, 40 cho writing task2 hoặc 20 cho task1>,
+    "max_score": <reading/listening: bằng tổng số câu hỏi tìm được; writing: 100>,
+    "task_type": "task1" hoặc "task2" (CHỈ set nếu skill=writing, ngược lại null),
+    "writing_prompt": "<đề bài luận, CHỈ nếu skill=writing, ngược lại chuỗi rỗng>",
+    "writing_rubric": "<tiêu chí chấm điểm theo 4 tiêu chí IELTS Writing (Task Response, Coherence & Cohesion, Lexical Resource, Grammar) — nếu văn bản không có sẵn, tự đề xuất tiêu chí chuẩn IELTS, CHỈ nếu skill=writing>",
+    "writing_image_url": ""
+  },
+  "passages": [
+    { "ref": "1", "title": "<reading: tên bài đọc — listening: tên phần, VD 'Part 1'>", "body_html": "<toàn bộ nội dung bài đọc/transcript, bọc mỗi đoạn hoặc mỗi câu thoại trong thẻ <p>...</p>, escape đúng HTML — GIỐNG HỆT cách làm cho reading, kể cả khi skill=listening>", "video_url": "<CHỈ nếu skill=listening, luôn để chuỗi rỗng vì không có sẵn link video từ file văn bản — người quản trị sẽ tự dán link sau>" }
+  ],
+  "questions": [
+    {
+      "order_num": <số thứ tự câu hỏi>,
+      "passage_ref": "<ref của passage/phần câu này thuộc về>",
+      "question_type": "mc" | "tfng" | "gap_fill" | "matching",
+      "question_text": "<nội dung câu hỏi, KHÔNG kèm số thứ tự phía trước>",
+      "options": [<mảng các lựa chọn dạng chuỗi, bao gồm cả nhãn A/B/C/D nếu có — chỉ dùng cho mc/tfng/matching, để null nếu gap_fill>],
+      "correct_answer": [<mảng các chuỗi đáp án được chấp nhận — với mc dùng ĐÚNG NGUYÊN VĂN 1 trong các chuỗi ở "options", với tfng dùng "TRUE"/"FALSE"/"NOT GIVEN", với gap_fill liệt kê mọi cách viết đúng nếu có đề cập>],
+      "explanation": "<giải thích ngắn tại sao đây là đáp án đúng, nếu văn bản có đủ thông tin, nếu không để trống>"
+    }
+  ]
+}
+
+QUY TẮC BẮT BUỘC:
+- "passages" và "questions" để mảng RỖNG [] nếu skill là "writing".
+- Nếu skill là "reading"/"listening" mà không tìm thấy đáp án rõ ràng cho 1 câu hỏi nào đó, vẫn PHẢI đưa câu hỏi đó vào với "correct_answer" là suy đoán hợp lý nhất, và bắt buộc ghi "CẦN KIỂM TRA LẠI ĐÁP ÁN" ở đầu "explanation" của câu đó để người dùng biết mà rà soát lại — TUYỆT ĐỐI không được bỏ sót câu hỏi.
+- Giữ nguyên văn bản gốc (tiếng Anh) của bài đọc/transcript và câu hỏi, không dịch, không tóm tắt, không bịa thêm nội dung.
+- Mọi chuỗi trong JSON PHẢI escape đúng chuẩn JSON (dấu " thành \\", xuống dòng thành \\n) — đây là lỗi hay gặp nhất, hãy đặc biệt cẩn thận với các đoạn transcript/passage dài có chứa dấu ngoặc kép.
+- Chỉ trả về JSON hợp lệ, không giải thích gì thêm ngoài JSON.`;
+
+    const MAX_CHARS = 50000;
+    const truncated = rawText.length > MAX_CHARS;
+    const userPrompt = `NỘI DUNG FILE ĐỀ THI (văn bản thô trích xuất từ PDF/DOCX):\n\n${rawText.slice(0, MAX_CHARS)}${truncated ? '\n\n[... văn bản đã bị cắt bớt do quá dài ...]' : ''}`;
+
+    try {
+      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_KEY}`,
+          'HTTP-Referer': 'https://aiagentscc.com',
+          'X-Title': 'AI AGENTS CC IELTS Test Extraction'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          max_tokens: 60000,
+          // This is a straightforward text→JSON restructuring task, not a reasoning task — Gemini 2.5
+          // Flash's internal "thinking" tokens otherwise eat into the same max_tokens budget as the
+          // actual JSON output, which is what was truncating large (40+ question) tests mid-string.
+          reasoning: { enabled: false },
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ]
+        })
+      });
+
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        console.error('[IeltsExtract] OpenRouter error:', apiRes.status, errText);
+        return { ok: false, error: 'AI service error' };
+      }
+
+      const data = await apiRes.json();
+      const choice = data.choices?.[0];
+      const raw = choice?.message?.content || '';
+
+      if (choice?.finish_reason === 'length') {
+        console.error('[IeltsExtract] Truncated: AI response hit max_tokens before completing JSON.');
+        return { ok: false, error: 'Đề quá dài — AI bị cắt nội dung giữa chừng nên không tạo được JSON hợp lệ. Hãy thử với file ngắn hơn (VD: tách riêng từng Part/passage) rồi thử lại.' };
+      }
+
+      let parsed;
+      try {
+        parsed = extractJsonObject(raw);
+      } catch (parseErr) {
+        console.error('[IeltsExtract] JSON parse error:', parseErr.message);
+        return { ok: false, error: 'AI trả về JSON không hợp lệ (có thể do nội dung quá dài hoặc phức tạp). Hãy thử lại, hoặc chia nhỏ file rồi thử từng phần.' };
+      }
+
+      if (!parsed.test || !['reading', 'writing', 'listening'].includes(parsed.test.skill)) {
+        throw new Error('AI không xác định được kỹ năng (reading/writing/listening) hợp lệ.');
+      }
+
+      return {
+        ok: true,
+        extracted: {
+          test: parsed.test,
+          passages: Array.isArray(parsed.passages) ? parsed.passages : [],
+          questions: Array.isArray(parsed.questions) ? parsed.questions : [],
+        },
+        truncated,
+      };
+    } catch (err) {
+      console.error('[IeltsExtract] Error:', err.message);
+      return { ok: false, error: 'AI không đọc được nội dung file: ' + err.message };
+    }
   }
 
   // ── Admin middleware ───────────────────────────────────────
@@ -698,30 +1316,276 @@ const CHALLENGE_DAYS_TEACHER = [
   });
 
   // Public courses list
-  app.get('/api/courses', (_req, res) => {
+  // Private courses must always have a published, in-sync checkout product. Courses saved
+  // before that pairing existed (or whose product drifted out of sync some other way) get
+  // healed here on read, so the "Thanh toán" button never dead-ends.
+  function ensureCourseProduct(courseId) {
+    const product = db.get("SELECT id FROM products WHERE course_id = ? AND status = 'published'", [courseId]);
+    if (product) return product.id;
+    syncCourseProduct(courseId);
+    return db.get("SELECT id FROM products WHERE course_id = ? AND status = 'published'", [courseId])?.id || null;
+  }
+
+  app.get('/api/courses', (req, res) => {
+    const { user_id = '' } = req.query;
     const courses = db.all(`
-      SELECT c.id, c.title, c.description, c.cover_color, c.status,
-             c.instructor, c.order_num, c.created_at,
+      SELECT c.id, c.title, c.description, c.cover_color, c.status, c.visibility, c.price, c.compare_price,
+             c.instructor, c.order_num, c.created_at, c.space_id, c.group_id,
+             s.name AS space_name, s.icon AS space_icon, g.name AS group_name,
+             p.id AS checkout_product_id,
              COUNT(cl.id) AS lesson_count
       FROM courses c
-      LEFT JOIN course_lessons cl ON cl.course_id = c.id
+      LEFT JOIN course_lessons cl ON cl.course_id = c.id AND cl.status = 'published'
+      LEFT JOIN spaces s ON s.id = c.space_id
+      LEFT JOIN space_groups g ON g.id = c.group_id
+      LEFT JOIN products p ON p.course_id = c.id AND p.status = 'published'
       WHERE c.status = 'published'
       GROUP BY c.id
       ORDER BY c.order_num ASC, c.created_at DESC
-    `);
-    const total_lessons = db.get('SELECT COUNT(*) AS n FROM course_lessons cl JOIN courses c ON c.id = cl.course_id WHERE c.status = ?', ['published']).n;
+    `).map(c => ({
+      ...c,
+      join_status: c.group_id ? (getGroupMembership(c.group_id, user_id)?.status || 'none')
+        : c.space_id ? (getMembership(c.space_id, user_id)?.status || 'none')
+        : null,
+      enroll_status: user_id ? (getEnrollment(c.id, user_id)?.status || 'none') : 'none',
+      checkout_product_id: c.visibility === 'private' && !c.checkout_product_id ? ensureCourseProduct(c.id) : c.checkout_product_id,
+    }));
+    const total_lessons = db.get("SELECT COUNT(*) AS n FROM course_lessons cl JOIN courses c ON c.id = cl.course_id WHERE c.status = 'published' AND cl.status = 'published'").n;
     res.json({ courses, total_lessons });
   });
 
-  // Course detail with lessons
+  // Course detail with lessons. Private courses the user hasn't paid for get the lesson
+  // curriculum stripped of content — only the checkout prompt should render client-side.
   app.get('/api/courses/:id', (req, res) => {
+    const { user_id = '' } = req.query;
     const course = db.get('SELECT * FROM courses WHERE id = ?', [req.params.id]);
     if (!course) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
-    const lessons = db.all(
-      'SELECT id, title, content, video_url, duration_min, order_num FROM course_lessons WHERE course_id = ? ORDER BY order_num ASC, id ASC',
-      [req.params.id]
+    const enroll_status = user_id ? (getEnrollment(course.id, user_id)?.status || 'none') : 'none';
+    const unlocked = course.visibility !== 'private' || enroll_status === 'approved';
+    const lesson_count = db.get("SELECT COUNT(*) AS n FROM course_lessons WHERE course_id = ? AND status = 'published'", [req.params.id]).n;
+    const lessons = unlocked
+      ? db.all(
+          `SELECT id, title, content, video_url, duration_min, order_num,
+                  exercise_enabled, exercise_type, exercise_prompt, exercise_max_score, exercise_pass_score, ielts_test_id
+           FROM course_lessons WHERE course_id = ? AND status = 'published' ORDER BY order_num ASC, id ASC`,
+          [req.params.id]
+        ).map(l => {
+          if (!l.exercise_enabled) return { ...l, my_submission: null };
+          const s = user_id ? db.get(
+            'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, ielts_band_feedback, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
+            [user_id, l.id]
+          ) : null;
+          const my_submission = s ? {
+            ...s,
+            issues: JSON.parse(s.issues || '[]'),
+            hints: JSON.parse(s.hints || '[]'),
+            ielts_band_feedback: s.ielts_band_feedback ? JSON.parse(s.ielts_band_feedback) : null,
+          } : null;
+          const result = { ...l, my_submission };
+          const needsForm = !my_submission || my_submission.status === 'needs_resubmit';
+
+          if (l.ielts_test_id) {
+            const test = db.get(
+              'SELECT id, skill, title, description, time_limit_minutes, max_score, passages, task_type, writing_prompt, writing_image_url, chatgpt_url FROM ielts_tests WHERE id = ?',
+              [l.ielts_test_id]
+            );
+            result.ielts_test = test ? { ...test, passages: test.passages ? JSON.parse(test.passages) : [] } : null;
+            if (test && (test.skill === 'reading' || test.skill === 'listening')) {
+              const questions = db.all(
+                'SELECT id, question_type, passage_ref, question_text, options, order_num FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC',
+                [test.id]
+              );
+              if (needsForm) {
+                result.ielts_questions = questions.map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null }));
+              } else {
+                const fullQuestions = db.all('SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC', [test.id]);
+                const answers = JSON.parse(s.answer_text || '{}');
+                my_submission.ielts_review = fullQuestions.map(q => ({
+                  question_text: q.question_text,
+                  question_type: q.question_type,
+                  passage_ref: q.passage_ref,
+                  options: q.options ? JSON.parse(q.options) : null,
+                  submitted: answers[q.id] ?? null,
+                  correct_answer: JSON.parse(q.correct_answer),
+                  explanation: q.explanation,
+                }));
+              }
+            }
+          } else if (l.exercise_type === 'quiz') {
+            const questions = db.all(
+              'SELECT id, question_text, options, correct_index, order_num FROM lesson_exercise_questions WHERE lesson_id = ? ORDER BY order_num ASC, id ASC',
+              [l.id]
+            );
+            if (needsForm) {
+              result.quiz_questions = questions.map(q => ({ id: q.id, question_text: q.question_text, options: JSON.parse(q.options), order_num: q.order_num }));
+            } else {
+              const answers = JSON.parse(s.answer_text || '{}');
+              my_submission.quiz_review = questions.map(q => ({
+                question_text: q.question_text,
+                options: JSON.parse(q.options),
+                picked_index: answers[q.id] !== undefined ? Number(answers[q.id]) : null,
+                correct_index: q.correct_index,
+              }));
+            }
+          }
+          return result;
+        })
+      : [];
+    const checkout_product_id = course.visibility === 'private' ? ensureCourseProduct(course.id) : null;
+    res.json({
+      course: { ...course, enroll_status, checkout_product_id },
+      lessons,
+      lesson_count,
+    });
+  });
+
+  // Enroll instantly in a public course. Private courses must go through checkout —
+  // enrollment there is granted automatically once the linked order completes.
+  app.post('/api/courses/:id/enroll', (req, res) => {
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
+    const course = db.get('SELECT * FROM courses WHERE id = ?', [req.params.id]);
+    if (!course) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
+    if (course.visibility === 'private') {
+      return res.status(402).json({ error: 'Khóa học này yêu cầu thanh toán để tham gia.', checkout_product_id: ensureCourseProduct(course.id) });
+    }
+
+    const status = 'approved';
+    const existing = db.get('SELECT id, status FROM course_enrollments WHERE course_id = ? AND user_id = ?', [req.params.id, user_id]);
+    if (existing) {
+      if (existing.status !== 'approved')
+        db.run('UPDATE course_enrollments SET status = ? WHERE id = ?', [status, existing.id]);
+    } else {
+      db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [req.params.id, user_id, status]);
+    }
+    res.json({ success: true, status: 'approved' });
+  });
+
+  // AI-graded lesson exercise — student submits once, gets an immediate score + feedback.
+  // The row is only inserted after a SUCCESSFUL grading call, so a failed AI call never
+  // burns the student's single attempt (see UNIQUE(user_id, lesson_id) on the table).
+  app.post('/api/courses/lessons/:lessonId/exercise/submit', async (req, res) => {
+    const { user_id, answer, answers } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
+
+    const lesson = db.get('SELECT * FROM course_lessons WHERE id = ? AND exercise_enabled = 1', [req.params.lessonId]);
+    if (!lesson) return res.status(404).json({ error: 'Bài tập không tồn tại.' });
+
+    const enrollment = getEnrollment(lesson.course_id, user_id);
+    if (!enrollment || enrollment.status !== 'approved')
+      return res.status(403).json({ error: 'Bạn cần tham gia khóa học này trước khi nộp bài tập.' });
+
+    const existing = db.get('SELECT * FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?', [user_id, lesson.id]);
+    if (existing && existing.status !== 'needs_resubmit') {
+      return res.status(409).json({
+        error: existing.status === 'finalized'
+          ? 'Bài tập này đã được giáo viên chấm và kết thúc.'
+          : 'Bạn đã nộp bài tập này rồi.',
+      });
+    }
+
+    let answerText, score, issues, hints, raw = '', maxScore = lesson.exercise_max_score || 100, bandFeedback = null;
+
+    if (lesson.ielts_test_id) {
+      const test = db.get('SELECT * FROM ielts_tests WHERE id = ?', [lesson.ielts_test_id]);
+      if (!test) return res.status(404).json({ error: 'Đề thi không tồn tại.' });
+      maxScore = test.max_score || maxScore;
+
+      if (test.skill === 'reading' || test.skill === 'listening') {
+        if (!answers || typeof answers !== 'object') return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
+        const questions = db.all('SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC', [test.id]);
+        if (!questions.length) return res.status(400).json({ error: 'Đề thi chưa có câu hỏi.' });
+        const normalizedAnswers = {};
+        questions.forEach(q => { if (answers[q.id] !== undefined) normalizedAnswers[q.id] = String(answers[q.id]); });
+        if (Object.keys(normalizedAnswers).length < questions.length)
+          return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
+        const graded = gradeIeltsReadingExercise(questions, normalizedAnswers, maxScore);
+        answerText = JSON.stringify(normalizedAnswers);
+        score = graded.score; issues = graded.issues; hints = graded.hints;
+      } else if (test.skill === 'speaking') {
+        // Self-report: no AI grading — clicking "Đã hoàn thành" always awards full score.
+        answerText = 'Đã hoàn thành luyện nói.';
+        score = maxScore; issues = []; hints = [];
+      } else {
+        if (!answer || !answer.trim()) return res.status(400).json({ error: 'Vui lòng nhập nội dung bài làm.' });
+        const result = await gradeExerciseWithGemini({
+          lessonTitle: lesson.title,
+          exercisePrompt: test.writing_prompt || '',
+          rubric: test.writing_rubric || '',
+          maxScore,
+          studentAnswer: answer.trim(),
+          ieltsWriting: { taskType: test.task_type },
+        });
+        if (!result.ok) return res.status(502).json({ error: 'AI chấm bài gặp lỗi, vui lòng thử lại sau.' });
+        answerText = answer.trim(); score = result.score; issues = result.issues; hints = result.hints; raw = result.raw || '';
+        bandFeedback = result.bandFeedback;
+      }
+    } else if (lesson.exercise_type === 'quiz') {
+      if (!answers || typeof answers !== 'object') return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
+      const questions = db.all('SELECT * FROM lesson_exercise_questions WHERE lesson_id = ? ORDER BY order_num ASC, id ASC', [lesson.id]);
+      if (!questions.length) return res.status(400).json({ error: 'Bài tập trắc nghiệm chưa có câu hỏi.' });
+      const normalizedAnswers = {};
+      questions.forEach(q => { if (answers[q.id] !== undefined) normalizedAnswers[q.id] = Number(answers[q.id]); });
+      if (Object.keys(normalizedAnswers).length < questions.length)
+        return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
+      const graded = gradeQuizExercise(questions, normalizedAnswers, maxScore);
+      answerText = JSON.stringify(normalizedAnswers);
+      score = graded.score; issues = graded.issues; hints = graded.hints;
+    } else {
+      if (!answer || !answer.trim()) return res.status(400).json({ error: 'Vui lòng nhập nội dung bài làm.' });
+      const result = await gradeExerciseWithGemini({
+        lessonTitle: lesson.title,
+        exercisePrompt: lesson.exercise_prompt || '',
+        rubric: lesson.exercise_rubric || '',
+        maxScore,
+        studentAnswer: answer.trim(),
+      });
+      if (!result.ok) return res.status(502).json({ error: 'AI chấm bài gặp lỗi, vui lòng thử lại sau.' });
+      answerText = answer.trim(); score = result.score; issues = result.issues; hints = result.hints; raw = result.raw || '';
+    }
+
+    const passed = score >= lesson.exercise_pass_score ? 1 : 0;
+    const alreadyAwarded = existing ? existing.xp_awarded > 0 : false;
+    const newlyAwardedXp = (passed && !alreadyAwarded) ? (lesson.exercise_xp_reward || 0) : 0;
+    const xp_awarded = alreadyAwarded ? existing.xp_awarded : newlyAwardedXp;
+    const bandFeedbackJson = bandFeedback ? JSON.stringify(bandFeedback) : null;
+
+    if (existing) {
+      db.run(
+        `UPDATE lesson_exercise_submissions
+           SET answer_text=?, score=?, max_score=?, pass_score=?, passed=?, issues=?, hints=?, ai_feedback_raw=?, ielts_band_feedback=?, xp_awarded=?,
+               status='graded', teacher_note=NULL, submitted_at=datetime('now','localtime')
+         WHERE id=?`,
+        [answerText, score, maxScore, lesson.exercise_pass_score, passed,
+         JSON.stringify(issues), JSON.stringify(hints), raw, bandFeedbackJson, xp_awarded, existing.id]
+      );
+    } else {
+      db.run(
+        `INSERT INTO lesson_exercise_submissions
+          (user_id, lesson_id, course_id, answer_text, score, max_score, pass_score, passed, issues, hints, ai_feedback_raw, ielts_band_feedback, xp_awarded)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        [user_id, lesson.id, lesson.course_id, answerText, score, maxScore, lesson.exercise_pass_score,
+         passed, JSON.stringify(issues), JSON.stringify(hints), raw, bandFeedbackJson, xp_awarded]
+      );
+    }
+
+    if (newlyAwardedXp > 0) {
+      addXP(user_id, newlyAwardedXp, 'lesson_exercise', `Đạt bài tập: ${lesson.title}`);
+    }
+
+    const saved = db.get(
+      'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, ielts_band_feedback, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
+      [user_id, lesson.id]
     );
-    res.json({ course, lessons });
+    res.status(201).json({
+      success: true,
+      my_submission: {
+        ...saved,
+        issues: JSON.parse(saved.issues || '[]'),
+        hints: JSON.parse(saved.hints || '[]'),
+        ielts_band_feedback: saved.ielts_band_feedback ? JSON.parse(saved.ielts_band_feedback) : null,
+      },
+    });
   });
 
   // Register
@@ -793,7 +1657,7 @@ const CHALLENGE_DAYS_TEACHER = [
     res.json({
       success: true,
       user: { id: user.id, first_name: user.first_name, last_name: user.last_name,
-              email: user.email, level: user.level, xp: user.xp },
+              email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin },
     });
   });
 
@@ -855,7 +1719,7 @@ const CHALLENGE_DAYS_TEACHER = [
       success: true,
       user: {
         id: user.id, first_name: user.first_name, last_name: user.last_name,
-        email: user.email, level: user.level, xp: user.xp,
+        email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin,
         avatar: user.avatar_url || picture,
       },
     });
@@ -940,7 +1804,7 @@ const CHALLENGE_DAYS_TEACHER = [
     const like = `%${search}%`;
 
     let sql = `SELECT id, first_name, last_name, email, level, xp, streak,
-                      status, last_active_at, created_at
+                      status, is_admin, last_active_at, created_at
                FROM users
                WHERE (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)`;
     const params = [like, like, like];
@@ -965,6 +1829,11 @@ const CHALLENGE_DAYS_TEACHER = [
     if (!['active','banned','suspended'].includes(status))
       return res.status(400).json({ error: 'Invalid status' });
     db.run('UPDATE users SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.patch('/api/admin/users/:id/admin', requireAdmin, (req, res) => {
+    db.run('UPDATE users SET is_admin = ? WHERE id = ?', [req.body.is_admin ? 1 : 0, req.params.id]);
     res.json({ success: true });
   });
 
@@ -1076,55 +1945,317 @@ const CHALLENGE_DAYS_TEACHER = [
   // PUBLIC CONTENT ROUTES
   // ══════════════════════════════════════════════════════════
 
+  // Attach poll tallies + the requesting user's vote to a batch of posts (mutates in place)
+  function attachPollData(posts, userId) {
+    const pollPosts = posts.filter(p => p.poll_options);
+    if (!pollPosts.length) return;
+    const ids = pollPosts.map(p => p.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const voteRows = db.all(`SELECT post_id, option_index, COUNT(*) AS n FROM poll_votes WHERE post_id IN (${placeholders}) GROUP BY post_id, option_index`, ids);
+    const myVoteRows = userId
+      ? db.all(`SELECT post_id, option_index FROM poll_votes WHERE user_id = ? AND post_id IN (${placeholders})`, [userId, ...ids])
+      : [];
+    pollPosts.forEach(p => {
+      let options = [];
+      try { options = JSON.parse(p.poll_options) || []; } catch { options = []; }
+      const tallies = options.map((_, i) => voteRows.filter(v => v.post_id === p.id && v.option_index === i).reduce((n, v) => n + v.n, 0));
+      p.poll_options = options;
+      p.poll_tallies = tallies;
+      p.poll_total = tallies.reduce((a, b) => a + b, 0);
+      const mine = myVoteRows.find(v => v.post_id === p.id);
+      p.my_vote = mine ? mine.option_index : null;
+    });
+  }
+
   // Feed
   app.get('/api/feed', (req, res) => {
-    const { limit = 20, offset = 0, pillar = '', type = '', sort = '' } = req.query;
+    const { limit = 20, offset = 0, pillar = '', type = '', sort = '', space_id = '', user_id = '' } = req.query;
     let sql = `
-      SELECT p.id, p.title, p.content, p.pillar, p.post_type,
+      SELECT p.id, p.title, p.content, p.pillar, p.post_type, p.space_id,
+             p.topic_id, p.image_url, p.video_url, p.doc_url, p.gif_url, p.poll_question, p.poll_options,
              p.likes_count, p.comments_count, p.is_pinned, p.created_at,
-             u.id AS author_id, u.first_name, u.last_name, u.level
+             u.id AS author_id, u.first_name, u.last_name, u.level,
+             t.name AS topic_name, t.icon AS topic_icon
       FROM posts p JOIN users u ON u.id = p.user_id
+      LEFT JOIN topics t ON t.id = p.topic_id
       WHERE 1=1`;
     const params = [];
     if (pillar) { sql += ' AND p.pillar = ?'; params.push(pillar); }
     if (type)   { sql += ' AND p.post_type = ?'; params.push(type); }
+    if (space_id) {
+      const space = db.get('SELECT * FROM spaces WHERE id = ?', [space_id]);
+      if (space) {
+        const { isAdmin } = getUserFlags(user_id);
+        if (!canViewContent(space, user_id, isAdmin)) return res.json({ posts: [], total: 0 });
+      }
+      sql += ' AND p.space_id = ?'; params.push(space_id);
+    } else {
+      // Aggregate feed: hide posts from spaces the user isn't an approved member of (private/secret)
+      const { isAdmin } = getUserFlags(user_id);
+      const allSpaces = db.all('SELECT * FROM spaces');
+      const accessibleIds = allSpaces.filter(s => canViewContent(s, user_id, isAdmin)).map(s => s.id);
+      if (accessibleIds.length) {
+        sql += ` AND (p.space_id IS NULL OR p.space_id IN (${accessibleIds.map(() => '?').join(',')}))`;
+        params.push(...accessibleIds);
+      } else {
+        sql += ' AND p.space_id IS NULL';
+      }
+    }
     const order = sort === 'popular'
       ? 'p.likes_count DESC, p.comments_count DESC'
       : 'p.is_pinned DESC, p.created_at DESC';
     sql += ` ORDER BY ${order} LIMIT ? OFFSET ?`;
     params.push(Number(limit), Number(offset));
     const posts = db.all(sql, params);
+    attachPollData(posts, user_id);
     const total = db.get('SELECT COUNT(*) AS n FROM posts').n;
     res.json({ posts, total });
   });
 
   // Create post
   app.post('/api/posts', (req, res) => {
-    const { user_id, title, content, pillar, post_type = 'post' } = req.body;
+    const {
+      user_id, title, content, pillar, post_type = 'post', space_id, topic_id,
+      image_url, video_url, doc_url, gif_url, poll_question, poll_options,
+    } = req.body;
     if (!user_id || !content)
       return res.status(400).json({ error: 'Thiếu thông tin bài đăng.' });
     const user = db.get('SELECT id, level FROM users WHERE id = ?', [user_id]);
     if (!user) return res.status(404).json({ error: 'User không tồn tại.' });
+    if (space_id) {
+      const space = db.get('SELECT * FROM spaces WHERE id = ?', [space_id]);
+      if (!space) return res.status(404).json({ error: 'Space không tồn tại.' });
+      const { isAdmin } = getUserFlags(user_id);
+      // Public spaces are open to everyone (same rule as viewing); private/secret need an approved membership.
+      if (!canViewContent(space, user_id, isAdmin))
+        return res.status(403).json({ error: 'Bạn cần tham gia Space này trước khi đăng bài.' });
+    }
+    let pollOptionsJson = null;
+    if (poll_question && Array.isArray(poll_options)) {
+      const cleaned = poll_options.map(o => String(o || '').trim()).filter(Boolean);
+      if (cleaned.length >= 2) pollOptionsJson = JSON.stringify(cleaned.slice(0, 6));
+    }
     const result = db.run(
-      'INSERT INTO posts (user_id, title, content, pillar, post_type) VALUES (?,?,?,?,?)',
-      [user_id, title || '', content, pillar || null, post_type]
+      `INSERT INTO posts (user_id, title, content, pillar, post_type, space_id, topic_id,
+        image_url, video_url, doc_url, gif_url, poll_question, poll_options)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [user_id, title || '', content, pillar || null, post_type, space_id || null, topic_id || null,
+       image_url || null, video_url || null, doc_url || null, gif_url || null,
+       pollOptionsJson ? (poll_question || '').trim() : null, pollOptionsJson]
     );
     addXP(user_id, 3, 'post', `Đăng bài: ${title || content.slice(0, 30)}`);
     res.status(201).json({ success: true, post_id: result.lastInsertRowid });
   });
 
+  // Vote (or change vote) on a post's poll
+  app.post('/api/posts/:id/vote', (req, res) => {
+    const { user_id, option_index } = req.body;
+    if (!user_id || option_index === undefined) return res.status(400).json({ error: 'Thiếu thông tin bình chọn.' });
+    const post = db.get('SELECT id, poll_options FROM posts WHERE id = ?', [req.params.id]);
+    if (!post || !post.poll_options) return res.status(404).json({ error: 'Bài đăng không có poll.' });
+    let options = [];
+    try { options = JSON.parse(post.poll_options) || []; } catch { options = []; }
+    const idx = Number(option_index);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= options.length)
+      return res.status(400).json({ error: 'Lựa chọn không hợp lệ.' });
+    db.run(
+      `INSERT INTO poll_votes (post_id, user_id, option_index) VALUES (?,?,?)
+       ON CONFLICT(post_id, user_id) DO UPDATE SET option_index = excluded.option_index`,
+      [req.params.id, user_id, idx]
+    );
+    const voteRows = db.all('SELECT option_index, COUNT(*) AS n FROM poll_votes WHERE post_id = ? GROUP BY option_index', [req.params.id]);
+    const tallies = options.map((_, i) => voteRows.find(v => v.option_index === i)?.n || 0);
+    res.json({ success: true, poll_tallies: tallies, poll_total: tallies.reduce((a, b) => a + b, 0), my_vote: idx });
+  });
+
+  // ── Spaces (public) ──────────────────────────────────────────
+  function getUserFlags(userId) {
+    if (!userId) return { isAdmin: false };
+    const u = db.get('SELECT is_admin FROM users WHERE id = ?', [userId]);
+    return { isAdmin: !!(u && u.is_admin) };
+  }
+  function getMembership(spaceId, userId) {
+    if (!userId) return null;
+    return db.get('SELECT status FROM space_members WHERE space_id = ? AND user_id = ?', [spaceId, userId]);
+  }
+  // Approved in ANY space belonging to this group counts as "in the group".
+  function getGroupMembership(groupId, userId) {
+    if (!userId) return null;
+    return db.get(
+      `SELECT sm.status FROM space_members sm
+       JOIN spaces s ON s.id = sm.space_id
+       WHERE s.group_id = ? AND sm.user_id = ? AND sm.status = 'approved' LIMIT 1`,
+      [groupId, userId]
+    );
+  }
+  function getEnrollment(courseId, userId) {
+    if (!userId) return null;
+    return db.get('SELECT status FROM course_enrollments WHERE course_id = ? AND user_id = ?', [courseId, userId]);
+  }
+  // Called whenever an order flips to 'completed' — if the purchased product represents
+  // a private course's checkout, approve (or create) that buyer's enrollment automatically.
+  function autoEnrollFromProductPurchase(productId, buyerId) {
+    const product = db.get('SELECT course_id FROM products WHERE id = ?', [productId]);
+    if (!product || !product.course_id) return;
+    const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [product.course_id, buyerId]);
+    if (existing) {
+      db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
+    } else {
+      db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [product.course_id, buyerId, 'approved']);
+    }
+  }
+  function canSeeSpace(space, userId, isAdmin) {
+    if (space.visibility !== 'secret') return true;
+    if (isAdmin) return true;
+    const m = getMembership(space.id, userId);
+    return !!(m && m.status === 'approved');
+  }
+  function canViewContent(space, userId, isAdmin) {
+    if (space.visibility === 'public') return true;
+    if (isAdmin) return true;
+    const m = getMembership(space.id, userId);
+    return !!(m && m.status === 'approved');
+  }
+
+  app.get('/api/spaces', (req, res) => {
+    const { user_id = '' } = req.query;
+    const { isAdmin } = getUserFlags(user_id);
+    const spaces = db.all(`
+      SELECT s.id, s.group_id, s.name, s.icon, s.description, s.visibility, s.min_level, s.allow_join_requests, s.created_at,
+             COUNT(DISTINCT p.id) AS post_count,
+             (SELECT COUNT(*) FROM space_members sm WHERE sm.space_id = s.id AND sm.status = 'approved') AS member_count,
+             SUM(CASE WHEN p.user_id = ? THEN 1 ELSE 0 END) AS my_post_count
+      FROM spaces s LEFT JOIN posts p ON p.space_id = s.id
+      GROUP BY s.id
+      ORDER BY s.order_num ASC, s.created_at ASC
+    `, [user_id || 0]);
+    const visible = spaces
+      .filter(s => canSeeSpace(s, user_id, isAdmin))
+      .map(s => {
+        const m = getMembership(s.id, user_id);
+        return { ...s, join_status: m ? m.status : 'none' };
+      });
+    res.json({ spaces: visible });
+  });
+
+  // Space groups with nested spaces the user has an APPROVED membership in — used by the sidebar.
+  // (Discovery of not-yet-joined spaces happens on spaces.html, not the sidebar.)
+  app.get('/api/space-groups', (req, res) => {
+    const { user_id = '', all = '' } = req.query;
+    const { isAdmin } = getUserFlags(user_id);
+    const groups = db.all('SELECT id, name FROM space_groups ORDER BY order_num ASC, created_at ASC');
+    if (all) return res.json({ groups, is_admin: isAdmin });
+    const spaces = db.all(
+      'SELECT id, group_id, name, icon, visibility, min_level FROM spaces ORDER BY order_num ASC, created_at ASC'
+    );
+    const result = groups
+      .map(g => ({
+        id: g.id,
+        name: g.name,
+        spaces: spaces
+          .filter(s => s.group_id === g.id)
+          .map(s => {
+            const m = getMembership(s.id, user_id);
+            return { ...s, join_status: m ? m.status : 'none' };
+          })
+          .filter(s => s.join_status === 'approved'),
+      }))
+      .filter(g => g.spaces.length > 0);
+    res.json({ groups: result, is_admin: isAdmin });
+  });
+
+  // Member-facing space creation — only community admins (users.is_admin) can create
+  app.post('/api/spaces', (req, res) => {
+    const { user_id, group_id, name, icon = '💬', description = '', visibility = 'public', allow_join_requests = 1 } = req.body;
+    const u = db.get('SELECT is_admin FROM users WHERE id = ?', [user_id]);
+    if (!u || !u.is_admin) return res.status(403).json({ error: 'Bạn không có quyền tạo Space.' });
+    if (!name?.trim()) return res.status(400).json({ error: 'Tên Space không được để trống.' });
+    if (!group_id) return res.status(400).json({ error: 'Vui lòng chọn Group cho Space.' });
+    const vis = ['public', 'private', 'secret'].includes(visibility) ? visibility : 'public';
+    const r = db.run(
+      'INSERT INTO spaces (group_id, name, icon, description, visibility, allow_join_requests) VALUES (?,?,?,?,?,?)',
+      [group_id, name.trim(), icon || '💬', description || '', vis, allow_join_requests ? 1 : 0]
+    );
+    // Auto-join the creator so the new space shows up in their own sidebar immediately
+    db.run('INSERT INTO space_members (space_id, user_id, status) VALUES (?,?,?)', [r.lastInsertRowid, user_id, 'approved']);
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.get('/api/spaces/:id', (req, res) => {
+    const space = db.get('SELECT * FROM spaces WHERE id = ?', [req.params.id]);
+    if (!space) return res.status(404).json({ error: 'Space không tồn tại.' });
+    const userId = req.query.user_id;
+    const { isAdmin } = getUserFlags(userId);
+    if (!canSeeSpace(space, userId, isAdmin))
+      return res.status(404).json({ error: 'Space không tồn tại.' });
+    const m = getMembership(space.id, userId);
+    res.json({
+      space,
+      join_status: m ? m.status : 'none',
+      content_locked: !canViewContent(space, userId, isAdmin),
+    });
+  });
+
+  // Topics of a space — used to populate the "Topic" select when posting
+  app.get('/api/topics', (req, res) => {
+    const { space_id } = req.query;
+    if (!space_id) return res.status(400).json({ error: 'Thiếu space_id.' });
+    const topics = db.all('SELECT id, space_id, name, icon FROM topics WHERE space_id = ? ORDER BY order_num ASC, created_at ASC', [space_id]);
+    res.json({ topics });
+  });
+
+  // Join / request-to-join a space
+  app.post('/api/spaces/:id/join', (req, res) => {
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
+    const space = db.get('SELECT * FROM spaces WHERE id = ?', [req.params.id]);
+    if (!space) return res.status(404).json({ error: 'Space không tồn tại.' });
+
+    if (space.visibility === 'secret')
+      return res.status(403).json({ error: 'Bạn cần được mời để tham gia Space này.' });
+
+    if (space.visibility === 'private' && !space.allow_join_requests)
+      return res.status(403).json({ error: 'Space này hiện không nhận yêu cầu tham gia mới.' });
+
+    const status = space.visibility === 'public' ? 'approved' : 'pending';
+    const existing = db.get('SELECT id, status FROM space_members WHERE space_id = ? AND user_id = ?', [req.params.id, user_id]);
+    if (existing) {
+      if (existing.status !== status && !(existing.status === 'approved'))
+        db.run('UPDATE space_members SET status = ? WHERE id = ?', [status, existing.id]);
+    } else {
+      db.run('INSERT INTO space_members (space_id, user_id, status) VALUES (?,?,?)', [req.params.id, user_id, status]);
+    }
+    res.json({ success: true, status: existing?.status === 'approved' ? 'approved' : status });
+  });
+
   // Single post detail
   app.get('/api/posts/:id', (req, res) => {
     const p = db.get(
-      `SELECT p.id, p.title, p.content, p.pillar, p.post_type,
+      `SELECT p.id, p.title, p.content, p.pillar, p.post_type, p.space_id, p.is_pinned,
+              p.topic_id, p.image_url, p.video_url, p.doc_url, p.gif_url, p.poll_question, p.poll_options,
               p.likes_count, p.comments_count, p.created_at,
-              u.id AS author_id, u.first_name, u.last_name, u.level
+              u.id AS author_id, u.first_name, u.last_name, u.level,
+              t.name AS topic_name, t.icon AS topic_icon
        FROM posts p JOIN users u ON u.id = p.user_id
+       LEFT JOIN topics t ON t.id = p.topic_id
        WHERE p.id = ?`,
       [req.params.id]
     );
     if (!p) return res.status(404).json({ error: 'Không tìm thấy bài đăng' });
+    attachPollData([p], req.query.user_id);
     res.json(p);
+  });
+
+  // Toggle pin — community admins only
+  app.post('/api/posts/:id/pin', (req, res) => {
+    const { user_id } = req.body;
+    const { isAdmin } = getUserFlags(user_id);
+    if (!isAdmin) return res.status(403).json({ error: 'Chỉ admin mới có thể ghim bài viết.' });
+    const post = db.get('SELECT id, is_pinned FROM posts WHERE id = ?', [req.params.id]);
+    if (!post) return res.status(404).json({ error: 'Không tìm thấy bài đăng.' });
+    const newVal = post.is_pinned ? 0 : 1;
+    db.run('UPDATE posts SET is_pinned = ? WHERE id = ?', [newVal, req.params.id]);
+    res.json({ success: true, is_pinned: newVal });
   });
 
   // Comments for a post (flat list with parent_id; frontend builds tree)
@@ -1269,7 +2400,7 @@ const CHALLENGE_DAYS_TEACHER = [
     const { search = '', limit = 24, offset = 0 } = req.query;
     const like = `%${search}%`;
     const users = db.all(`
-      SELECT id, first_name, last_name, level, xp, streak, created_at
+      SELECT id, first_name, last_name, level, xp, streak, created_at, bio, location
       FROM users
       WHERE status = 'active' AND (first_name LIKE ? OR last_name LIKE ? OR (first_name || ' ' || last_name) LIKE ?)
       ORDER BY xp DESC
@@ -1286,6 +2417,37 @@ const CHALLENGE_DAYS_TEACHER = [
     res.json({ users, total });
   });
 
+  // Community stats bar (public) — members / admins / online counts
+  app.get('/api/community/stats', (req, res) => {
+    const members = db.get("SELECT COUNT(*) AS n FROM users WHERE status = 'active'").n;
+    const admins = db.get("SELECT COUNT(*) AS n FROM users WHERE status = 'active' AND is_admin = 1").n;
+    const online = db.get(
+      "SELECT COUNT(*) AS n FROM users WHERE status = 'active' AND last_active_at >= datetime('now', '-10 minutes', 'localtime')"
+    ).n;
+    res.json({ members, admins, online });
+  });
+
+  // About page bundle (public) — intro, media gallery, member count, creator
+  app.get('/api/about', (req, res) => {
+    const rows = db.all("SELECT key, value FROM site_settings WHERE key IN ('about_intro','about_media')");
+    const settings = {};
+    rows.forEach(r => { settings[r.key] = r.value; });
+    let media = [];
+    try { media = JSON.parse(settings.about_media || '[]'); } catch { media = []; }
+
+    const member_count = db.get("SELECT COUNT(*) AS n FROM users WHERE status = 'active'").n;
+    const creator = db.get(
+      "SELECT id, first_name, last_name FROM users WHERE is_admin = 1 ORDER BY created_at ASC LIMIT 1"
+    );
+
+    res.json({
+      intro: settings.about_intro || '',
+      media,
+      member_count,
+      creator: creator || null,
+    });
+  });
+
   // User's recent posts
   app.get('/api/users/:id/posts', (req, res) => {
     const posts = db.all(
@@ -1296,13 +2458,15 @@ const CHALLENGE_DAYS_TEACHER = [
     res.json({ posts });
   });
 
-  // User profile
+  // User profile — email/phone are only included when viewing your own profile (PII, not public)
   app.get('/api/users/:id', (req, res) => {
-    const user = db.get(
-      'SELECT id, first_name, last_name, level, xp, streak, created_at FROM users WHERE id = ?',
-      [req.params.id]
-    );
+    const isSelf = req.query.requester_id && Number(req.query.requester_id) === Number(req.params.id);
+    const fields = 'id, first_name, last_name, level, xp, streak, created_at, bio, location, social_links, is_admin'
+      + (isSelf ? ', email, phone' : '');
+    const user = db.get(`SELECT ${fields} FROM users WHERE id = ?`, [req.params.id]);
     if (!user) return res.status(404).json({ error: 'User không tồn tại.' });
+    user.is_admin = !!user.is_admin;
+    try { user.social_links = user.social_links ? JSON.parse(user.social_links) : {}; } catch { user.social_links = {}; }
 
     const completed_days = db.get(
       'SELECT COUNT(*) AS n FROM user_challenge_progress WHERE user_id = ?',
@@ -1326,6 +2490,34 @@ const CHALLENGE_DAYS_TEACHER = [
     pillarRows.forEach(r => { if (r.pillar in pillar_counts) pillar_counts[r.pillar] = r.n; });
 
     res.json({ ...user, completed_days, post_count, cot_count, pillar_counts });
+  });
+
+  // Update own profile (bio, location, social links, name) — self-service only
+  app.patch('/api/users/:id', (req, res) => {
+    const targetId = Number(req.params.id);
+    const requesterId = Number(req.body.user_id);
+    if (!requesterId || requesterId !== targetId)
+      return res.status(403).json({ error: 'Bạn chỉ có thể chỉnh sửa hồ sơ của chính mình.' });
+
+    const user = db.get('SELECT id FROM users WHERE id = ?', [targetId]);
+    if (!user) return res.status(404).json({ error: 'User không tồn tại.' });
+
+    const { first_name, last_name, bio, location, phone, social_links } = req.body;
+    if (first_name !== undefined) {
+      if (!String(first_name).trim()) return res.status(400).json({ error: 'Tên không được để trống.' });
+      db.run('UPDATE users SET first_name = ? WHERE id = ?', [String(first_name).trim(), targetId]);
+    }
+    if (last_name !== undefined)  db.run('UPDATE users SET last_name = ? WHERE id = ?', [String(last_name).trim(), targetId]);
+    if (bio !== undefined)        db.run('UPDATE users SET bio = ? WHERE id = ?', [String(bio).slice(0, 300), targetId]);
+    if (location !== undefined)   db.run('UPDATE users SET location = ? WHERE id = ?', [String(location).trim(), targetId]);
+    if (phone !== undefined)      db.run('UPDATE users SET phone = ? WHERE id = ?', [String(phone).trim().slice(0, 20), targetId]);
+    if (social_links !== undefined) {
+      const allowed = ['website', 'facebook', 'instagram', 'x', 'youtube', 'linkedin'];
+      const clean = {};
+      allowed.forEach(k => { if (social_links[k]) clean[k] = String(social_links[k]).trim().slice(0, 200); });
+      db.run('UPDATE users SET social_links = ? WHERE id = ?', [JSON.stringify(clean), targetId]);
+    }
+    res.json({ success: true });
   });
 
   // User activity heatmap (last 365 days of XP)
@@ -1757,28 +2949,268 @@ const CHALLENGE_DAYS_TEACHER = [
     res.json({ success: true });
   });
 
+  // ── Admin space groups ────────────────────────────────────────
+  app.get('/api/admin/space-groups', requireAdmin, (_req, res) => {
+    const groups = db.all('SELECT * FROM space_groups ORDER BY order_num ASC, created_at ASC');
+    const spaces = db.all(`
+      SELECT s.*, COUNT(p.id) AS post_count
+      FROM spaces s LEFT JOIN posts p ON p.space_id = s.id
+      GROUP BY s.id ORDER BY s.order_num ASC, s.created_at ASC
+    `);
+    const result = groups.map(g => ({ ...g, spaces: spaces.filter(s => s.group_id === g.id) }));
+    res.json({ groups: result });
+  });
+
+  app.post('/api/admin/space-groups', requireAdmin, (req, res) => {
+    const { name, order_num = 0 } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Tên group không được để trống.' });
+    const r = db.run('INSERT INTO space_groups (name, order_num) VALUES (?,?)', [name.trim(), Number(order_num) || 0]);
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/space-groups/:id', requireAdmin, (req, res) => {
+    const { name, order_num } = req.body;
+    const g = db.get('SELECT id FROM space_groups WHERE id = ?', [req.params.id]);
+    if (!g) return res.status(404).json({ error: 'Group không tồn tại.' });
+    if (name !== undefined)      db.run('UPDATE space_groups SET name = ? WHERE id = ?', [name, req.params.id]);
+    if (order_num !== undefined) db.run('UPDATE space_groups SET order_num = ? WHERE id = ?', [Number(order_num) || 0, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/space-groups/:id', requireAdmin, (req, res) => {
+    const spaceIds = db.all('SELECT id FROM spaces WHERE group_id = ?', [req.params.id]).map(s => s.id);
+    spaceIds.forEach(id => {
+      const topicIds = db.all('SELECT id FROM topics WHERE space_id = ?', [id]).map(t => t.id);
+      topicIds.forEach(tid => db.run('UPDATE posts SET topic_id = NULL WHERE topic_id = ?', [tid]));
+      db.run('DELETE FROM topics WHERE space_id = ?', [id]);
+      db.run('UPDATE posts SET space_id = NULL WHERE space_id = ?', [id]);
+    });
+    db.run('DELETE FROM spaces WHERE group_id = ?', [req.params.id]);
+    db.run('DELETE FROM space_groups WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Admin spaces ─────────────────────────────────────────────
+  app.get('/api/admin/spaces', requireAdmin, (_req, res) => {
+    const spaces = db.all(`
+      SELECT s.*, COUNT(p.id) AS post_count
+      FROM spaces s LEFT JOIN posts p ON p.space_id = s.id
+      GROUP BY s.id ORDER BY s.order_num ASC, s.created_at DESC
+    `);
+    res.json({ spaces });
+  });
+
+  app.post('/api/admin/spaces', requireAdmin, (req, res) => {
+    const { name, icon = '💬', description = '', visibility = 'public', allow_join_requests = 1, order_num = 0, group_id } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Tên space không được để trống.' });
+    if (!group_id) return res.status(400).json({ error: 'Vui lòng chọn Group cho Space.' });
+    const vis = ['public', 'private', 'secret'].includes(visibility) ? visibility : 'public';
+    const r = db.run(
+      'INSERT INTO spaces (group_id, name, icon, description, visibility, allow_join_requests, order_num) VALUES (?,?,?,?,?,?,?)',
+      [group_id, name.trim(), icon || '💬', description || '', vis, allow_join_requests ? 1 : 0, Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/spaces/:id', requireAdmin, (req, res) => {
+    const { name, icon, description, visibility, allow_join_requests, order_num, group_id } = req.body;
+    const s = db.get('SELECT id FROM spaces WHERE id = ?', [req.params.id]);
+    if (!s) return res.status(404).json({ error: 'Space không tồn tại.' });
+    if (name !== undefined)        db.run('UPDATE spaces SET name = ? WHERE id = ?', [name, req.params.id]);
+    if (icon !== undefined)        db.run('UPDATE spaces SET icon = ? WHERE id = ?', [icon, req.params.id]);
+    if (description !== undefined) db.run('UPDATE spaces SET description = ? WHERE id = ?', [description, req.params.id]);
+    if (visibility !== undefined)  db.run('UPDATE spaces SET visibility = ? WHERE id = ?', [['public','private','secret'].includes(visibility) ? visibility : 'public', req.params.id]);
+    if (allow_join_requests !== undefined) db.run('UPDATE spaces SET allow_join_requests = ? WHERE id = ?', [allow_join_requests ? 1 : 0, req.params.id]);
+    if (order_num !== undefined)   db.run('UPDATE spaces SET order_num = ? WHERE id = ?', [Number(order_num) || 0, req.params.id]);
+    if (group_id !== undefined)    db.run('UPDATE spaces SET group_id = ? WHERE id = ?', [group_id, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/spaces/:id', requireAdmin, (req, res) => {
+    const topicIds = db.all('SELECT id FROM topics WHERE space_id = ?', [req.params.id]).map(t => t.id);
+    topicIds.forEach(id => db.run('UPDATE posts SET topic_id = NULL WHERE topic_id = ?', [id]));
+    db.run('DELETE FROM topics WHERE space_id = ?', [req.params.id]);
+    db.run('UPDATE posts SET space_id = NULL WHERE space_id = ?', [req.params.id]);
+    db.run('DELETE FROM space_members WHERE space_id = ?', [req.params.id]);
+    db.run('DELETE FROM spaces WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Admin topics ─────────────────────────────────────────────
+  app.get('/api/admin/topics', requireAdmin, (_req, res) => {
+    const topics = db.all(`
+      SELECT t.*, s.name AS space_name, s.icon AS space_icon,
+             (SELECT COUNT(*) FROM posts p WHERE p.topic_id = t.id) AS post_count
+      FROM topics t JOIN spaces s ON s.id = t.space_id
+      ORDER BY s.order_num ASC, t.order_num ASC, t.created_at ASC
+    `);
+    res.json({ topics });
+  });
+
+  app.post('/api/admin/topics', requireAdmin, (req, res) => {
+    const { space_id, name, icon = '🏷️', order_num = 0 } = req.body;
+    if (!space_id) return res.status(400).json({ error: 'Vui lòng chọn Space cho Topic.' });
+    if (!name?.trim()) return res.status(400).json({ error: 'Tên Topic không được để trống.' });
+    const r = db.run(
+      'INSERT INTO topics (space_id, name, icon, order_num) VALUES (?,?,?,?)',
+      [space_id, name.trim(), icon || '🏷️', Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/topics/:id', requireAdmin, (req, res) => {
+    const { space_id, name, icon, order_num } = req.body;
+    const t = db.get('SELECT id FROM topics WHERE id = ?', [req.params.id]);
+    if (!t) return res.status(404).json({ error: 'Topic không tồn tại.' });
+    if (space_id !== undefined) db.run('UPDATE topics SET space_id = ? WHERE id = ?', [space_id, req.params.id]);
+    if (name !== undefined)     db.run('UPDATE topics SET name = ? WHERE id = ?', [name, req.params.id]);
+    if (icon !== undefined)     db.run('UPDATE topics SET icon = ? WHERE id = ?', [icon || '🏷️', req.params.id]);
+    if (order_num !== undefined) db.run('UPDATE topics SET order_num = ? WHERE id = ?', [Number(order_num) || 0, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/topics/:id', requireAdmin, (req, res) => {
+    db.run('UPDATE posts SET topic_id = NULL WHERE topic_id = ?', [req.params.id]);
+    db.run('DELETE FROM topics WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Admin pillars (trụ cột) ────────────────────────────────────
+  app.get('/api/admin/pillars', requireAdmin, (_req, res) => {
+    const pillars = db.all(`
+      SELECT p.*, (SELECT COUNT(*) FROM posts po WHERE po.pillar = p.key) AS post_count
+      FROM pillars p ORDER BY p.order_num ASC, p.created_at ASC
+    `);
+    res.json({ pillars });
+  });
+
+  app.post('/api/admin/pillars', requireAdmin, (req, res) => {
+    const { label, icon = '🔥', color = '#0ea5e9', order_num = 0 } = req.body;
+    if (!label?.trim()) return res.status(400).json({ error: 'Tên trụ cột không được để trống.' });
+    const key = uniquePillarKey(slugify(label));
+    const r = db.run(
+      'INSERT INTO pillars (key, label, icon, color, order_num) VALUES (?,?,?,?,?)',
+      [key, label.trim(), icon || '🔥', color || '#0ea5e9', Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid, key });
+  });
+
+  app.patch('/api/admin/pillars/:id', requireAdmin, (req, res) => {
+    const { label, icon, color, order_num } = req.body;
+    const p = db.get('SELECT id FROM pillars WHERE id = ?', [req.params.id]);
+    if (!p) return res.status(404).json({ error: 'Trụ cột không tồn tại.' });
+    if (label !== undefined)     db.run('UPDATE pillars SET label = ? WHERE id = ?', [label, req.params.id]);
+    if (icon !== undefined)      db.run('UPDATE pillars SET icon = ? WHERE id = ?', [icon || '🔥', req.params.id]);
+    if (color !== undefined)     db.run('UPDATE pillars SET color = ? WHERE id = ?', [color || '#0ea5e9', req.params.id]);
+    if (order_num !== undefined) db.run('UPDATE pillars SET order_num = ? WHERE id = ?', [Number(order_num) || 0, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/pillars/:id', requireAdmin, (req, res) => {
+    const pillar = db.get('SELECT key FROM pillars WHERE id = ?', [req.params.id]);
+    if (!pillar) return res.status(404).json({ error: 'Trụ cột không tồn tại.' });
+    db.run('UPDATE posts SET pillar = NULL WHERE pillar = ?', [pillar.key]);
+    db.run('DELETE FROM pillars WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // Pillars (public) — used to populate the composer select + filter dropdowns
+  app.get('/api/pillars', (_req, res) => {
+    const pillars = db.all('SELECT id, key, label, icon, color FROM pillars ORDER BY order_num ASC, created_at ASC');
+    res.json({ pillars });
+  });
+
+  // ── Admin: space members (approve join requests / invite / remove) ──
+  app.get('/api/admin/spaces/:id/members', requireAdmin, (req, res) => {
+    const members = db.all(`
+      SELECT sm.id, sm.status, sm.created_at, u.id AS user_id, u.first_name, u.last_name, u.email
+      FROM space_members sm JOIN users u ON u.id = sm.user_id
+      WHERE sm.space_id = ?
+      ORDER BY sm.status ASC, sm.created_at ASC
+    `, [req.params.id]);
+    res.json({ members });
+  });
+
+  app.post('/api/admin/spaces/:id/members', requireAdmin, (req, res) => {
+    const { email } = req.body;
+    if (!email?.trim()) return res.status(400).json({ error: 'Vui lòng nhập email thành viên.' });
+    const user = db.get('SELECT id FROM users WHERE email = ?', [email.trim()]);
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy thành viên với email này.' });
+    const existing = db.get('SELECT id FROM space_members WHERE space_id = ? AND user_id = ?', [req.params.id, user.id]);
+    if (existing) {
+      db.run("UPDATE space_members SET status = 'approved' WHERE id = ?", [existing.id]);
+    } else {
+      db.run('INSERT INTO space_members (space_id, user_id, status) VALUES (?,?,?)', [req.params.id, user.id, 'approved']);
+    }
+    res.status(201).json({ success: true });
+  });
+
+  app.patch('/api/admin/space-members/:id', requireAdmin, (req, res) => {
+    const { status } = req.body;
+    if (!['approved', 'pending'].includes(status)) return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+    db.run('UPDATE space_members SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/space-members/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM space_members WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
   // ── Admin courses ──────────────────────────────────────────
   app.get('/api/admin/courses', requireAdmin, (_req, res) => {
     const courses = db.all(`
-      SELECT c.*, COUNT(cl.id) AS lesson_count
-      FROM courses c LEFT JOIN course_lessons cl ON cl.course_id = c.id
+      SELECT c.*, s.name AS space_name, g.name AS group_name, COUNT(DISTINCT cl.id) AS lesson_count,
+             (SELECT COUNT(*) FROM course_enrollments ce WHERE ce.course_id = c.id AND ce.status = 'pending') AS pending_enrollments,
+             (SELECT COUNT(*) FROM course_enrollments ce WHERE ce.course_id = c.id AND ce.status = 'approved') AS enrolled_count
+      FROM courses c
+      LEFT JOIN course_lessons cl ON cl.course_id = c.id
+      LEFT JOIN spaces s ON s.id = c.space_id
+      LEFT JOIN space_groups g ON g.id = c.group_id
       GROUP BY c.id ORDER BY c.order_num ASC, c.created_at DESC
     `);
     res.json({ courses });
   });
 
+  // Keeps a private course's checkout in sync with a linked "product" row, so it can
+  // be sold through the existing marketplace checkout/SePay pipeline. Public courses
+  // don't need a checkout, so their linked product (if any) is soft-disabled instead.
+  function syncCourseProduct(courseId) {
+    const course = db.get('SELECT * FROM courses WHERE id = ?', [courseId]);
+    if (!course) return;
+    const existingProduct = db.get('SELECT id FROM products WHERE course_id = ?', [courseId]);
+    if (course.visibility === 'private') {
+      if (existingProduct) {
+        db.run(
+          "UPDATE products SET title = ?, description = ?, price = ?, compare_price = ?, cover_color = ?, category = 'course', status = 'published' WHERE id = ?",
+          [course.title, course.description || '', Number(course.price) || 0, Number(course.compare_price) || 0, course.cover_color, existingProduct.id]
+        );
+      } else {
+        const sellerId = db.get('SELECT id FROM users ORDER BY id ASC LIMIT 1')?.id || 1;
+        db.run(
+          "INSERT INTO products (seller_id, title, description, price, compare_price, category, cover_color, status, course_id) VALUES (?,?,?,?,?,'course',?,'published',?)",
+          [sellerId, course.title, course.description || '', Number(course.price) || 0, Number(course.compare_price) || 0, course.cover_color, courseId]
+        );
+      }
+    } else if (existingProduct) {
+      db.run("UPDATE products SET status = 'draft' WHERE id = ?", [existingProduct.id]);
+    }
+  }
+
   app.post('/api/admin/courses', requireAdmin, (req, res) => {
-    const { title, description, cover_color = '#6366f1', instructor, status = 'draft', order_num = 0 } = req.body;
+    const { title, description, cover_color = '#6366f1', instructor, status = 'draft', order_num = 0, space_id = null, group_id = null, visibility = 'public', price = 0, compare_price = 0 } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: 'Tên khóa học không được để trống.' });
+    const vis = ['public', 'private'].includes(visibility) ? visibility : 'public';
     const r = db.run(
-      'INSERT INTO courses (title, description, cover_color, instructor, status, order_num) VALUES (?,?,?,?,?,?)',
-      [title.trim(), description || '', cover_color, instructor || '', status, Number(order_num)]
+      'INSERT INTO courses (title, description, cover_color, instructor, status, order_num, space_id, group_id, visibility, price, compare_price) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [title.trim(), description || '', cover_color, instructor || '', status, Number(order_num), space_id || null, group_id || null, vis, Number(price) || 0, Number(compare_price) || 0]
     );
+    syncCourseProduct(r.lastInsertRowid);
     res.status(201).json({ success: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/courses/:id', requireAdmin, (req, res) => {
-    const { title, description, cover_color, instructor, status, order_num } = req.body;
+    const { title, description, cover_color, instructor, status, order_num, space_id, group_id, visibility, price, compare_price } = req.body;
     const c = db.get('SELECT id FROM courses WHERE id = ?', [req.params.id]);
     if (!c) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
     if (title !== undefined)       db.run('UPDATE courses SET title = ? WHERE id = ?', [title, req.params.id]);
@@ -1787,12 +3219,57 @@ const CHALLENGE_DAYS_TEACHER = [
     if (instructor !== undefined)  db.run('UPDATE courses SET instructor = ? WHERE id = ?', [instructor, req.params.id]);
     if (status !== undefined)      db.run('UPDATE courses SET status = ? WHERE id = ?', [status, req.params.id]);
     if (order_num !== undefined)   db.run('UPDATE courses SET order_num = ? WHERE id = ?', [Number(order_num), req.params.id]);
+    if (space_id !== undefined)    db.run('UPDATE courses SET space_id = ? WHERE id = ?', [space_id || null, req.params.id]);
+    if (group_id !== undefined)    db.run('UPDATE courses SET group_id = ? WHERE id = ?', [group_id || null, req.params.id]);
+    if (visibility !== undefined)  db.run('UPDATE courses SET visibility = ? WHERE id = ?', [['public', 'private'].includes(visibility) ? visibility : 'public', req.params.id]);
+    if (price !== undefined)       db.run('UPDATE courses SET price = ? WHERE id = ?', [Number(price) || 0, req.params.id]);
+    if (compare_price !== undefined) db.run('UPDATE courses SET compare_price = ? WHERE id = ?', [Number(compare_price) || 0, req.params.id]);
+    syncCourseProduct(req.params.id);
     res.json({ success: true });
   });
 
   app.delete('/api/admin/courses/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM course_lessons WHERE course_id = ?', [req.params.id]);
+    db.run('DELETE FROM course_enrollments WHERE course_id = ?', [req.params.id]);
+    db.run("UPDATE products SET status = 'draft', course_id = NULL WHERE course_id = ?", [req.params.id]);
     db.run('DELETE FROM courses WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Admin: course enrollments (approve enroll requests / add / remove) ──
+  app.get('/api/admin/courses/:id/enrollments', requireAdmin, (req, res) => {
+    const enrollments = db.all(`
+      SELECT ce.id, ce.status, ce.created_at, u.id AS user_id, u.first_name, u.last_name, u.email
+      FROM course_enrollments ce JOIN users u ON u.id = ce.user_id
+      WHERE ce.course_id = ?
+      ORDER BY ce.status ASC, ce.created_at ASC
+    `, [req.params.id]);
+    res.json({ enrollments });
+  });
+
+  app.post('/api/admin/courses/:id/enrollments', requireAdmin, (req, res) => {
+    const { email } = req.body;
+    if (!email?.trim()) return res.status(400).json({ error: 'Vui lòng nhập email học viên.' });
+    const user = db.get('SELECT id FROM users WHERE email = ?', [email.trim()]);
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy thành viên với email này.' });
+    const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [req.params.id, user.id]);
+    if (existing) {
+      db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
+    } else {
+      db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [req.params.id, user.id, 'approved']);
+    }
+    res.status(201).json({ success: true });
+  });
+
+  app.patch('/api/admin/course-enrollments/:id', requireAdmin, (req, res) => {
+    const { status } = req.body;
+    if (!['approved', 'pending'].includes(status)) return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+    db.run('UPDATE course_enrollments SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/course-enrollments/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM course_enrollments WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   });
 
@@ -1806,19 +3283,31 @@ const CHALLENGE_DAYS_TEACHER = [
   });
 
   app.post('/api/admin/courses/:id/lessons', requireAdmin, (req, res) => {
-    const { title, content, video_url, duration_min = 0, order_num = 0 } = req.body;
+    const {
+      title, content, video_url, duration_min = 0, order_num = 0, status = 'published',
+      exercise_enabled = 0, exercise_type = 'text', exercise_prompt = '', exercise_rubric = '',
+      exercise_max_score = 100, exercise_pass_score = 70, exercise_xp_reward = 0,
+    } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: 'Tên bài học không được để trống.' });
     const course = db.get('SELECT id FROM courses WHERE id = ?', [req.params.id]);
     if (!course) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
     const r = db.run(
-      'INSERT INTO course_lessons (course_id, title, content, video_url, duration_min, order_num) VALUES (?,?,?,?,?,?)',
-      [req.params.id, title.trim(), content || '', video_url || '', Number(duration_min), Number(order_num)]
+      `INSERT INTO course_lessons
+        (course_id, title, content, video_url, duration_min, order_num, status,
+         exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.params.id, title.trim(), content || '', video_url || '', Number(duration_min), Number(order_num), status === 'draft' ? 'draft' : 'published',
+       exercise_enabled ? 1 : 0, exercise_type === 'quiz' ? 'quiz' : 'text', exercise_prompt || '', exercise_rubric || '', Number(exercise_max_score) || 100, Number(exercise_pass_score) || 70, Number(exercise_xp_reward) || 0]
     );
     res.status(201).json({ success: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/lessons/:id', requireAdmin, (req, res) => {
-    const { title, content, video_url, duration_min, order_num } = req.body;
+    const {
+      title, content, video_url, duration_min, order_num, status,
+      exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward,
+      ielts_test_id,
+    } = req.body;
     const l = db.get('SELECT id FROM course_lessons WHERE id = ?', [req.params.id]);
     if (!l) return res.status(404).json({ error: 'Bài học không tồn tại.' });
     if (title !== undefined)       db.run('UPDATE course_lessons SET title = ? WHERE id = ?', [title, req.params.id]);
@@ -1826,6 +3315,15 @@ const CHALLENGE_DAYS_TEACHER = [
     if (video_url !== undefined)   db.run('UPDATE course_lessons SET video_url = ? WHERE id = ?', [video_url, req.params.id]);
     if (duration_min !== undefined) db.run('UPDATE course_lessons SET duration_min = ? WHERE id = ?', [Number(duration_min), req.params.id]);
     if (order_num !== undefined)   db.run('UPDATE course_lessons SET order_num = ? WHERE id = ?', [Number(order_num), req.params.id]);
+    if (status !== undefined)      db.run('UPDATE course_lessons SET status = ? WHERE id = ?', [status === 'draft' ? 'draft' : 'published', req.params.id]);
+    if (exercise_enabled !== undefined)   db.run('UPDATE course_lessons SET exercise_enabled = ? WHERE id = ?', [exercise_enabled ? 1 : 0, req.params.id]);
+    if (exercise_type !== undefined)      db.run('UPDATE course_lessons SET exercise_type = ? WHERE id = ?', [exercise_type === 'quiz' ? 'quiz' : 'text', req.params.id]);
+    if (exercise_prompt !== undefined)    db.run('UPDATE course_lessons SET exercise_prompt = ? WHERE id = ?', [exercise_prompt, req.params.id]);
+    if (exercise_rubric !== undefined)    db.run('UPDATE course_lessons SET exercise_rubric = ? WHERE id = ?', [exercise_rubric, req.params.id]);
+    if (exercise_max_score !== undefined) db.run('UPDATE course_lessons SET exercise_max_score = ? WHERE id = ?', [Number(exercise_max_score) || 100, req.params.id]);
+    if (exercise_pass_score !== undefined) db.run('UPDATE course_lessons SET exercise_pass_score = ? WHERE id = ?', [Number(exercise_pass_score) || 70, req.params.id]);
+    if (exercise_xp_reward !== undefined) db.run('UPDATE course_lessons SET exercise_xp_reward = ? WHERE id = ?', [Number(exercise_xp_reward) || 0, req.params.id]);
+    if (ielts_test_id !== undefined)      db.run('UPDATE course_lessons SET ielts_test_id = ? WHERE id = ?', [ielts_test_id === null || ielts_test_id === '' ? null : Number(ielts_test_id), req.params.id]);
     res.json({ success: true });
   });
 
@@ -1834,9 +3332,321 @@ const CHALLENGE_DAYS_TEACHER = [
     res.json({ success: true });
   });
 
+  app.get('/api/admin/lessons/:id/questions', requireAdmin, (req, res) => {
+    const questions = db.all(
+      'SELECT * FROM lesson_exercise_questions WHERE lesson_id = ? ORDER BY order_num ASC, id ASC',
+      [req.params.id]
+    ).map(q => ({ ...q, options: JSON.parse(q.options) }));
+    res.json({ questions });
+  });
+
+  app.post('/api/admin/lessons/:id/questions', requireAdmin, (req, res) => {
+    const { question_text, options, correct_index, explanation = '', order_num = 0 } = req.body;
+    if (!question_text?.trim()) return res.status(400).json({ error: 'Nội dung câu hỏi không được để trống.' });
+    if (!Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'Cần ít nhất 2 đáp án.' });
+    if (correct_index === undefined || correct_index < 0 || correct_index >= options.length)
+      return res.status(400).json({ error: 'Vui lòng chọn đáp án đúng.' });
+    const lesson = db.get('SELECT id FROM course_lessons WHERE id = ?', [req.params.id]);
+    if (!lesson) return res.status(404).json({ error: 'Bài học không tồn tại.' });
+    const r = db.run(
+      'INSERT INTO lesson_exercise_questions (lesson_id, question_text, options, correct_index, explanation, order_num) VALUES (?,?,?,?,?,?)',
+      [req.params.id, question_text.trim(), JSON.stringify(options.map(o => String(o).trim())), Number(correct_index), explanation || '', Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/questions/:id', requireAdmin, (req, res) => {
+    const { question_text, options, correct_index, explanation, order_num } = req.body;
+    const q = db.get('SELECT id FROM lesson_exercise_questions WHERE id = ?', [req.params.id]);
+    if (!q) return res.status(404).json({ error: 'Câu hỏi không tồn tại.' });
+    if (question_text !== undefined) db.run('UPDATE lesson_exercise_questions SET question_text = ? WHERE id = ?', [question_text, req.params.id]);
+    if (options !== undefined)       db.run('UPDATE lesson_exercise_questions SET options = ? WHERE id = ?', [JSON.stringify(options.map(o => String(o).trim())), req.params.id]);
+    if (correct_index !== undefined) db.run('UPDATE lesson_exercise_questions SET correct_index = ? WHERE id = ?', [Number(correct_index), req.params.id]);
+    if (explanation !== undefined)   db.run('UPDATE lesson_exercise_questions SET explanation = ? WHERE id = ?', [explanation, req.params.id]);
+    if (order_num !== undefined)     db.run('UPDATE lesson_exercise_questions SET order_num = ? WHERE id = ?', [Number(order_num), req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/questions/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM lesson_exercise_questions WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── IELTS test bank (kho đề) — shared tests attachable to any lesson via ielts_test_id ──
+  app.get('/api/admin/ielts-tests', requireAdmin, (req, res) => {
+    const { skill = '' } = req.query;
+    const tests = db.all(
+      `SELECT t.*, (SELECT COUNT(*) FROM ielts_test_questions q WHERE q.test_id = t.id) AS question_count
+       FROM ielts_tests t
+       ${skill ? 'WHERE t.skill = ?' : ''}
+       ORDER BY t.created_at DESC`,
+      skill ? [skill] : []
+    );
+    res.json({ tests });
+  });
+
+  app.post('/api/admin/ielts-tests', requireAdmin, (req, res) => {
+    const {
+      skill, title, description = '', time_limit_minutes = 60, status = 'published', max_score = 100,
+      passages = [], task_type = null, writing_prompt = '', writing_rubric = '', writing_image_url = '',
+      chatgpt_url = '',
+    } = req.body;
+    if (!['reading', 'writing', 'listening', 'speaking'].includes(skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
+    if (!title?.trim()) return res.status(400).json({ error: 'Tên đề không được để trống.' });
+    const r = db.run(
+      `INSERT INTO ielts_tests
+        (skill, title, description, time_limit_minutes, status, max_score, passages, task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [skill, title.trim(), description || '', Number(time_limit_minutes) || 60, status === 'draft' ? 'draft' : 'published',
+       Number(max_score) || 100, JSON.stringify(passages || []), task_type || null, writing_prompt || '', writing_rubric || '', writing_image_url || '',
+       chatgpt_url || '']
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.get('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
+    const test = db.get('SELECT * FROM ielts_tests WHERE id = ?', [req.params.id]);
+    if (!test) return res.status(404).json({ error: 'Đề không tồn tại.' });
+    const questions = db.all(
+      'SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC',
+      [req.params.id]
+    ).map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null, correct_answer: JSON.parse(q.correct_answer) }));
+    res.json({ test: { ...test, passages: test.passages ? JSON.parse(test.passages) : [] }, questions });
+  });
+
+  app.patch('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
+    const {
+      title, description, time_limit_minutes, status, max_score, passages,
+      task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url,
+    } = req.body;
+    const t = db.get('SELECT id FROM ielts_tests WHERE id = ?', [req.params.id]);
+    if (!t) return res.status(404).json({ error: 'Đề không tồn tại.' });
+    if (title !== undefined)              db.run('UPDATE ielts_tests SET title = ? WHERE id = ?', [title, req.params.id]);
+    if (description !== undefined)        db.run('UPDATE ielts_tests SET description = ? WHERE id = ?', [description, req.params.id]);
+    if (time_limit_minutes !== undefined) db.run('UPDATE ielts_tests SET time_limit_minutes = ? WHERE id = ?', [Number(time_limit_minutes) || 60, req.params.id]);
+    if (status !== undefined)             db.run('UPDATE ielts_tests SET status = ? WHERE id = ?', [status === 'draft' ? 'draft' : 'published', req.params.id]);
+    if (max_score !== undefined)          db.run('UPDATE ielts_tests SET max_score = ? WHERE id = ?', [Number(max_score) || 100, req.params.id]);
+    if (passages !== undefined)           db.run('UPDATE ielts_tests SET passages = ? WHERE id = ?', [JSON.stringify(passages || []), req.params.id]);
+    if (task_type !== undefined)          db.run('UPDATE ielts_tests SET task_type = ? WHERE id = ?', [task_type, req.params.id]);
+    if (writing_prompt !== undefined)     db.run('UPDATE ielts_tests SET writing_prompt = ? WHERE id = ?', [writing_prompt, req.params.id]);
+    if (writing_rubric !== undefined)     db.run('UPDATE ielts_tests SET writing_rubric = ? WHERE id = ?', [writing_rubric, req.params.id]);
+    if (writing_image_url !== undefined)  db.run('UPDATE ielts_tests SET writing_image_url = ? WHERE id = ?', [writing_image_url, req.params.id]);
+    if (chatgpt_url !== undefined)        db.run('UPDATE ielts_tests SET chatgpt_url = ? WHERE id = ?', [chatgpt_url, req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
+    const linked = db.all('SELECT title FROM course_lessons WHERE ielts_test_id = ?', [req.params.id]);
+    if (linked.length) {
+      return res.status(409).json({
+        error: 'Đề đang được gắn vào bài học, vui lòng gỡ liên kết trước khi xoá.',
+        lessons: linked.map(l => l.title),
+      });
+    }
+    db.run('DELETE FROM ielts_test_questions WHERE test_id = ?', [req.params.id]);
+    db.run('DELETE FROM ielts_tests WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.get('/api/admin/ielts-tests/:id/questions', requireAdmin, (req, res) => {
+    const questions = db.all(
+      'SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC',
+      [req.params.id]
+    ).map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null, correct_answer: JSON.parse(q.correct_answer) }));
+    res.json({ questions });
+  });
+
+  app.post('/api/admin/ielts-tests/:id/questions', requireAdmin, (req, res) => {
+    const { question_type, passage_ref = '', question_text, options = null, correct_answer, explanation = '', order_num = 0 } = req.body;
+    if (!['mc', 'tfng', 'gap_fill', 'matching'].includes(question_type)) return res.status(400).json({ error: 'Dạng câu hỏi không hợp lệ.' });
+    if (!question_text?.trim()) return res.status(400).json({ error: 'Nội dung câu hỏi không được để trống.' });
+    if (!Array.isArray(correct_answer) || !correct_answer.length) return res.status(400).json({ error: 'Cần ít nhất 1 đáp án chấp nhận được.' });
+    const test = db.get('SELECT id FROM ielts_tests WHERE id = ?', [req.params.id]);
+    if (!test) return res.status(404).json({ error: 'Đề không tồn tại.' });
+    const r = db.run(
+      'INSERT INTO ielts_test_questions (test_id, question_type, passage_ref, question_text, options, correct_answer, explanation, order_num) VALUES (?,?,?,?,?,?,?,?)',
+      [req.params.id, question_type, passage_ref || '', question_text.trim(),
+       options ? JSON.stringify(options.map(o => String(o).trim())) : null,
+       JSON.stringify(correct_answer.map(a => String(a).trim())), explanation || '', Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/ielts-test-questions/:id', requireAdmin, (req, res) => {
+    const { question_type, passage_ref, question_text, options, correct_answer, explanation, order_num } = req.body;
+    const q = db.get('SELECT id FROM ielts_test_questions WHERE id = ?', [req.params.id]);
+    if (!q) return res.status(404).json({ error: 'Câu hỏi không tồn tại.' });
+    if (question_type !== undefined)  db.run('UPDATE ielts_test_questions SET question_type = ? WHERE id = ?', [question_type, req.params.id]);
+    if (passage_ref !== undefined)    db.run('UPDATE ielts_test_questions SET passage_ref = ? WHERE id = ?', [passage_ref, req.params.id]);
+    if (question_text !== undefined)  db.run('UPDATE ielts_test_questions SET question_text = ? WHERE id = ?', [question_text, req.params.id]);
+    if (options !== undefined)        db.run('UPDATE ielts_test_questions SET options = ? WHERE id = ?', [options ? JSON.stringify(options.map(o => String(o).trim())) : null, req.params.id]);
+    if (correct_answer !== undefined) db.run('UPDATE ielts_test_questions SET correct_answer = ? WHERE id = ?', [JSON.stringify(correct_answer.map(a => String(a).trim())), req.params.id]);
+    if (explanation !== undefined)    db.run('UPDATE ielts_test_questions SET explanation = ? WHERE id = ?', [explanation, req.params.id]);
+    if (order_num !== undefined)      db.run('UPDATE ielts_test_questions SET order_num = ? WHERE id = ?', [Number(order_num), req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/ielts-test-questions/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM ielts_test_questions WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // Bulk import: { test: {...}, passages: [...], questions: [...] } — see kho-de-thi/tests/*.json
+  app.post('/api/admin/ielts-tests/import', requireAdmin, (req, res) => {
+    const { test, passages = [], questions = [] } = req.body;
+    if (!test || !['reading', 'writing', 'listening', 'speaking'].includes(test.skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
+    if (!test.title?.trim()) return res.status(400).json({ error: 'Tên đề không được để trống.' });
+    const r = db.run(
+      `INSERT INTO ielts_tests
+        (skill, title, description, time_limit_minutes, status, max_score, passages, task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [test.skill, test.title.trim(), test.description || '', Number(test.time_limit_minutes) || 60,
+       test.status === 'draft' ? 'draft' : 'published', Number(test.max_score) || 100, JSON.stringify(passages || []),
+       test.task_type || null, test.writing_prompt || '', test.writing_rubric || '', test.writing_image_url || '', test.chatgpt_url || '']
+    );
+    const testId = r.lastInsertRowid;
+    questions.forEach((q, i) => {
+      db.run(
+        'INSERT INTO ielts_test_questions (test_id, question_type, passage_ref, question_text, options, correct_answer, explanation, order_num) VALUES (?,?,?,?,?,?,?,?)',
+        [testId, q.question_type, q.passage_ref || '', q.question_text,
+         q.options ? JSON.stringify(q.options.map(o => String(o).trim())) : null,
+         JSON.stringify((q.correct_answer || []).map(a => String(a).trim())), q.explanation || '', Number(q.order_num) || i]
+      );
+    });
+    res.status(201).json({ success: true, id: testId, question_count: questions.length });
+  });
+
+  // Upload a PDF/DOCX sample test, extract its text, and ask AI to restructure it into the
+  // { test, passages, questions } import shape. Nothing is saved here — the admin reviews the
+  // result (pre-filled into the Import JSON box) before actually importing it.
+  app.post('/api/admin/ielts-tests/extract-from-file', requireAdmin, (req, res) => {
+    ieltsFileUpload.single('file')(req, res, async (err) => {
+      if (err) return res.status(400).json({ error: err.message });
+      if (!req.file) return res.status(400).json({ error: 'Vui lòng chọn file PDF hoặc DOCX.' });
+
+      let text;
+      try {
+        if (/\.pdf$/i.test(req.file.originalname)) {
+          const parser = new PDFParse({ data: req.file.buffer });
+          text = (await parser.getText()).text;
+        } else {
+          text = (await mammoth.extractRawText({ buffer: req.file.buffer })).value;
+        }
+      } catch (e) {
+        console.error('[IeltsExtract] Parse error:', e.message);
+        return res.status(400).json({ error: 'Không đọc được nội dung file — file có thể bị lỗi hoặc là bản scan (ảnh, không có chữ chọn được).' });
+      }
+
+      if (!text || !text.trim()) {
+        return res.status(400).json({ error: 'File không có nội dung chữ nào — có thể đây là bản scan (ảnh), hệ thống hiện chỉ đọc được PDF/DOCX có chữ thật.' });
+      }
+
+      const result = await extractIeltsTestFromText(text);
+      if (!result.ok) return res.status(502).json({ error: result.error });
+      res.json({ success: true, extracted: result.extracted, truncated: result.truncated });
+    });
+  });
+
+  app.get('/api/admin/lesson-exercise-submissions', requireAdmin, (req, res) => {
+    const { course_id = '', lesson_id = '', passed = '', limit = 50, offset = 0 } = req.query;
+    let sql = `
+      SELECT les.id, les.answer_text, les.score, les.max_score, les.pass_score, les.passed,
+             les.issues, les.hints, les.xp_awarded, les.status, les.teacher_note, les.submitted_at,
+             u.id AS user_id, u.first_name, u.last_name, u.email,
+             cl.id AS lesson_id, cl.title AS lesson_title, cl.exercise_rubric, cl.exercise_type,
+             c.id AS course_id, c.title AS course_title
+      FROM lesson_exercise_submissions les
+      JOIN users u ON u.id = les.user_id
+      JOIN course_lessons cl ON cl.id = les.lesson_id
+      JOIN courses c ON c.id = les.course_id
+      WHERE 1=1`;
+    const params = [];
+    if (course_id) { sql += ' AND les.course_id = ?'; params.push(Number(course_id)); }
+    if (lesson_id) { sql += ' AND les.lesson_id = ?'; params.push(Number(lesson_id)); }
+    if (passed !== '') { sql += ' AND les.passed = ?'; params.push(Number(passed)); }
+    sql += ' ORDER BY les.submitted_at DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+    const questionsCache = {};
+    const submissions = db.all(sql, params).map(s => {
+      const base = { ...s, issues: JSON.parse(s.issues || '[]'), hints: JSON.parse(s.hints || '[]') };
+      if (s.exercise_type === 'quiz') {
+        if (!questionsCache[s.lesson_id]) {
+          questionsCache[s.lesson_id] = db.all(
+            'SELECT * FROM lesson_exercise_questions WHERE lesson_id = ? ORDER BY order_num ASC, id ASC',
+            [s.lesson_id]
+          );
+        }
+        const answers = JSON.parse(s.answer_text || '{}');
+        base.quiz_review = questionsCache[s.lesson_id].map(q => {
+          const options = JSON.parse(q.options);
+          const picked = answers[q.id];
+          return {
+            question_text: q.question_text,
+            picked_option: picked !== undefined ? options[picked] : null,
+            correct_option: options[q.correct_index],
+            is_correct: picked === q.correct_index,
+          };
+        });
+      }
+      return base;
+    });
+    let cntSql = 'SELECT COUNT(*) AS n FROM lesson_exercise_submissions WHERE 1=1';
+    const cntP = [];
+    if (course_id) { cntSql += ' AND course_id = ?'; cntP.push(Number(course_id)); }
+    if (lesson_id) { cntSql += ' AND lesson_id = ?'; cntP.push(Number(lesson_id)); }
+    if (passed !== '') { cntSql += ' AND passed = ?'; cntP.push(Number(passed)); }
+    const total = db.get(cntSql, cntP).n;
+    res.json({ submissions, total });
+  });
+
+  // Teacher intervention on an already-graded lesson exercise submission:
+  // request_resubmit unlocks one more attempt (student's next submit UPDATEs this row);
+  // finalize sets a manual score/note and permanently locks the submission — no further action possible.
+  app.patch('/api/admin/lesson-exercise-submissions/:id', requireAdmin, (req, res) => {
+    const { action, note = '', score } = req.body;
+    const sub = db.get('SELECT * FROM lesson_exercise_submissions WHERE id = ?', [req.params.id]);
+    if (!sub) return res.status(404).json({ error: 'Bài nộp không tồn tại.' });
+    if (sub.status === 'finalized') return res.status(400).json({ error: 'Bài tập này đã kết thúc, không thể thao tác thêm.' });
+
+    if (action === 'request_resubmit') {
+      db.run('UPDATE lesson_exercise_submissions SET status = ?, teacher_note = ? WHERE id = ?', ['needs_resubmit', note, req.params.id]);
+    } else if (action === 'finalize') {
+      const s = Number(score);
+      if (!Number.isFinite(s) || s < 0 || s > sub.max_score) return res.status(400).json({ error: 'Điểm không hợp lệ.' });
+      const passed = s >= sub.pass_score ? 1 : 0;
+      const alreadyAwarded = sub.xp_awarded > 0;
+      let xp_awarded = sub.xp_awarded;
+      if (passed && !alreadyAwarded) {
+        const lesson = db.get('SELECT title, exercise_xp_reward FROM course_lessons WHERE id = ?', [sub.lesson_id]);
+        xp_awarded = lesson?.exercise_xp_reward || 0;
+        if (xp_awarded > 0) addXP(sub.user_id, xp_awarded, 'lesson_exercise', `Giáo viên chấm lại: ${lesson.title}`);
+      }
+      db.run(
+        `UPDATE lesson_exercise_submissions SET status = 'finalized', score = ?, passed = ?, teacher_note = ?, xp_awarded = ? WHERE id = ?`,
+        [s, passed, note, xp_awarded, req.params.id]
+      );
+    } else {
+      return res.status(400).json({ error: 'Hành động không hợp lệ.' });
+    }
+
+    const updated = db.get('SELECT * FROM lesson_exercise_submissions WHERE id = ?', [req.params.id]);
+    res.json({
+      success: true,
+      submission: { ...updated, issues: JSON.parse(updated.issues || '[]'), hints: JSON.parse(updated.hints || '[]') },
+    });
+  });
+
   // ── Admin settings ────────────────────────────────────────
   app.patch('/api/admin/settings', requireAdmin, (req, res) => {
-    const allowed = ['announcement_enabled', 'announcement_text', 'announcement_icon'];
+    const allowed = [
+      'announcement_enabled', 'announcement_text', 'announcement_icon',
+      'late_reminder_enabled',
+      'calendar_embed_url', 'about_intro', 'about_media',
+      'community_name',
+      'challenge_hero_icon', 'challenge_hero_title', 'challenge_hero_desc',
+      'mp_store_name', 'mp_store_desc',
+      'mp_bank_name', 'mp_bank_account_name', 'mp_bank_account_number',
+    ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
     updates.forEach(([key, value]) => {
@@ -1919,14 +3729,16 @@ const CHALLENGE_DAYS_TEACHER = [
   // List products (public)
   app.get('/api/products', (req, res) => {
     const { category, sort, q } = req.query;
-    let where = "p.status = 'published'";
+    // Course-checkout products are sold from the course page, not the general marketplace.
+    let where = "p.status = 'published' AND p.course_id IS NULL";
     const params = [];
     if (category && category !== 'all') { where += ' AND p.category = ?'; params.push(category); }
     if (q) { where += ' AND (p.title LIKE ? OR p.description LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
     const orderMap = { newest: 'p.created_at DESC', popular: 'p.sales_count DESC', price_asc: 'p.price ASC', price_desc: 'p.price DESC' };
     const orderBy = orderMap[sort] || 'p.created_at DESC';
     const products = db.all(`
-      SELECT p.id, p.title, p.description, p.price, p.category, p.cover_color,
+      SELECT p.id, p.title, p.description, p.price, p.compare_price, p.detail_url, p.is_featured,
+             p.category, p.cover_color,
              p.sales_count, p.created_at,
              u.first_name, u.last_name, u.xp
       FROM products p
@@ -1934,7 +3746,7 @@ const CHALLENGE_DAYS_TEACHER = [
       WHERE ${where}
       ORDER BY ${orderBy}
     `, params);
-    const total = db.get('SELECT COUNT(*) AS n FROM products WHERE status = ?', ['published']).n;
+    const total = db.get("SELECT COUNT(*) AS n FROM products WHERE status = 'published' AND course_id IS NULL").n;
     res.json({ products, total });
   });
 
@@ -2076,12 +3888,13 @@ const CHALLENGE_DAYS_TEACHER = [
     res.json(products);
   });
 
-  // Admin — list all products
+  // Admin — list all products (course-checkout products are managed from the course page, not here)
   app.get('/api/admin/products', requireAdmin, (_req, res) => {
     const products = db.all(`
       SELECT p.*, u.first_name, u.last_name, u.email
       FROM products p
       JOIN users u ON u.id = p.seller_id
+      WHERE p.course_id IS NULL
       ORDER BY p.created_at DESC
     `);
     res.json(products);
@@ -2089,13 +3902,13 @@ const CHALLENGE_DAYS_TEACHER = [
 
   // Admin — create product
   app.post('/api/admin/products', requireAdmin, (req, res) => {
-    const { title, description, long_description, price, category, cover_color, status, seller_id } = req.body;
+    const { title, description, long_description, price, compare_price, detail_url, is_featured, category, cover_color, status, seller_id } = req.body;
     if (!title) return res.status(400).json({ error: 'Thiếu tên sản phẩm.' });
     const sid = seller_id || db.get('SELECT id FROM users ORDER BY id ASC LIMIT 1')?.id || 1;
     const result = db.run(
-      'INSERT INTO products (seller_id, title, description, long_description, price, category, cover_color, status) VALUES (?,?,?,?,?,?,?,?)',
-      [sid, title, description || '', long_description || '', Number(price) || 0,
-       category || 'other', cover_color || '#0ea5e9', status || 'published']
+      'INSERT INTO products (seller_id, title, description, long_description, price, compare_price, detail_url, is_featured, category, cover_color, status) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [sid, title, description || '', long_description || '', Number(price) || 0, Number(compare_price) || 0,
+       detail_url || null, is_featured ? 1 : 0, category || 'other', cover_color || '#0ea5e9', status || 'published']
     );
     const product = db.get('SELECT * FROM products WHERE id = ?', [result.lastInsertRowid]);
     res.status(201).json({ success: true, product });
@@ -2103,13 +3916,16 @@ const CHALLENGE_DAYS_TEACHER = [
 
   // Admin — update product
   app.patch('/api/admin/products/:id', requireAdmin, (req, res) => {
-    const { status, title, description, long_description, price, category, cover_color } = req.body;
+    const { status, title, description, long_description, price, compare_price, detail_url, is_featured, category, cover_color } = req.body;
     const fields = []; const params = [];
     if (status !== undefined)           { fields.push('status = ?');           params.push(status); }
     if (title !== undefined)            { fields.push('title = ?');            params.push(title); }
     if (description !== undefined)      { fields.push('description = ?');      params.push(description); }
     if (long_description !== undefined) { fields.push('long_description = ?'); params.push(long_description); }
     if (price !== undefined)            { fields.push('price = ?');            params.push(Number(price)); }
+    if (compare_price !== undefined)    { fields.push('compare_price = ?');    params.push(Number(compare_price) || 0); }
+    if (detail_url !== undefined)       { fields.push('detail_url = ?');       params.push(detail_url || null); }
+    if (is_featured !== undefined)      { fields.push('is_featured = ?');      params.push(is_featured ? 1 : 0); }
     if (category !== undefined)         { fields.push('category = ?');         params.push(category); }
     if (cover_color !== undefined)      { fields.push('cover_color = ?');      params.push(cover_color); }
     if (!fields.length) return res.status(400).json({ error: 'Không có trường cần cập nhật.' });
@@ -2193,7 +4009,7 @@ const CHALLENGE_DAYS_TEACHER = [
 
     // Fetch full order info for email
     const info = db.get(`
-      SELECT o.amount, p.title AS product_title, p.id AS product_id,
+      SELECT o.amount, o.buyer_id, p.title AS product_title, p.id AS product_id,
              u.first_name, u.last_name, u.email AS buyer_email
       FROM orders o
       JOIN products p ON p.id = o.product_id
@@ -2205,6 +4021,7 @@ const CHALLENGE_DAYS_TEACHER = [
     const amtFmt = Number(info.amount).toLocaleString('vi-VN') + 'đ';
 
     if (status === 'completed') {
+      autoEnrollFromProductPurchase(info.product_id, info.buyer_id);
       sendPaymentConfirmedEmails(orderId);
     } else if (status === 'cancelled') {
       sendEmail({
@@ -2378,6 +4195,7 @@ const CHALLENGE_DAYS_TEACHER = [
 
     db.run('UPDATE orders SET status = ? WHERE id = ?', ['completed', order.id]);
     db.run('UPDATE products SET sales_count = sales_count + 1 WHERE id = ?', [productId]);
+    autoEnrollFromProductPurchase(productId, buyerId);
     console.log(`✅ SePay: Order #${order.id} completed — ${transferAmount}₫`);
     res.json({ success: true });
 
@@ -2430,6 +4248,7 @@ const CHALLENGE_DAYS_TEACHER = [
 
         db.run('UPDATE orders SET status = ? WHERE id = ?', ['completed', order.id]);
         db.run('UPDATE products SET sales_count = sales_count + 1 WHERE id = ?', [productId]);
+        autoEnrollFromProductPurchase(Number(productId), Number(buyerId));
         console.log(`✅ GSheet: Đơn #${order.id} xác nhận tự động (${amount}₫)`);
         sendPaymentConfirmedEmails(order.id);
       }

@@ -1,0 +1,1937 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngày 17 — Skill Sản Xuất Content + Auto-Post Facebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1612;
+    --ink-soft: #4a4038;
+    --ink-mute: #8a7f75;
+    --paper: #faf7f2;
+    --paper-warm: #f2ece0;
+    --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f;
+    --accent-soft: #fce4dc;
+    --gold: #b8882d;
+    --gold-soft: #f8ecd0;
+    --sage: #5c6b4d;
+    --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200, 68, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184, 136, 45, 0.04) 0%, transparent 40%);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(250, 247, 242, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+    z-index: 100;
+    padding: 14px 0;
+  }
+
+  .topbar-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .topbar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  .topbar-nav {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .topbar-nav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 100px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .topbar-nav a:hover {
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+  }
+
+  .hero {
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .day-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .day-tag::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .goal-box {
+    background: var(--paper-warm);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin: 32px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .goal-box-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .goal-box p {
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .goal-box em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--accent);
+    display: block;
+    margin: 10px 0 4px;
+    font-weight: 500;
+  }
+
+  section {
+    margin-bottom: 56px;
+  }
+
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 64px 0 20px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink);
+  }
+
+  h2 .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+  }
+
+  .phase-header {
+    text-align: center;
+    margin: 80px 0 40px;
+    position: relative;
+  }
+
+  .phase-header::before,
+  .phase-header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .phase-header::before { left: 20%; }
+  .phase-header::after { right: 20%; }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .phase-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 10px;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: var(--ink-soft);
+  }
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .story {
+    background: var(--gold-soft);
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(184, 136, 45, 0.2);
+  }
+
+  .story-label {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .story p {
+    color: var(--ink);
+    font-size: 16px;
+  }
+
+  .story p:last-child { margin-bottom: 0; }
+
+  .metaphor {
+    background: var(--sage-soft);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 10px;
+    border-left: 3px solid var(--sage);
+    position: relative;
+  }
+
+  .metaphor::before {
+    content: "💡";
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  .metaphor-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sage);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .metaphor blockquote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-top: 8px;
+    border: none;
+    padding: 0;
+  }
+
+  .tip {
+    background: var(--accent-soft);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 10px;
+    position: relative;
+    border-left: 3px solid var(--accent);
+  }
+
+  .tip::before {
+    content: "🔥";
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 18px;
+  }
+
+  .tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+    padding-right: 30px;
+  }
+
+  .tip p {
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .tip p:last-child { margin-bottom: 0; }
+
+  /* Warning - màu cam khác accent */
+  .warning {
+    background: #fff4e6;
+    border-left: 3px solid #e8a544;
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .warning::before {
+    content: "⚠️";
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 18px;
+  }
+
+  .warning-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #b97318;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+    padding-right: 30px;
+  }
+
+  .warning p {
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .warning p:last-child { margin-bottom: 0; }
+
+  /* Verify box - kiểm tra điểm */
+  .verify {
+    background: white;
+    border: 2px dashed var(--sage);
+    padding: 18px 22px;
+    margin: 18px 0;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  .verify-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sage);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .verify-label::before {
+    content: "✓";
+    background: var(--sage);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .verify p {
+    color: var(--ink);
+    font-size: 15px;
+    margin-bottom: 0;
+  }
+
+  .verify code {
+    background: var(--sage-soft);
+    color: var(--sage);
+    font-weight: 600;
+  }
+
+  /* Click path - mô tả đường click trên giao diện */
+  .click-path {
+    background: var(--paper-deep);
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.5;
+    border-left: 3px solid var(--accent);
+    overflow-x: auto;
+  }
+
+  .click-path strong {
+    color: var(--accent);
+  }
+
+  /* UI mock - mô tả màn hình thấy gì */
+  .ui-mock {
+    background: white;
+    border: 1px solid var(--rule);
+    padding: 16px 20px;
+    margin: 14px 0;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    font-size: 14px;
+  }
+
+  .ui-mock-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .ui-mock-content {
+    background: var(--paper-warm);
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+
+  .prompt-box {
+    background: var(--ink);
+    color: #f5ede0;
+    padding: 0;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .prompt-header {
+    background: rgba(255,255,255,0.04);
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+
+  .copy-btn.copied {
+    background: var(--sage);
+    color: white;
+    border-color: var(--sage);
+  }
+
+  .prompt-body {
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #f5ede0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  ul, ol {
+    margin: 16px 0 20px 4px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin-bottom: 10px;
+    color: var(--ink-soft);
+  }
+
+  li::marker {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--paper-deep);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--accent);
+    font-weight: 500;
+    word-break: break-word;
+  }
+
+  pre {
+    background: var(--paper-deep);
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 12px 0;
+    overflow-x: auto;
+    border-left: 3px solid var(--accent);
+  }
+
+  pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--ink);
+    font-weight: 400;
+  }
+
+  /* Mode card */
+  .mode-card {
+    background: white;
+    padding: 22px 26px;
+    margin: 14px 0;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+  }
+
+  .mode-card-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .mode-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .mode-card-desc {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+
+  .mode-card-trigger {
+    background: var(--accent-soft);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 14.5px;
+    margin: 0;
+  }
+
+  /* Troubleshoot */
+  .troubleshoot {
+    background: white;
+    border: 1px solid var(--rule);
+    padding: 0;
+    margin: 20px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .troubleshoot-header {
+    background: #fff4e6;
+    padding: 12px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #b97318;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-bottom: 1px solid #e8a544;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .troubleshoot-body {
+    padding: 16px 22px;
+  }
+
+  .troubleshoot-body details {
+    margin: 8px 0;
+    border-bottom: 1px dashed var(--rule);
+    padding-bottom: 8px;
+  }
+
+  .troubleshoot-body details:last-child {
+    border-bottom: none;
+  }
+
+  .troubleshoot-body summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 6px 0;
+    font-size: 14.5px;
+  }
+
+  .troubleshoot-body summary:hover {
+    color: var(--accent);
+  }
+
+  .troubleshoot-body details[open] summary {
+    color: var(--accent);
+  }
+
+  .troubleshoot-body details > p,
+  .troubleshoot-body details > ul {
+    margin-top: 8px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  /* Checklist */
+  .checklist {
+    background: white;
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--rule);
+  }
+
+  .checklist-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--rule);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+
+  .check-box {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--ink-mute);
+    border-radius: 5px;
+    margin-top: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: white;
+  }
+
+  .check-item.done .check-box {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+
+  .check-item.done .check-box::after {
+    content: "✓";
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .check-item.done .check-text {
+    color: var(--ink-mute);
+    text-decoration: line-through;
+  }
+
+  .check-text {
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .success {
+    background: linear-gradient(135deg, var(--sage-soft) 0%, #f0f4e8 100%);
+    padding: 28px 32px;
+    margin: 32px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(92, 107, 77, 0.2);
+  }
+
+  .success-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sage);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .success-title::before {
+    content: "✓";
+    background: var(--sage);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+  }
+
+  .success ul {
+    margin: 0;
+    padding-left: 4px;
+    list-style: none;
+  }
+
+  .success li {
+    padding: 6px 0;
+    color: var(--ink);
+    font-weight: 500;
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .success li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--sage);
+    font-weight: bold;
+  }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    text-align: center;
+    border-top: 1px solid var(--rule);
+  }
+
+  .footer-quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .footer-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 32px 20px 100px; }
+    .hero { margin-bottom: 40px; padding-bottom: 28px; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 24px; margin-top: 48px; }
+    h3 { font-size: 19px; }
+    .phase-title { font-size: 26px; }
+    .phase-header::before, .phase-header::after { width: 30px; }
+    .phase-header::before { left: 10%; }
+    .phase-header::after { right: 10%; }
+    .topbar-nav { gap: 2px; }
+    .topbar-nav a { padding: 6px 8px; font-size: 12px; }
+    .topbar-label { display: none; }
+    .story, .success { padding: 22px 22px; }
+    .metaphor, .tip, .checklist, .warning, .mode-card { padding: 20px 22px; }
+    .prompt-body { font-size: 12.5px; padding: 16px 20px; }
+    pre { font-size: 11.5px; padding: 12px 14px; }
+  }
+
+  @media print {
+    .topbar, .copy-btn { display: none; }
+    body { background: white; }
+    .troubleshoot-body details { display: block; }
+    .troubleshoot-body details > * { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">21-Day Challenge</div>
+    <nav class="topbar-nav">
+      <a href="#phase1">1 · Setup</a>
+      <a href="#phase2">2 · Skill</a>
+      <a href="#phase3">3 · Auto</a>
+      <a href="#phase4">4 · Ads</a>
+      <a href="#phase5">5 · Quan sát</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 17 · Tuần 4</div>
+  <h1>
+    Skill Sản Xuất Content<br>
+    Hoàn Chỉnh + Auto-Post FB
+  </h1>
+  <p class="hero-sub">
+    Hôm nay agent của bạn sẽ <em>tự gen <strong>full content</strong> (ảnh đẹp + văn bản hoàn chỉnh — hook + body + CTA + hashtag) và đăng lên Page Facebook</em> mỗi sáng — không cần bạn động tay. Đồng thời gen được 3 bộ creative ads (ảnh + ad copy ghép cặp) để bạn paste vào Ads Manager khi muốn chạy chiến dịch.
+  </p>
+</header>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Cuối hôm nay bạn có:</p>
+  <em>Skill tao-creative-fb với 2 mode: (1) Content Free — agent tạo full bài (ảnh + caption hoàn chỉnh) đăng Page mỗi sáng, (2) Creative Ads — agent tạo 3 bộ creative (mỗi bộ gồm ảnh + ad copy) khi bạn muốn chạy chiến dịch</em>
+  <em>Lịch hẹn tự chạy 9h sáng mỗi ngày — gen ý tưởng → bạn chọn → agent làm full content → bạn duyệt → đăng tự động</em>
+  <em>Lần đầu trải nghiệm: dậy sáng thấy Page Facebook đã có 1 bài đăng đầy đủ ảnh + văn bản, không phải bạn làm</em>
+</div>
+
+<div class="story">
+  <div class="story-label">Tại sao đây là moment chuyển hoá</div>
+  <p>Trước hôm nay bạn (hoặc team bạn) phải <strong>vừa nghĩ ý tưởng, vừa viết bài, vừa làm ảnh, vừa đăng Facebook</strong> mỗi ngày — tốn 30-60 phút/ngày. Một content creator junior lương ~8tr/tháng làm việc này.</p>
+  <p>Sau hôm nay bạn ngủ — agent làm thay. Page có content đều đặn, đúng tone, đẹp visual. <strong>Bạn không phải bỏ công, không phải trả lương.</strong></p>
+</div>
+
+<div class="warning">
+  <div class="warning-label">Đọc kỹ trước khi bắt đầu</div>
+  <p>Hôm nay có <strong>setup Facebook API</strong> — đây là phần dễ kẹt nhất chuỗi. Nếu bạn vội, bạn sẽ bỏ cuộc giữa chừng.</p>
+  <p>Cần <strong>1-2 giờ tập trung</strong>, không bị ngắt quãng. Lưu kỹ token vào file đúng vị trí (sẽ hướng dẫn). Nếu kẹt — đọc phần Troubleshoot ở mỗi bước, có lời giải cho 90% lỗi phổ biến.</p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Quy tắc AI-First xuyên suốt ngày hôm nay</div>
+  <p><strong>Đừng tự loay hoay.</strong> Mỗi khi gặp lệnh không hiểu, lỗi không biết sửa, hoặc terminal trông lạ — <em>screenshot + paste vào agent coding (Cursor / Antigravity / Claude Code)</em> và bảo nó: "Giải thích cho tôi" hoặc "Chạy giúp tôi, giải thích output". Agent sẽ làm tất cả.</p>
+  <p>Bạn không cần là dev. Bạn chỉ cần là <strong>người chỉ đạo agent</strong>. Đây là pattern cốt lõi của Operator — và là lý do khoá này gọi là <em>AI-First Vibe Coding</em>.</p>
+</div>
+
+<div class="story">
+  <div class="story-label">Bức tranh tổng thể — 5 phần liên kết với nhau ra sao?</div>
+  <p>Trước khi vào việc, đây là logic toàn bộ Ngày 17 — để bạn không bị lost ở giữa đường:</p>
+  <pre style="margin: 12px 0; background: white; padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.6; color: var(--ink); border-left: 3px solid var(--accent); white-space: pre-wrap;">PHẦN 1 (Setup) — Lấy 2 chìa khoá:
+              · OpenAI API key (để gen ảnh + caption)
+              · Facebook Permanent Page Token (để đăng lên Page)
+            ↓
+PHẦN 2 (Skill) — Vibe code skill dùng 2 chìa khoá đó để sản xuất content
+              Test bằng @filename trong agent coding (chưa cần goClaw)
+            ↓
+PHẦN 5 (Done) — Upload skill lên goClaw để agent Telegram dùng được
+              [làm sớm vì PHẦN 3 cần skill đã trên goClaw]
+            ↓
+PHẦN 3 (Auto) — Đặt lịch hẹn 9h sáng → tự gọi skill mỗi ngày
+              Telegram làm "khâu duyệt" — bạn OK mới đăng
+            ↓
+PHẦN 4 (Ads)  — Mode 2 của skill: gen creative ads thủ công khi cần
+              Bạn paste vào Ads Manager (không tự chạy ads)</pre>
+  <p><strong>Lưu ý thứ tự:</strong> Phần 5 (upload goClaw) đặt sau Phần 4 trong tài liệu, nhưng <em>thực hiện trước Phần 3</em> — vì lịch hẹn cần skill đã có trên goClaw mới chạy được. SOP có warning khi đến Bước 07 nhắc bạn cuộn xuống làm Bước 09 trước.</p>
+</div>
+
+<!-- ========= PHẦN 1: SETUP NỀN TẢNG ========= -->
+
+<div class="phase-header" id="phase1">
+  <span class="phase-label">Phần Một</span>
+  <div class="phase-title">Setup OpenAI + Facebook API</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Đăng ký OpenAI API key
+  </h2>
+
+  <p>Một bài đăng Facebook hoàn chỉnh = <strong>ảnh + văn bản (caption)</strong>. Hôm nay agent của bạn sẽ tự sinh ra <em>cả 2 phần</em> trong cùng 1 lần. Phần ảnh dùng <strong>GPT Image API của OpenAI</strong> (model gen ảnh tốt nhất hiện tại, text trong ảnh viết chuẩn tiếng Việt, giá rẻ). Phần văn bản dùng GPT-4 hoặc Claude (qua chính agent coding của bạn).</p>
+
+  <h3>1.1 — Tạo tài khoản OpenAI Platform</h3>
+
+  <ol>
+    <li>Vào <code>https://platform.openai.com</code> (chú ý <strong>platform</strong>, không phải chatgpt.com).</li>
+    <li>Đăng ký tài khoản mới (hoặc đăng nhập nếu đã có).</li>
+    <li>Tài khoản mới được tặng <strong>$5 free credit</strong> — đủ gen ~500-1000 ảnh chất lượng thường (đủ cho ~1 năm content nếu đăng mỗi ngày).</li>
+  </ol>
+
+  <h3>1.2 — Tạo API key</h3>
+
+  <div class="click-path">
+    Settings (icon ⚙️ góc trên phải) → <strong>API keys</strong> → <strong>Create new secret key</strong> → đặt tên <code>kp3-content-bot</code> → bấm <strong>Create</strong>
+  </div>
+
+  <p>Một popup hiện ra với chuỗi key bắt đầu bằng <code>sk-proj-...</code>. <strong>Copy ngay và lưu vào file Notepad/notes</strong> — popup đóng là không xem lại được, phải tạo key mới.</p>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Bạn có 1 chuỗi bắt đầu bằng <code>sk-proj-</code>, dài khoảng 100-150 ký tự. Đây là OpenAI API key của bạn.</p>
+  </div>
+
+  <h3>1.3 — Nạp tiền (nếu hết $5 free)</h3>
+
+  <p>$5 free đủ làm Ngày 17. Nhưng để dùng lâu dài, có 2 cách nạp:</p>
+
+  <ul>
+    <li><strong>Visa/Mastercard quốc tế</strong> (Vietcombank Visa Debit, Techcombank Mastercard...): vào Settings → Billing → Add payment method → nạp tối thiểu $5.</li>
+    <li><strong>Wise / Revolut</strong>: nếu thẻ ngân hàng VN bị từ chối (hay xảy ra với account mới), dùng thẻ ảo Wise — nạp VND vào Wise → tạo thẻ ảo USD → add vào OpenAI.</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — kẹt là hỏi agent</div>
+    <p>Nếu màn hình OpenAI khác hướng dẫn (UI thay đổi liên tục), <strong>screenshot màn hình → paste vào agent coding</strong> + bảo: <em>"Tôi đang ở đây trên OpenAI Platform, muốn tạo API key, bấm tiếp đâu?"</em>. Agent đọc ảnh và chỉ chính xác.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 01</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Account của tôi bị khoá ngay sau khi đăng ký"</summary>
+        <p>Account VN đôi khi bị flag do IP. Dùng VPN (US/SG) khi đăng ký lần đầu. Sau khi tài khoản được tạo, dùng IP VN bình thường được.</p>
+      </details>
+      <details>
+        <summary>"Thẻ Visa của tôi bị từ chối"</summary>
+        <p>Thử thẻ khác (đặc biệt: thẻ tín dụng tốt hơn thẻ ghi nợ). Nếu vẫn từ chối, dùng Wise — đăng ký 5 phút, nạp VND, tạo thẻ ảo USD. Phí Wise ~10k VND/tháng nhưng chấp nhận khắp nơi.</p>
+      </details>
+      <details>
+        <summary>"Tôi không thấy $5 free credit"</summary>
+        <p>Free credit có thời hạn 3 tháng từ ngày đăng ký. Nếu đăng ký lâu rồi nhưng chưa dùng — credit đã hết hạn. Phải nạp tiền thật để dùng.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Tạo Facebook Developer App
+  </h2>
+
+  <p>Để code Python đăng bài lên Page Facebook, ta cần 1 <strong>Facebook Developer App</strong>. App này là <em>"chìa khóa"</em> giúp Facebook nhận biết code của bạn.</p>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Hiểu kiểu đơn giản</div>
+    <blockquote>
+      Facebook Developer App giống như <strong>"thẻ nhân viên"</strong> bạn cấp cho code của mình. Có thẻ này, code của bạn được phép vào "tòa nhà Facebook" và làm việc thay bạn — như đăng bài lên Page bạn quản lý.
+    </blockquote>
+  </div>
+
+  <h3>2.1 — Tạo App tại Facebook for Developers</h3>
+
+  <ol>
+    <li>Vào <code>https://developers.facebook.com</code> — đăng nhập bằng tài khoản Facebook cá nhân của bạn (tài khoản mà bạn đang admin Page kinh doanh).</li>
+    <li>Nếu chưa từng vào, Facebook sẽ yêu cầu bạn <strong>"Register as developer"</strong> — đồng ý điều khoản.</li>
+    <li>Bấm góc trên phải <strong>My Apps</strong> → <strong>Create App</strong>.</li>
+  </ol>
+
+  <h3>2.2 — Chọn loại App</h3>
+
+  <p>Facebook hỏi <em>"What do you want your app to do?"</em>. Chọn:</p>
+
+  <div class="click-path">
+    <strong>Other</strong> → bấm <strong>Next</strong> → chọn <strong>Business</strong> → bấm <strong>Next</strong>
+  </div>
+
+  <div class="warning">
+    <div class="warning-label">Quan trọng</div>
+    <p>Phải chọn loại <strong>Business</strong>. Loại "Consumer" hoặc "Gaming" không có Marketing API. Sai loại = phải tạo lại app từ đầu.</p>
+  </div>
+
+  <h3>2.3 — Đặt tên + tạo</h3>
+
+  <ol>
+    <li>App name: <code>kp3-content-bot</code> (hoặc gì cũng được, không có chữ "facebook" hay "fb").</li>
+    <li>Email: email của bạn.</li>
+    <li>Business Account: chọn Business Manager nếu có; nếu không, để trống cũng được.</li>
+    <li>Bấm <strong>Create App</strong> — Facebook hỏi password, nhập password Facebook cá nhân.</li>
+  </ol>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Bạn được chuyển vào trang Dashboard của App, thấy tên app + một ID dạng <code>1234567890123456</code> (15-16 chữ số) ở phía trên. Đây là <strong>App ID</strong> — sẽ cần ở Bước 03.</p>
+  </div>
+
+  <h3>2.4 — Lấy App Secret</h3>
+
+  <div class="click-path">
+    Sidebar trái → <strong>App settings</strong> → <strong>Basic</strong> → tìm dòng <strong>App Secret</strong> → bấm <strong>Show</strong> → nhập password Facebook → copy chuỗi
+  </div>
+
+  <p>App Secret là chuỗi 32 ký tự. <strong>Lưu vào notes cùng với App ID</strong>.</p>
+
+  <div class="warning">
+    <div class="warning-label">Bí mật tuyệt đối</div>
+    <p>App Secret giống như mật khẩu — KHÔNG share, KHÔNG commit lên Git. Sẽ lưu vào file <code>.env</code> ở Bước 05.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — UI Facebook đổi liên tục</div>
+    <p>Facebook for Developers cập nhật giao diện rất thường xuyên. Nếu bạn không thấy nút giống mô tả, <strong>screenshot màn hình → paste agent coding</strong> + hỏi: <em>"Tôi đang ở Facebook Developer App, muốn tạo App Business / lấy App Secret, bấm đâu?"</em>. Đừng đoán mò.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 02</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Bị block không cho tạo App"</summary>
+        <p>Tài khoản Facebook cá nhân của bạn quá mới hoặc thiếu thông tin. Cần: xác thực số điện thoại, đăng nhập ổn định 2-4 tuần, có ảnh đại diện thật. Nếu account quá mới (&lt;6 tháng), có thể không tạo được — mượn tài khoản người thân/bạn (admin Page chung) để tạo.</p>
+      </details>
+      <details>
+        <summary>"Không thấy option Business khi tạo App"</summary>
+        <p>Bạn đang xem giao diện cũ. Bấm <strong>Cancel</strong>, vào lại <code>developers.facebook.com/apps</code>, bấm <strong>Create App</strong> lại — đảm bảo dùng giao diện mới (giao diện trắng, không phải xanh dương cũ).</p>
+      </details>
+      <details>
+        <summary>"Quên App ID/Secret rồi"</summary>
+        <p>Vào lại <code>developers.facebook.com/apps</code> → chọn app vừa tạo → App settings → Basic. Mọi thông tin ở đó.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Lấy Permanent Page Access Token
+  </h2>
+
+  <p>Đây là phần <strong>khó nhất</strong> ngày hôm nay. Đọc kỹ, làm chậm. Mục tiêu cuối: có 1 chuỗi token <em>không bao giờ hết hạn</em>, dùng cho code đăng bài lên Page mãi mãi.</p>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — luật vàng cho Bước 03</div>
+    <p>Bước này có nhiều thuật ngữ kỹ thuật (token, OAuth, curl, JSON...). <strong>Đừng cố hiểu hết</strong> — chỉ cần làm đúng thứ tự. Mỗi sub-step:</p>
+    <ol style="margin: 8px 0; padding-left: 20px;">
+      <li>Đọc hướng dẫn 1 lượt</li>
+      <li>Có chỗ không hiểu → screenshot + hỏi agent coding "giải thích chỗ này"</li>
+      <li>Có lệnh curl → paste nguyên lệnh vào agent + bảo "chạy giúp tôi, in output ra"</li>
+      <li>Lỗi → copy error → paste agent + bảo "lỗi này nghĩa là gì, sửa sao"</li>
+    </ol>
+    <p>Học viên KHÔNG cần là dev. Bạn cần <strong>biết bấm "Hỏi AI"</strong> đúng lúc.</p>
+  </div>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Tại sao có 4 sub-step nhỏ?</div>
+    <blockquote>
+      Facebook cố tình thiết kế phức tạp — vì token có quyền đăng bài thay bạn, không thể cho dễ. Bạn phải <em>"đổi" token 3 lần</em>: ngắn → dài → vĩnh viễn. Mỗi lần đổi là 1 lệnh đơn giản, nhưng phải làm đúng thứ tự.
+    </blockquote>
+  </div>
+
+  <h3>3.1 — Lấy Short-lived User Token (sống 1 giờ)</h3>
+
+  <ol>
+    <li>Vào <strong>Graph API Explorer</strong>: <code>https://developers.facebook.com/tools/explorer</code></li>
+    <li>Góc phải có dropdown <strong>Meta App</strong> → chọn app bạn vừa tạo (<code>kp3-content-bot</code>).</li>
+    <li>Phía dưới có nút <strong>Add a Permission</strong> — thêm 4 permissions sau (gõ tên trong ô tìm rồi tick):
+      <ul style="margin-top: 8px;">
+        <li><code>pages_manage_posts</code></li>
+        <li><code>pages_read_engagement</code></li>
+        <li><code>pages_show_list</code></li>
+        <li><code>public_profile</code></li>
+      </ul>
+    </li>
+    <li>Bấm <strong>Generate Access Token</strong> (nút xanh dương phía trên).</li>
+    <li>Popup hiện ra → <strong>Continue as [Tên bạn]</strong> → chọn <strong>Page bạn muốn đăng</strong> (chỉ tick Page kinh doanh, không tick tất cả) → <strong>Continue</strong> → tick <strong>tất cả permissions</strong> → <strong>Save</strong>.</li>
+    <li>Bạn được trả về Graph Explorer, ô <strong>Access Token</strong> bây giờ có 1 chuỗi dài bắt đầu bằng <code>EAA...</code>.</li>
+  </ol>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Bạn copy được 1 chuỗi token bắt đầu bằng <code>EAA</code>, dài ~200 ký tự. Token này <strong>chỉ sống 1 giờ</strong> — phải đổi thành long-lived ngay ở 3.2.</p>
+  </div>
+
+  <h3>3.2 — Đổi sang Long-lived User Token (sống 60 ngày)</h3>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — đừng tự gõ terminal</div>
+    <p>Từ đây tới hết Bước 03, bạn sẽ thấy nhiều lệnh <code>curl</code>. <strong>Không cần biết curl là gì</strong>. Mở agent coding (Cursor/Antigravity/Claude Code), paste lệnh + bảo: <em>"Chạy lệnh này giúp tôi, giải thích output trả về."</em> Agent sẽ chạy và dịch kết quả cho bạn.</p>
+    <p>Cách này cũng an toàn hơn — agent biết thay placeholder thế nào, biết debug nếu lỗi, biết gợi ý nếu bạn paste sai chỗ.</p>
+  </div>
+
+  <p>Mở terminal trên máy (Terminal trên Mac, PowerShell/CMD trên Windows), paste lệnh sau — <strong>thay 3 chỗ in đậm</strong> bằng giá trị thật của bạn:</p>
+
+  <pre><code>curl -G "https://graph.facebook.com/v18.0/oauth/access_token" \
+  -d "grant_type=fb_exchange_token" \
+  -d "client_id=<strong>APP_ID_CỦA_BẠN</strong>" \
+  -d "client_secret=<strong>APP_SECRET_CỦA_BẠN</strong>" \
+  -d "fb_exchange_token=<strong>SHORT_LIVED_TOKEN_TỪ_3.1</strong>"</code></pre>
+
+  <p>Trả về JSON kiểu:</p>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Output mong đợi</div>
+    <div class="ui-mock-content">{"access_token":"EAAxxxxxx...","token_type":"bearer","expires_in":5183944}</div>
+  </div>
+
+  <p>Copy chuỗi <code>access_token</code> này — đây là <strong>Long-lived User Token</strong> sống 60 ngày.</p>
+
+  <h3>3.3 — Đổi sang Permanent Page Token (KHÔNG hết hạn)</h3>
+
+  <p>Đây là token cuối cùng — vĩnh viễn. Cần biết <strong>User ID</strong> của bạn trên Facebook trước.</p>
+
+  <h4>Lấy User ID:</h4>
+
+  <pre><code>curl "https://graph.facebook.com/v18.0/me?access_token=<strong>LONG_LIVED_TOKEN_TỪ_3.2</strong>"</code></pre>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Output</div>
+    <div class="ui-mock-content">{"name":"Tên Bạn","id":"10223611603830114"}</div>
+  </div>
+
+  <p>Copy <code>id</code> — đây là User ID (chuỗi số dài).</p>
+
+  <h4>Lấy Permanent Page Token:</h4>
+
+  <pre><code>curl "https://graph.facebook.com/v18.0/<strong>USER_ID</strong>/accounts?access_token=<strong>LONG_LIVED_TOKEN</strong>"</code></pre>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Output</div>
+    <div class="ui-mock-content">{
+  "data": [
+    {
+      "access_token": "EAAxxxxxxx...",  ← ĐÂY là Permanent Page Token
+      "category": "Brand",
+      "name": "Tên Page của bạn",
+      "id": "123456789012345"          ← ĐÂY là Page ID
+    }
+  ]
+}</div>
+  </div>
+
+  <p>Copy 2 chuỗi:</p>
+
+  <ul>
+    <li><code>access_token</code> — đây là <strong>Permanent Page Token</strong>. KHÔNG bao giờ hết hạn.</li>
+    <li><code>id</code> — đây là <strong>Page ID</strong> của bạn. Cũng cần lưu.</li>
+  </ul>
+
+  <h3>3.4 — Kiểm tra token vĩnh viễn</h3>
+
+  <p>Để chắc chắn token thật sự không hết hạn, vào <strong>Access Token Debugger</strong>: <code>https://developers.facebook.com/tools/debug/accesstoken/</code></p>
+
+  <ol>
+    <li>Paste Permanent Page Token vào ô.</li>
+    <li>Bấm <strong>Debug</strong>.</li>
+    <li>Tìm dòng <strong>Expires</strong> — phải là <code>Never</code>.</li>
+  </ol>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm — quan trọng nhất</div>
+    <p>Nếu thấy <code>Expires: Never</code> — bạn đã thành công. Token này lưu vào file <code>.env</code> là dùng vĩnh viễn.</p>
+    <p>Nếu thấy thời gian hết hạn — bạn đã làm sai 1 bước. Quay lại 3.2 hoặc 3.3, làm lại cẩn thận.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 03</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Token short-lived ở 3.1 không có chuỗi EAA..."</summary>
+        <p>Bạn quên thêm permissions hoặc chưa "Continue as Tên bạn" + chọn Page. Bấm Generate Access Token lại, đọc kỹ popup, tick đầy đủ.</p>
+      </details>
+      <details>
+        <summary>"3.2 trả về error 'Invalid OAuth access token'"</summary>
+        <p>Token short-lived đã hết hạn (1 giờ trôi nhanh khi đang debug). Quay lại 3.1, lấy token mới, làm 3.2 ngay trong vòng 5 phút.</p>
+      </details>
+      <details>
+        <summary>"3.3 trả về data trống []"</summary>
+        <p>Bạn chưa phải admin của Page nào, hoặc Page đó là Profile cá nhân (không phải Business Page). Tạo 1 Business Page trên Facebook trước, rồi quay lại 3.1.</p>
+      </details>
+      <details>
+        <summary>"Permanent token vẫn hiện expires"</summary>
+        <p>Có 2 lý do: (1) Bạn đổi short-lived → permanent, không qua long-lived. Phải làm đủ 3 bước. (2) Account FB chưa đủ tin cậy. Thử account khác, hoặc đợi vài ngày.</p>
+      </details>
+      <details>
+        <summary>"Tôi không quen terminal, làm sao?"</summary>
+        <p>Có 2 cách thay thế:</p>
+        <ul>
+          <li><strong>Postman</strong> (app GUI free): tạo GET request, paste URL với params.</li>
+          <li><strong>Hỏi agent coding</strong>: paste lệnh curl, agent chạy giúp.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ========= PHẦN 2: VIBE SKILL ========= -->
+
+<div class="phase-header" id="phase2">
+  <span class="phase-label">Phần Hai</span>
+  <div class="phase-title">Vibe Code Skill 2 Mode</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    Hiểu skill 2 mode hôm nay
+  </h2>
+
+  <p>Skill bạn vibe hôm nay là <strong>Cấp 3</strong> (theo phân loại Ngày 16) — có scripts/ chạy code. Skill này có <strong>2 chế độ hoạt động</strong>:</p>
+
+  <div class="mode-card">
+    <div class="mode-card-tag">Mode 1 · Content Free</div>
+    <div class="mode-card-title">Đăng đều mỗi ngày, không spam</div>
+    <p class="mode-card-desc">Agent gen 3 ý tưởng bài đăng organic (chia sẻ giá trị, không hard sell). Bạn chọn 1, agent tạo <strong>full content</strong>: ảnh đẹp + caption hoàn chỉnh có hook + body + CTA mềm — đăng tự động lên Page. <strong>Lịch hẹn 9h sáng mỗi ngày</strong> kích hoạt.</p>
+    <p class="mode-card-trigger">Trigger: "Tạo content cho ngày mai", "Gen bài Page", "Content free"</p>
+  </div>
+
+  <div class="mode-card">
+    <div class="mode-card-tag">Mode 2 · Creative Ads</div>
+    <div class="mode-card-title">Sản xuất hàng loạt khi chạy chiến dịch</div>
+    <p class="mode-card-desc">Agent gen 3 bộ creative hoàn chỉnh — mỗi bộ gồm <strong>1 ảnh ads</strong> (visual mạnh) + <strong>1 ad copy</strong> (hook + USP + CTA rõ ràng). Bạn copy paste cả 2 phần vào Ads Manager để chạy. <strong>Không tự đăng</strong> — vì ads cần bạn duyệt budget, target.</p>
+    <p class="mode-card-trigger">Trigger: "Tạo creative ads", "Gen ads cho sản phẩm X", "Cần 3 bộ creative" (mỗi bộ = ảnh + copy)</p>
+  </div>
+
+  <div class="story">
+    <div class="story-label">Tại sao 1 skill 2 mode (không phải 2 skill riêng)?</div>
+    <p>Vì cùng dùng chung 1 hạ tầng — cùng OpenAI API, cùng kiến thức brand voice, cùng Python script. Khác biệt chỉ ở <em>prompt engineering</em> (cách viết prompt cho GPT Image) và <em>action cuối</em> (đăng vs để học viên tự dùng). Tách 2 skill = duplicate nhiều code.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Vibe code skill bằng agent coding
+  </h2>
+
+  <p>Mở agent coding (Cursor / Antigravity / Claude Code) trong thư mục <code>my-skills/</code> bạn đã tạo ở Ngày 16. Paste prompt:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Vibe skill tao-creative-fb (AI-First)</span>
+      <button class="copy-btn" data-copy="p5">COPY</button>
+    </div>
+    <div class="prompt-body" id="p5">Tôi cần tạo 1 Claude Skill Cấp 3 tên là "tao-creative-fb" — sản xuất full content (ảnh + văn bản) cho Facebook business page của tôi.
+
+QUAN TRỌNG: Mỗi output phải gồm CẢ ẢNH VÀ VĂN BẢN — không phải chỉ ảnh. Một bài đăng FB hoàn chỉnh = ảnh + caption. Một creative ads hoàn chỉnh = ảnh ads + ad copy.
+
+Skill này có 2 mode:
+
+MODE 1 — CONTENT FREE (auto-post Page hằng ngày):
+- Trigger: user nói "tạo content cho ngày mai", "gen bài Page", "content free", "content organic"
+- Behavior: 
+  + Bước A: Gen 3 ý tưởng (mỗi ý: tiêu đề + angle ngắn) → gửi cho user chọn
+  + Bước B: User chọn 1 ý → agent gen FULL CONTENT cho ý đó:
+      * 1 ảnh đẹp 1024x1024 bằng GPT Image API (model gpt-image-1, quality low cho rẻ)
+      * 1 caption hoàn chỉnh ~80-150 từ (hook + body + soft CTA) theo brand voice
+  + Bước C: Show preview ảnh + caption cho user duyệt
+  + Bước D: User OK → POST cả ảnh + caption lên Facebook Page qua Graph API endpoint /{page-id}/photos (param: url=image_url, caption=caption_text)
+
+MODE 2 — CREATIVE ADS (gen thủ công, không auto đăng):
+- Trigger: user nói "tạo creative ads", "gen ads", "cần creative cho chiến dịch"
+- Behavior: gen 3 BỘ creative — mỗi bộ là 1 cặp ghép đôi:
+  + 1 ảnh ads (gpt-image-1 quality medium, có khoảng trống cho text overlay nếu cần)
+  + 1 ad copy hoàn chỉnh ~80-150 từ (hook mạnh + USP nổi bật + CTA rõ ràng)
+- 3 bộ phải khác angle: pain point / solution / social proof
+- KHÔNG tự đăng — chỉ trả về cho user paste vào Ads Manager (cả ảnh + copy phải đi cùng nhau)
+
+Cấu trúc skill cần:
+my-skills/tao-creative-fb/
+├── SKILL.md              (instructions chính, có YAML frontmatter chuẩn)
+├── scripts/
+│   ├── gen_image.py       (gọi OpenAI GPT Image API)
+│   ├── gen_caption.py     (viết caption/copy theo brand voice)
+│   ├── post_facebook.py   (post ảnh + caption lên FB Page)
+│   └── env.example        (template env vars)
+└── assets/
+    ├── image-prompt-templates.md  (template prompt cho GPT Image, theo brand)
+    └── caption-templates.md       (template viết caption: hook patterns, CTA mềm cho organic, CTA mạnh cho ads)
+
+Đọc context của tôi:
+1. brain.db trong folder my-brain/ — chứa brand_voice
+2. Đọc 4 Context Files đã tạo Ngày 15 (SOUL.md, USER.md, AGENTS.md, HEARTBEAT.md) — để skill biết tone
+
+Yêu cầu kỹ thuật:
+- Dùng Python 3.10+
+- Lib: openai (pip install openai), requests (pip install requests), python-dotenv
+- Token lưu trong file .env (KHÔNG hard-code):
+    OPENAI_API_KEY=sk-proj-xxx
+    FB_PAGE_ID=123456789
+    FB_PAGE_TOKEN=EAAxxx
+- Có error handling: nếu OpenAI fail → log + retry 1 lần. Nếu FB fail → return error rõ ràng.
+- Có test mode: nếu set DRY_RUN=true thì không thực sự post FB, chỉ in ra console + lưu ảnh + caption ra file local.
+
+YAML frontmatter trong SKILL.md phải có:
+- name: tao-creative-fb
+- description: gồm cả What it does + When to use it + trigger phrases cho cả 2 mode. NHẤN MẠNH skill này tạo CẢ ẢNH VÀ VĂN BẢN.
+
+Làm theo thứ tự:
+1. ĐỌC brain.db, hiểu brand voice
+2. TRÌNH BÀY plan trước khi code (cấu trúc file, logic 2 mode, test approach)
+3. TÔI DUYỆT plan
+4. Code SKILL.md
+5. Code scripts/gen_image.py + scripts/gen_caption.py
+6. Code scripts/post_facebook.py (đảm bảo upload CẢ ảnh và caption cùng lúc qua /photos endpoint)
+7. Code 2 file template trong assets/
+8. Tạo file .env.example với các vars
+9. Test Mode 2 trước (an toàn — không đụng FB): chạy 1 lần, xem có ra đủ 3 BỘ (ảnh + copy ghép cặp) không
+10. Test Mode 1 với DRY_RUN=true — kiểm tra full flow: gen 3 ý tưởng → chọn → gen ảnh + caption → preview (chưa post)
+
+Làm từng bước, chờ tôi xác nhận.</div>
+  </div>
+
+  <p>Sau khi agent vibe xong, bạn sẽ có thư mục skill đầy đủ. Mở đọc qua từng file để hiểu sơ — không cần hiểu hết code, chỉ cần biết file nào làm gì.</p>
+
+  <div class="warning">
+    <div class="warning-label">Cẩn thận file .env</div>
+    <p>File <code>.env</code> chứa OpenAI key + Facebook token — <strong>tuyệt đối KHÔNG commit lên Git</strong>. Thêm <code>.env</code> vào <code>.gitignore</code> ngay khi tạo. Agent coding sẽ làm giúp nếu bạn nhắc.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Test skill ngay tại agent coding
+  </h2>
+
+  <h3>6.1 — Tạo file .env thật</h3>
+
+  <p>Trong thư mục skill, tạo file <code>.env</code> (chú ý có dấu chấm đầu) với nội dung:</p>
+
+  <pre><code>OPENAI_API_KEY=sk-proj-...   # từ Bước 01
+FB_PAGE_ID=123456789...      # từ Bước 03.3
+FB_PAGE_TOKEN=EAAxxx...      # từ Bước 03.3 (Permanent Page Token)
+DRY_RUN=true                 # bật chế độ test, chưa post thật</code></pre>
+
+  <h3>6.2 — Test Mode 2 (Creative Ads — an toàn nhất)</h3>
+
+  <p>Trong agent coding, gõ <code>@</code> → chọn <code>SKILL.md</code> của <code>tao-creative-fb</code>. Sau đó nhập:</p>
+
+  <pre><code>Tạo creative ads cho sản phẩm: khoá học Vibe Coding của tôi
+- Giá: 2tr
+- USP: học 21 ngày có hệ thống business chạy 24/7
+- Mục tiêu: lead generation cho landing page
+Cần 3 bộ creative — mỗi bộ gồm 1 ảnh + 1 copy. 3 bộ phải khác angle (pain point / solution / social proof).</code></pre>
+
+  <p>Agent sẽ:</p>
+
+  <ol>
+    <li>Gọi GPT Image API gen 3 ảnh → lưu vào <code>output/</code></li>
+    <li>Viết 3 ad copy hoàn chỉnh (mỗi cái có hook khác, angle khác, nhưng cùng CTA)</li>
+    <li>Show <strong>cả 3 bộ ảnh + copy</strong> cho bạn duyệt</li>
+  </ol>
+
+  <div class="verify">
+    <div class="verify-label">Kiểm tra điểm</div>
+    <p>Bạn có 3 file ảnh PNG/WEBP trong thư mục output + 3 đoạn copy text (mỗi copy ~50-100 từ). <strong>Ảnh và copy phải khớp với nhau</strong> — không phải gen riêng rẽ. Copy có đủ: hook (câu mở), body (giá trị), CTA (kêu gọi hành động).</p>
+  </div>
+
+  <h3>6.3 — Test Mode 1 với DRY_RUN (gen content nhưng chưa post)</h3>
+
+  <p>Trong agent coding, nhập:</p>
+
+  <pre><code>Tạo content free cho ngày mai. Topic: chia sẻ kinh nghiệm dùng AI agent thay nhân viên.</code></pre>
+
+  <p>Agent sẽ:</p>
+
+  <ol>
+    <li>Gen 3 ý tưởng (chỉ tiêu đề + tóm tắt nhanh) → bạn chọn 1</li>
+    <li>Với ý đã chọn, gen <strong>full content</strong>: ảnh + caption hoàn chỉnh (hook + body + CTA mềm)</li>
+    <li>Vì <code>DRY_RUN=true</code> — chỉ in ra console, KHÔNG post FB thật</li>
+  </ol>
+
+  <h3>6.4 — Test thật (POST lên Facebook)</h3>
+
+  <p>Khi mọi thứ OK ở 6.3, đổi <code>DRY_RUN=false</code> trong <code>.env</code>, chạy lại Mode 1.</p>
+
+  <div class="warning">
+    <div class="warning-label">Trước khi test thật — đọc kỹ</div>
+    <p>Bài đăng sẽ <strong>thật sự lên Page Facebook của bạn</strong> — public, mọi người thấy được. Nên:</p>
+    <ol style="margin: 8px 0; padding-left: 20px;">
+      <li>Test ngoài giờ vàng (sáng sớm hoặc đêm khuya) — tránh khách thấy bài lỗi</li>
+      <li>Sẵn sàng vào Page <strong>xoá ngay</strong> nếu bài chưa đẹp (mở Page → bài mới → "..." → Delete)</li>
+      <li>Nếu bài đăng chưa hoàn hảo: tinh chỉnh template trong <code>assets/image-prompt-templates.md</code> (cho ảnh) hoặc <code>assets/caption-templates.md</code> (cho văn bản) — bằng cách bảo agent: <em>"Sửa template để ảnh/caption có style [mô tả]"</em>. Chạy lại.</li>
+    </ol>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — đừng tự debug</div>
+    <p>Bất kỳ lỗi nào ở Bước 06 (OpenAI, Facebook, Python...): <strong>copy nguyên error message → paste vào agent coding</strong> + bảo "Lỗi này là gì? Sửa giúp tôi". Đừng google, đừng đoán. Agent biết hết — và biết cả codebase của bạn.</p>
+  </div>
+
+  <div class="troubleshoot">
+    <div class="troubleshoot-header">⚠️ Troubleshoot — Bước 06</div>
+    <div class="troubleshoot-body">
+      <details>
+        <summary>"Lỗi 401 từ OpenAI: Invalid API key"</summary>
+        <p>Key sai hoặc thiếu. Kiểm tra: file .env có <code>OPENAI_API_KEY=sk-proj-...</code> đúng định dạng không. Không có dấu cách trước/sau dấu =. Không có nháy "" bao quanh.</p>
+      </details>
+      <details>
+        <summary>"Lỗi 429 từ OpenAI: rate limit"</summary>
+        <p>Free tier có giới hạn ~3 request/phút. Đợi 1 phút, chạy lại. Hoặc nâng tier (nạp thêm tiền vào account).</p>
+      </details>
+      <details>
+        <summary>"Ảnh gen ra xấu/không đúng concept"</summary>
+        <p>Mở <code>assets/image-prompt-templates.md</code> — đây là nơi điều chỉnh prompt cho GPT Image. Bảo agent: "Cải thiện template để ảnh có style [tả style mong muốn]". Chạy lại.</p>
+      </details>
+      <details>
+        <summary>"Caption gen ra quá AI-generic, không giống tôi"</summary>
+        <p>Mở <code>assets/caption-templates.md</code> — đây là template cho văn bản. Bảo agent: "Đọc thêm brand_voice trong brain.db, viết lại template để giống cách tôi nói". Có thể paste 2-3 bài đăng cũ của bạn để agent học giọng.</p>
+      </details>
+      <details>
+        <summary>"Lỗi từ Facebook: (#200) Permissions error"</summary>
+        <p>Token thiếu permissions <code>pages_manage_posts</code>. Quay lại Bước 03.1, generate token mới với đầy đủ 4 permissions.</p>
+      </details>
+      <details>
+        <summary>"Lỗi (#190) Token expired"</summary>
+        <p>Bạn dùng nhầm short-lived hoặc long-lived token (60 ngày). Phải dùng <strong>Permanent Page Token</strong> từ 3.3. Vào <code>developers.facebook.com/tools/debug/accesstoken</code> kiểm tra Expires phải là Never.</p>
+      </details>
+      <details>
+        <summary>"Bài đăng lên Page nhưng không có ảnh"</summary>
+        <p>Code chỉ post text, chưa upload ảnh. Hỏi agent: "Sửa post_facebook.py để upload ảnh kèm caption qua endpoint /{page-id}/photos".</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ========= PHẦN 3: AUTO HẰNG NGÀY ========= -->
+
+<div class="phase-header" id="phase3">
+  <span class="phase-label">Phần Ba</span>
+  <div class="phase-title">Setup Auto-Post Mỗi Sáng</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Đặt lịch hẹn 9h sáng + duyệt qua Telegram
+  </h2>
+
+  <p>Giờ skill chạy tay được rồi. Cần biến nó thành <strong>tự chạy mỗi sáng + duyệt qua Telegram trước khi đăng</strong> — để bạn kiểm soát, không bị spam Page.</p>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Lịch hẹn — đồng hồ báo thức cho agent</div>
+    <blockquote>
+      <strong>Lịch hẹn</strong> giống như <em>đồng hồ báo thức của agent</em>. Bạn đặt: "9h sáng mỗi ngày, làm việc X". Tới 9h, agent tự thức dậy, làm theo lệnh, gửi kết quả về Telegram cho bạn. Trên Dashboard goClaw, feature này tên là <strong>Schedule Tasks</strong> (hoặc <em>Scheduled Tasks</em> tùy phiên bản).
+    </blockquote>
+  </div>
+
+  <div class="warning">
+    <div class="warning-label">Trước khi làm Bước 07 — upload skill lên goClaw trước</div>
+    <p>Lịch hẹn sẽ gọi agent goClaw → agent dùng skill <code>tao-creative-fb</code>. Vì vậy skill phải có sẵn trên goClaw trước khi đặt lịch.</p>
+    <p><strong>Cuộn xuống làm Bước 09 (Upload skill lên goClaw) trước</strong>, rồi quay lại đây làm Bước 07. Hai bước đặt thứ tự như thế này vì lịch hẹn là nội dung chính của Phần 3, upload là setup phụ.</p>
+  </div>
+
+  <h3>Flow tự động sẽ chạy mỗi sáng</h3>
+
+  <pre><code>9h sáng (lịch hẹn kích hoạt) 
+  → Agent gen 3 ý tưởng (mỗi ý: tiêu đề + angle)
+  → Telegram: "Sáng. Đây là 3 ý tưởng cho hôm nay, chọn 1?"
+  → Bạn reply số 1/2/3
+  → Agent gen full content cho ý đó:
+       • 1 ảnh đẹp (1024x1024, theo brand)
+       • 1 caption hoàn chỉnh (hook + body + CTA mềm)
+  → Telegram gửi preview ảnh + caption
+  → Bạn reply OK / Đổi
+  → OK → Agent post cả ảnh + caption lên Page Facebook
+  → Telegram: "Đã đăng. Link: facebook.com/..."</code></pre>
+
+  <h3>7.1 — Tạo lịch hẹn mới trong goClaw Dashboard</h3>
+
+  <p>Mở Dashboard goClaw (URL như Ngày 14, thường <code>https://app.yourdomain.com</code>). Tìm menu <strong>Schedule Tasks</strong> trong sidebar:</p>
+
+  <div class="click-path">
+    Sidebar → <strong>Schedule Tasks</strong> (hoặc <strong>Scheduled Tasks</strong>) → bấm <strong>+ New Task</strong> (hoặc <strong>Add</strong>)
+  </div>
+
+  <p>Form có <strong>4 trường chính</strong> cần điền:</p>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Form tạo lịch hẹn</div>
+    <div class="ui-mock-content">┌─────────────────────────────────────────────┐
+│ Name:         daily-content-fb              │
+│                                             │
+│ Agent:        [chọn agent Telegram của bạn] │
+│                                             │
+│ Schedule Type: ◯ Every  ● Cron  ◯ Once     │
+│   Cron expression: 0 9 * * *                │
+│                                             │
+│ Message:      (khung lớn, viết hướng dẫn   │
+│                cho agent — markdown OK)     │
+└─────────────────────────────────────────────┘</div>
+  </div>
+
+  <h3>7.2 — Điền từng trường</h3>
+
+  <ol>
+    <li><strong>Name</strong> — đặt tên dễ nhận: <code>daily-content-fb</code></li>
+    <li><strong>Agent</strong> — chọn agent Telegram bạn đã tạo từ Ngày 14</li>
+    <li><strong>Schedule Type</strong> — có 3 loại, chọn <strong>Cron</strong>:
+      <ul style="margin-top: 6px;">
+        <li><em>Every</em> — chạy đều theo khoảng thời gian (ví dụ mỗi 30 phút)</li>
+        <li><em>Cron</em> — chạy đúng giờ cố định (cái bạn cần) → điền biểu thức <code>0 9 * * *</code> nghĩa là 9h sáng mỗi ngày</li>
+        <li><em>Once</em> — chạy 1 lần duy nhất rồi xoá (dùng cho nhắc nhở 1 lần)</li>
+      </ul>
+    </li>
+    <li><strong>Message</strong> — đây là <em>"chỉ thị giao cho agent"</em> mỗi lần lịch hẹn kích hoạt. Paste nội dung này:</li>
+  </ol>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Message · Lịch hẹn 9h sáng</span>
+      <button class="copy-btn" data-copy="p7msg">COPY</button>
+    </div>
+    <div class="prompt-body" id="p7msg">Chào sáng. Dùng skill tao-creative-fb ở mode CONTENT FREE để tạo bài đăng cho Page Facebook hôm nay.
+
+BƯỚC 1: Gen 3 ý tưởng bài đăng (mỗi ý gồm: tiêu đề + angle ngắn 1-2 câu). Topic liên quan business của tôi (đọc brain.db để biết business là gì). Gửi 3 ý tưởng cho tôi qua Telegram, đợi tôi chọn 1 (reply 1/2/3).
+
+BƯỚC 2: Sau khi tôi chọn, gen FULL CONTENT cho ý đó:
+- 1 ảnh đẹp 1024x1024 (theo brand voice từ brand_voice trong brain.db)
+- 1 caption hoàn chỉnh ~80-150 từ (hook hấp dẫn + body kể câu chuyện/giá trị + CTA mềm + 3-5 hashtag)
+
+BƯỚC 3: Gửi preview qua Telegram cho tôi xem (cả ảnh + caption). Đợi tôi reply "OK" hoặc "Đổi".
+
+BƯỚC 4: Khi tôi reply OK, post cả ảnh + caption lên Page Facebook qua skill tao-creative-fb. Sau khi post xong, gửi link bài đăng cho tôi qua Telegram.
+
+Tone tự nhiên, đúng brand voice. Không hard sell.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — không cần tự setup nếu lười</div>
+    <p>Cách dễ hơn: thay vì điền form, bạn nhắn cho agent Telegram của bạn (qua chat thường):</p>
+    <p style="margin-top: 8px;"><em>"Tạo cho tôi 1 lịch hẹn (Schedule Task) chạy 9h sáng mỗi ngày, tên là daily-content-fb. Mỗi lần chạy, dùng skill tao-creative-fb mode CONTENT FREE — gen 3 ý tưởng → tôi chọn 1 → gen full content → tôi duyệt → post Page Facebook."</em></p>
+    <p>Agent có tool <code>cron</code> sẽ tự tạo task cho bạn, confirm qua Telegram. Không cần vào Dashboard.</p>
+  </div>
+
+  <h3>7.3 — Test ngay (đừng đợi mai)</h3>
+
+  <p>Sau khi lưu lịch hẹn, tìm cách kích hoạt thủ công để xem nó chạy đúng không:</p>
+
+  <div class="click-path">
+    Schedule Tasks → click vào lịch hẹn vừa tạo → bấm <strong>Run Now</strong> (hoặc <strong>Trigger</strong>)
+  </div>
+
+  <p>Trong 1-2 phút, Telegram phải bật:</p>
+
+  <div class="ui-mock">
+    <div class="ui-mock-title">Tin nhắn từ agent</div>
+    <div class="ui-mock-content">Chào sáng! Đây là 3 ý tưởng content cho hôm nay:
+
+1. "Tại sao 80% chủ shop online vẫn tự viết caption tay" 
+   → Hook: shock số liệu | Giá trị: 3 lý do + giải pháp AI
+
+2. "Một ngày bình thường của agent AI làm việc thay tôi"
+   → Hook: kể chuyện | Giá trị: behind-the-scenes
+
+3. "Sai lầm tôi mắc khi mới dùng AI cho business"
+   → Hook: vulnerability | Giá trị: 3 bài học
+
+Bạn chọn ý nào? Reply 1/2/3.</div>
+  </div>
+
+  <p>Reply <code>1</code> hoặc <code>2</code>... agent gen ảnh + caption, gửi preview, đợi bạn duyệt, post.</p>
+
+  <div class="story">
+    <div class="story-label">Đây là moment đáng nhớ nhất hôm nay</div>
+    <p>Lần đầu Page Facebook của bạn có bài đăng <em>không phải bạn làm</em>. Bạn chỉ nhắn <strong>1 chữ "OK"</strong> qua Telegram — và 30 giây sau Page có bài mới (cả ảnh đẹp + caption đầy đủ).</p>
+    <p>Nhân với 30 ngày → 30 bài/tháng tự động, không tốn 1 giờ nào. Đây chính là content engine bạn đã xây.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — goClaw UI khác hướng dẫn</div>
+    <p>Mỗi phiên bản goClaw có UI hơi khác — không thấy đúng menu <strong>Schedule Tasks</strong> hoặc nút <strong>Run Now</strong>? <strong>Screenshot Dashboard → paste agent coding</strong> + hỏi: <em>"Tôi đang ở Dashboard goClaw, muốn tạo lịch hẹn (Schedule Task) chạy mỗi sáng 9h, bấm đâu?"</em>. Hoặc đơn giản nhất: nhắn agent Telegram tạo lịch hẹn giúp như tip ở 7.2.</p>
+  </div>
+</section>
+
+<!-- ========= PHẦN 4: MODE ADS ========= -->
+
+<div class="phase-header" id="phase4">
+  <span class="phase-label">Phần Bốn</span>
+  <div class="phase-title">Mode Creative Ads — Sản Xuất Theo Yêu Cầu</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    Khi nào dùng Mode Ads
+  </h2>
+
+  <p>Mode 1 (content free) chạy auto. Mode 2 (creative ads) <strong>không chạy auto</strong> — chỉ kích hoạt khi bạn cần. Tại sao?</p>
+
+  <ul>
+    <li>Ads tốn tiền thật → cần bạn duyệt từng cái</li>
+    <li>Mỗi chiến dịch khác nhau (target, USP, ưu đãi) → không gen đại trà được</li>
+    <li>Bạn vẫn paste vào Ads Manager → Facebook lo việc chạy/tối ưu</li>
+  </ul>
+
+  <h3>Khi nào kích hoạt</h3>
+
+  <ul>
+    <li>Sắp launch sản phẩm mới → cần 5-10 mẫu creative để test</li>
+    <li>Ads hiện tại bị fatigue (CTR giảm) → cần creative mới</li>
+    <li>Có sự kiện/khuyến mãi → cần ads cho sự kiện đó</li>
+  </ul>
+
+  <h3>Cách dùng</h3>
+
+  <p>Trong Telegram, gõ:</p>
+
+  <pre><code>Tạo creative ads cho [sản phẩm]
+- Giá: [giá]
+- USP: [3 điểm khác biệt nổi bật]
+- Audience: [mô tả khách hàng mục tiêu]
+- Mục tiêu: [lead gen / sales / awareness]
+
+Cần 3 bộ creative — mỗi bộ gồm:
+- 1 ảnh ads (visual mạnh, có khoảng trống cho text)
+- 1 ad copy hoàn chỉnh (hook + USP + CTA)
+
+3 bộ phải khác angle nhau:
+- Bộ 1: pain point (khoét nỗi đau)
+- Bộ 2: solution (giải pháp + lợi ích)
+- Bộ 3: social proof (testimonial / kết quả thực)</code></pre>
+
+  <p>Agent gen → gửi qua Telegram. Bạn:</p>
+
+  <ol>
+    <li>Tải <strong>cả 3 ảnh</strong> về máy (mỗi ảnh đi với 1 copy tương ứng)</li>
+    <li>Copy <strong>cả 3 đoạn ad copy</strong> (mỗi đoạn ~80-150 từ)</li>
+    <li>Mở Facebook Ads Manager → tạo 3 ads riêng — mỗi ad upload 1 ảnh + paste 1 copy tương ứng</li>
+    <li>Set budget, audience, chạy. Sau 3 ngày xem ad nào CTR cao nhất → scale ngân sách lên cái đó.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Mẹo nâng cao</div>
+    <p>Yêu cầu agent gen <strong>3 angle khác nhau</strong>: pain point + solution + social proof. Test cả 3, bài nào CTR cao nhất sau 3 ngày → scale ngân sách lên cái đó.</p>
+  </div>
+
+  <div class="story">
+    <div class="story-label">Skill này còn nâng cấp được</div>
+    <p>Sau Ngày 17, bạn có thể vibe thêm các skill chuyên sâu về advertising: phân tích ads performance, A/B test creative tự động, viết ad copy theo framework AIDA/PAS. <strong>Không khó hơn skill hôm nay</strong> — cùng pattern, chỉ khác content. Đây là <em>asset của riêng bạn</em>, không ai chia phần.</p>
+  </div>
+</section>
+
+<!-- ========= PHẦN 5: GOCLAW + KHOE ========= -->
+
+<div class="phase-header" id="phase5">
+  <span class="phase-label">Phần Năm</span>
+  <div class="phase-title">Đưa Lên goClaw + Quan Sát 7 Ngày</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Upload skill lên goClaw
+  </h2>
+
+  <p>Skill đã chạy được trong agent coding. Giờ đưa lên goClaw để agent Telegram của bạn dùng được — đây là lý do lịch hẹn ở Bước 07 hoạt động được.</p>
+
+  <ol>
+    <li>Mở Dashboard goClaw → <strong>Capabilities</strong> → <strong>Skills</strong>.</li>
+    <li>Bấm <strong>Upload Skill</strong> → chọn thư mục <code>tao-creative-fb/</code> (nén .zip nếu yêu cầu).</li>
+    <li>Bật <em>Enabled</em>.</li>
+    <li>Vào agent Telegram → tab Skills → tick để cho agent này dùng skill.</li>
+    <li>Trong agent config, đảm bảo có <strong>environment variables</strong>:
+      <ul>
+        <li><code>OPENAI_API_KEY</code></li>
+        <li><code>FB_PAGE_ID</code></li>
+        <li><code>FB_PAGE_TOKEN</code></li>
+      </ul>
+      Tuỳ phiên bản goClaw, có thể thiết lập env vars ở Agent Settings hoặc Workspace Settings.
+    </li>
+  </ol>
+
+  <div class="warning">
+    <div class="warning-label">Bảo mật trên goClaw</div>
+    <p>goClaw lưu env vars mã hoá — nhưng bạn vẫn nên kiểm tra: chỉ admin workspace thấy được giá trị thật. Nếu nghi ngờ, rotate token (tạo mới từ Bước 03) bất cứ lúc nào.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">AI-First — không thấy thẻ Skills?</div>
+    <p>UI goClaw thay đổi theo phiên bản — nếu không thấy <strong>Capabilities → Skills</strong>, thử các tên khác: <em>Tools</em>, <em>Extensions</em>, <em>Add-ons</em>. Hoặc <strong>screenshot Dashboard → paste agent coding</strong> + hỏi: <em>"Tôi muốn upload thư mục skill lên goClaw, bấm đâu?"</em>.</p>
+    <p>Nếu Dashboard không có UI upload skill, bảo agent coding: <em>"SSH lên VPS chạy goClaw, copy thư mục skill vào folder skills của agent, hướng dẫn từng bước."</em></p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 10</span>
+    Quan sát + Tinh chỉnh trong 7 ngày tới
+  </h2>
+
+  <p>Khác với các ngày trước, hôm nay <strong>không có bài đăng khoe</strong>. Lý do: chất lượng skill chỉ thấy được sau khi nó chạy thật vài ngày. Nhiệm vụ của bạn 7 ngày tới:</p>
+
+  <ol>
+    <li><strong>Mỗi sáng 9h</strong>: Telegram bật, agent gửi 3 ý tưởng. Bạn chọn, duyệt, post.</li>
+    <li><strong>Sau 3-4 ngày</strong>: review lại các bài đã đăng. Câu hỏi tự hỏi:
+      <ul style="margin-top: 6px;">
+        <li>Tone đã đúng giọng business chưa?</li>
+        <li>Ảnh có style nhất quán không?</li>
+        <li>Caption có quá AI-generic không?</li>
+      </ul>
+    </li>
+    <li><strong>Tinh chỉnh template</strong>: nếu thấy bài chưa đúng, mở agent coding, sửa template trong <code>assets/image-prompt-templates.md</code> (cho ảnh) hoặc <code>assets/caption-templates.md</code> (cho văn bản). AI sẽ làm giúp — chỉ cần nói "Sửa template để bài đăng có style [mô tả]".</li>
+    <li><strong>Lưu lại moments đáng khoe</strong>: screenshot Page khi có bài auto-post đẹp, screenshot Telegram lúc bạn duyệt — <em>để dành cho Demo Day Ngày 21</em>.</li>
+  </ol>
+
+  <div class="story">
+    <div class="story-label">Demo Day Ngày 21 đang chờ</div>
+    <p>Cuối thử thách (Ngày 21), sẽ có buổi <strong>meeting trình bày hệ thống</strong> bạn đã build. Lúc đó bạn sẽ <em>show cả Page Facebook auto-post hằng ngày</em> như 1 phần của hệ thống — đây là moment khoe ấn tượng nhất, không phải đăng bài rời rạc giữa chừng.</p>
+    <p>Vậy nên hôm nay <strong>tập trung làm cho skill chạy ngon</strong> — quà sẽ đến ở Ngày 21.</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Mẹo AI-First quan trọng</div>
+    <p>Đừng tự tay sửa template hay code — luôn đưa cho agent coding làm. Bạn chỉ <em>nói mong muốn</em> + <em>đưa ví dụ bài đăng đẹp/xấu</em>. Agent sẽ refactor template hoặc viết lại prompt cho bạn.</p>
+    <p>Đây là pattern xuyên suốt 21 ngày: <strong>bạn là người chỉ đạo, AI là người làm</strong>. Càng dùng nhiều, càng quen.</p>
+  </div>
+</section>
+
+<!-- ========= NỘP BÀI ========= -->
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh OpenAI API key đã có</strong> — chụp trang Settings → API keys của OpenAI Platform, thấy key <code>kp3-content-bot</code> đã tạo (che chuỗi key thật).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh Permanent Page Token check vĩnh viễn</strong> — chụp Access Token Debugger hiển thị <code>Expires: Never</code>. Đây là bằng chứng setup Facebook đã đúng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh thư mục skill tao-creative-fb</strong> — chụp file explorer/agent coding hiển thị thư mục có SKILL.md + scripts/ + assets/.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh test Mode 2 (creative ads)</strong> — chụp 3 ảnh ads + 3 ad copy agent gen ra. Đây là output thật của skill.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh bài đăng tự động trên Page Facebook</strong> — chụp Page có bài mới agent đăng (ảnh + caption). <em>Đây là bằng chứng auto-post đã hoạt động.</em></div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh chat Telegram duyệt content</strong> — chụp cuộc trò chuyện lịch hẹn 9h: agent gửi 3 ý tưởng → bạn chọn → preview → OK → đăng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Đã setup lịch hẹn 9h sáng + chạy thật ít nhất 1 ngày</strong> — sáng hôm sau (hoặc đã Run Now thành công) thấy Telegram có tin nhắn agent đề xuất 3 ý tưởng, bạn duyệt, Page có bài mới do agent đăng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Lưu screenshot cho Demo Day Ngày 21</strong> — chụp lại các moment ấn tượng (Page Facebook auto-post, chat Telegram duyệt content, 3 bộ creative ads). <em>Sẽ dùng để trình bày hệ thống của bạn ở buổi meeting cuối thử thách.</em></div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Permanent Page Token đã có và verified (Never expires)</li>
+      <li>Skill tao-creative-fb chạy được cả 2 mode, output là <strong>full content (ảnh + văn bản đi đôi)</strong></li>
+      <li>Lịch hẹn 9h sáng đã setup, đã test bằng Run Now</li>
+      <li><strong>Page Facebook có ít nhất 1 bài đăng full (ảnh + caption hoàn chỉnh) do agent tự đăng</strong></li>
+      <li>Đã lưu screenshots cho Demo Day Ngày 21</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top: 32px;">
+    <div class="tip-label">Tinh thần Ngày 17</div>
+    <p>Hôm nay là ngày <strong>setup nặng</strong> — tốn công đầu, nhưng từ ngày mai trở đi mọi thứ tự chạy. <em>Đây chính là pattern Operator</em>: chịu khó setup 1 lần, hưởng thành quả mãi mãi.</p>
+    <p>Nếu hôm nay bạn kẹt ở Bước 03 (Facebook token) — đừng bỏ cuộc. Đọc lại từng sub-step, hỏi agent coding khi không hiểu, kiểm tra Token Debugger sau mỗi lần đổi token. <strong>90% người làm được; bạn chỉ cần kiên nhẫn 1-2 giờ.</strong></p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "Bạn ngủ — agent đăng bài.<br>
+    Bạn dậy — Page đã có content."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 17 of 21</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-copy');
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const text = target.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'COPY';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

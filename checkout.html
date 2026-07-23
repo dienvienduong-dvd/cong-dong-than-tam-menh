@@ -236,6 +236,12 @@
       color: #7c3aed;
     }
 
+    .co-price-compare {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
     /* Form */
     .form-group {
       margin-bottom: 12px;
@@ -708,7 +714,10 @@
             </div>
             <div class="co-price-row">
               <div class="co-price-label">Tổng thanh toán</div>
-              <div class="co-price-val" id="productPrice"></div>
+              <div style="text-align:right;">
+                <div class="co-price-compare" id="productComparePrice" style="display:none;"></div>
+                <div class="co-price-val" id="productPrice"></div>
+              </div>
             </div>
           </div>
 
@@ -805,7 +814,7 @@
             <!-- Bank transfer panel -->
             <div id="detail-bank" class="co-card-body" style="border-bottom:1px solid var(--border)">
               <div class="qr-wrap">
-                <img id="sePayQR" class="qr-img" src="" alt="QR chuyển khoản BIDV" style="display:none">
+                <img id="sePayQR" class="qr-img" src="" alt="QR chuyển khoản ngân hàng" style="display:none">
                 <div id="qrLoading" class="qr-placeholder">
                   <span>🔄</span>
                   <span style="font-size:12px">Đang tạo QR...</span>
@@ -815,19 +824,19 @@
               <div class="bank-info">
                 <div class="bank-row">
                   <span class="bank-key">Ngân hàng</span>
-                  <span class="bank-val">BIDV</span>
+                  <span class="bank-val" id="bankName"></span>
                 </div>
                 <div class="bank-row">
                   <span class="bank-key">Số tài khoản</span>
                   <div style="display:flex;align-items:center;gap:6px">
-                    <span class="bank-val">96247NGUYEN</span>
-                    <button class="bank-copy" id="copyAccBtn" onclick="copyAndMark('96247NGUYEN','copyAccBtn')">Sao
+                    <span class="bank-val" id="bankAcc"></span>
+                    <button class="bank-copy" id="copyAccBtn" onclick="copyAndMark(BANK.acc,'copyAccBtn')">Sao
                       chép</button>
                   </div>
                 </div>
                 <div class="bank-row">
                   <span class="bank-key">Chủ tài khoản</span>
-                  <span class="bank-val">TỪ CHÍ NGUYỆN</span>
+                  <span class="bank-val" id="bankOwner"></span>
                 </div>
                 <div class="bank-row">
                   <span class="bank-key">Số tiền</span>
@@ -871,7 +880,7 @@
     <div id="successState">
       <div class="success-icon">✅</div>
       <div class="success-title">Thanh toán thành công!</div>
-      <div class="success-sub">
+      <div class="success-sub" id="successSub">
         Hệ thống đã xác nhận thanh toán của bạn.<br>
         Sản phẩm sẽ được gửi qua email trong vòng <strong>1–4 giờ</strong>.
       </div>
@@ -880,9 +889,9 @@
         <div style="font-size:var(--fs-sm);color:var(--text);font-weight:600" id="successProductTitle"></div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="successOrderInfo"></div>
       </div>
-      <div class="success-actions">
+      <div class="success-actions" id="successActions">
         <a href="marketplace.html" class="btn-outline-purple">← Về Marketplace</a>
-        <a href="feed.html" class="btn-solid-purple">Về Bảng tin</a>
+        <a href="feed.html" class="btn-solid-purple">Về Feed</a>
       </div>
     </div>
 
@@ -890,7 +899,7 @@
     <div id="pendingState">
       <div class="success-icon" style="background:#fef9c3;font-size:36px">⏳</div>
       <div class="success-title">Đã ghi nhận xác nhận của bạn!</div>
-      <div class="success-sub">
+      <div class="success-sub" id="pendingSub">
         Chúng tôi đã nhận được thông tin chuyển khoản.<br>
         Admin sẽ kiểm tra và xác nhận trong vòng <strong>1–4 giờ</strong> làm việc.<br>
         Một email xác nhận đã được gửi đến hộp thư của bạn.
@@ -902,7 +911,7 @@
       </div>
       <div class="success-actions">
         <a href="marketplace.html" class="btn-outline-purple">← Về Marketplace</a>
-        <a href="feed.html" class="btn-solid-purple">Về Bảng tin</a>
+        <a href="feed.html" class="btn-solid-purple">Về Feed</a>
       </div>
     </div>
 
@@ -919,7 +928,7 @@
       course: { label: 'Mini Course', icon: '🎓', bg: '#fce7f3', color: '#9d174d' },
       other: { label: 'Khác', icon: '📦', bg: '#f1f5f9', color: '#475569' },
     };
-    const BANK = { name: 'BIDV', acc: '96247NGUYEN', owner: 'TỪ CHÍ NGUYỆN' };
+    let BANK = { name: 'BIDV', acc: '96247NGUYEN', owner: 'TỪ CHÍ NGUYỆN' };
 
     function escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
     function fmtPrice(p) { return p === 0 ? 'Miễn phí' : p.toLocaleString('vi-VN') + '₫'; }
@@ -942,9 +951,20 @@
       if (!id) return (location.href = 'marketplace.html');
 
       try {
-        const p = await fetch(`${API}/products/${id}`).then(r => r.json());
+        const [p, settings] = await Promise.all([
+          fetch(`${API}/products/${id}`).then(r => r.json()),
+          fetch(`${API}/settings`).then(r => r.json()).catch(() => ({})),
+        ]);
         if (p.error) throw new Error(p.error);
         currentProduct = p;
+        BANK = {
+          name: settings.mp_bank_name || BANK.name,
+          acc: settings.mp_bank_account_number || BANK.acc,
+          owner: settings.mp_bank_account_name || BANK.owner,
+        };
+        document.getElementById('bankName').textContent = BANK.name;
+        document.getElementById('bankAcc').textContent = BANK.acc;
+        document.getElementById('bankOwner').textContent = BANK.owner;
         renderProduct(p);
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('checkoutContent').style.display = '';
@@ -971,6 +991,13 @@
       document.getElementById('sellerAv').style.background = avColor(p.seller_id);
       document.getElementById('sellerName').textContent = sellerName;
       document.getElementById('productPrice').textContent = fmtPrice(p.price);
+      const compareEl = document.getElementById('productComparePrice');
+      if (p.compare_price > p.price) {
+        compareEl.textContent = fmtPrice(p.compare_price);
+        compareEl.style.display = '';
+      } else {
+        compareEl.style.display = 'none';
+      }
 
       document.getElementById('buyerName').value = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
       document.getElementById('buyerEmail').value = currentUser.email || '';
@@ -1026,7 +1053,7 @@
 
     // ── SePay QR ──────────────────────────────────────────────────
     function buildSePayURL(note) {
-      return `https://qr.sepay.vn/img?bank=BIDV&acc=${BANK.acc}&template=compact&amount=${currentProduct.price}&des=${encodeURIComponent(note)}`;
+      return `https://qr.sepay.vn/img?bank=${encodeURIComponent(BANK.name)}&acc=${encodeURIComponent(BANK.acc)}&template=compact&amount=${currentProduct.price}&des=${encodeURIComponent(note)}`;
     }
 
     function loadSePayQR(note) {
@@ -1152,6 +1179,12 @@
       document.getElementById('pendingProductTitle').textContent = currentProduct?.title || '';
       document.getElementById('pendingOrderInfo').textContent =
         `Mã đơn #${currentOrderId} · ${fmtPrice(currentProduct?.price)} · Chuyển khoản BIDV`;
+      if (currentProduct?.course_id) {
+        document.getElementById('pendingSub').innerHTML =
+          `Chúng tôi đã nhận được thông tin chuyển khoản.<br>
+           Admin sẽ kiểm tra và xác nhận trong vòng <strong>1–4 giờ</strong> làm việc.<br>
+           Bạn sẽ được <strong>tự động thêm vào khóa học</strong> ngay khi thanh toán được xác nhận — không cần thao tác gì thêm.`;
+      }
       startPendingPolling();
     }
 
@@ -1163,6 +1196,12 @@
       document.getElementById('successProductTitle').textContent = currentProduct?.title || '';
       document.getElementById('successOrderInfo').textContent =
         `Mã đơn #${currentOrderId} · ${fmtPrice(currentProduct?.price)} · Chuyển khoản BIDV`;
+      if (currentProduct?.course_id) {
+        document.getElementById('successSub').innerHTML =
+          `Hệ thống đã xác nhận thanh toán của bạn.<br>Bạn đã được <strong>tự động thêm vào khóa học</strong> — vào học ngay bên dưới.`;
+        document.getElementById('successActions').innerHTML =
+          `<a href="course-view.html?id=${currentProduct.course_id}" class="btn-solid-purple">Vào học ngay →</a>`;
+      }
     }
 
     init();

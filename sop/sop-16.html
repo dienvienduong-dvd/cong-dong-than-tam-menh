@@ -1,0 +1,2036 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngày 16 — Tự Tay Tạo Skill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1612;
+    --ink-soft: #4a4038;
+    --ink-mute: #8a7f75;
+    --paper: #faf7f2;
+    --paper-warm: #f2ece0;
+    --paper-deep: #ebe3d3;
+    --rule: #d6cdbc;
+    --accent: #c8441f;
+    --accent-soft: #fce4dc;
+    --gold: #b8882d;
+    --gold-soft: #f8ecd0;
+    --sage: #5c6b4d;
+    --sage-soft: #e8ede0;
+    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(200, 68, 31, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184, 136, 45, 0.04) 0%, transparent 40%);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(250, 247, 242, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+    z-index: 100;
+    padding: 14px 0;
+  }
+
+  .topbar-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .topbar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  .topbar-nav {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .topbar-nav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 100px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .topbar-nav a:hover {
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+  }
+
+  .hero {
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .day-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .day-tag::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+
+  .hero-sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  .goal-box {
+    background: var(--paper-warm);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin: 32px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .goal-box-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .goal-box p {
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .goal-box em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--accent);
+    display: block;
+    margin: 10px 0 4px;
+    font-weight: 500;
+  }
+
+  section {
+    margin-bottom: 56px;
+  }
+
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 64px 0 20px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink);
+  }
+
+  h2 .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+  }
+
+  .phase-header {
+    text-align: center;
+    margin: 80px 0 40px;
+    position: relative;
+  }
+
+  .phase-header::before,
+  .phase-header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .phase-header::before { left: 20%; }
+  .phase-header::after { right: 20%; }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .phase-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 32px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: var(--ink-soft);
+  }
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  em {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .story {
+    background: var(--gold-soft);
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(184, 136, 45, 0.2);
+  }
+
+  .story-label {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .story p {
+    color: var(--ink);
+    font-size: 16px;
+  }
+
+  .story p:last-child { margin-bottom: 0; }
+
+  .metaphor {
+    background: var(--sage-soft);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 10px;
+    border-left: 3px solid var(--sage);
+    position: relative;
+  }
+
+  .metaphor::before {
+    content: "💡";
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  .metaphor-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sage);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .metaphor blockquote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-top: 8px;
+    border: none;
+    padding: 0;
+  }
+
+  .tip {
+    background: var(--accent-soft);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 10px;
+    position: relative;
+    border-left: 3px solid var(--accent);
+  }
+
+  .tip::before {
+    content: "🔥";
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 18px;
+  }
+
+  .tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+    padding-right: 30px;
+  }
+
+  .tip p {
+    color: var(--ink);
+    font-size: 15px;
+  }
+
+  .tip p:last-child { margin-bottom: 0; }
+
+  .prompt-box {
+    background: var(--ink);
+    color: #f5ede0;
+    padding: 0;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .prompt-header {
+    background: rgba(255,255,255,0.04);
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .prompt-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+
+  .copy-btn.copied {
+    background: var(--sage);
+    color: white;
+    border-color: var(--sage);
+  }
+
+  .prompt-body {
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #f5ede0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  ul, ol {
+    margin: 16px 0 20px 4px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin-bottom: 10px;
+    color: var(--ink-soft);
+  }
+
+  li::marker {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--paper-deep);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Level cards (4 cấp skill) */
+  .level-card {
+    background: white;
+    padding: 22px 26px;
+    margin: 14px 0;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+
+  .level-card-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .level-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .level-card-structure {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    background: var(--paper-warm);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .level-card-when {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .level-card-replaces {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 15px;
+    padding: 10px 14px;
+    background: var(--accent-soft);
+    border-radius: 6px;
+    margin: 0;
+  }
+
+  /* Quiz card */
+  .quiz-intro {
+    background: linear-gradient(135deg, var(--gold-soft) 0%, #faf2e0 100%);
+    padding: 28px 32px;
+    margin: 32px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(184, 136, 45, 0.3);
+  }
+
+  .quiz-intro h3 {
+    margin-top: 0;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quiz-intro h3::before {
+    content: "🎯";
+    font-size: 22px;
+  }
+
+  .quiz-card {
+    background: white;
+    padding: 24px 28px;
+    margin: 16px 0;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+  }
+
+  .quiz-card.answered {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 1px var(--sage), var(--shadow);
+  }
+
+  .quiz-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .quiz-question {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.45;
+    margin-bottom: 18px;
+  }
+
+  .quiz-helper {
+    background: var(--paper-warm);
+    padding: 12px 16px;
+    margin: 0 0 16px 0;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .quiz-helper-text {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .quiz-ask-btn {
+    background: var(--ink);
+    color: #f5ede0;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .quiz-ask-btn:hover {
+    background: var(--accent);
+  }
+
+  .quiz-ask-btn.copied {
+    background: var(--sage);
+  }
+
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quiz-option {
+    background: var(--paper);
+    padding: 14px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.5;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .quiz-option:hover {
+    background: var(--paper-deep);
+  }
+
+  .quiz-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .quiz-option.correct {
+    border-color: var(--sage);
+    background: var(--sage-soft);
+  }
+
+  .quiz-option.wrong {
+    border-color: #d96b4e;
+    background: #fde8e0;
+    opacity: 0.7;
+  }
+
+  .quiz-option .option-letter {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--accent);
+    margin-right: 10px;
+  }
+
+  .quiz-option.correct .option-letter { color: var(--sage); }
+  .quiz-option.wrong .option-letter { color: #d96b4e; }
+
+  .quiz-submit {
+    margin-top: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .quiz-submit:hover { background: #b03a18; }
+
+  .quiz-submit:disabled {
+    background: var(--ink-mute);
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .quiz-feedback {
+    display: none;
+    margin-top: 16px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
+  .quiz-feedback.correct {
+    background: var(--sage-soft);
+    border-left: 3px solid var(--sage);
+    color: var(--ink);
+  }
+
+  .quiz-feedback.wrong {
+    background: #fde8e0;
+    border-left: 3px solid #d96b4e;
+    color: var(--ink);
+  }
+
+  .quiz-feedback strong {
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+  }
+
+  .quiz-feedback.correct strong { color: var(--sage); }
+  .quiz-feedback.wrong strong { color: #b54a2c; }
+
+  .quiz-progress {
+    position: sticky;
+    top: 60px;
+    background: rgba(250, 247, 242, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0 24px;
+    text-align: center;
+    border: 1px solid var(--rule);
+    z-index: 50;
+  }
+
+  .quiz-progress-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+  }
+
+  .quiz-progress-bar {
+    height: 4px;
+    background: var(--paper-deep);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .quiz-progress-fill {
+    height: 100%;
+    background: var(--sage);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* Idea card */
+  .idea-card {
+    background: white;
+    padding: 16px 20px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .idea-card-num {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .idea-card-body { flex: 1; }
+
+  .idea-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .idea-card-meta {
+    font-size: 13px;
+    color: var(--ink-mute);
+    margin-bottom: 6px;
+  }
+
+  .idea-card-meta strong { color: var(--accent); }
+
+  .idea-card-desc {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Checklist */
+  .checklist {
+    background: white;
+    padding: 28px 32px;
+    margin: 28px 0;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--rule);
+  }
+
+  .checklist-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--rule);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+
+  .check-box {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--ink-mute);
+    border-radius: 5px;
+    margin-top: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: white;
+  }
+
+  .check-item.done .check-box {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+
+  .check-item.done .check-box::after {
+    content: "✓";
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .check-item.done .check-text {
+    color: var(--ink-mute);
+    text-decoration: line-through;
+  }
+
+  .check-text {
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .success {
+    background: linear-gradient(135deg, var(--sage-soft) 0%, #f0f4e8 100%);
+    padding: 28px 32px;
+    margin: 32px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(92, 107, 77, 0.2);
+  }
+
+  .success-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sage);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .success-title::before {
+    content: "✓";
+    background: var(--sage);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+  }
+
+  .success ul {
+    margin: 0;
+    padding-left: 4px;
+    list-style: none;
+  }
+
+  .success li {
+    padding: 6px 0;
+    color: var(--ink);
+    font-weight: 500;
+    padding-left: 22px;
+    position: relative;
+  }
+
+  .success li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--sage);
+    font-weight: bold;
+  }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    text-align: center;
+    border-top: 1px solid var(--rule);
+  }
+
+  .footer-quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .footer-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 32px 20px 100px; }
+    .hero { margin-bottom: 40px; padding-bottom: 28px; }
+    h1 { font-size: 34px; }
+    h2 { font-size: 24px; margin-top: 48px; }
+    h3 { font-size: 19px; }
+    .phase-title { font-size: 26px; }
+    .phase-header::before, .phase-header::after { width: 30px; }
+    .phase-header::before { left: 10%; }
+    .phase-header::after { right: 10%; }
+    .topbar-nav { gap: 2px; }
+    .topbar-nav a { padding: 6px 8px; font-size: 12px; }
+    .topbar-label { display: none; }
+    .story, .success { padding: 22px 22px; }
+    .metaphor, .tip, .checklist, .quiz-card, .quiz-intro { padding: 20px 22px; }
+    .prompt-body { font-size: 13px; padding: 16px 20px; }
+    .quiz-helper { flex-direction: column; align-items: stretch; }
+    .quiz-ask-btn { width: 100%; }
+  }
+
+  @media print {
+    .topbar, .copy-btn, .quiz-ask-btn, .quiz-submit { display: none; }
+    body { background: white; }
+    .quiz-feedback { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-label">21-Day Challenge</div>
+    <nav class="topbar-nav">
+      <a href="#phase1">1 · Dùng</a>
+      <a href="#phase2">2 · Hiểu</a>
+      <a href="#phase3">3 · Tạo</a>
+      <a href="#phase4">4 · Lên goClaw</a>
+      <a href="#phase5">5 · Khoe</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+<header class="hero">
+  <div class="day-tag">Ngày 16 · Tuần 3</div>
+  <h1>
+    Tự Tay Tạo Skill —<br>
+    Biến Quy Trình Của Bạn<br>
+    Thành Vũ Khí AI
+  </h1>
+  <p class="hero-sub">
+    Bộ skills 2 triệu tôi tặng các bạn ở Ngày 15 — hôm nay bạn sẽ <em>tự tay tạo những skill còn xịn hơn thế</em>, chính xác cho business của riêng bạn. Skill là cách để agent <em>thay được những người làm chuyên môn cao</em> — lập trình viên, video editor, copywriter, kế toán...
+  </p>
+</header>
+
+<div class="goal-box">
+  <div class="goal-box-label">Mục tiêu cuối ngày</div>
+  <p>Cuối hôm nay bạn có:</p>
+  <em>Bộ skills 2tr tôi tặng ở Ngày 15 — đã được cài đặt và dùng được trong agent coding của bạn + trên goClaw</em>
+  <em>1 skill do chính bạn tạo, gắn với business của bạn (viết bài Facebook đúng giọng, soạn proposal đúng template, làm báo cáo doanh thu... — tùy bạn chọn)</em>
+  <em>Hiểu rõ 4 cấp độ skill, biết khi nào dùng cấp nào — bằng cách làm bài trắc nghiệm 10 câu</em>
+</div>
+
+<div class="story">
+  <div class="story-label">Một câu chuyện thật</div>
+  <p>Bạn từng phải trả <strong>10 triệu cho 1 video editor</strong> để cắt 30 video reels mỗi tháng? Hoặc <strong>15 triệu cho 1 lập trình viên junior</strong> để code 1 tính năng mới mỗi tuần? Hoặc <strong>5 triệu cho 1 copywriter</strong> để viết content theo brand voice của bạn?</p>
+  <p>Skill cấp cao = <strong>cho agent khả năng làm những việc đó thay con người</strong>. Bạn ngủ — agent edit video, code, viết bài. Không phải tương lai xa — đây là cái bạn build được trong vài giờ hôm nay.</p>
+</div>
+
+<div class="tip">
+  <div class="tip-label">Tinh thần ngày hôm nay</div>
+  <p><strong>Đây là ngày chuyển hóa quan trọng nhất chuỗi.</strong> Trước hôm nay bạn <em>nhận skill</em> từ tôi. Sau hôm nay bạn <em>tự tạo skill</em> — đồng nghĩa bạn không còn phụ thuộc vào ai nữa, business của bạn cần gì tự làm được.</p>
+  <p>SOP hôm nay <strong>ép bạn dùng agent coding hỏi</strong> — không phải đọc lý thuyết suông. Đây mới là cách hiểu sâu.</p>
+</div>
+
+<!-- ========= PHẦN 1: DÙNG SKILLS ĐÃ CÓ ========= -->
+
+<div class="phase-header" id="phase1">
+  <span class="phase-label">Phần Một</span>
+  <div class="phase-title">Cài Bộ Skills 2tr Bạn Đã Có</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 01</span>
+    Giải nén bộ skills bạn nhận được
+  </h2>
+
+  <div class="story">
+    <div class="story-label">Nhắc lại</div>
+    <p>Hoàn thành Ngày 15, tôi đã gửi bạn <strong>1 bộ skills xịn xò trị giá 2 triệu</strong> — gồm các skill viết content, soạn proposal, phân tích đối thủ... Hôm nay, trước khi học cách tự tạo skill mới, hãy <em>cài đặt và dùng được bộ skills cũ này trước</em>.</p>
+    <p>Vì sao? Vì bạn cần <strong>thấy nó hoạt động</strong> để hiểu skill là gì trên thực tế. Lý thuyết đọc 100 lần không bằng dùng thử 1 lần.</p>
+  </div>
+
+  <ol>
+    <li>Tải bộ skills tôi đã gửi bạn (file <code>.zip</code> qua email/Telegram khi bạn hoàn thành Ngày 15).</li>
+    <li>Giải nén ra một thư mục, đặt tên dễ nhớ — ví dụ <code>kp3-skills/</code>. Bên trong sẽ có nhiều thư mục con, mỗi thư mục là 1 skill (kebab-case như <code>viet-bai-facebook/</code>, <code>soan-proposal/</code>...).</li>
+    <li>Mở thử 1 thư mục — bạn sẽ thấy file <code>SKILL.md</code> bên trong. Đây chính là "trái tim" của skill.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Chưa nhận được bộ skills?</div>
+    <p>Có thể bạn chưa hoàn thành Ngày 15 đúng cách (cần tag Facebook Dương Trọng Nghĩa). Quay lại Ngày 15, hoàn thành đúng quy trình, bộ skills sẽ được gửi cho bạn.</p>
+    <p>Trong lúc chờ, bạn vẫn có thể bỏ qua Phần Một và làm Phần Hai trở đi — học lý thuyết + tự tạo skill mới của bạn.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 02</span>
+    Cài skills vào agent coding của bạn
+  </h2>
+
+  <p>Có <strong>2 cách dùng</strong> tùy bạn đang dùng agent coding nào:</p>
+
+  <h3>Cách A — Dùng "@filename trick" (cho mọi agent coding)</h3>
+
+  <p>Đây là cách <strong>đơn giản nhất, hoạt động trên mọi agent coding</strong> (Cursor, Antigravity, Windsurf, Continue, Claude Code...):</p>
+
+  <ol>
+    <li>Copy thư mục <code>kp3-skills/</code> vào trong dự án bạn đang làm việc (ví dụ thư mục website của bạn).</li>
+    <li>Mở agent coding, trong khung chat gõ ký tự <code>@</code> → một popup hiện ra → tìm và chọn file <code>SKILL.md</code> của skill bạn muốn dùng (ví dụ <code>kp3-skills/viet-bai-facebook/SKILL.md</code>).</li>
+    <li>File được tạm thời inject vào ngữ cảnh hội thoại. Agent đã đọc skill.</li>
+    <li>Sau đó gõ yêu cầu thật, ví dụ: <em>"Viết bài Facebook về khoá học X giá 2tr, có ưu đãi cuối tuần."</em></li>
+    <li>Agent đọc skill → làm theo template/instructions → ra output đúng format.</li>
+  </ol>
+
+  <div class="metaphor">
+    <div class="metaphor-label">@filename trick là gì?</div>
+    <blockquote>
+      Mỗi agent coding đều có cách <strong>tạm thời chèn 1 file vào ngữ cảnh hội thoại</strong>. Cursor/Windsurf/Antigravity gõ <code>@</code> hoặc <code>#</code>. Đây là cách dùng skill <em>tạm thời cho 1 cuộc trò chuyện</em> — không cài permanent, lúc nào cần thì gọi.
+    </blockquote>
+  </div>
+
+  <h3>Cách B — Cài permanent vào Claude Code (chỉ cho ai có Claude Code)</h3>
+
+  <p>Nếu bạn dùng Claude Code, có thể cài skill <em>permanent</em> để Claude tự kích hoạt khi cần, không phải gọi <code>@</code> mỗi lần:</p>
+
+  <ol>
+    <li>Mở terminal, copy bộ skills vào thư mục skills của Claude Code:
+      <pre style="background: var(--paper-deep); padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; margin: 8px 0; overflow-x: auto;">cp -r kp3-skills/* ~/.claude/skills/</pre>
+    </li>
+    <li>Khởi động lại Claude Code (đóng và mở lại terminal).</li>
+    <li>Từ giờ, mỗi khi bạn nói câu phù hợp với skill (ví dụ "viết bài Facebook"), Claude tự nhận ra, tự đọc skill, tự làm theo. Không cần gọi <code>@</code>.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Không có Claude Code?</div>
+    <p>Không sao. Cách A (@filename) hoạt động trên hầu hết agent coding khác. Bạn không bỏ lỡ gì cả — chỉ là thao tác mỗi lần dùng thêm 1 bước (gõ <code>@</code>).</p>
+    <p>Khi quen với skills rồi, bạn có thể mua Claude Code (rẻ hơn nhiều so với thuê 1 nhân viên).</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 03</span>
+    Upload skills lên Claude.ai (tùy chọn)
+  </h2>
+
+  <p>Nếu bạn có tài khoản Claude.ai (Pro hoặc Free), bạn có thể upload skills lên đó để dùng trực tiếp trong giao diện chat của Claude — không cần agent coding:</p>
+
+  <ol>
+    <li>Mở <a href="https://claude.ai" target="_blank" style="color: var(--accent);">claude.ai</a> → đăng nhập.</li>
+    <li>Vào <strong>Settings</strong> (góc trên phải) → <strong>Capabilities</strong> → <strong>Skills</strong>.</li>
+    <li>Bấm <strong>Upload Skill</strong> → chọn thư mục skill (nén thành <code>.zip</code> trước nếu yêu cầu).</li>
+    <li>Bật <em>Enabled</em> cho skill đó.</li>
+    <li>Quay về cuộc chat — gõ yêu cầu phù hợp, Claude tự kích hoạt skill.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Không có Claude.ai?</div>
+    <p>Bỏ qua bước này — Cách A (@filename trong agent coding) đã đủ rồi. Hoặc đến Phần Bốn bạn sẽ upload skills lên goClaw để dùng qua Telegram.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 04</span>
+    Dùng thử ít nhất 1 skill
+  </h2>
+
+  <p>Đừng bỏ qua bước này. <strong>Trải nghiệm thật mới hiểu skill là gì.</strong></p>
+
+  <p>Chọn 1 skill trong bộ kp3-skills/ phù hợp với business của bạn (ví dụ <code>viet-bai-facebook/</code>). Mở skill ra (đọc nhanh SKILL.md để hiểu nó làm gì), rồi:</p>
+
+  <ol>
+    <li>Trong agent coding, gõ <code>@</code> → chọn <code>SKILL.md</code> của skill đó.</li>
+    <li>Gõ yêu cầu thật từ business của bạn — không phải ví dụ giả. Ví dụ: <em>"Viết bài Facebook giới thiệu khoá [tên khoá thật của bạn], giá [giá thật], điểm khác biệt là [USP thật]."</em></li>
+    <li>Đọc kỹ output — agent có ra đúng format không? Tone có đúng không?</li>
+    <li>Nếu output chưa đúng giọng bạn — đó là dấu hiệu skill cần điều chỉnh. Đến Phần Ba bạn sẽ học cách sửa skill.</li>
+  </ol>
+
+  <div class="story">
+    <div class="story-label">Khoảnh khắc bạn cần cảm nhận</div>
+    <p>Khi bạn paste 1 yêu cầu ngắn 1 câu vào agent coding, kèm <code>@SKILL.md</code>, agent ra cho bạn 1 bài đăng Facebook hoàn chỉnh đúng format trong 10 giây — <strong>đó chính là giá trị của skill</strong>. Trước đây bạn phải mô tả lại context mỗi lần. Giờ skill làm thay.</p>
+    <p>Nhân giá trị đó với 30 lần/tháng — đó là tại sao bộ skills này đáng 2tr.</p>
+  </div>
+</section>
+
+<!-- ========= PHẦN 2: HIỂU ========= -->
+
+<div class="phase-header" id="phase2">
+  <span class="phase-label">Phần Hai</span>
+  <div class="phase-title">Hiểu Skill Là Gì</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 05</span>
+    Đọc ebook trước
+  </h2>
+
+  <p>Tôi đã gửi bạn file ebook <strong>"The Complete Guide to Building Skills for Claude"</strong> của Anthropic. Đây là tài liệu chính thức.</p>
+
+  <p>Bạn <strong>không cần đọc hết</strong>. Chỉ cần đọc 3 chương:</p>
+
+  <ul>
+    <li><strong>Chapter 1 — Fundamentals</strong>: Skill là gì, cấu trúc thư mục, progressive disclosure. ~3 trang.</li>
+    <li><strong>Chapter 2 — Planning and Design</strong>: Cách viết SKILL.md + YAML frontmatter. ~6 trang.</li>
+    <li><strong>Chapter 5 — Patterns and Troubleshooting</strong> (chỉ phần Patterns đầu): 5 patterns phổ biến. ~5 trang.</li>
+  </ul>
+
+  <p>Tổng: <strong>~14 trang, đọc 20-30 phút</strong>. Đọc bằng tiếng Anh nhưng có agent coding bên cạnh — không hiểu chỗ nào, paste vào hỏi.</p>
+
+  <div class="metaphor">
+    <div class="metaphor-label">Hiểu skill kiểu đơn giản nhất</div>
+    <blockquote>
+      Skill = <strong>1 thư mục có file <code>SKILL.md</code></strong>. File này dạy agent cách làm 1 việc cụ thể. Khi agent thấy task tương tự, nó tự đọc skill và làm theo.
+    </blockquote>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 06</span>
+    Hiểu 4 cấp độ skill
+  </h2>
+
+  <p>Skill có thể đơn giản (chỉ 1 file MD) hoặc phức tạp (nhiều thành phần). Anthropic chia thành 4 cấp độ — biết cấp nào phù hợp việc nào là <strong>kỹ năng quan trọng nhất</strong> hôm nay:</p>
+
+  <div class="level-card">
+    <div class="level-card-tag">Cấp 1 · Skill Đơn</div>
+    <div class="level-card-title">Chỉ 1 file SKILL.md</div>
+    <div class="level-card-structure">my-skill/
+└── SKILL.md</div>
+    <div class="level-card-when"><strong>Khi nào dùng:</strong> Khi skill chỉ là <em>hướng dẫn cách agent xử lý task</em> — không cần data ngoài, không cần format chuẩn cứng. Output là văn bản tự do.</div>
+    <p class="level-card-replaces">Thay được: junior CS, junior copywriter, content creator</p>
+  </div>
+
+  <div class="level-card">
+    <div class="level-card-tag">Cấp 2 · Skill + Khuôn Mẫu</div>
+    <div class="level-card-title">SKILL.md + assets/ chứa template</div>
+    <div class="level-card-structure">my-skill/
+├── SKILL.md
+└── assets/
+    └── template.docx</div>
+    <div class="level-card-when"><strong>Khi nào dùng:</strong> Khi output cần <em>đúng format chuẩn</em> mỗi lần — slide, hợp đồng, proposal, caption có hook+body+CTA cố định.</div>
+    <p class="level-card-replaces">Thay được: graphic designer (làm template), proposal writer, SEO writer</p>
+  </div>
+
+  <div class="level-card">
+    <div class="level-card-tag">Cấp 3 · Skill + Máy Tự Động</div>
+    <div class="level-card-title">SKILL.md + scripts/ chứa code chạy được</div>
+    <div class="level-card-structure">my-skill/
+├── SKILL.md
+└── scripts/
+    └── process.py</div>
+    <div class="level-card-when"><strong>Khi nào dùng:</strong> Khi cần <em>xử lý dữ liệu thực tế</em> — đếm, tính toán, parse file, validate, edit video, render ảnh. Code chính xác hơn ngôn ngữ.</div>
+    <p class="level-card-replaces">Thay được: lập trình viên junior, data analyst, video editor (FFmpeg), SEO checker</p>
+  </div>
+
+  <div class="level-card">
+    <div class="level-card-tag">Cấp 4 · Skill + Sổ Tay Chuyên Môn</div>
+    <div class="level-card-title">SKILL.md + references/ chứa kiến thức sâu</div>
+    <div class="level-card-structure">my-skill/
+├── SKILL.md
+└── references/
+    └── deep-knowledge.md</div>
+    <div class="level-card-when"><strong>Khi nào dùng:</strong> Khi skill cần <em>kiến thức chuyên sâu</em> — luật, tài chính, y khoa, kế toán. Agent tham chiếu khi cần (không load hết vào context cho đỡ tốn chi phí AI).</div>
+    <p class="level-card-replaces">Thay được: tư vấn pháp lý, tư vấn tài chính, kế toán, chuyên gia chuyên môn</p>
+  </div>
+
+  <div class="level-card">
+    <div class="level-card-tag">Cấp 5 · Skill Đầy Đủ</div>
+    <div class="level-card-title">SKILL.md + scripts/ + assets/ + references/</div>
+    <div class="level-card-structure">my-skill/
+├── SKILL.md
+├── scripts/
+├── assets/
+└── references/</div>
+    <div class="level-card-when"><strong>Khi nào dùng:</strong> Cho task <em>phức hợp cao</em> — vừa cần xử lý data, vừa cần format chuẩn, vừa cần kiến thức sâu. Ví dụ: build báo cáo BI hàng tuần.</div>
+    <p class="level-card-replaces">Thay được: senior all-round (technical writer + designer + dev junior)</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Quy tắc vàng khi chọn cấp</div>
+    <p><strong>Bắt đầu cấp thấp nhất khả thi.</strong> Skill đầu tiên của bạn nên Cấp 1 hoặc Cấp 2 — dễ làm, dễ test, ra kết quả nhanh. Sau quen rồi, lên Cấp 3-5 cho task phức tạp.</p>
+    <p>Đừng over-engineer skill đầu tiên — không ai làm được skill cấp 5 ngay lần đầu.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 07</span>
+    Trắc nghiệm 10 câu — bắt buộc dùng AI để trả lời
+  </h2>
+
+  <div class="quiz-intro">
+    <h3>Cách làm bài</h3>
+    <p>Mỗi câu là 1 tình huống thật. Bạn phải đoán: <strong>cấp skill nào phù hợp nhất</strong>?</p>
+    <p style="margin-top: 10px;"><strong>Quy tắc bắt buộc:</strong> với mỗi câu, <em>mở agent coding của bạn (Cursor / Antigravity / Claude Code) và bấm nút <strong>"Hỏi AI"</strong></em> — nó copy sẵn prompt, bạn dán vào agent, agent giải thích. Sau đó quay lại đây chọn đáp án.</p>
+    <p style="margin-top: 10px;">Đừng đoán mò. Mục tiêu là <strong>hiểu sâu</strong>, không phải đúng nhanh. Làm đủ 10 câu, mỗi câu sẽ có giải thích chi tiết sau khi bạn chọn.</p>
+  </div>
+
+  <div class="quiz-progress">
+    <div class="quiz-progress-text"><span id="quiz-done">0</span> / 10 câu đã hoàn thành</div>
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-fill"></div></div>
+  </div>
+
+  <!-- 10 quiz cards -->
+
+  <div class="quiz-card" data-quiz="1" data-correct="A">
+    <div class="quiz-num">Câu 01 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>trả lời câu hỏi thường gặp</strong> của khách hàng trên Telegram, đúng tone business của bạn. FAQ có sẵn 20 câu, mỗi câu trả lời ngắn 2-3 dòng.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Chưa biết? Bấm "Hỏi AI" → dán vào Cursor/Antigravity → đọc giải thích → quay lại chọn đáp án.</div>
+      <button class="quiz-ask-btn" data-prompt="q1">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Chỉ SKILL.md với danh sách FAQ + cách phản hồi</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 3 — Cần script Python để xử lý câu hỏi</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 4 — Cần references chuyên sâu</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 5 — Cần đầy đủ tất cả thành phần</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: A — Cấp 1.</strong> Trả lời FAQ là task đơn giản, chỉ cần hướng dẫn thuần văn bản: <em>"Khi khách hỏi câu A → trả lời theo cách B, giọng theo brand voice"</em>. Không cần script (không có data cần xử lý), không cần template (output là tin nhắn tự do), không cần references chuyên sâu (FAQ ngắn gọn).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="2" data-correct="C">
+    <div class="quiz-num">Câu 02 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>edit video tự động</strong> — cắt clip dài thành 5 reels ngắn, thêm caption animation, ghép nhạc nền.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Chưa biết? Bấm "Hỏi AI" → dán vào agent coding → đọc giải thích.</div>
+      <button class="quiz-ask-btn" data-prompt="q2">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — SKILL.md với hướng dẫn cách edit</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — SKILL.md + template caption mẫu</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 3 — SKILL.md + scripts/ chứa FFmpeg/Python xử lý video</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 4 — SKILL.md + references/ về nguyên tắc montage</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: C — Cấp 3.</strong> Edit video cần <em>xử lý dữ liệu thực tế (file video)</em>. Không thể chỉ "mô tả bằng lời" — phải có script Python/Bash gọi FFmpeg để cắt, ghép, render. Đây là điển hình của task <strong>thay được video editor</strong> (~10tr/tháng).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="3" data-correct="B">
+    <div class="quiz-num">Câu 03 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>soạn proposal/báo giá</strong> cho khách hàng mới — phải đúng template thương hiệu của bạn (logo, màu, layout cố định).</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Chưa biết? Bấm "Hỏi AI" để nó giải thích cho bạn.</div>
+      <button class="quiz-ask-btn" data-prompt="q3">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Chỉ SKILL.md mô tả nội dung proposal</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — SKILL.md + assets/proposal-template.docx có sẵn layout</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 3 — Cần script Python tạo file Word</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 4 — Cần references về kỹ thuật bán hàng</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: B — Cấp 2.</strong> Output cần đúng <em>format brand cố định</em> mỗi lần (logo, màu, layout). Cách tốt nhất: cho agent file template có sẵn, agent chỉ cần fill vào. Không cần script (không xử lý data), không cần references (kiến thức bán hàng đã có thể nằm trong SKILL.md).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="4" data-correct="D">
+    <div class="quiz-num">Câu 04 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>code 1 tính năng mới</strong> vào website của bạn — ví dụ thêm trang "Khách hàng nói gì". Task gồm: viết code frontend, viết code backend, test, commit, deploy.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Đây là task khó nhất bài. Bấm "Hỏi AI" để hiểu rõ.</div>
+      <button class="quiz-ask-btn" data-prompt="q4">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — SKILL.md mô tả task + brand</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — Chỉ template code mẫu</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 4 — Chỉ references về cách code</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 5 — SKILL.md + scripts (test, deploy) + assets (code template) + references (best practices)</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: D — Cấp 5.</strong> Tasks code phức tạp = nhiều bước (write code, test, deploy) → cần đủ cả ba: <em>scripts</em> để tự test/deploy, <em>assets</em> chứa code template chuẩn của bạn, <em>references</em> chứa best practices của codebase. Đây là skill <strong>thay được junior dev</strong> (~15tr/tháng).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="5" data-correct="C">
+    <div class="quiz-num">Câu 05 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>soạn hợp đồng</strong> cho khách thuê dịch vụ — phải đúng luật VN, có điều khoản chuẩn về thanh toán, sở hữu trí tuệ, NDA, giải quyết tranh chấp.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Chưa biết? Bấm "Hỏi AI" để nó giải thích cho bạn.</div>
+      <button class="quiz-ask-btn" data-prompt="q5">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Chỉ hướng dẫn thuần</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — Chỉ template hợp đồng</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 4 — SKILL.md + references/ chứa các điều khoản pháp lý chuẩn</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 3 — Cần script tạo file PDF</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: C — Cấp 4.</strong> Soạn hợp đồng cần <em>kiến thức chuyên sâu về luật</em>. Mỗi điều khoản (thanh toán, IP, NDA, tranh chấp) là 1 chuyên đề riêng — không thể nhét hết vào SKILL.md. Cách đúng: <strong>references/ chứa từng file MD cho mỗi loại điều khoản</strong>, agent đọc khi cần. Đây là skill <strong>thay được tư vấn pháp lý</strong> (~5-10tr/lần).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="6" data-correct="D">
+    <div class="quiz-num">Câu 06 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>làm báo cáo doanh thu cuối tháng</strong> — đọc data thật từ database (đơn hàng, khách hàng), tính toán doanh thu/lãi/khách mới, vẽ biểu đồ, xuất ra slide PowerPoint theo template công ty.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Câu này tổng hợp nhiều thứ. Bấm "Hỏi AI" để hiểu rõ.</div>
+      <button class="quiz-ask-btn" data-prompt="q6">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Hướng dẫn thuần</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — Chỉ template slide</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 3 — Chỉ script đọc database</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 5 — Đầy đủ: scripts (đọc DB + tính số), assets (template slide), references (cách diễn giải số liệu)</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: D — Cấp 5.</strong> Task này phức hợp 3 thứ: (1) đọc + tính data → <em>cần scripts</em>, (2) format slide đúng template công ty → <em>cần assets</em>, (3) diễn giải số liệu kiểu chuyên nghiệp → <em>cần references</em>. Skill này <strong>thay được data analyst</strong> (~20tr/tháng).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="7" data-correct="B">
+    <div class="quiz-num">Câu 07 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>viết caption Instagram</strong> cho mỗi sản phẩm bạn bán — caption có cấu trúc cố định: Hook (câu gây chú ý) + Body (mô tả sản phẩm) + CTA (kêu gọi mua).</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Chưa biết? Bấm "Hỏi AI" để nó giải thích cho bạn.</div>
+      <button class="quiz-ask-btn" data-prompt="q7">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Chỉ SKILL.md mô tả cách viết caption</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — SKILL.md + assets/caption-template.md có Hook/Body/CTA mẫu</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 3 — Cần script đọc thông tin sản phẩm</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 4 — Cần references về marketing</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: B — Cấp 2.</strong> Caption cần <em>cấu trúc cố định</em> (Hook + Body + CTA) → cần template làm sẵn cho agent fill. Tương tự câu 03 (proposal): khi output có format chuẩn, dùng Cấp 2 với template trong assets/.</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="8" data-correct="A">
+    <div class="quiz-num">Câu 08 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>phân tích đối thủ cạnh tranh</strong> — bạn cho tên đối thủ, agent vào website của họ, đọc nội dung, đánh giá điểm mạnh/yếu, viết báo cáo dạng văn bản.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Chưa biết? Bấm "Hỏi AI" để nó giải thích cho bạn.</div>
+      <button class="quiz-ask-btn" data-prompt="q8">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Chỉ SKILL.md với hướng dẫn phân tích theo framework SWOT</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — Cần template báo cáo</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 3 — Cần script crawl website</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 5 — Cần đầy đủ</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: A — Cấp 1.</strong> Phân tích đối thủ là task <em>research + suy luận</em> — agent dùng tool có sẵn (web search/fetch) tự đọc website, không cần script crawl đặc biệt. Output là văn bản tự do, không cần template cứng. Skill chỉ cần dạy <strong>framework phân tích</strong> (ví dụ SWOT).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="9" data-correct="C">
+    <div class="quiz-num">Câu 09 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>tạo poster quảng cáo tự động</strong> — bạn nhập thông tin sự kiện (tên, ngày, địa điểm), agent tạo ra ảnh poster có sẵn typography đẹp, màu sắc đúng brand, logo công ty.</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Câu này nâng cao. Bấm "Hỏi AI" để hiểu rõ.</div>
+      <button class="quiz-ask-btn" data-prompt="q9">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — Chỉ hướng dẫn thiết kế</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — Chỉ assets/ chứa logo + font</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 3 — SKILL.md + scripts/ (Python với Pillow/SVG để render ảnh) + assets/ (logo, font, màu)</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 4 — Cần references về thiết kế</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: C — Cấp 3 (kết hợp với assets).</strong> Tạo ảnh là task <em>cần code chạy được</em> (Python với thư viện Pillow, hoặc SVG/Canvas). Đồng thời cần assets (logo, font). Đây là Cấp 3 mở rộng có cả assets — skill <strong>thay được junior designer</strong> (~10-15tr/tháng).</p>
+    </div>
+  </div>
+
+  <div class="quiz-card" data-quiz="10" data-correct="C">
+    <div class="quiz-num">Câu 10 / 10</div>
+    <p class="quiz-question">Bạn muốn agent <strong>tư vấn đầu tư cơ bản</strong> cho khách hàng — agent hỏi tình hình tài chính của khách, gợi ý phân bổ portfolio (cổ phiếu, vàng, gửi tiết kiệm) dựa trên nguyên tắc đầu tư chuẩn (rule of 100, đa dạng hoá, etc.).</p>
+    <div class="quiz-helper">
+      <div class="quiz-helper-text">Câu cuối! Bấm "Hỏi AI" để hiểu rõ.</div>
+      <button class="quiz-ask-btn" data-prompt="q10">Hỏi AI</button>
+    </div>
+    <div class="quiz-options">
+      <div class="quiz-option" data-letter="A"><span class="option-letter">A.</span> Cấp 1 — SKILL.md với vài nguyên tắc</div>
+      <div class="quiz-option" data-letter="B"><span class="option-letter">B.</span> Cấp 2 — Cần template báo cáo tư vấn</div>
+      <div class="quiz-option" data-letter="C"><span class="option-letter">C.</span> Cấp 4 — SKILL.md + references/ chứa từng nguyên tắc đầu tư chi tiết</div>
+      <div class="quiz-option" data-letter="D"><span class="option-letter">D.</span> Cấp 3 — Cần script tính toán</div>
+    </div>
+    <button class="quiz-submit" disabled>Kiểm tra đáp án</button>
+    <div class="quiz-feedback">
+      <strong></strong>
+      <p><strong>Đáp án: C — Cấp 4.</strong> Tư vấn đầu tư cần <em>kiến thức chuyên môn sâu</em> — mỗi nguyên tắc là 1 chuyên đề (đa dạng hóa, time horizon, risk tolerance...). references/ chứa từng file MD chi tiết, agent đọc khi tình huống yêu cầu. Đây là skill <strong>thay được tư vấn tài chính cá nhân</strong> (~10-20tr/cuộc tư vấn).</p>
+    </div>
+  </div>
+
+  <div class="success" id="quiz-complete" style="display: none;">
+    <div class="success-title">Hoàn thành 10 câu!</div>
+    <ul>
+      <li>Bạn đã hiểu khi nào dùng cấp skill nào</li>
+      <li>Giờ là lúc tự tay tạo skill đầu tiên — cuộn xuống Phần Hai</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 08</span>
+    10 ý tưởng skill cho business của bạn
+  </h2>
+
+  <p>Trước khi vào tạo, đây là <strong>10 ý tưởng skill khả thi</strong> — chọn 1 cái phù hợp business của bạn để làm đầu tiên:</p>
+
+  <div class="idea-card">
+    <div class="idea-card-num">01</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill viết bài Facebook theo brand voice</div>
+      <div class="idea-card-meta"><strong>Cấp 2</strong> · Hợp với: mọi business cần content</div>
+      <div class="idea-card-desc">Template Hook + Body + CTA. Agent đọc thông tin sản phẩm/sự kiện → fill vào template → ra bài đăng đúng giọng bạn. <em>Khuyên làm đầu tiên</em>.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">02</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill trả lời FAQ khách hàng</div>
+      <div class="idea-card-meta"><strong>Cấp 1</strong> · Hợp với: e-commerce, khoá học, dịch vụ</div>
+      <div class="idea-card-desc">SKILL.md chứa 20+ FAQ + cách trả lời theo brand. Agent thay junior CS — không cần con người trực Telegram nữa.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">03</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill báo cáo doanh thu cuối tuần</div>
+      <div class="idea-card-meta"><strong>Cấp 3</strong> · Hợp với: bán hàng có database</div>
+      <div class="idea-card-desc">Script đọc database → tính số → render dạng tin nhắn Telegram. Mỗi cuối tuần agent tự gửi, không cần bạn yêu cầu.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">04</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill viết email follow-up khách</div>
+      <div class="idea-card-meta"><strong>Cấp 2</strong> · Hợp với: B2B, agency, freelancer</div>
+      <div class="idea-card-desc">Template email theo từng giai đoạn (sau gặp lần 1, sau gửi proposal, sau im lặng 1 tuần...). Agent điền tên khách + context → ra email gửi luôn.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">05</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill soạn proposal/báo giá</div>
+      <div class="idea-card-meta"><strong>Cấp 2</strong> · Hợp với: freelancer, agency</div>
+      <div class="idea-card-desc">Template proposal có logo, cấu trúc giá, điều khoản chuẩn. Agent điền theo yêu cầu khách → file Word đẹp gửi luôn.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">06</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill phân tích đối thủ cạnh tranh</div>
+      <div class="idea-card-meta"><strong>Cấp 1 + 4</strong> · Hợp với: marketer, founder</div>
+      <div class="idea-card-desc">Agent vào website đối thủ → đọc → đánh giá theo framework SWOT (references chứa SWOT chi tiết). Output báo cáo 1 trang.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">07</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill viết caption sản phẩm bán hàng</div>
+      <div class="idea-card-meta"><strong>Cấp 2</strong> · Hợp với: shop online</div>
+      <div class="idea-card-desc">Template Hook + Body + CTA. Bạn nhập tên sản phẩm + giá + USP → agent ra caption Instagram/Facebook đúng giọng.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">08</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill kiểm tra bài viết trước khi đăng (SEO)</div>
+      <div class="idea-card-meta"><strong>Cấp 3</strong> · Hợp với: blogger, content creator</div>
+      <div class="idea-card-desc">Script đếm độ dài, mật độ từ khóa, kiểm tra tiêu đề/meta. Agent chấm điểm 1-10 + đề xuất cải thiện.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">09</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill soạn lịch nội dung tuần</div>
+      <div class="idea-card-meta"><strong>Cấp 1 + 2</strong> · Hợp với: social media manager</div>
+      <div class="idea-card-desc">Bạn nhập theme tuần + sự kiện → agent ra 7 ý tưởng bài đăng cho 7 ngày, kèm caption mẫu cho từng bài.</div>
+    </div>
+  </div>
+
+  <div class="idea-card">
+    <div class="idea-card-num">10</div>
+    <div class="idea-card-body">
+      <div class="idea-card-title">Skill tạo SOP/quy trình nội bộ</div>
+      <div class="idea-card-meta"><strong>Cấp 1</strong> · Hợp với: người có team, cần document</div>
+      <div class="idea-card-desc">Bạn mô tả quy trình bằng lời → agent biến thành SOP rõ ràng, có numbered steps, troubleshooting, checklist.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========= PHẦN 2: TẠO ========= -->
+
+<div class="phase-header" id="phase3">
+  <span class="phase-label">Phần Ba</span>
+  <div class="phase-title">Tự Tay Tạo Skill Đầu Tiên</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 09</span>
+    Chốt 1 skill để làm hôm nay
+  </h2>
+
+  <p>Chọn 1 trong 10 ý tưởng ở Bước 04 — hoặc nghĩ ra ý tưởng riêng phù hợp business của bạn. Tiêu chí chọn:</p>
+
+  <ul>
+    <li><strong>Đơn giản</strong>: ưu tiên Cấp 1 hoặc Cấp 2 cho skill đầu tiên. Không nhảy thẳng Cấp 5.</li>
+    <li><strong>Có ích thực sự</strong>: việc bạn đang làm tay 3-5 lần/tuần — skill ra sẽ tiết kiệm thật.</li>
+    <li><strong>Rõ output</strong>: bạn hình dung được kết quả nó ra phải như thế nào.</li>
+  </ul>
+
+  <div class="tip">
+    <div class="tip-label">Khuyên cho người mới</div>
+    <p><strong>Skill 01 (viết bài Facebook)</strong> hoặc <strong>Skill 02 (FAQ khách hàng)</strong> là 2 lựa chọn an toàn nhất — đơn giản, ra kết quả ngay, dùng được hàng ngày. Bạn có thể làm xong 1 trong 2 cái này trong 60 phút.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 10</span>
+    Vibe code skill bằng agent coding
+  </h2>
+
+  <p>Mở agent coding (Cursor / Antigravity / Claude Code), tạo thư mục mới <code>my-skills/</code> trên máy. Paste prompt:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Tạo skill đầu tiên (AI-First)</span>
+      <button class="copy-btn" data-copy="p6">COPY</button>
+    </div>
+    <div class="prompt-body" id="p6">Tôi muốn tạo 1 Claude Skill đầu tiên. Đây là tài liệu chính thức của Anthropic về cách tạo skill: https://docs.anthropic.com/skills (hoặc tôi đã đọc ebook và đính kèm ở đây nếu bạn cần).
+
+Skill tôi muốn tạo:
+- Tên skill: [điền tên ngắn theo kebab-case, ví dụ: viet-bai-facebook]
+- Mục đích: [điền 1 câu — ví dụ: "Viết bài Facebook đúng brand voice của tôi"]
+- Cấp độ: [Cấp 1 / 2 / 3 / 4 / 5 — bạn đã chọn ở Bước 04]
+- Use case cụ thể: [điền 2-3 tình huống thật — ví dụ: "Khi tôi nói 'viết bài Facebook về sản phẩm A giá 500k', skill này phải kích hoạt và ra bài đúng template Hook+Body+CTA"]
+
+Đọc context của tôi:
+1. Brain.db trong folder my-brain/ — chứa brand_voice của tôi
+2. Nếu cần thêm thông tin gì về business của tôi, hỏi tôi cụ thể
+
+Làm giúp tôi:
+
+1. Tạo thư mục my-skills/[tên-skill]/ với cấu trúc đúng (kebab-case, có SKILL.md, các thư mục assets/scripts/references nếu cần theo cấp độ tôi chọn).
+
+2. Viết SKILL.md với:
+   - YAML frontmatter có name + description chuẩn (description phải gồm: cái skill làm gì + khi nào dùng + các trigger phrase người dùng có thể nói)
+   - Body markdown rõ ràng: Instructions, Examples (2-3 ví dụ), Troubleshooting nếu có
+
+3. Nếu Cấp 2: tạo template trong assets/. Nếu Cấp 3: viết script có chú thích rõ. Nếu Cấp 4: viết references chia thành nhiều file MD nhỏ.
+
+4. Test skill ngay tại đây: bạn giả vờ là Claude đang nhận skill này, tôi gõ 1 yêu cầu thật, bạn xem skill có kích hoạt đúng không và output có đúng kỳ vọng không.
+
+5. Nếu test có vấn đề (skill không kích hoạt khi nên kích hoạt, hoặc kích hoạt sai khi không nên), sửa lại description trong YAML và test lại.
+
+Làm từng bước, trình bày plan trước khi code, chờ tôi duyệt.</div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Quy tắc khi viết description trong YAML</div>
+    <p>Theo ebook (Chapter 2), description là <strong>phần quan trọng nhất</strong> của skill — nó quyết định khi nào skill kích hoạt. Description tốt phải gồm:</p>
+    <ul style="margin: 8px 0; padding-left: 20px;">
+      <li>Cái gì (What it does)</li>
+      <li>Khi nào dùng (When to use it) + các cụm từ người dùng có thể nói</li>
+      <li>Dưới 1024 ký tự</li>
+    </ul>
+    <p>Ví dụ tốt: <em>"Viết bài Facebook theo brand voice. Dùng khi user nói 'viết bài cho sản phẩm X', 'làm caption Facebook', 'viết content quảng cáo'."</em></p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 11</span>
+    Test skill ngay trong agent coding
+  </h2>
+
+  <p>Sau khi agent đã viết xong, test ngay tại agent coding bằng <strong>"@filename trick"</strong> — đây là cách hầu hết agent coding (Cursor, Antigravity, Windsurf) đều support:</p>
+
+  <ol>
+    <li>Trong khung chat của agent coding, gõ <code>@</code> → một popup hiện ra → chọn file <code>SKILL.md</code> bạn vừa tạo. File được inject vào context.</li>
+    <li>Sau đó gõ yêu cầu thật, ví dụ: <em>"Viết bài Facebook về khoá học Vibe Coding của tôi, giá 2tr, ưu đãi cuối tuần."</em></li>
+    <li>Agent sẽ <strong>đọc skill, làm theo template/instructions trong skill</strong>, ra bài đăng.</li>
+    <li>Kiểm tra: output có đúng format bạn mong muốn không? Tone có đúng không? Nếu không đúng → quay lại sửa SKILL.md, test lại.</li>
+  </ol>
+
+  <div class="metaphor">
+    <div class="metaphor-label">@filename trick là gì?</div>
+    <blockquote>
+      Mỗi agent coding đều có cách <strong>tạm thời chèn 1 file</strong> vào ngữ cảnh hội thoại. Cursor/Windsurf gõ <code>@</code>, Antigravity gõ <code>#</code> hoặc kéo thả file. Đây là cách <em>nhanh nhất để test skill</em> trước khi upload lên goClaw.
+    </blockquote>
+  </div>
+
+  <div class="tip">
+    <div class="tip-label">Skill không hoạt động đúng?</div>
+    <p>3 lỗi phổ biến (theo ebook Chapter 5):</p>
+    <ol style="margin: 8px 0; padding-left: 20px;">
+      <li><strong>Skill không kích hoạt</strong>: description thiếu trigger phrase. Sửa: thêm các cụm người dùng thường nói.</li>
+      <li><strong>Skill kích hoạt sai lúc</strong>: description quá rộng. Sửa: thêm "Do NOT use for [...]" để hạn chế.</li>
+      <li><strong>Output không đúng template</strong>: SKILL.md instructions chưa rõ. Sửa: thêm Examples cụ thể, càng concrete càng tốt.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ========= PHẦN 3: DÙNG ========= -->
+
+<div class="phase-header" id="phase4">
+  <span class="phase-label">Phần Bốn</span>
+  <div class="phase-title">Đưa Skill Lên goClaw Để Agent Dùng</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 12</span>
+    Upload skill lên goClaw
+  </h2>
+
+  <p>Skill bạn vừa tạo dùng được trong agent coding (qua @filename). Giờ đưa lên goClaw để <strong>agent Telegram của bạn dùng được</strong> — bất cứ khi nào bạn nhắn yêu cầu phù hợp, nó tự kích hoạt skill.</p>
+
+  <ol>
+    <li>Mở <code>https://app.yourdomain.com</code> → đăng nhập goClaw Dashboard.</li>
+    <li>Sidebar → <strong>Capabilities</strong> → <strong>Skills</strong>.</li>
+    <li>Bấm <strong>Upload Skill</strong> → chọn thư mục skill bạn vừa tạo (nén thành .zip nếu cần).</li>
+    <li>Bật <em>Enabled</em> cho skill này.</li>
+    <li>Vào agent detail (agent Telegram của bạn) → tab Skills → tick để cho agent này dùng skill vừa upload.</li>
+  </ol>
+
+  <div class="tip">
+    <div class="tip-label">Không thấy Skills trong sidebar goClaw?</div>
+    <p>Tuỳ phiên bản, có thể nằm ở: <em>Capabilities → Skills</em>, hoặc <em>Core → Skills</em>, hoặc cần upload qua filesystem sync (giống Knowledge Vault ở Ngày 15).</p>
+    <p>Chụp màn hình → paste vào Claude → <em>"tôi muốn upload skill cho goClaw, bấm đâu?"</em>.</p>
+  </div>
+</section>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 13</span>
+    Test thật với Telegram
+  </h2>
+
+  <p>Mở Telegram, chat với agent Telegram của bạn. Gõ 1 yêu cầu phù hợp với skill bạn vừa tạo:</p>
+
+  <ul>
+    <li>Nếu skill viết bài Facebook: <em>"Viết bài Facebook về sản phẩm A của tôi giá 500k, ưu đãi cuối tuần."</em></li>
+    <li>Nếu skill FAQ: <em>"Khách hỏi làm sao biết khoá học có hợp với mình không?"</em></li>
+    <li>Nếu skill báo cáo: <em>"Làm báo cáo doanh thu tuần này cho tôi."</em></li>
+  </ul>
+
+  <p>Agent phải:</p>
+  <ul>
+    <li>✓ Tự nhận ra skill phù hợp</li>
+    <li>✓ Load skill vào context</li>
+    <li>✓ Output đúng format/template như đã test ở Bước 07</li>
+  </ul>
+
+  <p>Nếu agent không kích hoạt skill: kiểm tra description trong YAML đã có đủ trigger phrase chưa. Nếu output sai format: sửa lại Examples trong SKILL.md, upload lại.</p>
+</section>
+
+<!-- ========= PHẦN 4: KHOE ========= -->
+
+<div class="phase-header" id="phase5">
+  <span class="phase-label">Phần Năm</span>
+  <div class="phase-title">Khoe Thành Quả</div>
+</div>
+
+<section>
+  <h2>
+    <span class="step-num">BƯỚC 14</span>
+    Đăng bài + tag Facebook nhận quà 2tr
+  </h2>
+
+  <div class="story">
+    <div class="story-label">🎁 Phần quà cho người khoe đúng cách</div>
+    <p><strong>Bài đăng phải tag Facebook Dương Trọng Nghĩa</strong> — ai tag đúng sẽ được tặng <strong>thêm 1 bộ skills xịn xò mới trị giá 2 triệu đồng</strong> (khác bộ Ngày 15).</p>
+    <p>Link Facebook để tag: <a href="https://www.facebook.com/duongtrongnghia.theKP3/" target="_blank" style="color: var(--accent); font-weight: 600;">facebook.com/duongtrongnghia.theKP3</a></p>
+  </div>
+
+  <p>Mở agent coding, paste:</p>
+
+  <div class="prompt-box">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt · Viết bài khoe Ngày 16</span>
+      <button class="copy-btn" data-copy="p10">COPY</button>
+    </div>
+    <div class="prompt-body" id="p10">Đọc brand voice trong brain.db. Viết 1 bài đăng kể về trải nghiệm hôm nay:
+
+- Trước hôm nay tôi nhận skills từ người khác. Hôm nay tôi tự tay tạo skill đầu tiên — chính xác cho business của tôi.
+- Skill tôi vừa tạo: [điền tên skill + nó làm gì].
+- Lần đầu tôi hiểu skill cấp cao có thể thay được [điền: video editor / lập trình viên / copywriter / kế toán... — cái tương ứng skill bạn làm].
+- Cảm giác: <em>không còn phụ thuộc vào ai để có công cụ AI riêng — business cần gì tôi tự build được</em>.
+
+Tone tự nhiên, cá nhân, không khoe khoang kỹ thuật. Nhấn mạnh việc <strong>chuyển từ "user" sang "creator"</strong> — đây là khác biệt lớn nhất hôm nay.
+
+Cuối bài NHỚ tag Dương Trọng Nghĩa (link: https://www.facebook.com/duongtrongnghia.theKP3/).
+
+Lưu vào day16_post.txt.</div>
+  </div>
+
+  <p>Đăng ít nhất 2 kênh. Nhớ tag Dương Trọng Nghĩa trên Facebook để nhận bộ skills mới 2tr.</p>
+</section>
+
+<!-- ========= NỘP BÀI ========= -->
+<section id="submit">
+  <h2>
+    <span class="step-num">FINAL</span>
+    Nộp Bài
+  </h2>
+
+  <div class="checklist">
+    <div class="checklist-title">Checklist hoàn thành</div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh dùng được 1 skill từ bộ kp3-skills/</strong> — chụp khung chat agent coding, bạn gõ <code>@SKILL.md</code> của 1 skill có sẵn, agent ra output đúng. <em>Bằng chứng bạn đã biết cách dùng bộ skills 2tr ở Ngày 15.</em></div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Hoàn thành 10 câu trắc nghiệm</strong> — tất cả các câu phải có trạng thái "đã trả lời" (đúng hay sai đều được, miễn là bạn thực sự đã hỏi AI và hiểu giải thích).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh thư mục skill bạn vừa tạo</strong> — chụp màn hình agent coding/file explorer hiển thị thư mục skill có SKILL.md + (assets/scripts/references nếu có).</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh skill BẠN TỰ TẠO chạy được trong agent coding</strong> — chụp khung chat agent coding, bạn dùng @filename inject skill mới, agent ra output đúng kỳ vọng.</div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Ảnh skill chạy được trên goClaw qua Telegram</strong> — chụp tin nhắn Telegram bạn yêu cầu, agent goClaw dùng skill và ra output đúng. <em>Đây là bằng chứng skill hoạt động end-to-end.</em></div>
+    </div>
+
+    <div class="check-item" onclick="this.classList.toggle('done')">
+      <div class="check-box"></div>
+      <div class="check-text"><strong>Link bài đăng</strong> — ít nhất 2 kênh, public, bài Facebook có tag <a href="https://www.facebook.com/duongtrongnghia.theKP3/" target="_blank" style="color: var(--accent);">Dương Trọng Nghĩa</a> để nhận bộ skills mới 2tr.</div>
+    </div>
+  </div>
+
+  <div class="success">
+    <div class="success-title">Tiêu chí hoàn thành</div>
+    <ul>
+      <li>Bạn hiểu 4 cấp skill, biết khi nào dùng cấp nào (qua 10 câu trắc nghiệm)</li>
+      <li>Bạn có 1 skill do chính bạn tạo, dùng được ở 2 nơi</li>
+      <li>Bạn không còn phụ thuộc vào skills của ai — business cần gì tự build được</li>
+    </ul>
+  </div>
+
+  <div class="tip" style="margin-top: 32px;">
+    <div class="tip-label">Mẹo cho ngày mai và sau đó</div>
+    <p>Sau khi xong skill đầu tiên, <strong>mỗi tuần tạo thêm 1 skill mới</strong>. Sau 3 tháng bạn sẽ có ~12 skills riêng — đủ thay 1 team nhỏ. Đây là tài sản thực sự của bạn, không ai lấy mất được.</p>
+    <p>Mẹo: <em>việc nào bạn làm tay 3+ lần/tuần</em> — biến thành skill. Quy luật đơn giản này tiết kiệm hàng giờ mỗi tuần.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p class="footer-quote">
+    "Trước hôm nay bạn là user.<br>
+    Hôm nay bạn thành <em>creator</em>."
+  </p>
+  <p class="footer-sig">focus.camp · The KP3 · Day 16 of 21</p>
+</footer>
+
+<script>
+  // Copy buttons (general)
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-copy');
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const text = target.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1500);
+      }).catch(() => {});
+    });
+  });
+
+  // Quiz "Hỏi AI" prompts (mapped per question)
+  const quizPrompts = {
+    q1: `Tôi đang học về Claude Skills. Có 4 cấp độ:
+- Cấp 1: chỉ SKILL.md (hướng dẫn thuần)
+- Cấp 2: SKILL.md + assets/ (template/file mẫu)
+- Cấp 3: SKILL.md + scripts/ (code chạy được)
+- Cấp 4: SKILL.md + references/ (kiến thức sâu)
+- Cấp 5: đầy đủ tất cả
+
+Tình huống: Tôi muốn tạo skill cho agent TRẢ LỜI CÂU HỎI THƯỜNG GẶP của khách hàng — FAQ có sẵn 20 câu, mỗi câu trả lời ngắn 2-3 dòng, đúng tone business của tôi.
+
+Theo bạn, skill này nên dùng cấp độ nào? Giải thích lý do trong 3-5 câu, không cần dài.`,
+
+    q2: `Tôi đang học Claude Skills (4 cấp: 1=chỉ MD, 2=có template, 3=có script, 4=có references, 5=đầy đủ).
+
+Tình huống: Tôi muốn tạo skill cho agent EDIT VIDEO TỰ ĐỘNG — cắt clip dài thành 5 reels ngắn, thêm caption animation, ghép nhạc nền.
+
+Cấp nào phù hợp? Giải thích trong 3-5 câu.`,
+
+    q3: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent SOẠN PROPOSAL/BÁO GIÁ cho khách hàng mới, phải đúng template thương hiệu (logo, màu, layout cố định).
+
+Cấp nào phù hợp? Giải thích ngắn gọn.`,
+
+    q4: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống khó: Tôi muốn skill cho agent CODE TÍNH NĂNG MỚI vào website — viết frontend, viết backend, test, commit, deploy.
+
+Cấp nào phù hợp? Giải thích tại sao trong 3-5 câu — đặc biệt giải thích tại sao có thể cần cả 3 thành phần (scripts + assets + references).`,
+
+    q5: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent SOẠN HỢP ĐỒNG cho khách thuê dịch vụ — đúng luật VN, có điều khoản về thanh toán, IP, NDA, giải quyết tranh chấp.
+
+Cấp nào phù hợp? Giải thích ngắn — đặc biệt tại sao cần references thay vì chỉ template.`,
+
+    q6: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent LÀM BÁO CÁO DOANH THU CUỐI THÁNG — đọc data từ database, tính doanh thu/lãi/khách mới, vẽ biểu đồ, xuất ra slide PowerPoint theo template công ty.
+
+Task này cần cấp nào? Giải thích tại sao — task này tổng hợp những gì.`,
+
+    q7: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent VIẾT CAPTION INSTAGRAM cho mỗi sản phẩm — caption có cấu trúc cố định: Hook + Body + CTA.
+
+Cấp nào phù hợp? Giải thích ngắn gọn.`,
+
+    q8: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent PHÂN TÍCH ĐỐI THỦ CẠNH TRANH — đưa tên đối thủ, agent vào website họ, đọc nội dung, đánh giá điểm mạnh/yếu, viết báo cáo dạng văn bản.
+
+Cấp nào phù hợp? Giải thích ngắn — đặc biệt vì sao KHÔNG cần script crawl.`,
+
+    q9: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent TẠO POSTER QUẢNG CÁO TỰ ĐỘNG — nhập thông tin sự kiện, agent tạo ra ảnh poster có typography đẹp, màu brand, logo công ty.
+
+Cấp nào phù hợp? Giải thích — đặc biệt tại sao tạo ảnh cần script.`,
+
+    q10: `Claude Skills 4 cấp (1=MD thuần, 2=template, 3=script, 4=references, 5=đầy đủ).
+
+Tình huống: Tôi muốn skill cho agent TƯ VẤN ĐẦU TƯ CƠ BẢN — agent hỏi tình hình tài chính khách, gợi ý phân bổ portfolio (cổ phiếu, vàng, gửi tiết kiệm) dựa trên nguyên tắc đầu tư chuẩn (rule of 100, đa dạng hoá...).
+
+Cấp nào phù hợp? Giải thích ngắn — đặc biệt tại sao cần references thay vì nhét hết vào SKILL.md.`
+  };
+
+  // Quiz interaction
+  document.querySelectorAll('.quiz-ask-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const promptKey = btn.getAttribute('data-prompt');
+      const text = quizPrompts[promptKey];
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'ĐÃ COPY · Mở agent';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 2200);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'ĐÃ COPY';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Hỏi AI';
+          btn.classList.remove('copied');
+        }, 2200);
+      });
+    });
+  });
+
+  // Quiz options selection + submit
+  let answeredCount = 0;
+
+  document.querySelectorAll('.quiz-card').forEach(card => {
+    const options = card.querySelectorAll('.quiz-option');
+    const submitBtn = card.querySelector('.quiz-submit');
+    const feedback = card.querySelector('.quiz-feedback');
+    const correctAnswer = card.getAttribute('data-correct');
+    let selectedLetter = null;
+    let answered = false;
+
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        if (answered) return;
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedLetter = opt.getAttribute('data-letter');
+        submitBtn.disabled = false;
+      });
+    });
+
+    submitBtn.addEventListener('click', () => {
+      if (answered || !selectedLetter) return;
+      answered = true;
+      const isCorrect = (selectedLetter === correctAnswer);
+
+      options.forEach(o => {
+        const letter = o.getAttribute('data-letter');
+        if (letter === correctAnswer) o.classList.add('correct');
+        else if (letter === selectedLetter && !isCorrect) o.classList.add('wrong');
+      });
+
+      feedback.style.display = 'block';
+      feedback.classList.add(isCorrect ? 'correct' : 'wrong');
+      const strong = feedback.querySelector('strong');
+      strong.textContent = isCorrect ? '✓ Đúng rồi!' : '✗ Chưa đúng — đọc giải thích bên dưới';
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đã trả lời';
+      card.classList.add('answered');
+
+      answeredCount++;
+      updateProgress();
+    });
+  });
+
+  function updateProgress() {
+    document.getElementById('quiz-done').textContent = answeredCount;
+    document.getElementById('quiz-fill').style.width = (answeredCount * 10) + '%';
+    if (answeredCount === 10) {
+      document.getElementById('quiz-complete').style.display = 'block';
+    }
+  }
+
+  // Checklist toggle
+  // (already handled by inline onclick)
+</script>
+
+</body>
+</html>
