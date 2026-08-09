@@ -20,6 +20,7 @@ const mammoth   = require('mammoth');
 
 const https    = require('https');
 const http     = require('http');
+const crypto   = require('crypto');
 const { Resend } = require('resend');
 
 const app      = express();
@@ -237,6 +238,13 @@ const SCHEMA = `
     token      TEXT    UNIQUE NOT NULL,
     expires_at TEXT    NOT NULL,
     used       INTEGER DEFAULT 0,
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    token      TEXT    UNIQUE NOT NULL,
+    expires_at TEXT    NOT NULL,
     created_at TEXT    DEFAULT (datetime('now','localtime'))
   );
   CREATE TABLE IF NOT EXISTS challenges (
@@ -871,6 +879,12 @@ const CHALLENGE_DAYS_TEACHER = [
     console.log('  Migrated users: added phone.');
   }
 
+  // Migrate users: add admin_pin_hash (2nd factor PIN for community admins logging into admin.html)
+  if (!userCols2.includes('admin_pin_hash')) {
+    db.exec('ALTER TABLE users ADD COLUMN admin_pin_hash TEXT');
+    console.log('  Migrated users: added admin_pin_hash.');
+  }
+
   // Migrate spaces: add group_id, backfill a default group for ungrouped spaces
   const spaceCols = db.all('PRAGMA table_info(spaces)').map(c => c.name);
   if (!spaceCols.includes('group_id')) {
@@ -1299,10 +1313,23 @@ QUY TẮC BẮT BUỘC:
   }
 
   // ── Admin middleware ───────────────────────────────────────
+  // Accepts either the shared ADMIN_KEY (master/bootstrap) or a per-admin
+  // session token from /api/admin/login. The session's is_admin/status are
+  // re-checked on every request, so revoking admin access takes effect immediately.
   function requireAdmin(req, res, next) {
-    if (req.headers['x-admin-key'] !== ADMIN_KEY)
-      return res.status(401).json({ error: 'Unauthorized' });
-    next();
+    const key = req.headers['x-admin-key'];
+    if (!key) return res.status(401).json({ error: 'Unauthorized' });
+    if (key === ADMIN_KEY) return next();
+
+    const session = db.get(
+      `SELECT u.is_admin, u.status FROM admin_sessions s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.token = ? AND s.expires_at > datetime('now','localtime')`,
+      [key]
+    );
+    if (session && session.is_admin && session.status === 'active') return next();
+
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1795,6 +1822,57 @@ QUY TẮC BẮT BUỘC:
     res.json({ ok: req.body.key === ADMIN_KEY });
   });
 
+  // Admin login for community admins (is_admin=1): email + password + 6-digit PIN.
+  // Separate from /api/auth/login — issues a short-lived admin_sessions token instead
+  // of trusting a client-supplied user id, since this gates destructive back-office actions.
+  const adminLoginAttempts = new Map(); // email -> { count, resetAt }
+  app.post('/api/admin/login', (req, res) => {
+    const { email, password, pin } = req.body;
+    if (!email || !password || !pin)
+      return res.status(400).json({ error: 'Vui lòng nhập đủ email, mật khẩu và mã PIN.' });
+
+    const attempt = adminLoginAttempts.get(email);
+    if (attempt && attempt.count >= 5 && Date.now() < attempt.resetAt)
+      return res.status(429).json({ error: 'Sai quá nhiều lần. Vui lòng thử lại sau ít phút.' });
+
+    const fail = (msg) => {
+      const a = adminLoginAttempts.get(email) || { count: 0, resetAt: 0 };
+      a.count += 1;
+      a.resetAt = Date.now() + 15 * 60 * 1000;
+      adminLoginAttempts.set(email, a);
+      return res.status(401).json({ error: msg });
+    };
+
+    const user = db.get('SELECT * FROM users WHERE email = ?', [email]);
+    if (!user || !user.is_admin) return fail('Email hoặc mật khẩu không đúng.');
+    if (user.status !== 'active') return res.status(403).json({ error: 'Tài khoản đã bị khoá.' });
+    if (!user.password_hash)
+      return fail('Tài khoản này đăng nhập bằng Google, chưa có mật khẩu. Hãy đặt mật khẩu qua "Quên mật khẩu" trước.');
+    if (!bcrypt.compareSync(password, user.password_hash)) return fail('Email hoặc mật khẩu không đúng.');
+    if (!user.admin_pin_hash) return fail('Tài khoản chưa được cấp mã PIN admin. Liên hệ quản trị viên.');
+    if (!bcrypt.compareSync(pin, user.admin_pin_hash)) return fail('Mã PIN không đúng.');
+
+    adminLoginAttempts.delete(email);
+    db.run("DELETE FROM admin_sessions WHERE expires_at < datetime('now','localtime')");
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+    db.run('INSERT INTO admin_sessions (user_id, token, expires_at) VALUES (?,?,?)', [user.id, token, expiresAt]);
+
+    res.json({
+      success: true,
+      token,
+      user: { id: user.id, first_name: user.first_name, last_name: user.last_name, email: user.email },
+    });
+  });
+
+  // Logout — invalidate the current session token (no-op for the master ADMIN_KEY)
+  app.post('/api/admin/logout', requireAdmin, (req, res) => {
+    const key = req.headers['x-admin-key'];
+    if (key !== ADMIN_KEY) db.run('DELETE FROM admin_sessions WHERE token = ?', [key]);
+    res.json({ success: true });
+  });
+
   // Stats
   app.get('/api/admin/stats', requireAdmin, (_req, res) => {
     const total_users  = db.get('SELECT COUNT(*) AS n FROM users').n;
@@ -1852,7 +1930,19 @@ QUY TẮC BẮT BUỘC:
   });
 
   app.patch('/api/admin/users/:id/admin', requireAdmin, (req, res) => {
-    db.run('UPDATE users SET is_admin = ? WHERE id = ?', [req.body.is_admin ? 1 : 0, req.params.id]);
+    const isAdmin = req.body.is_admin ? 1 : 0;
+    db.run('UPDATE users SET is_admin = ? WHERE id = ?', [isAdmin, req.params.id]);
+    if (!isAdmin) db.run('DELETE FROM admin_sessions WHERE user_id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // Set/reset an admin's 6-digit PIN (2nd factor for admin.html login)
+  app.patch('/api/admin/users/:id/pin', requireAdmin, (req, res) => {
+    const { pin } = req.body;
+    if (!/^\d{6}$/.test(pin || ''))
+      return res.status(400).json({ error: 'Mã PIN phải gồm đúng 6 chữ số.' });
+    const hash = bcrypt.hashSync(pin, 10);
+    db.run('UPDATE users SET admin_pin_hash = ? WHERE id = ?', [hash, req.params.id]);
     res.json({ success: true });
   });
 

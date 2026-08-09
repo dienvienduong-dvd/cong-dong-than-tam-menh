@@ -189,6 +189,22 @@
       background: var(--primary-d);
     }
 
+    .login-switch {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .login-switch a {
+      color: #94a3b8;
+      text-decoration: none;
+    }
+
+    .login-switch a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
     /* ── App shell ─────────────────────────────────── */
     #shell {
       display: flex;
@@ -1036,12 +1052,36 @@
       <h2>Admin Panel</h2>
       <p>Đăng nhập để quản lý hệ thống</p>
       <div class="login-error" id="loginErr"></div>
-      <div class="login-field">
-        <label>Admin Key</label>
-        <input type="password" id="adminKeyInput" placeholder="Nhập admin key..."
-          onkeydown="if(event.key==='Enter') doLogin()">
+
+      <div id="loginFormAdmin">
+        <div class="login-field">
+          <label>Email</label>
+          <input type="email" id="adminEmailInput" placeholder="you@example.com"
+            onkeydown="if(event.key==='Enter') doLoginAdmin()">
+        </div>
+        <div class="login-field">
+          <label>Mật khẩu</label>
+          <input type="password" id="adminPasswordInput" placeholder="Mật khẩu tài khoản..."
+            onkeydown="if(event.key==='Enter') doLoginAdmin()">
+        </div>
+        <div class="login-field">
+          <label>Mã PIN (6 số)</label>
+          <input type="password" inputmode="numeric" maxlength="6" id="adminPinInput" placeholder="••••••"
+            onkeydown="if(event.key==='Enter') doLoginAdmin()">
+        </div>
+        <button class="login-btn" onclick="doLoginAdmin()">Đăng nhập</button>
+        <div class="login-switch"><a href="#" onclick="toggleLoginMode(event)">Đăng nhập bằng Admin Key</a></div>
       </div>
-      <button class="login-btn" onclick="doLogin()">Đăng nhập</button>
+
+      <div id="loginFormKey" style="display:none">
+        <div class="login-field">
+          <label>Admin Key</label>
+          <input type="password" id="adminKeyInput" placeholder="Nhập admin key..."
+            onkeydown="if(event.key==='Enter') doLoginMasterKey()">
+        </div>
+        <button class="login-btn" onclick="doLoginMasterKey()">Đăng nhập</button>
+        <div class="login-switch"><a href="#" onclick="toggleLoginMode(event)">Đăng nhập bằng tài khoản Admin</a></div>
+      </div>
     </div>
   </div>
 
@@ -3468,7 +3508,43 @@
     let currentPage = 'dashboard';
 
     // ── Auth ──────────────────────────────────────────────────────
-    async function doLogin() {
+    function toggleLoginMode(e) {
+      e.preventDefault();
+      const showKey = document.getElementById('loginFormAdmin').style.display !== 'none';
+      document.getElementById('loginFormAdmin').style.display = showKey ? 'none' : 'block';
+      document.getElementById('loginFormKey').style.display = showKey ? 'block' : 'none';
+      document.getElementById('loginErr').style.display = 'none';
+    }
+
+    function enterShell() {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('shell').style.display = 'flex';
+      loadDashboard();
+      loadSettings();
+    }
+
+    async function doLoginAdmin() {
+      const email = document.getElementById('adminEmailInput').value.trim();
+      const password = document.getElementById('adminPasswordInput').value;
+      const pin = document.getElementById('adminPinInput').value.trim();
+      if (!email || !password || !pin) return;
+      try {
+        const r = await fetch(`${API}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, pin })
+        });
+        const d = await r.json();
+        if (!r.ok) { showLoginErr(d.error || 'Đăng nhập thất bại.'); return; }
+        adminKey = d.token;
+        sessionStorage.setItem('adminKey', d.token);
+        enterShell();
+      } catch (e) {
+        showLoginErr('Không kết nối được server. Chạy: node server.js');
+      }
+    }
+
+    async function doLoginMasterKey() {
       const key = document.getElementById('adminKeyInput').value.trim();
       if (!key) return;
       try {
@@ -3481,17 +3557,16 @@
         if (!d.ok) { showLoginErr('Admin key không đúng.'); return; }
         adminKey = key;
         sessionStorage.setItem('adminKey', key);
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('shell').style.display = 'flex';
-        loadDashboard();
-        loadSettings();
+        enterShell();
       } catch (e) {
         showLoginErr('Không kết nối được server. Chạy: node server.js');
       }
     }
 
     function doLogout() {
+      const key = adminKey;
       sessionStorage.removeItem('adminKey');
+      fetch(`${API}/admin/logout`, { method: 'POST', headers: { 'x-admin-key': key } }).catch(() => {});
       location.reload();
     }
 
@@ -3579,6 +3654,11 @@
         ...opts,
         headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json', ...(opts.headers || {}) }
       });
+      if (res.status === 401) {
+        sessionStorage.removeItem('adminKey');
+        location.reload();
+        throw new Error('Phiên đăng nhập đã hết hạn.');
+      }
       let data;
       try { data = await res.json(); } catch { throw new Error(`Server lỗi ${res.status} — không đọc được JSON`); }
       if (!res.ok) throw new Error(data?.error || `Lỗi ${res.status}`);
@@ -3691,6 +3771,7 @@
         <button class="act-btn ${u.is_admin ? 'danger' : 'success'}" onclick="toggleAdmin(${u.id},${u.is_admin ? 0 : 1})">
           ${u.is_admin ? '👑 Bỏ Admin' : 'Đặt làm Admin'}
         </button>
+        ${u.is_admin ? `<button class="act-btn" onclick="setAdminPin(${u.id})">🔑 Đặt/Đổi PIN</button>` : ''}
       </td>
       <td>
         ${u.status === 'active'
@@ -3729,6 +3810,15 @@
       await api(`/admin/users/${id}/admin`, { method: 'PATCH', body: JSON.stringify({ is_admin: isAdmin }) });
       showToast(isAdmin ? 'Đã đặt làm Admin cộng đồng.' : 'Đã bỏ quyền Admin cộng đồng.', 'green');
       loadUsers(false);
+      if (isAdmin) setAdminPin(id);
+    }
+
+    async function setAdminPin(id) {
+      const pin = prompt('Nhập mã PIN 6 số để đăng nhập admin.html (email + mật khẩu + PIN này):');
+      if (pin === null) return;
+      if (!/^\d{6}$/.test(pin)) { showToast('Mã PIN phải gồm đúng 6 chữ số.', 'red'); return; }
+      await api(`/admin/users/${id}/pin`, { method: 'PATCH', body: JSON.stringify({ pin }) });
+      showToast('Đã cập nhật mã PIN admin.', 'green');
     }
 
     async function deleteUser(id, name) {
