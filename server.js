@@ -1789,8 +1789,24 @@ QUY TẮC BẮT BUỘC:
     db.run('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?,?,?)',
       [user.id, token, expires_at]);
 
-    // In production: send email with reset link. In dev: return token in response.
-    res.json({ success: true, dev_token: token, dev_hint: `Dùng token này tại /reset-password.html?token=${token}` });
+    const resetLink = `https://chuongcm.com/reset-password.html?token=${token}`;
+    sendEmail({
+      to: user.email,
+      subject: '🔑 Đặt lại mật khẩu — Cộng đồng IELTS Chương Cà Mau',
+      html: emailWrap('Đặt lại mật khẩu', `
+        <p>Xin chào <strong>${user.first_name}</strong>,</p>
+        <p>Có yêu cầu đặt lại mật khẩu cho tài khoản này. Bấm nút bên dưới để đặt mật khẩu mới (link có hiệu lực trong 1 giờ):</p>
+        <a class="btn" href="${resetLink}">Đặt lại mật khẩu</a>
+        <p>Nếu bạn không yêu cầu điều này, hãy bỏ qua email — mật khẩu hiện tại của bạn vẫn an toàn.</p>
+      `)
+    });
+
+    // No RESEND_API_KEY configured (local dev) — fall back to returning the token directly
+    // instead of silently failing, since there's no way to deliver the email.
+    if (!resendClient)
+      return res.json({ success: true, dev_token: token, dev_hint: `Dùng token này tại /reset-password.html?token=${token}` });
+
+    res.json({ success: true });
   });
 
   // Reset password — use token to set new password
