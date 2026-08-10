@@ -6304,10 +6304,13 @@
     }
 
     async function saveIeltsTest() {
-      // If the AI/JSON box still has unread content and we're creating a new test (not
-      // editing one), that JSON is almost certainly what the admin actually means to save —
-      // "Thêm đề" here used to silently ignore it and create a test with zero questions.
-      if (!editingIeltsTestId && document.getElementById('ieltsImportJson').value.trim()) {
+      // If the AI/JSON box still has unread content, we're creating a new test (not editing
+      // one), AND the admin hasn't typed a manual title, that JSON is almost certainly what
+      // they mean to save. But if they HAVE typed a title, they're filling the form by hand —
+      // delegating to the stale JSON here would silently discard everything they just typed
+      // and re-create old content instead, which is exactly the bug this used to cause.
+      if (!editingIeltsTestId && !document.getElementById('ieltsTitle').value.trim()
+          && document.getElementById('ieltsImportJson').value.trim()) {
         return importIeltsJson();
       }
 
