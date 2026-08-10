@@ -3573,11 +3573,15 @@ QUY TẮC BẮT BUỘC:
 
   app.patch('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
     const {
-      title, description, time_limit_minutes, status, max_score, passages,
+      skill, title, description, time_limit_minutes, status, max_score, passages,
       task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url, questions,
     } = req.body;
     const t = db.get('SELECT id FROM ielts_tests WHERE id = ?', [req.params.id]);
     if (!t) return res.status(404).json({ error: 'Đề không tồn tại.' });
+    if (skill !== undefined) {
+      if (!['reading', 'writing', 'listening', 'speaking'].includes(skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
+      db.run('UPDATE ielts_tests SET skill = ? WHERE id = ?', [skill, req.params.id]);
+    }
     if (title !== undefined)              db.run('UPDATE ielts_tests SET title = ? WHERE id = ?', [title, req.params.id]);
     if (description !== undefined)        db.run('UPDATE ielts_tests SET description = ? WHERE id = ?', [description, req.params.id]);
     if (time_limit_minutes !== undefined) db.run('UPDATE ielts_tests SET time_limit_minutes = ? WHERE id = ?', [Number(time_limit_minutes) || 60, req.params.id]);
