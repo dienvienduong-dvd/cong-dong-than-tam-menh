@@ -251,6 +251,15 @@ const SCHEMA = `
     key   TEXT PRIMARY KEY,
     value TEXT
   );
+  CREATE TABLE IF NOT EXISTS ai_providers (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT    NOT NULL,
+    provider_type TEXT    NOT NULL,
+    api_key       TEXT    NOT NULL,
+    model         TEXT,
+    is_active     INTEGER DEFAULT 0,
+    created_at    TEXT    DEFAULT (datetime('now','localtime'))
+  );
   CREATE TABLE IF NOT EXISTS challenges (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     title       TEXT NOT NULL,
@@ -636,11 +645,112 @@ const CHALLENGE_DAYS_TEACHER = [
 
   db.exec(SCHEMA);
 
-  // Admin-configured OpenRouter key (admin_secrets, set via admin.html) takes priority over
-  // the .env value — lets an admin rotate/add the key without SSH access or a restart.
+  // Legacy single-key storage (admin_secrets, from before multi-provider support) — only
+  // read once below to seed ai_providers on first boot, not used at runtime after that.
   function getOpenRouterKey() {
     const row = db.get("SELECT value FROM admin_secrets WHERE key = 'openrouter_api_key'");
     return (row && row.value) || OPENROUTER_KEY;
+  }
+
+  // One-time migration: turn whatever OpenRouter key was already configured (admin_secrets
+  // or .env) into the first ai_providers row, so switching to the multi-provider model doesn't
+  // interrupt the 3 AI features on an already-running deployment.
+  if (db.get('SELECT COUNT(*) AS n FROM ai_providers').n === 0) {
+    const legacyKey = getOpenRouterKey();
+    if (legacyKey) {
+      db.run(
+        'INSERT INTO ai_providers (name, provider_type, api_key, model, is_active) VALUES (?,?,?,?,1)',
+        ['OpenRouter (mặc định)', 'openrouter', legacyKey, 'google/gemini-2.5-flash']
+      );
+      console.log('  Migrated legacy OpenRouter key into ai_providers.');
+    }
+  }
+
+  function getActiveAiProvider() {
+    return db.get('SELECT * FROM ai_providers WHERE is_active = 1 LIMIT 1') || null;
+  }
+
+  function maskKey(key) {
+    if (!key || key.length <= 8) return '****';
+    return `${key.slice(0, 5)}...${key.slice(-4)}`;
+  }
+
+  // Unified chat call across providers. `messages` is OpenAI-style [{role, content}] (role:
+  // system/user/assistant) — the shape every caller already builds. Returns a normalized
+  // { ok, text, truncated, error } regardless of which provider actually served the request.
+  async function callAiChat({ messages, maxTokens, disableReasoning = false }) {
+    const provider = getActiveAiProvider();
+    if (!provider) return { ok: false, error: 'Chưa cấu hình API AI. Vào Cài đặt > AI để thêm.' };
+
+    if (provider.provider_type === 'google_ai_studio') {
+      return callGoogleAiStudio({ provider, messages, maxTokens, disableReasoning });
+    }
+    return callOpenRouterChat({ provider, messages, maxTokens, disableReasoning });
+  }
+
+  async function callOpenRouterChat({ provider, messages, maxTokens, disableReasoning }) {
+    try {
+      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${provider.api_key}`,
+          'HTTP-Referer': 'https://chuongcm.com',
+          'X-Title': 'Chuong Ca Mau IELTS Community',
+        },
+        body: JSON.stringify({
+          model: provider.model || 'google/gemini-2.5-flash',
+          max_tokens: maxTokens,
+          ...(disableReasoning ? { reasoning: { enabled: false } } : {}),
+          messages,
+        }),
+      });
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        console.error('[AI/OpenRouter] error:', apiRes.status, errText);
+        return { ok: false, error: 'AI service error' };
+      }
+      const data = await apiRes.json();
+      const choice = data.choices?.[0];
+      return { ok: true, text: choice?.message?.content || '', truncated: choice?.finish_reason === 'length' };
+    } catch (err) {
+      console.error('[AI/OpenRouter] Error:', err.message);
+      return { ok: false, error: err.message };
+    }
+  }
+
+  async function callGoogleAiStudio({ provider, messages, maxTokens, disableReasoning }) {
+    const model = provider.model || 'gemini-2.5-flash';
+    const systemMsg = messages.find(m => m.role === 'system');
+    const turns = messages.filter(m => m.role !== 'system')
+      .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+    const body = {
+      contents: turns,
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        ...(disableReasoning ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+      },
+    };
+    if (systemMsg) body.system_instruction = { parts: [{ text: systemMsg.content }] };
+
+    try {
+      const apiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${provider.api_key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        console.error('[AI/GoogleAIStudio] error:', apiRes.status, errText);
+        return { ok: false, error: 'AI service error' };
+      }
+      const data = await apiRes.json();
+      const candidate = data.candidates?.[0];
+      const text = candidate?.content?.parts?.map(p => p.text || '').join('') || '';
+      return { ok: true, text, truncated: candidate?.finishReason === 'MAX_TOKENS' };
+    } catch (err) {
+      console.error('[AI/GoogleAIStudio] Error:', err.message);
+      return { ok: false, error: err.message };
+    }
   }
 
   // Migrate challenge_days: add challenge_id + instructions if missing
@@ -1121,8 +1231,6 @@ const CHALLENGE_DAYS_TEACHER = [
   }
 
   async function gradeExerciseWithGemini({ lessonTitle, exercisePrompt, rubric, maxScore, studentAnswer, ieltsWriting = null }) {
-    if (!getOpenRouterKey()) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
-
     const systemPrompt = ieltsWriting
       ? `Bạn là giám khảo chấm thi IELTS Writing ${ieltsWriting.taskType === 'task1' ? 'Task 1' : 'Task 2'} cho khoá học "${lessonTitle}". Chấm nghiêm túc theo đúng 4 tiêu chí chính thức của IELTS Writing: Task Response/Achievement, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.
 
@@ -1146,32 +1254,16 @@ QUY TẮC BẮT BUỘC:
     const userPrompt = `ĐỀ BÀI (học viên thấy):\n${exercisePrompt}\n\nTIÊU CHÍ CHẤM ĐIỂM (nội bộ, học viên không thấy):\n${rubric || '(không có tiêu chí riêng, chấm theo mức độ đúng/đủ so với đề bài)'}\n\nBÀI LÀM CỦA HỌC VIÊN:\n${studentAnswer}`;
 
     try {
-      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getOpenRouterKey()}`,
-          'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Chuong Ca Mau IELTS Community Exercise Grading'
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          max_tokens: 1500,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ]
-        })
+      const result = await callAiChat({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        maxTokens: 1500,
       });
+      if (!result.ok) return { ok: false, error: result.error };
 
-      if (!apiRes.ok) {
-        const errText = await apiRes.text();
-        console.error('[ExerciseGrade] OpenRouter error:', apiRes.status, errText);
-        return { ok: false, error: 'AI service error' };
-      }
-
-      const data = await apiRes.json();
-      const raw = data.choices?.[0]?.message?.content || '';
+      const raw = result.text;
       const parsed = extractJsonObject(raw);
 
       let score = Number(parsed.score);
@@ -1208,8 +1300,6 @@ QUY TẮC BẮT BUỘC:
   // expects. The result is returned to the admin for review — it is never saved automatically,
   // since a misread answer key would silently mis-grade every student who takes the test.
   async function extractIeltsTestFromText(rawText) {
-    if (!getOpenRouterKey()) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
-
     const systemPrompt = `Bạn là trợ lý chuyển đổi đề thi IELTS từ văn bản thô (trích từ file PDF/DOCX, có thể lộn xộn định dạng) sang JSON có cấu trúc để nhập vào ngân hàng đề.
 
 Trước tiên xác định đây là đề dạng nào:
@@ -1259,40 +1349,23 @@ QUY TẮC BẮT BUỘC:
     const userPrompt = `NỘI DUNG FILE ĐỀ THI (văn bản thô trích xuất từ PDF/DOCX):\n\n${rawText.slice(0, MAX_CHARS)}${truncated ? '\n\n[... văn bản đã bị cắt bớt do quá dài ...]' : ''}`;
 
     try {
-      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getOpenRouterKey()}`,
-          'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Chuong Ca Mau IELTS Community Test Extraction'
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          max_tokens: 60000,
-          // This is a straightforward text→JSON restructuring task, not a reasoning task — Gemini 2.5
-          // Flash's internal "thinking" tokens otherwise eat into the same max_tokens budget as the
-          // actual JSON output, which is what was truncating large (40+ question) tests mid-string.
-          reasoning: { enabled: false },
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ]
-        })
+      // This is a straightforward text→JSON restructuring task, not a reasoning task — Gemini
+      // 2.5's internal "thinking" tokens otherwise eat into the same maxTokens budget as the
+      // actual JSON output, which is what was truncating large (40+ question) tests mid-string.
+      const result = await callAiChat({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        maxTokens: 60000,
+        disableReasoning: true,
       });
+      if (!result.ok) return { ok: false, error: result.error };
 
-      if (!apiRes.ok) {
-        const errText = await apiRes.text();
-        console.error('[IeltsExtract] OpenRouter error:', apiRes.status, errText);
-        return { ok: false, error: 'AI service error' };
-      }
+      const raw = result.text;
 
-      const data = await apiRes.json();
-      const choice = data.choices?.[0];
-      const raw = choice?.message?.content || '';
-
-      if (choice?.finish_reason === 'length') {
-        console.error('[IeltsExtract] Truncated: AI response hit max_tokens before completing JSON.');
+      if (result.truncated) {
+        console.error('[IeltsExtract] Truncated: AI response hit max tokens before completing JSON.');
         return { ok: false, error: 'Đề quá dài — AI bị cắt nội dung giữa chừng nên không tạo được JSON hợp lệ. Hãy thử với file ngắn hơn (VD: tách riêng từng Part/passage) rồi thử lại.' };
       }
 
@@ -3846,32 +3919,61 @@ QUY TẮC BẮT BUỘC:
     res.json({ success: true });
   });
 
-  // AI (OpenRouter) key — kept out of site_settings/admin/settings on purpose since
+  // AI providers — kept out of site_settings/admin/settings on purpose since
   // GET /api/settings is public and returns that whole table unfiltered.
-  function maskKey(key) {
-    if (key.length <= 8) return '****';
-    return `${key.slice(0, 5)}...${key.slice(-4)}`;
-  }
+  const AI_PROVIDER_TYPES = ['openrouter', 'google_ai_studio'];
 
-  app.get('/api/admin/ai-settings', requireAdmin, (req, res) => {
-    const row = db.get("SELECT value FROM admin_secrets WHERE key = 'openrouter_api_key'");
-    if (row && row.value) return res.json({ configured: true, source: 'db', masked: maskKey(row.value) });
-    if (OPENROUTER_KEY) return res.json({ configured: true, source: 'env', masked: maskKey(OPENROUTER_KEY) });
-    res.json({ configured: false, source: 'none', masked: null });
+  app.get('/api/admin/ai-providers', requireAdmin, (req, res) => {
+    const rows = db.all('SELECT * FROM ai_providers ORDER BY created_at ASC');
+    res.json({
+      providers: rows.map(r => ({
+        id: r.id, name: r.name, provider_type: r.provider_type, model: r.model,
+        masked: maskKey(r.api_key), is_active: !!r.is_active, created_at: r.created_at,
+      })),
+    });
   });
 
-  app.patch('/api/admin/ai-settings', requireAdmin, (req, res) => {
-    const key = (req.body.openrouter_api_key || '').trim();
-    if (!key) return res.status(400).json({ error: 'Vui lòng nhập API key.' });
-    db.run(
-      "INSERT INTO admin_secrets (key, value) VALUES ('openrouter_api_key', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-      [key]
+  app.post('/api/admin/ai-providers', requireAdmin, (req, res) => {
+    const { name, provider_type, api_key, model } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Vui lòng nhập tên.' });
+    if (!AI_PROVIDER_TYPES.includes(provider_type)) return res.status(400).json({ error: 'Nhà cung cấp không hợp lệ.' });
+    if (!api_key?.trim()) return res.status(400).json({ error: 'Vui lòng nhập API key.' });
+    const isFirst = db.get('SELECT COUNT(*) AS n FROM ai_providers').n === 0;
+    const r = db.run(
+      'INSERT INTO ai_providers (name, provider_type, api_key, model, is_active) VALUES (?,?,?,?,?)',
+      [name.trim(), provider_type, api_key.trim(), (model || '').trim() || null, isFirst ? 1 : 0]
     );
-    res.json({ success: true, masked: maskKey(key) });
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
   });
 
-  app.delete('/api/admin/ai-settings', requireAdmin, (req, res) => {
-    db.run("DELETE FROM admin_secrets WHERE key = 'openrouter_api_key'");
+  app.patch('/api/admin/ai-providers/:id', requireAdmin, (req, res) => {
+    const { name, provider_type, api_key, model } = req.body;
+    const t = db.get('SELECT id FROM ai_providers WHERE id = ?', [req.params.id]);
+    if (!t) return res.status(404).json({ error: 'Không tìm thấy.' });
+    if (provider_type !== undefined && !AI_PROVIDER_TYPES.includes(provider_type)) return res.status(400).json({ error: 'Nhà cung cấp không hợp lệ.' });
+    if (name !== undefined)          db.run('UPDATE ai_providers SET name = ? WHERE id = ?', [name.trim(), req.params.id]);
+    if (provider_type !== undefined) db.run('UPDATE ai_providers SET provider_type = ? WHERE id = ?', [provider_type, req.params.id]);
+    if (model !== undefined)         db.run('UPDATE ai_providers SET model = ? WHERE id = ?', [(model || '').trim() || null, req.params.id]);
+    if (api_key?.trim())             db.run('UPDATE ai_providers SET api_key = ? WHERE id = ?', [api_key.trim(), req.params.id]);
+    res.json({ success: true });
+  });
+
+  app.delete('/api/admin/ai-providers/:id', requireAdmin, (req, res) => {
+    const t = db.get('SELECT is_active FROM ai_providers WHERE id = ?', [req.params.id]);
+    if (!t) return res.status(404).json({ error: 'Không tìm thấy.' });
+    db.run('DELETE FROM ai_providers WHERE id = ?', [req.params.id]);
+    if (t.is_active) {
+      const next = db.get('SELECT id FROM ai_providers ORDER BY created_at DESC LIMIT 1');
+      if (next) db.run('UPDATE ai_providers SET is_active = 1 WHERE id = ?', [next.id]);
+    }
+    res.json({ success: true });
+  });
+
+  app.post('/api/admin/ai-providers/:id/activate', requireAdmin, (req, res) => {
+    const t = db.get('SELECT id FROM ai_providers WHERE id = ?', [req.params.id]);
+    if (!t) return res.status(404).json({ error: 'Không tìm thấy.' });
+    db.run('UPDATE ai_providers SET is_active = 0');
+    db.run('UPDATE ai_providers SET is_active = 1 WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   });
 
@@ -4907,10 +5009,6 @@ Sau khi có đủ thông tin 5 chặng:
       return res.json({ reply: INTAKE_OPENING, isComplete: false, profile: null });
     }
 
-    if (!getOpenRouterKey()) {
-      return res.status(503).json({ error: 'OPENROUTER_API_KEY chưa được cấu hình. Vui lòng thêm vào file .env.' });
-    }
-
     // Prepend opening message so AI knows the full context
     const fullMessages = [
       { role: 'system', content: INTAKE_SYSTEM },
@@ -4919,29 +5017,10 @@ Sau khi có đủ thông tin 5 chặng:
     ];
 
     try {
-      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getOpenRouterKey()}`,
-          'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Chuong Ca Mau IELTS Community Intake'
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          max_tokens: 1500,
-          messages: fullMessages
-        })
-      });
+      const result = await callAiChat({ messages: fullMessages, maxTokens: 1500 });
+      if (!result.ok) return res.status(503).json({ error: result.error });
 
-      if (!apiRes.ok) {
-        const errText = await apiRes.text();
-        console.error('[Intake] OpenRouter error:', apiRes.status, errText);
-        return res.status(502).json({ error: 'AI service error' });
-      }
-
-      const data = await apiRes.json();
-      const raw = data.choices?.[0]?.message?.content || '';
+      const raw = result.text;
 
       const profileStart = raw.indexOf('===PROFILE_START===');
       const profileEnd   = raw.indexOf('===PROFILE_END===');

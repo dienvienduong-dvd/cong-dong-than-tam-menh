@@ -2600,25 +2600,48 @@
         </div>
         </div>
 
-        <!-- AI (OpenRouter) -->
+        <!-- AI providers -->
         <div class="settings-tab-panel" data-tab="ai">
-        <div class="table-card" style="max-width:600px;">
+        <div class="table-card" style="max-width:720px;">
           <div class="table-card-header">
-            <h2>🤖 Kết nối AI (OpenRouter)</h2>
+            <h2>🤖 Kết nối AI</h2>
           </div>
           <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
             <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-              API key này dùng cho 3 tính năng: chấm bài tập tự động, trích xuất đề thi từ file (Kho đề IELTS), và chatbot intake.
-              Lấy key tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>.
+              Danh sách API dùng cho 3 tính năng: chấm bài tập tự động, trích xuất đề thi từ file (Kho đề IELTS), và chatbot intake — chỉ 1 API "Đang dùng" được áp dụng cho cả 3 cùng lúc.
+              Lấy key tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> (OpenRouter) hoặc <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Google AI Studio).
             </div>
-            <div id="aiKeyStatus" style="padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;"></div>
-            <div class="login-field" style="margin-bottom:0;">
-              <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">API key mới</label>
-              <input type="password" id="aiKeyInput" class="search-input" style="width:100%;" placeholder="sk-or-v1-...">
-            </div>
-            <div style="display:flex;gap:10px;">
-              <button class="btn-sm primary" onclick="saveAiSettings()">💾 Lưu</button>
-              <button class="btn-sm" id="aiKeyClearBtn" style="display:none;color:#dc2626;" onclick="clearAiSettings()">🗑️ Xoá key đã lưu</button>
+
+            <table class="data-table" style="width:100%;">
+              <thead><tr><th>Tên</th><th>Nhà cung cấp</th><th>Model</th><th>Key</th><th>Trạng thái</th><th></th></tr></thead>
+              <tbody id="aiProviderList"></tbody>
+            </table>
+            <button class="btn-sm" onclick="showAiProviderForm()">+ Thêm API</button>
+
+            <div id="aiProviderForm" style="display:none;border-top:1px solid var(--border);padding-top:16px;flex-direction:column;gap:12px;">
+              <div class="login-field" style="margin-bottom:0;">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tên</label>
+                <input type="text" id="aiProvName" class="search-input" style="width:100%;" placeholder="VD: OpenRouter chính, Gemini dự phòng...">
+              </div>
+              <div class="login-field" style="margin-bottom:0;">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Nhà cung cấp</label>
+                <select id="aiProvType" class="search-input" style="width:100%;" onchange="updateAiProvModelPlaceholder()">
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="google_ai_studio">Google AI Studio</option>
+                </select>
+              </div>
+              <div class="login-field" style="margin-bottom:0;">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">API key <span id="aiProvKeyHint" style="font-weight:400;"></span></label>
+                <input type="password" id="aiProvKey" class="search-input" style="width:100%;" placeholder="sk-or-v1-...">
+              </div>
+              <div class="login-field" style="margin-bottom:0;">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Model (tuỳ chọn)</label>
+                <input type="text" id="aiProvModel" class="search-input" style="width:100%;" placeholder="google/gemini-2.5-flash">
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn-sm primary" onclick="saveAiProvider()">💾 Lưu</button>
+                <button class="btn-sm" onclick="hideAiProviderForm()">Huỷ</button>
+              </div>
             </div>
           </div>
         </div>
@@ -4965,47 +4988,112 @@
           'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến';
         updateCoursesHeroPreview();
       } catch (e) { showToast('Không tải được cài đặt.', 'red'); }
-      loadAiSettings();
+      loadAiProviders();
     }
 
-    // ── AI (OpenRouter) settings ─────────────────────────────────
-    async function loadAiSettings() {
-      const el = document.getElementById('aiKeyStatus');
+    // ── AI providers ──────────────────────────────────────────────
+    const AI_PROVIDER_LABELS = { openrouter: 'OpenRouter', google_ai_studio: 'Google AI Studio' };
+    const AI_PROVIDER_MODEL_PLACEHOLDER = { openrouter: 'google/gemini-2.5-flash', google_ai_studio: 'gemini-2.5-flash' };
+    let editingAiProviderId = null;
+
+    async function loadAiProviders() {
+      const tbody = document.getElementById('aiProviderList');
       try {
-        const s = await api('/admin/ai-settings');
-        document.getElementById('aiKeyClearBtn').style.display = s.source === 'db' ? 'inline-block' : 'none';
-        if (!s.configured) {
-          el.innerHTML = '⚠️ Chưa cấu hình API key.';
-        } else if (s.source === 'db') {
-          el.innerHTML = `✅ Đang dùng key: <code>${s.masked}</code> (đã lưu qua trang admin)`;
-        } else {
-          el.innerHTML = `✅ Đang dùng key: <code>${s.masked}</code> (nguồn: .env server)`;
-        }
+        const { providers } = await api('/admin/ai-providers');
+        tbody.innerHTML = providers.length ? providers.map(p => `
+          <tr>
+            <td>${escHtml(p.name)}</td>
+            <td>${AI_PROVIDER_LABELS[p.provider_type] || p.provider_type}</td>
+            <td style="color:var(--muted);">${escHtml(p.model || '(mặc định)')}</td>
+            <td><code>${p.masked}</code></td>
+            <td>${p.is_active
+              ? '<span class="badge badge-active">● Đang dùng</span>'
+              : `<button class="act-btn" onclick="activateAiProvider(${p.id})">Dùng cái này</button>`}</td>
+            <td>
+              <button class="act-btn" onclick="editAiProvider(${p.id})">Sửa</button>
+              <button class="act-btn danger" onclick="deleteAiProvider(${p.id})">Xoá</button>
+            </td>
+          </tr>`).join('') : '<tr><td colspan="6" style="color:var(--muted);text-align:center;">Chưa có API nào.</td></tr>';
       } catch (e) {
-        el.textContent = 'Không tải được trạng thái AI key.';
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--red);">Không tải được danh sách.</td></tr>`;
       }
     }
 
-    async function saveAiSettings() {
-      const input = document.getElementById('aiKeyInput');
-      const key = input.value.trim();
-      if (!key) { showToast('Vui lòng nhập API key.', 'red'); return; }
+    function updateAiProvModelPlaceholder() {
+      const type = document.getElementById('aiProvType').value;
+      document.getElementById('aiProvModel').placeholder = AI_PROVIDER_MODEL_PLACEHOLDER[type] || '';
+    }
+
+    function showAiProviderForm() {
+      editingAiProviderId = null;
+      document.getElementById('aiProvName').value = '';
+      document.getElementById('aiProvType').value = 'openrouter';
+      document.getElementById('aiProvKey').value = '';
+      document.getElementById('aiProvModel').value = '';
+      document.getElementById('aiProvKeyHint').textContent = '';
+      updateAiProvModelPlaceholder();
+      document.getElementById('aiProviderForm').style.display = 'flex';
+    }
+
+    function hideAiProviderForm() {
+      editingAiProviderId = null;
+      document.getElementById('aiProviderForm').style.display = 'none';
+    }
+
+    async function editAiProvider(id) {
+      const { providers } = await api('/admin/ai-providers');
+      const p = providers.find(x => x.id === id);
+      if (!p) return;
+      editingAiProviderId = id;
+      document.getElementById('aiProvName').value = p.name;
+      document.getElementById('aiProvType').value = p.provider_type;
+      document.getElementById('aiProvKey').value = '';
+      document.getElementById('aiProvModel').value = p.model || '';
+      document.getElementById('aiProvKeyHint').textContent = `(để trống nếu không đổi — đang dùng ${p.masked})`;
+      updateAiProvModelPlaceholder();
+      document.getElementById('aiProviderForm').style.display = 'flex';
+    }
+
+    async function saveAiProvider() {
+      const body = {
+        name: document.getElementById('aiProvName').value.trim(),
+        provider_type: document.getElementById('aiProvType').value,
+        api_key: document.getElementById('aiProvKey').value.trim(),
+        model: document.getElementById('aiProvModel').value.trim(),
+      };
+      if (!body.name) { showToast('Vui lòng nhập tên.', 'red'); return; }
+      if (!editingAiProviderId && !body.api_key) { showToast('Vui lòng nhập API key.', 'red'); return; }
       try {
-        await api('/admin/ai-settings', { method: 'PATCH', body: JSON.stringify({ openrouter_api_key: key }) });
-        input.value = '';
-        showToast('Đã lưu API key.', 'green');
-        loadAiSettings();
+        if (editingAiProviderId) {
+          await api(`/admin/ai-providers/${editingAiProviderId}`, { method: 'PATCH', body: JSON.stringify(body) });
+          showToast('Đã cập nhật.', 'green');
+        } else {
+          await api('/admin/ai-providers', { method: 'POST', body: JSON.stringify(body) });
+          showToast('Đã thêm API.', 'green');
+        }
+        hideAiProviderForm();
+        loadAiProviders();
       } catch (e) {
         showToast(e.message || 'Lỗi kết nối.', 'red');
       }
     }
 
-    async function clearAiSettings() {
-      if (!confirm('Xoá API key đã lưu? Hệ thống sẽ quay lại dùng key trong .env (nếu có).')) return;
+    async function activateAiProvider(id) {
       try {
-        await api('/admin/ai-settings', { method: 'DELETE' });
-        showToast('Đã xoá API key đã lưu.', 'green');
-        loadAiSettings();
+        await api(`/admin/ai-providers/${id}/activate`, { method: 'POST' });
+        showToast('Đã chuyển sang dùng API này.', 'green');
+        loadAiProviders();
+      } catch (e) {
+        showToast(e.message || 'Lỗi kết nối.', 'red');
+      }
+    }
+
+    async function deleteAiProvider(id) {
+      if (!confirm('Xoá API này?')) return;
+      try {
+        await api(`/admin/ai-providers/${id}`, { method: 'DELETE' });
+        showToast('Đã xoá.', 'green');
+        loadAiProviders();
       } catch (e) {
         showToast(e.message || 'Lỗi kết nối.', 'red');
       }
