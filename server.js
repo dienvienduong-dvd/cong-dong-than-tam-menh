@@ -731,7 +731,11 @@ const CHALLENGE_DAYS_TEACHER = [
       contents: turns,
       generationConfig: {
         maxOutputTokens: maxTokens,
-        ...(disableReasoning ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        // thinkingConfig.thinkingBudget:0 (the Gemini 2.5-era way to disable thinking) is
+        // rejected as INVALID_ARGUMENT on newer models — confirmed against the real key/model
+        // in production that thinkingLevel:"LOW" is what actually drives thinking tokens to 0
+        // now ("NONE" is rejected too).
+        ...(disableReasoning ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {}),
       },
     };
     if (systemMsg) body.system_instruction = { parts: [{ text: systemMsg.content }] };
