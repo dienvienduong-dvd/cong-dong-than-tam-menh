@@ -942,7 +942,7 @@
 
     // ── Init ──────────────────────────────────────────────────────
     async function init() {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) return (location.href = 'index.html');
       currentUser = JSON.parse(raw);
 

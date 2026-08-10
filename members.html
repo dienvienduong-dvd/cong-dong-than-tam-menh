@@ -1224,7 +1224,7 @@
 
     let currentUser = null;
     (function () {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { window.location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
       const ini = initials(currentUser);

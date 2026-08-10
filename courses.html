@@ -912,10 +912,10 @@
       renderGrid();
     }
 
-    function doLogout() { sessionStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
+    function doLogout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
 
     function initUser() {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { window.location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
       const initials = ((currentUser.first_name || '?')[0] + (currentUser.last_name || '')[0]).toUpperCase();

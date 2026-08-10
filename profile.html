@@ -1518,7 +1518,7 @@
     // ── Auth check ────────────────────────────────────────
     let currentUser = null;
     (function () {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
       const ini = initials(currentUser);
@@ -2249,7 +2249,7 @@
         // Keep the session + sidebar in sync with the new name right away
         currentUser.first_name = body.first_name;
         currentUser.last_name = body.last_name;
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
         closeEditProfileModal();
         loadProfile();

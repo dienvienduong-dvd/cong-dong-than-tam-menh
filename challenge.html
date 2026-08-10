@@ -485,7 +485,7 @@
 
     let currentUser = null;
     (function () {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { window.location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
       const initials = (currentUser.first_name[0] + (currentUser.last_name ? currentUser.last_name[0] : '')).toUpperCase();

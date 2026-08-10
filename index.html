@@ -392,7 +392,7 @@ async function handleGoogleToken(access_token) {
       setGoogleBtnState('Tiếp tục với Google', false);
       return;
     }
-    sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+    localStorage.setItem('currentUser', JSON.stringify(data.user));
     await savePendingIntakeProfile(data.user.id);
     redirectAfterLogin();
   } catch {
@@ -445,7 +445,7 @@ loginForm.addEventListener('submit', async (e) => {
       return;
     }
 
-    sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+    localStorage.setItem('currentUser', JSON.stringify(data.user));
     await savePendingIntakeProfile(data.user.id);
     redirectAfterLogin();
   } catch (err) {

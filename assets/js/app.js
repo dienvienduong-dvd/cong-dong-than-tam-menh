@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function setup() {
     try {
-      const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+      const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
       const qs = user ? `?user_id=${user.id}` : '';
       const { groups } = await fetch(`/api/space-groups${qs}`).then(r => r.json());
       insertInto(document.getElementById('sidebar-nav'), groups || []);
@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function setup() {
     try {
-      const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+      const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
       if (!user) return;
       const { courses } = await fetch(`/api/courses?user_id=${user.id}`).then(r => r.json());
       const mine = (courses || []).filter(c => c.enroll_status === 'approved');
@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function _setup() {
-    const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!user) return;
     _notifUserId = user.id;
     const bell = document.getElementById('notifBell');

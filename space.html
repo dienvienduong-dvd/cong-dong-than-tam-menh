@@ -706,12 +706,12 @@
 
   // ── Auth ─────────────────────────────────────────────────────
   function doLogout() {
-    sessionStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser');
     window.location.href = 'index.html';
   }
 
   function initUser() {
-    const raw = sessionStorage.getItem('currentUser');
+    const raw = localStorage.getItem('currentUser');
     if (!raw) { window.location.href = 'index.html'; return; }
     currentUser = JSON.parse(raw);
     const initials = (currentUser.first_name[0] + (currentUser.last_name ? currentUser.last_name[0] : '')).toUpperCase();
@@ -750,7 +750,7 @@
       const u = await fetch(`${API}/users/${currentUser.id}?requester_id=${currentUser.id}`).then(r => r.json());
       if (typeof u.is_admin === 'boolean' && u.is_admin !== currentUser.is_admin) {
         currentUser.is_admin = u.is_admin;
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
       }
     } catch (e) {}
   }

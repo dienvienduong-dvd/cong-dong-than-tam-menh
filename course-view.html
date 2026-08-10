@@ -501,7 +501,7 @@
 
     // ── Auth ──────────────────────────────────────────────────
     (function () {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { window.location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
       const initials = (currentUser.first_name[0] + (currentUser.last_name || '')[0]).toUpperCase();
@@ -517,7 +517,7 @@
     })();
 
     function doLogout() {
-      sessionStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUser');
       window.location.href = 'index.html';
     }
 
@@ -960,7 +960,7 @@ Hãy bắt đầu bằng câu hỏi đầu tiên ngay bây giờ.`;
         lesson.my_submission = res.my_submission;
         if (res.my_submission.xp_awarded && currentUser) {
           currentUser.xp = (currentUser.xp || 0) + res.my_submission.xp_awarded;
-          sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
         }
         selectLesson(lessonId);
       } catch (e) {

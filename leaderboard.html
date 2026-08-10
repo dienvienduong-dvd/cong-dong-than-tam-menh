@@ -1523,7 +1523,7 @@
   <script src="assets/js/app.js"></script>
   <script>
     const API = '/api';
-    function doLogout() { sessionStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
+    function doLogout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
 
     const LEVELS = [
       { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 },
@@ -1587,7 +1587,7 @@
     }
 
     function initUser() {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { location.href = 'index.html'; return null; }
       const u = JSON.parse(raw);
       const lv = getLevel(u.xp || 0);
@@ -1786,7 +1786,7 @@
         const xpNeeded = lv.xpMax - lv.xpMin;
         const pct = Math.min(100, Math.round(xpInLevel / xpNeeded * 100));
 
-        sessionStorage.setItem('currentUser', JSON.stringify(u));
+        localStorage.setItem('currentUser', JSON.stringify(u));
 
         card.innerHTML = `
       <div style="font-size:var(--fs-sm);font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px">
@@ -1945,7 +1945,7 @@
         loadLeaderboards(user),
         loadRpStats(user),
       ]);
-      loadLevelGrid(JSON.parse(sessionStorage.getItem('currentUser') || '{}'));
+      loadLevelGrid(JSON.parse(localStorage.getItem('currentUser') || '{}'));
     }
 
     init();

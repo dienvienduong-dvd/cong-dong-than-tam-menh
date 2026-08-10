@@ -326,7 +326,7 @@
 
     function initials(u) { return ((u.first_name || '?')[0] + ((u.last_name || '')[0] || '')).toUpperCase(); }
     function avColor(id) { return AV_COLORS[(id || 0) % AV_COLORS.length]; }
-    function doLogout() { sessionStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
+    function doLogout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
     const LEVELS = [
       { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Học viên', xpMin: 45, xpMax: 120 },
       { level: 3, name: 'Thực hành', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Nâng cao', xpMin: 250, xpMax: 450 },
@@ -338,7 +338,7 @@
 
     let currentUser = null;
     (function () {
-      const raw = sessionStorage.getItem('currentUser');
+      const raw = localStorage.getItem('currentUser');
       if (!raw) { window.location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
       const ini = initials(currentUser);
