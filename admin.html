@@ -2612,6 +2612,11 @@
               Lấy key tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> (OpenRouter) hoặc <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Google AI Studio).
             </div>
 
+            <div style="margin-bottom:0;">
+              <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">API đang dùng</label>
+              <select id="aiActiveProviderSelect" class="search-input" style="width:100%;" onchange="activateAiProvider(this.value)"></select>
+            </div>
+
             <table class="data-table" style="width:100%;">
               <thead><tr><th>Tên</th><th>Nhà cung cấp</th><th>Model</th><th>Key</th><th>Trạng thái</th><th></th></tr></thead>
               <tbody id="aiProviderList"></tbody>
@@ -2619,22 +2624,22 @@
             <button class="btn-sm" onclick="showAiProviderForm()">+ Thêm API</button>
 
             <div id="aiProviderForm" style="display:none;border-top:1px solid var(--border);padding-top:16px;flex-direction:column;gap:12px;">
-              <div class="login-field" style="margin-bottom:0;">
+              <div style="margin-bottom:0;">
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tên</label>
                 <input type="text" id="aiProvName" class="search-input" style="width:100%;" placeholder="VD: OpenRouter chính, Gemini dự phòng...">
               </div>
-              <div class="login-field" style="margin-bottom:0;">
+              <div style="margin-bottom:0;">
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Nhà cung cấp</label>
                 <select id="aiProvType" class="search-input" style="width:100%;" onchange="updateAiProvModelPlaceholder()">
                   <option value="openrouter">OpenRouter</option>
                   <option value="google_ai_studio">Google AI Studio</option>
                 </select>
               </div>
-              <div class="login-field" style="margin-bottom:0;">
+              <div style="margin-bottom:0;">
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">API key <span id="aiProvKeyHint" style="font-weight:400;"></span></label>
                 <input type="password" id="aiProvKey" class="search-input" style="width:100%;" placeholder="sk-or-v1-...">
               </div>
-              <div class="login-field" style="margin-bottom:0;">
+              <div style="margin-bottom:0;">
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Model (tuỳ chọn)</label>
                 <input type="text" id="aiProvModel" class="search-input" style="width:100%;" placeholder="google/gemini-2.5-flash">
               </div>
@@ -4998,8 +5003,12 @@
 
     async function loadAiProviders() {
       const tbody = document.getElementById('aiProviderList');
+      const topSelect = document.getElementById('aiActiveProviderSelect');
       try {
         const { providers } = await api('/admin/ai-providers');
+        topSelect.innerHTML = providers.length
+          ? providers.map(p => `<option value="${p.id}" ${p.is_active ? 'selected' : ''}>${escHtml(p.name)} (${AI_PROVIDER_LABELS[p.provider_type] || p.provider_type})</option>`).join('')
+          : '<option value="">Chưa có API nào — bấm "+ Thêm API"</option>';
         tbody.innerHTML = providers.length ? providers.map(p => `
           <tr>
             <td>${escHtml(p.name)}</td>
@@ -5079,6 +5088,7 @@
     }
 
     async function activateAiProvider(id) {
+      if (!id) return;
       try {
         await api(`/admin/ai-providers/${id}/activate`, { method: 'POST' });
         showToast('Đã chuyển sang dùng API này.', 'green');
