@@ -247,6 +247,10 @@ const SCHEMA = `
     expires_at TEXT    NOT NULL,
     created_at TEXT    DEFAULT (datetime('now','localtime'))
   );
+  CREATE TABLE IF NOT EXISTS admin_secrets (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+  );
   CREATE TABLE IF NOT EXISTS challenges (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     title       TEXT NOT NULL,
@@ -631,6 +635,13 @@ const CHALLENGE_DAYS_TEACHER = [
   const db  = new DB(SQL);
 
   db.exec(SCHEMA);
+
+  // Admin-configured OpenRouter key (admin_secrets, set via admin.html) takes priority over
+  // the .env value — lets an admin rotate/add the key without SSH access or a restart.
+  function getOpenRouterKey() {
+    const row = db.get("SELECT value FROM admin_secrets WHERE key = 'openrouter_api_key'");
+    return (row && row.value) || OPENROUTER_KEY;
+  }
 
   // Migrate challenge_days: add challenge_id + instructions if missing
   const cdCols = db.all('PRAGMA table_info(challenge_days)').map(c => c.name);
@@ -1110,7 +1121,7 @@ const CHALLENGE_DAYS_TEACHER = [
   }
 
   async function gradeExerciseWithGemini({ lessonTitle, exercisePrompt, rubric, maxScore, studentAnswer, ieltsWriting = null }) {
-    if (!OPENROUTER_KEY) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
+    if (!getOpenRouterKey()) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
 
     const systemPrompt = ieltsWriting
       ? `Bạn là giám khảo chấm thi IELTS Writing ${ieltsWriting.taskType === 'task1' ? 'Task 1' : 'Task 2'} cho khoá học "${lessonTitle}". Chấm nghiêm túc theo đúng 4 tiêu chí chính thức của IELTS Writing: Task Response/Achievement, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.
@@ -1139,7 +1150,7 @@ QUY TẮC BẮT BUỘC:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_KEY}`,
+          'Authorization': `Bearer ${getOpenRouterKey()}`,
           'HTTP-Referer': 'https://chuongcm.com',
           'X-Title': 'Chuong Ca Mau IELTS Community Exercise Grading'
         },
@@ -1197,7 +1208,7 @@ QUY TẮC BẮT BUỘC:
   // expects. The result is returned to the admin for review — it is never saved automatically,
   // since a misread answer key would silently mis-grade every student who takes the test.
   async function extractIeltsTestFromText(rawText) {
-    if (!OPENROUTER_KEY) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
+    if (!getOpenRouterKey()) return { ok: false, error: 'OPENROUTER_API_KEY chưa được cấu hình.' };
 
     const systemPrompt = `Bạn là trợ lý chuyển đổi đề thi IELTS từ văn bản thô (trích từ file PDF/DOCX, có thể lộn xộn định dạng) sang JSON có cấu trúc để nhập vào ngân hàng đề.
 
@@ -1252,7 +1263,7 @@ QUY TẮC BẮT BUỘC:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_KEY}`,
+          'Authorization': `Bearer ${getOpenRouterKey()}`,
           'HTTP-Referer': 'https://chuongcm.com',
           'X-Title': 'Chuong Ca Mau IELTS Community Test Extraction'
         },
@@ -3835,6 +3846,35 @@ QUY TẮC BẮT BUỘC:
     res.json({ success: true });
   });
 
+  // AI (OpenRouter) key — kept out of site_settings/admin/settings on purpose since
+  // GET /api/settings is public and returns that whole table unfiltered.
+  function maskKey(key) {
+    if (key.length <= 8) return '****';
+    return `${key.slice(0, 5)}...${key.slice(-4)}`;
+  }
+
+  app.get('/api/admin/ai-settings', requireAdmin, (req, res) => {
+    const row = db.get("SELECT value FROM admin_secrets WHERE key = 'openrouter_api_key'");
+    if (row && row.value) return res.json({ configured: true, source: 'db', masked: maskKey(row.value) });
+    if (OPENROUTER_KEY) return res.json({ configured: true, source: 'env', masked: maskKey(OPENROUTER_KEY) });
+    res.json({ configured: false, source: 'none', masked: null });
+  });
+
+  app.patch('/api/admin/ai-settings', requireAdmin, (req, res) => {
+    const key = (req.body.openrouter_api_key || '').trim();
+    if (!key) return res.status(400).json({ error: 'Vui lòng nhập API key.' });
+    db.run(
+      "INSERT INTO admin_secrets (key, value) VALUES ('openrouter_api_key', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+      [key]
+    );
+    res.json({ success: true, masked: maskKey(key) });
+  });
+
+  app.delete('/api/admin/ai-settings', requireAdmin, (req, res) => {
+    db.run("DELETE FROM admin_secrets WHERE key = 'openrouter_api_key'");
+    res.json({ success: true });
+  });
+
   // ── Notifications (user) ──────────────────────────────────
   app.get('/api/notifications', (req, res) => {
     const { user_id } = req.query;
@@ -4867,7 +4907,7 @@ Sau khi có đủ thông tin 5 chặng:
       return res.json({ reply: INTAKE_OPENING, isComplete: false, profile: null });
     }
 
-    if (!OPENROUTER_KEY) {
+    if (!getOpenRouterKey()) {
       return res.status(503).json({ error: 'OPENROUTER_API_KEY chưa được cấu hình. Vui lòng thêm vào file .env.' });
     }
 
@@ -4883,7 +4923,7 @@ Sau khi có đủ thông tin 5 chặng:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_KEY}`,
+          'Authorization': `Bearer ${getOpenRouterKey()}`,
           'HTTP-Referer': 'https://chuongcm.com',
           'X-Title': 'Chuong Ca Mau IELTS Community Intake'
         },

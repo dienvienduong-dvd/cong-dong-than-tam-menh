@@ -2316,6 +2316,7 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('challenge', this)">🎯 Challenge</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('courses', this)">🎓 Khóa học</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('email', this)">⚙️ Email</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('ai', this)">🤖 AI</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('calendar', this)">📅 Lịch</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
         </div>
@@ -2594,6 +2595,30 @@
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveEmailAutomation()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- AI (OpenRouter) -->
+        <div class="settings-tab-panel" data-tab="ai">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>🤖 Kết nối AI (OpenRouter)</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+              API key này dùng cho 3 tính năng: chấm bài tập tự động, trích xuất đề thi từ file (Kho đề IELTS), và chatbot intake.
+              Lấy key tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>.
+            </div>
+            <div id="aiKeyStatus" style="padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;"></div>
+            <div class="login-field" style="margin-bottom:0;">
+              <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">API key mới</label>
+              <input type="password" id="aiKeyInput" class="search-input" style="width:100%;" placeholder="sk-or-v1-...">
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveAiSettings()">💾 Lưu</button>
+              <button class="btn-sm" id="aiKeyClearBtn" style="display:none;color:#dc2626;" onclick="clearAiSettings()">🗑️ Xoá key đã lưu</button>
             </div>
           </div>
         </div>
@@ -4940,6 +4965,50 @@
           'Học từ cơ bản đến nâng cao — từ prompt engineering đến deploy agent thực chiến';
         updateCoursesHeroPreview();
       } catch (e) { showToast('Không tải được cài đặt.', 'red'); }
+      loadAiSettings();
+    }
+
+    // ── AI (OpenRouter) settings ─────────────────────────────────
+    async function loadAiSettings() {
+      const el = document.getElementById('aiKeyStatus');
+      try {
+        const s = await api('/admin/ai-settings');
+        document.getElementById('aiKeyClearBtn').style.display = s.source === 'db' ? 'inline-block' : 'none';
+        if (!s.configured) {
+          el.innerHTML = '⚠️ Chưa cấu hình API key.';
+        } else if (s.source === 'db') {
+          el.innerHTML = `✅ Đang dùng key: <code>${s.masked}</code> (đã lưu qua trang admin)`;
+        } else {
+          el.innerHTML = `✅ Đang dùng key: <code>${s.masked}</code> (nguồn: .env server)`;
+        }
+      } catch (e) {
+        el.textContent = 'Không tải được trạng thái AI key.';
+      }
+    }
+
+    async function saveAiSettings() {
+      const input = document.getElementById('aiKeyInput');
+      const key = input.value.trim();
+      if (!key) { showToast('Vui lòng nhập API key.', 'red'); return; }
+      try {
+        await api('/admin/ai-settings', { method: 'PATCH', body: JSON.stringify({ openrouter_api_key: key }) });
+        input.value = '';
+        showToast('Đã lưu API key.', 'green');
+        loadAiSettings();
+      } catch (e) {
+        showToast(e.message || 'Lỗi kết nối.', 'red');
+      }
+    }
+
+    async function clearAiSettings() {
+      if (!confirm('Xoá API key đã lưu? Hệ thống sẽ quay lại dùng key trong .env (nếu có).')) return;
+      try {
+        await api('/admin/ai-settings', { method: 'DELETE' });
+        showToast('Đã xoá API key đã lưu.', 'green');
+        loadAiSettings();
+      } catch (e) {
+        showToast(e.message || 'Lỗi kết nối.', 'red');
+      }
     }
 
     async function saveCommunityName() {
