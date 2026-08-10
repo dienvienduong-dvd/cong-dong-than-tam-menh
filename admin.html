@@ -6352,7 +6352,6 @@
         } else {
           res = await api('/admin/ielts-tests', { method: 'POST', body: JSON.stringify(body) });
         }
-        if (res.error) { showToast(res.error, 'red'); return; }
         showToast(editingIeltsTestId
           ? (res.question_count !== undefined ? `Đã cập nhật đề — ${res.question_count} câu hỏi.` : 'Đã cập nhật đề.')
           : 'Đã thêm đề — mở lại để thêm câu hỏi.', 'green');
@@ -6360,6 +6359,8 @@
         switchIeltsSkillTab(skill);
         if (editingIeltsTestId) await editIeltsTest(editingIeltsTestId);
         else newIeltsTest();
+      } catch (e) {
+        showToast(e.message || 'Lỗi kết nối.', 'red');
       } finally {
         btns.forEach(b => b && (b.disabled = false));
       }
@@ -6604,11 +6605,12 @@
       btns.forEach(b => b && (b.disabled = true));
       try {
         const res = await api('/admin/ielts-tests/import', { method: 'POST', body: JSON.stringify(parsed) });
-        if (res.error) { showToast(res.error, 'red'); return; }
         showToast(`Đã nhập đề — ${res.question_count} câu hỏi.`, 'green');
         currentIeltsSkillTab = parsed.test?.skill || currentIeltsSkillTab;
         switchIeltsSkillTab(currentIeltsSkillTab);
         await editIeltsTest(res.id);
+      } catch (e) {
+        showToast(e.message || 'Lỗi kết nối.', 'red');
       } finally {
         btns.forEach(b => b && (b.disabled = false));
       }

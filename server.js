@@ -3548,6 +3548,8 @@ QUY TẮC BẮT BUỘC:
     } = req.body;
     if (!['reading', 'writing', 'listening', 'speaking'].includes(skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
     if (!title?.trim()) return res.status(400).json({ error: 'Tên đề không được để trống.' });
+    const dup = db.get('SELECT id FROM ielts_tests WHERE skill = ? AND title = ?', [skill, title.trim()]);
+    if (dup) return res.status(409).json({ error: `Đã có đề trùng tên "${title.trim()}" (ID ${dup.id}). Đổi tên khác, hoặc mở đề đó (ID ${dup.id}) để sửa thay vì tạo mới.` });
     const r = db.run(
       `INSERT INTO ielts_tests
         (skill, title, description, time_limit_minutes, status, max_score, passages, task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url)
@@ -3664,6 +3666,8 @@ QUY TẮC BẮT BUỘC:
     const { test, passages = [], questions = [] } = req.body;
     if (!test || !['reading', 'writing', 'listening', 'speaking'].includes(test.skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
     if (!test.title?.trim()) return res.status(400).json({ error: 'Tên đề không được để trống.' });
+    const dup = db.get('SELECT id FROM ielts_tests WHERE skill = ? AND title = ?', [test.skill, test.title.trim()]);
+    if (dup) return res.status(409).json({ error: `Đã có đề trùng tên "${test.title.trim()}" (ID ${dup.id}). Mở đề đó để sửa/thêm câu hỏi thay vì nhập JSON lại — nhập lại sẽ tạo bản trùng.` });
     const r = db.run(
       `INSERT INTO ielts_tests
         (skill, title, description, time_limit_minutes, status, max_score, passages, task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url)
