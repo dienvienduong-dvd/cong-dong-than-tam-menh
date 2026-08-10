@@ -1141,7 +1141,7 @@ QUY TẮC BẮT BUỘC:
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENROUTER_KEY}`,
           'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Cộng đồng IELTS Chương Cà Mau Exercise Grading'
+          'X-Title': 'Chuong Ca Mau IELTS Community Exercise Grading'
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
@@ -1254,7 +1254,7 @@ QUY TẮC BẮT BUỘC:
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENROUTER_KEY}`,
           'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Cộng đồng IELTS Chương Cà Mau Test Extraction'
+          'X-Title': 'Chuong Ca Mau IELTS Community Test Extraction'
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
@@ -4864,7 +4864,7 @@ Sau khi có đủ thông tin 5 chặng:
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENROUTER_KEY}`,
           'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Cộng đồng IELTS Chương Cà Mau Intake'
+          'X-Title': 'Chuong Ca Mau IELTS Community Intake'
         },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
