@@ -720,7 +720,10 @@ const CHALLENGE_DAYS_TEACHER = [
   }
 
   async function callGoogleAiStudio({ provider, messages, maxTokens, disableReasoning }) {
-    const model = provider.model || 'gemini-2.5-flash';
+    // 'gemini-2.5-flash' (dated model) has been restricted for new API keys/projects by
+    // Google ("no longer available to new users") — the -latest alias always points to
+    // whatever flash model Google currently supports, avoiding this going stale again.
+    const model = provider.model || 'gemini-flash-latest';
     const systemMsg = messages.find(m => m.role === 'system');
     const turns = messages.filter(m => m.role !== 'system')
       .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
