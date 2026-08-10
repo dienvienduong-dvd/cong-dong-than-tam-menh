@@ -6326,6 +6326,17 @@
         writing_image_url: document.getElementById('ieltsWritingImageUrl').value.trim(),
         chatgpt_url: document.getElementById('ieltsChatgptUrl').value.trim(),
       };
+      // Editing an existing test with unread JSON still in the box (e.g. AI extraction was
+      // re-run on a test that already exists) — use its passages/questions instead of the
+      // empty manual state; the PATCH endpoint used to have no way to receive "questions" at all.
+      if (editingIeltsTestId && document.getElementById('ieltsImportJson').value.trim()) {
+        let parsed;
+        try { parsed = JSON.parse(document.getElementById('ieltsImportJson').value.trim()); }
+        catch (e) { showToast('JSON không hợp lệ: ' + e.message, 'red'); return; }
+        if (parsed.passages) body.passages = parsed.passages;
+        if (parsed.questions) body.questions = parsed.questions;
+      }
+
       if (!body.title) { showToast('Vui lòng nhập tên đề.', 'red'); return; }
       let res;
       if (editingIeltsTestId) {
@@ -6334,7 +6345,9 @@
         res = await api('/admin/ielts-tests', { method: 'POST', body: JSON.stringify(body) });
       }
       if (res.error) { showToast(res.error, 'red'); return; }
-      showToast(editingIeltsTestId ? 'Đã cập nhật đề.' : 'Đã thêm đề — mở lại để thêm câu hỏi.', 'green');
+      showToast(editingIeltsTestId
+        ? (res.question_count !== undefined ? `Đã cập nhật đề — ${res.question_count} câu hỏi.` : 'Đã cập nhật đề.')
+        : 'Đã thêm đề — mở lại để thêm câu hỏi.', 'green');
       currentIeltsSkillTab = skill;
       switchIeltsSkillTab(skill);
       if (editingIeltsTestId) await editIeltsTest(editingIeltsTestId);

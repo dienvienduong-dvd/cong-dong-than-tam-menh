@@ -3572,7 +3572,7 @@ QUY TẮC BẮT BUỘC:
   app.patch('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
     const {
       title, description, time_limit_minutes, status, max_score, passages,
-      task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url,
+      task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url, questions,
     } = req.body;
     const t = db.get('SELECT id FROM ielts_tests WHERE id = ?', [req.params.id]);
     if (!t) return res.status(404).json({ error: 'Đề không tồn tại.' });
@@ -3587,7 +3587,20 @@ QUY TẮC BẮT BUỘC:
     if (writing_rubric !== undefined)     db.run('UPDATE ielts_tests SET writing_rubric = ? WHERE id = ?', [writing_rubric, req.params.id]);
     if (writing_image_url !== undefined)  db.run('UPDATE ielts_tests SET writing_image_url = ? WHERE id = ?', [writing_image_url, req.params.id]);
     if (chatgpt_url !== undefined)        db.run('UPDATE ielts_tests SET chatgpt_url = ? WHERE id = ?', [chatgpt_url, req.params.id]);
-    res.json({ success: true });
+    // Re-importing JSON onto an existing test (e.g. after AI extraction) previously dropped
+    // "questions" silently — this endpoint never read it. Replace the question set when given one.
+    if (Array.isArray(questions)) {
+      db.run('DELETE FROM ielts_test_questions WHERE test_id = ?', [req.params.id]);
+      questions.forEach((q, i) => {
+        db.run(
+          'INSERT INTO ielts_test_questions (test_id, question_type, passage_ref, question_text, options, correct_answer, explanation, order_num) VALUES (?,?,?,?,?,?,?,?)',
+          [req.params.id, q.question_type, q.passage_ref || '', q.question_text,
+           q.options ? JSON.stringify(q.options.map(o => String(o).trim())) : null,
+           JSON.stringify((q.correct_answer || []).map(a => String(a).trim())), q.explanation || '', Number(q.order_num) || i]
+        );
+      });
+    }
+    res.json({ success: true, question_count: Array.isArray(questions) ? questions.length : undefined });
   });
 
   app.delete('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
