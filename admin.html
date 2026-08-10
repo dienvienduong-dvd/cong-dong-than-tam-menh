@@ -2072,7 +2072,7 @@
               <div style="border-top:1px solid var(--border);padding-top:12px;">
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Nhập JSON hàng loạt (tuỳ chọn — xem định dạng trong kho-de-thi/tests/*.json)</label>
                 <textarea class="search-input" style="width:100%;min-height:80px;resize:vertical;font-family:monospace;font-size:11px;" id="ieltsImportJson" placeholder='{"test": {...}, "passages": [...], "questions": [...]}'></textarea>
-                <button class="btn-sm" style="margin-top:8px;" onclick="importIeltsJson()">Nhập JSON (tạo đề mới)</button>
+                <button class="btn-sm" id="ieltsImportBtn" style="margin-top:8px;" onclick="importIeltsJson()">Nhập JSON (tạo đề mới)</button>
               </div>
 
               <div style="display:flex;gap:8px;">
@@ -6338,20 +6338,28 @@
       }
 
       if (!body.title) { showToast('Vui lòng nhập tên đề.', 'red'); return; }
-      let res;
-      if (editingIeltsTestId) {
-        res = await api(`/admin/ielts-tests/${editingIeltsTestId}`, { method: 'PATCH', body: JSON.stringify(body) });
-      } else {
-        res = await api('/admin/ielts-tests', { method: 'POST', body: JSON.stringify(body) });
+
+      const btns = [document.getElementById('ieltsSaveBtn'), document.getElementById('ieltsImportBtn')];
+      if (btns[0]?.disabled) return;
+      btns.forEach(b => b && (b.disabled = true));
+      try {
+        let res;
+        if (editingIeltsTestId) {
+          res = await api(`/admin/ielts-tests/${editingIeltsTestId}`, { method: 'PATCH', body: JSON.stringify(body) });
+        } else {
+          res = await api('/admin/ielts-tests', { method: 'POST', body: JSON.stringify(body) });
+        }
+        if (res.error) { showToast(res.error, 'red'); return; }
+        showToast(editingIeltsTestId
+          ? (res.question_count !== undefined ? `Đã cập nhật đề — ${res.question_count} câu hỏi.` : 'Đã cập nhật đề.')
+          : 'Đã thêm đề — mở lại để thêm câu hỏi.', 'green');
+        currentIeltsSkillTab = skill;
+        switchIeltsSkillTab(skill);
+        if (editingIeltsTestId) await editIeltsTest(editingIeltsTestId);
+        else newIeltsTest();
+      } finally {
+        btns.forEach(b => b && (b.disabled = false));
       }
-      if (res.error) { showToast(res.error, 'red'); return; }
-      showToast(editingIeltsTestId
-        ? (res.question_count !== undefined ? `Đã cập nhật đề — ${res.question_count} câu hỏi.` : 'Đã cập nhật đề.')
-        : 'Đã thêm đề — mở lại để thêm câu hỏi.', 'green');
-      currentIeltsSkillTab = skill;
-      switchIeltsSkillTab(skill);
-      if (editingIeltsTestId) await editIeltsTest(editingIeltsTestId);
-      else newIeltsTest();
     }
 
     function openIeltsPreview() {
@@ -6586,12 +6594,21 @@
       if (!raw) { showToast('Vui lòng dán nội dung JSON.', 'red'); return; }
       let parsed;
       try { parsed = JSON.parse(raw); } catch (e) { showToast('JSON không hợp lệ: ' + e.message, 'red'); return; }
-      const res = await api('/admin/ielts-tests/import', { method: 'POST', body: JSON.stringify(parsed) });
-      if (res.error) { showToast(res.error, 'red'); return; }
-      showToast(`Đã nhập đề — ${res.question_count} câu hỏi.`, 'green');
-      currentIeltsSkillTab = parsed.test?.skill || currentIeltsSkillTab;
-      switchIeltsSkillTab(currentIeltsSkillTab);
-      await editIeltsTest(res.id);
+      // Guard against double-clicks (or "Thêm đề" delegating here) firing the import twice —
+      // each call creates a brand-new test, so a double submit means duplicate tests.
+      const btns = [document.getElementById('ieltsImportBtn'), document.getElementById('ieltsSaveBtn')];
+      if (btns[0]?.disabled) return;
+      btns.forEach(b => b && (b.disabled = true));
+      try {
+        const res = await api('/admin/ielts-tests/import', { method: 'POST', body: JSON.stringify(parsed) });
+        if (res.error) { showToast(res.error, 'red'); return; }
+        showToast(`Đã nhập đề — ${res.question_count} câu hỏi.`, 'green');
+        currentIeltsSkillTab = parsed.test?.skill || currentIeltsSkillTab;
+        switchIeltsSkillTab(currentIeltsSkillTab);
+        await editIeltsTest(res.id);
+      } finally {
+        btns.forEach(b => b && (b.disabled = false));
+      }
     }
 
     // ── Marketplace ────────────────────────────────────────────────
