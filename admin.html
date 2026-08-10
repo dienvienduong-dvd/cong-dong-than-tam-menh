@@ -2073,6 +2073,7 @@
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Nhập JSON hàng loạt (tuỳ chọn — xem định dạng trong kho-de-thi/tests/*.json)</label>
                 <textarea class="search-input" style="width:100%;min-height:80px;resize:vertical;font-family:monospace;font-size:11px;" id="ieltsImportJson" placeholder='{"test": {...}, "passages": [...], "questions": [...]}'></textarea>
                 <button class="btn-sm" id="ieltsImportBtn" style="margin-top:8px;" onclick="importIeltsJson()">Nhập JSON (tạo đề mới)</button>
+                <button class="btn-sm" style="margin-top:8px;" onclick="document.getElementById('ieltsImportJson').value=''">Xoá JSON</button>
               </div>
 
               <div style="display:flex;gap:8px;">
@@ -6598,6 +6599,11 @@
       if (!raw) { showToast('Vui lòng dán nội dung JSON.', 'red'); return; }
       let parsed;
       try { parsed = JSON.parse(raw); } catch (e) { showToast('JSON không hợp lệ: ' + e.message, 'red'); return; }
+      // The manual "Tên đề" field wins over whatever title is baked into the JSON — otherwise
+      // typing a new title here and clicking this button silently reuses the JSON's old title
+      // (this is exactly what caused "different content, same title" reports).
+      const manualTitle = document.getElementById('ieltsTitle').value.trim();
+      if (manualTitle) parsed.test = { ...parsed.test, title: manualTitle };
       // Guard against double-clicks (or "Thêm đề" delegating here) firing the import twice —
       // each call creates a brand-new test, so a double submit means duplicate tests.
       const btns = [document.getElementById('ieltsImportBtn'), document.getElementById('ieltsSaveBtn')];
