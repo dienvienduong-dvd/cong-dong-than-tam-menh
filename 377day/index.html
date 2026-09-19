@@ -1,0 +1,888 @@
+<meta charset="UTF-8">
+<title>Hồi Sinh 377 Ngày</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg:#F6F1E7;
+    --surface:#EFE7D8;
+    --surface-raised:#FAF6EC;
+    --ink:#221F1B;
+    --ink-soft:#5B5142;
+    --ink-faint:#8A7D68;
+    --jade:#0B6E58;
+    --jade-deep:#084F3F;
+    --on-jade:#FFFDF8;
+    --gold:#A6741F;
+    --gold-deep:#7E5814;
+    --lacquer:#8C2F2F;
+    --border:rgba(34,31,27,0.14);
+    --border-strong:rgba(34,31,27,0.24);
+    --shadow: 0 18px 40px -22px rgba(34,31,27,0.35);
+    --ease: cubic-bezier(.16,1,.3,1);
+    --r-lg:20px; --r-md:14px; --r-pill:999px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141210; --surface:#1F1B17; --surface-raised:#27221C;
+      --ink:#F3ECDD; --ink-soft:#C7BCA5; --ink-faint:#8F8570;
+      --jade:#38C79C; --jade-deep:#26997A; --on-jade:#07231C;
+      --gold:#D9A93E; --gold-deep:#B5842B;
+      --lacquer:#C1483F;
+      --border:rgba(243,236,221,0.14); --border-strong:rgba(243,236,221,0.24);
+      --shadow: 0 18px 44px -20px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141210; --surface:#1F1B17; --surface-raised:#27221C;
+    --ink:#F3ECDD; --ink-soft:#C7BCA5; --ink-faint:#8F8570;
+    --jade:#38C79C; --jade-deep:#26997A; --on-jade:#07231C;
+    --gold:#D9A93E; --gold-deep:#B5842B;
+    --lacquer:#C1483F;
+    --border:rgba(243,236,221,0.14); --border-strong:rgba(243,236,221,0.24);
+    --shadow: 0 18px 44px -20px rgba(0,0,0,0.6);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
+
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font); font-size:17px; line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    padding-left:max(16px, env(safe-area-inset-left));
+    padding-right:max(16px, env(safe-area-inset-right));
+    position:relative;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background-image:radial-gradient(var(--ink) 0.6px, transparent 0.6px);
+    background-size:16px 16px; opacity:0.035; z-index:0;
+  }
+
+  h1,h2,h3,h4{ font-weight:700; margin:0; text-wrap:balance; color:var(--ink); letter-spacing:-0.01em; }
+  p{margin:0}
+  a{color:inherit}
+  img,svg{max-width:100%}
+  .container{max-width:1120px; margin-inline:auto; position:relative; z-index:1}
+  .prose{max-width:66ch}
+  .nb{white-space:nowrap}
+  .eyebrow{
+    font-size:0.76rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--jade); font-weight:700;
+    display:inline-flex; align-items:center; gap:0.6em;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--jade);display:inline-block}
+
+  /* ---------- header ---------- */
+  .site-header{ position:sticky; top:0; z-index:40; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); }
+  .site-header .bar{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-block:0.85rem; flex-wrap:wrap; }
+  .wordmark{ font-weight:800; font-size:1.05rem; letter-spacing:-0.01em; display:flex; align-items:baseline; gap:0.5rem; }
+  .wordmark span{ font-size:0.66rem; letter-spacing:0.14em; color:var(--ink-faint); font-weight:600; }
+  .header-actions{ display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap; }
+  .phone-link{ font-weight:600; font-size:0.92rem; white-space:nowrap; display:inline-flex; align-items:center; gap:0.45rem; color:var(--ink-soft); text-decoration:none; transition:color 180ms var(--ease); border-radius:var(--r-pill); padding:0.2rem 0.4rem; margin:-0.2rem -0.4rem; }
+  .phone-link:hover{ color:var(--jade-deep); background:color-mix(in srgb, var(--jade) 10%, transparent); }
+  .phone-link svg{ flex:none; }
+
+  .btn{
+    appearance:none; -webkit-appearance:none; margin:0; box-shadow:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+    border-radius:var(--r-pill); border:1px solid transparent; padding:0.85rem 1.7rem;
+    font-family:var(--font); font-weight:600; font-size:0.95rem; letter-spacing:0.01em;
+    cursor:pointer; text-decoration:none; min-height:44px; position:relative; overflow:hidden;
+    transition:background-color 220ms var(--ease), border-color 220ms var(--ease), color 220ms var(--ease), transform 180ms var(--ease), box-shadow 220ms var(--ease);
+  }
+  .btn:focus-visible{outline:2px solid var(--jade); outline-offset:2px}
+  .btn-primary{ background:var(--jade); color:var(--on-jade); }
+  .btn-primary:hover{ background:var(--jade-deep); transform:translateY(-2px); box-shadow:0 14px 26px -12px color-mix(in srgb, var(--jade) 60%, transparent); }
+  .btn-ghost{ background:transparent; border-color:var(--border-strong); color:var(--ink); }
+  .btn-ghost:hover{ border-color:var(--jade); color:var(--jade-deep); background:color-mix(in srgb, var(--jade) 8%, transparent); transform:translateY(-2px); }
+  .btn-sm{ padding:0.6rem 1.15rem; font-size:0.85rem; min-height:38px; }
+
+  /* ---------- beaded spine ---------- */
+  .spine{
+    width:3px; align-self:stretch; justify-self:center;
+    background-image:radial-gradient(circle, var(--jade) 2px, transparent 2.4px);
+    background-size:100% 15px; background-repeat:repeat-y;
+    opacity:0.8; min-height:64px;
+    transform-origin:top; animation:spineGrow 1.2s var(--ease) both; animation-delay:.25s;
+  }
+  @keyframes spineGrow{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+
+  section{ padding-block:clamp(3.2rem, 6vw, 5.5rem); position:relative; z-index:1; border-bottom:1px solid var(--border); }
+  section:last-of-type{border-bottom:none}
+  .section-head{ max-width:56ch; margin-bottom:clamp(2rem,4vw,3rem); }
+  .section-head h2{ font-size:clamp(1.9rem, 3vw, 2.6rem); }
+  .section-head .eyebrow{ margin-bottom:0.9rem; }
+
+  /* Content is visible at rest by default. Elements only get a very short settle-in
+     nudge the first time they enter view; nothing is ever hidden waiting on JS. */
+  [data-reveal],.reveal-item{ opacity:1; transform:none; }
+  [data-reveal].will-settle{ opacity:0.001; transform:translateY(16px); transition:opacity .68s var(--ease), transform .68s var(--ease); }
+  [data-reveal].will-settle.is-visible{ opacity:1; transform:none; }
+  .reveal-item.will-settle{ opacity:0.001; transform:translateY(14px) scale(0.985); transition:opacity .6s var(--ease), transform .6s var(--ease); }
+  .reveal-item.will-settle.is-visible{ opacity:1; transform:none; }
+  .reveal-item:nth-child(1){transition-delay:0ms}
+  .reveal-item:nth-child(2){transition-delay:60ms}
+  .reveal-item:nth-child(3){transition-delay:120ms}
+  .reveal-item:nth-child(4){transition-delay:180ms}
+  .reveal-item:nth-child(5){transition-delay:240ms}
+  .reveal-item:nth-child(6){transition-delay:300ms}
+  .reveal-item:nth-child(7){transition-delay:360ms}
+  .reveal-item:nth-child(8){transition-delay:420ms}
+  .reveal-item:nth-child(9){transition-delay:480ms}
+  .reveal-item:nth-child(10){transition-delay:540ms}
+  @media (prefers-reduced-motion: reduce){ [data-reveal],.reveal-item,.spine{opacity:1 !important; transform:none !important; animation:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{ padding-block:clamp(3.4rem, 7vw, 5.5rem) clamp(2.6rem,5vw,4rem); border-bottom:1px solid var(--border); }
+  .hero-grid{ display:grid; grid-template-columns:1.25fr 0.75fr; gap:clamp(2rem,5vw,4rem); align-items:center; }
+  .hero h1{ font-size:clamp(2.4rem, 4.2vw + 1rem, 4.1rem); font-weight:800; line-height:1.12; margin-block:1rem 1.3rem; letter-spacing:-0.02em; }
+  .hero h1 em{ font-style:normal; color:var(--jade-deep); display:block; margin-block:0.12em 0.05em; }
+  .hero .lede{ font-size:1.15rem; color:var(--ink-soft); max-width:52ch; }
+  .hero-ctas{ display:flex; flex-wrap:wrap; gap:0.9rem; margin-top:1.8rem; align-items:center; }
+  .hero-note{ margin-top:1rem; font-size:0.85rem; color:var(--ink-faint); }
+  .hero-visual{ position:relative; display:flex; justify-content:center; align-items:stretch; gap:1.3rem; height:100%; min-height:300px; }
+  .hero-illustration{ position:absolute; inset:-10% -20%; z-index:0; opacity:0.9; pointer-events:none; }
+  .hero-visual .track{ position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
+  .day-tag{ font-weight:700; font-size:1.25rem; color:var(--jade-deep); }
+  .day-tag.end{ color:var(--gold-deep); }
+  .hero-visual .caption{ position:relative; z-index:1; writing-mode:vertical-rl; text-orientation:mixed; font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-faint); }
+
+  @media (max-width:860px){ .hero-grid{ grid-template-columns:1fr; } .hero-visual{ display:none; } }
+
+  /* ---------- letter ---------- */
+  .letter{ background:var(--surface); }
+  .letter-card{
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--r-lg);
+    box-shadow:var(--shadow); padding:clamp(1.8rem,4vw,3.2rem);
+    max-width:76ch; margin-inline:auto; position:relative;
+    transition:box-shadow 260ms var(--ease), transform 260ms var(--ease), background-color 260ms var(--ease);
+  }
+  .letter-card::before{ content:""; position:absolute; left:0; top:1.4rem; bottom:1.4rem; width:4px; border-radius:var(--r-pill); background:var(--gold); }
+  .letter-card:hover{ transform:translateY(-3px); box-shadow:0 26px 50px -24px rgba(34,31,27,0.4); background:color-mix(in srgb, var(--jade) 3%, var(--surface-raised)); }
+  .letter-kicker{ font-style:italic; font-weight:600; font-size:1.2rem; color:var(--jade-deep); margin-bottom:1.4rem; }
+  .letter-card p{ margin-bottom:1.15rem; color:var(--ink-soft); }
+  .letter-card p:last-of-type{ margin-bottom:0; }
+  .letter-card strong{ color:var(--ink); }
+  .letter-pull{
+    font-style:italic; font-weight:600; font-size:1.35rem; line-height:1.5; color:var(--ink);
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    padding-block:1.3rem; margin-block:1.5rem !important;
+  }
+  .sig{ margin-top:1.8rem !important; font-size:1.05rem; }
+  .sig .name{ display:block; font-weight:800; color:var(--jade-deep); font-size:1.35rem; margin-top:0.25rem; letter-spacing:-0.01em; }
+
+  /* ---------- bridge ---------- */
+  .bridge-grid{ display:grid; grid-template-columns:1fr auto 1fr; gap:clamp(1.5rem,4vw,2.5rem); align-items:stretch; }
+  .bridge-col{ background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--r-lg); padding:1.8rem; transition:border-color 220ms var(--ease), transform 220ms var(--ease), background-color 220ms var(--ease); }
+  .bridge-col:hover{ transform:translateY(-3px); background:color-mix(in srgb, var(--jade) 4%, var(--surface-raised)); }
+  .bridge-col h3{ font-size:1.3rem; margin-bottom:1rem; }
+  .bridge-col.before h3{ color:var(--ink-faint); }
+  .bridge-col.after{ border-color:var(--jade); box-shadow:var(--shadow); }
+  .bridge-col.after h3{ color:var(--jade-deep); }
+  .bridge-col ul{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0.7rem; }
+  .bridge-col li{ display:flex; gap:0.6rem; color:var(--ink-soft); font-size:0.96rem; }
+  .bridge-col li svg{ flex:none; margin-top:0.2rem; }
+  .bridge-arrow{ display:flex; align-items:center; justify-content:center; color:var(--jade); }
+  @media (max-width:760px){ .bridge-grid{ grid-template-columns:1fr; } .bridge-arrow{ transform:rotate(90deg); padding:0.2rem 0; } }
+
+  /* ---------- rhythm ---------- */
+  .rhythm{ background:var(--surface); }
+  .rhythm-row{ display:flex; flex-direction:column; gap:0.6rem; }
+  .rhythm-item{ display:grid; grid-template-columns:auto 1fr; gap:1.2rem; padding:1.2rem 1.3rem; border-radius:var(--r-lg); transition:background-color 220ms var(--ease); }
+  .rhythm-item:hover{ background:color-mix(in srgb, var(--jade) 6%, transparent); }
+  .rhythm-icon{ flex:none; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--jade) 12%, var(--surface-raised)); color:var(--jade-deep); }
+  .rhythm-body h3{ font-size:1.25rem; margin-bottom:0.4rem; }
+  .rhythm-body p{ color:var(--ink-soft); max-width:58ch; }
+  .rhythm-tag{ display:inline-block; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold-deep); font-weight:700; margin-bottom:0.5rem; }
+  .rhythm-note{ margin-top:1.6rem; padding:1.1rem 1.3rem; border:1px dashed var(--border-strong); border-radius:var(--r-lg); color:var(--ink-faint); font-style:italic; font-size:0.98rem; }
+
+  /* ---------- offer stack ---------- */
+  .offer-intro{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.6rem; }
+  .offer-intro .value-tag{ font-size:0.98rem; color:var(--ink-faint); }
+  .offer-intro .value-tag strong{ color:var(--jade-deep); font-weight:700; font-variant-numeric:tabular-nums; }
+  .offer-stack{ display:flex; flex-direction:column; gap:0.6rem; }
+  .offer-row{
+    display:grid; grid-template-columns:auto 1fr auto; gap:1.2rem; align-items:center;
+    padding:1.2rem 1.3rem; border-radius:var(--r-lg); border:1px solid transparent;
+    transition:background-color 220ms var(--ease), border-color 220ms var(--ease), transform 220ms var(--ease);
+  }
+  .offer-row:nth-child(even){ background:color-mix(in srgb, var(--ink) 3%, transparent); }
+  .offer-row:hover{ background:color-mix(in srgb, var(--jade) 7%, transparent); border-color:var(--border); transform:translateX(3px); }
+  .offer-icon{ flex:none; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--jade) 12%, var(--surface-raised)); color:var(--jade-deep); transition:transform 220ms var(--ease); }
+  .offer-row:hover .offer-icon{ transform:scale(1.08); }
+  .offer-num{ font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-faint); }
+  .offer-body h3{ font-size:1.12rem; margin-block:0.15rem 0.3rem; }
+  .offer-body p{ color:var(--ink-soft); font-size:0.93rem; }
+  .offer-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem; text-align:right; }
+  .offer-check{ display:flex; align-items:center; gap:0.35rem; color:var(--jade-deep); font-size:0.78rem; font-weight:700; }
+  .offer-value{ font-size:0.82rem; font-weight:700; color:var(--gold-deep); background:color-mix(in srgb, var(--gold) 14%, var(--surface-raised)); padding:0.3rem 0.7rem; border-radius:var(--r-pill); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  @media (max-width:640px){
+    .offer-row{ grid-template-columns:auto 1fr; }
+    .offer-meta{ grid-column:1 / -1; flex-direction:row; align-items:center; justify-content:space-between; text-align:left; margin-top:0.4rem; padding-left:calc(48px + 1.2rem); }
+  }
+  .offer-total{
+    margin-top:0.8rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    border:2px solid var(--jade); border-radius:var(--r-lg); padding:1.5rem 1.8rem;
+    background:color-mix(in srgb, var(--jade) 8%, var(--surface-raised));
+  }
+  .offer-total .label{ font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; font-weight:700; color:var(--jade-deep); }
+  .offer-total .label span{ display:block; font-size:0.95rem; text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink-soft); margin-top:0.3rem; }
+  .offer-total strong{ font-size:clamp(1.8rem,4vw,2.4rem); font-weight:800; color:var(--jade-deep); font-variant-numeric:tabular-nums; }
+
+  /* ---------- ladder ---------- */
+  .ladder{ background:var(--surface); }
+  .ladder-line{ text-align:center; max-width:52ch; margin:0 auto clamp(2.4rem,5vw,3.4rem); color:var(--ink-soft); font-style:italic; font-weight:600; font-size:1.1rem; }
+  .ladder-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1.4rem; align-items:start; }
+  .rung{ background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--r-lg); padding:1.7rem 1.6rem; display:flex; flex-direction:column; gap:0.85rem; transition:box-shadow 220ms var(--ease), border-color 220ms var(--ease), transform 220ms var(--ease), background-color 220ms var(--ease); }
+  .rung:hover{ transform:translateY(-4px); box-shadow:var(--shadow); background:color-mix(in srgb, var(--jade) 4%, var(--surface-raised)); }
+  .rung-top{ display:flex; align-items:center; gap:0.7rem; }
+  .rung-icon{ flex:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--jade) 12%, var(--surface-raised)); color:var(--jade-deep); }
+  .rung .step{ font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .rung h3{ font-size:1.3rem; }
+  .rung .src{ font-size:0.82rem; color:var(--ink-faint); }
+  .rung .price{ font-weight:800; font-size:1.6rem; margin-top:0.2rem; font-variant-numeric:tabular-nums; }
+  .rung p.desc{ color:var(--ink-soft); font-size:0.92rem; }
+  .rung-steps{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
+  .rung-steps li{ display:flex; gap:0.55rem; font-size:0.86rem; color:var(--ink-soft); line-height:1.45; }
+  .rung-steps .n{ flex:none; width:1.3rem; height:1.3rem; border-radius:50%; border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:700; color:var(--jade-deep); }
+  .rung-tagline{ margin-top:0.2rem; font-size:0.82rem; font-weight:700; color:var(--gold-deep); }
+  .rung-credit{ font-size:0.8rem; color:var(--ink-faint); font-style:italic; border-top:1px dashed var(--border-strong); padding-top:0.7rem; margin-top:0.2rem; }
+  .rung.r3{
+    border-color:var(--jade); border-width:2px; box-shadow:var(--shadow); position:relative;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--jade) 10%, var(--surface-raised)), var(--surface-raised));
+  }
+  .rung.r3 .rung-icon{ background:var(--jade); color:var(--on-jade); }
+  .rung.r3 .badge{ position:absolute; top:-0.8rem; left:1.5rem; background:var(--jade); color:var(--on-jade); font-size:0.7rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:0.35rem 0.8rem; border-radius:var(--r-pill); }
+  .rung.r3 .price{ color:var(--gold-deep); font-size:2rem; }
+  .rung .strike{ text-decoration:line-through; color:var(--ink-faint); font-size:1rem; font-weight:500; }
+  @media (max-width:860px){ .ladder-grid{ grid-template-columns:1fr; } }
+
+  /* ---------- pricing ---------- */
+  .pricing{
+    background:#1B1512; color:#F6EFE2; border-radius:var(--r-lg); overflow:hidden; position:relative;
+    --jade:#33C79C; --jade-deep:#22987A; --on-jade:#0B2B22;
+    --gold:#E4B454; --gold-deep:#C99A38;
+  }
+  .pricing-inner{ padding:clamp(2.4rem,6vw,4rem) clamp(2.4rem,6vw,4rem) clamp(1.6rem,4vw,2rem); display:grid; grid-template-columns:1.1fr 0.9fr; gap:clamp(2rem,5vw,3.5rem); align-items:center; }
+  .pricing .eyebrow{ color:var(--jade); }
+  .pricing .eyebrow::before{ background:var(--jade); }
+  .pricing h2{ color:#F6EFE2; font-size:clamp(1.9rem,3.4vw,2.7rem); margin-block:0.9rem 1rem; }
+  .pricing p.copy{ color:color-mix(in srgb, #F6EFE2 78%, transparent); max-width:50ch; }
+  .price-block{ background:color-mix(in srgb, #F6EFE2 6%, transparent); border:1px solid color-mix(in srgb, #F6EFE2 18%, transparent); border-radius:var(--r-lg); padding:1.8rem; }
+  .value-row{ display:flex; justify-content:space-between; gap:1rem; font-size:0.88rem; color:color-mix(in srgb, #F6EFE2 70%, transparent); padding-block:0.3rem; font-variant-numeric:tabular-nums; }
+  .value-row.list{ border-top:1px dashed color-mix(in srgb, #F6EFE2 24%, transparent); margin-top:0.4rem; padding-top:0.7rem; }
+  .value-row.list span{ text-decoration:line-through; opacity:0.75; }
+  .price-block .new{ font-weight:800; font-size:clamp(2.2rem,5vw,3rem); color:var(--jade); line-height:1.1; margin-block:0.5rem 0.2rem; font-variant-numeric:tabular-nums; }
+  .price-block .per-day{ color:color-mix(in srgb, #F6EFE2 75%, transparent); font-size:0.95rem; }
+  .price-block .btn{ width:100%; margin-top:1.4rem; }
+  .price-block .phone-link{ color:color-mix(in srgb, #F6EFE2 82%, transparent); justify-content:center; margin-top:0.8rem; }
+  .price-block .phone-link:hover{ color:var(--jade); background:color-mix(in srgb, var(--jade) 14%, transparent); }
+  .upgrade-note{
+    margin:0 clamp(2.4rem,6vw,4rem) clamp(2.4rem,6vw,4rem);
+    border:1px solid color-mix(in srgb, #F6EFE2 20%, transparent);
+    border-radius:var(--r-lg); padding:1.1rem 1.4rem;
+    display:flex; align-items:flex-start; gap:0.9rem;
+    background:color-mix(in srgb, var(--jade) 12%, transparent);
+  }
+  .upgrade-note svg{ flex:none; color:var(--jade); margin-top:0.15rem; }
+  .upgrade-note p{ color:color-mix(in srgb, #F6EFE2 88%, transparent); font-size:0.94rem; }
+  .upgrade-note strong{ color:var(--jade); }
+  @media (max-width:860px){
+    .pricing-inner{ grid-template-columns:1fr; padding-bottom:0; }
+    .upgrade-note{ margin-inline:clamp(1.4rem,6vw,4rem); margin-top:1.6rem; }
+  }
+
+  /* ---------- bonus ---------- */
+  .bonus-card{ display:grid; grid-template-columns:auto 1fr; gap:1.6rem; align-items:center; background:var(--surface-raised); border:1px solid var(--gold); border-radius:var(--r-lg); padding:clamp(1.6rem,4vw,2.4rem); transition:transform 220ms var(--ease), background-color 220ms var(--ease); }
+  .bonus-card:hover{ transform:translateY(-3px); background:color-mix(in srgb, var(--gold) 6%, var(--surface-raised)); }
+  .bonus-card .offer-icon{ background:color-mix(in srgb, var(--gold) 16%, var(--surface-raised)); color:var(--gold-deep); width:56px; height:56px; }
+  .bonus-card h3{ font-size:1.35rem; margin-bottom:0.5rem; }
+  .bonus-card p{ color:var(--ink-soft); }
+  @media (max-width:640px){ .bonus-card{ grid-template-columns:1fr; text-align:left; } }
+
+  /* ---------- faq ---------- */
+  .faq-list{ max-width:76ch; display:flex; flex-direction:column; gap:0.7rem; }
+  details{ background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--r-md); padding:0; transition:border-color 200ms var(--ease), background-color 200ms var(--ease); overflow:hidden; }
+  details[open]{ border-color:var(--border-strong); }
+  summary{ list-style:none; cursor:pointer; padding:1.1rem 1.3rem; font-weight:600; display:flex; justify-content:space-between; align-items:center; gap:1rem; transition:background-color 200ms var(--ease); }
+  summary:hover{ background:color-mix(in srgb, var(--jade) 6%, transparent); }
+  summary::-webkit-details-marker{ display:none; }
+  summary .q{ font-size:1.02rem; }
+  summary .icon{ flex:none; transition:transform 220ms var(--ease); color:var(--jade-deep); }
+  details[open] summary .icon{ transform:rotate(45deg); }
+  .faq-a{ padding:0 1.3rem 1.2rem; color:var(--ink-soft); max-width:64ch; }
+
+  /* ---------- final cta ---------- */
+  .final-cta{ text-align:center; position:relative; overflow:hidden; }
+  .final-glow{ position:absolute; left:50%; top:0; width:900px; height:500px; transform:translate(-50%,-40%); background:radial-gradient(circle, color-mix(in srgb, var(--jade) 16%, transparent), transparent 70%); pointer-events:none; z-index:0; }
+  .final-cta > div{ position:relative; z-index:1; }
+  .final-cta h2{ font-size:clamp(2rem,4vw,3rem); max-width:22ch; margin-inline:auto; }
+  .final-cta .prose{ margin-inline:auto; text-align:center; color:var(--ink-soft); margin-top:1rem; }
+  .final-ctas{ display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; margin-top:1.8rem; }
+  .final-thanks{ margin-top:2.6rem; font-style:italic; font-weight:600; color:var(--ink-faint); font-size:1.05rem; }
+
+  /* ---------- footer ---------- */
+  footer{ padding-block:2.5rem 3rem; }
+  .footer-grid{ display:flex; justify-content:space-between; gap:1.5rem; flex-wrap:wrap; align-items:flex-start; }
+  .footer-note{ max-width:52ch; font-size:0.82rem; color:var(--ink-faint); }
+  .footer-contact{ font-size:0.9rem; color:var(--ink-soft); text-align:right; }
+  .footer-contact a{ text-decoration:none; font-weight:600; color:var(--jade-deep); }
+  @media (max-width:600px){ .footer-contact{ text-align:left; } }
+
+  /* ---------- lead form dialog ---------- */
+  dialog.lead-dialog{
+    border:none; padding:0; margin:auto; max-width:460px; width:calc(100% - 2rem);
+    border-radius:var(--r-lg); background:var(--surface-raised); color:var(--ink);
+    box-shadow:0 30px 70px -20px rgba(0,0,0,0.4);
+  }
+  dialog.lead-dialog::backdrop{ background:rgba(20,16,12,0.55); backdrop-filter:blur(2px); animation:leadBackdropIn 220ms var(--ease); }
+  dialog.lead-dialog[open]{ animation:leadDialogIn 260ms var(--ease); }
+  @keyframes leadDialogIn{ from{ opacity:0; transform:translateY(12px) scale(0.97); } to{ opacity:1; transform:none; } }
+  @keyframes leadBackdropIn{ from{ opacity:0; } to{ opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ dialog.lead-dialog[open], dialog.lead-dialog::backdrop{ animation:none; } }
+  .lead-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1.6rem 1.6rem 0; }
+  .lead-head h3{ font-size:1.25rem; }
+  .lead-head p{ color:var(--ink-soft); font-size:0.88rem; margin-top:0.4rem; }
+  .lead-close{
+    appearance:none; -webkit-appearance:none; flex:none; width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--border-strong); background:transparent; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--ink-soft); padding:0;
+    transition:background-color 180ms var(--ease), color 180ms var(--ease);
+  }
+  .lead-close:hover{ background:color-mix(in srgb, var(--jade) 10%, transparent); color:var(--jade-deep); }
+  .lead-form{ padding:1.3rem 1.6rem 1.6rem; display:flex; flex-direction:column; gap:1rem; }
+  .field{ display:flex; flex-direction:column; gap:0.4rem; }
+  .field label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+  .lead-required{ color:var(--lacquer); }
+  .field input, .field textarea{
+    font-family:var(--font); font-size:0.95rem; padding:0.75rem 1rem; border-radius:var(--r-md);
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--ink);
+    transition:border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+  .field input:focus, .field textarea:focus{ outline:none; border-color:var(--jade); box-shadow:0 0 0 3px color-mix(in srgb, var(--jade) 22%, transparent); }
+  .field textarea{ resize:vertical; min-height:80px; font-family:var(--font); }
+  .lead-form .btn{ width:100%; margin-top:0.3rem; }
+  .lead-success{ padding:1.4rem 1.6rem 1.6rem; display:flex; flex-direction:column; gap:1rem; }
+  .lead-success p{ color:var(--ink-soft); font-size:0.92rem; }
+  .lead-actions{ display:flex; flex-direction:column; gap:0.6rem; }
+  .lead-actions .btn{ width:100%; }
+</style>
+
+<header class="site-header">
+  <div class="container bar">
+    <div class="wordmark">Ngô Lâm <span>· HỒI SINH 377 NGÀY</span></div>
+    <div class="header-actions">
+      <a class="phone-link" href="tel:0946583966" aria-label="Gọi số điện thoại 0946 583 966">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        0946 583 966
+      </a>
+      <button type="button" class="btn btn-primary btn-sm js-open-lead-form">Nhận ưu đãi</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero container">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Thư ngỏ · Dự án cộng đồng tháng 10/2026</span>
+        <h1>Hồi sinh <em>Thân –&nbsp;Tâm –&nbsp;Mệnh</em> trong hành&nbsp;trình <span class="nb">377 ngày</span></h1>
+        <p class="lede">Trọn vẹn hệ tri thức mà Ngô Lâm từng đồng hành 1-1 cùng bệnh nhân K và người mắc bệnh mãn tính — nay mở rộng cho mọi gia đình Việt, với lộ trình cá nhân hóa mỗi ngày và tương tác Zoom định kỳ vào mùng Một, ngày Rằm.</p>
+        <div class="hero-ctas">
+          <button type="button" class="btn btn-primary js-open-lead-form">Nhận suất ưu đãi 11.800.000đ</button>
+          <a class="btn btn-ghost" href="#thu-ngo">Đọc thư ngỏ</a>
+        </div>
+        <p class="hero-note">Mức trợ giá còn hiệu lực trong Tháng 10/2026, theo Dự án cộng đồng "1.000 Gia Đình Việt Nam chăm sóc sức khỏe chủ động tại nhà".</p>
+        <p class="hero-note">Chương trình mang tính giáo dục, hỗ trợ xây dựng lối sống chăm sóc sức khỏe chủ động — không khám chữa bệnh, không thay thế chẩn đoán, thuốc, điều trị hoặc theo dõi của bác sĩ.</p>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <svg class="hero-illustration" viewBox="0 0 260 240" preserveAspectRatio="xMidYMid meet">
+          <circle cx="150" cy="58" r="30" fill="var(--gold)" opacity="0.16"/>
+          <path d="M0,240 L55,130 L95,168 L145,96 L195,158 L260,118 L260,240 Z" fill="var(--jade)" opacity="0.10"/>
+          <path d="M0,240 L38,162 L88,200 L138,142 L188,192 L260,150 L260,240 Z" fill="var(--jade)" opacity="0.16"/>
+          <path d="M130,210 c-16,-20 -16,-38 0,-38 c16,0 16,18 0,38 Z" fill="var(--jade-deep)" opacity="0.3"/>
+        </svg>
+        <div class="track">
+          <span class="day-tag">Ngày 1</span>
+          <div class="spine" style="height:220px"></div>
+          <span class="day-tag end">Ngày 377</span>
+        </div>
+        <span class="caption">Lộ trình cá nhân hóa mỗi ngày</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="letter" id="thu-ngo">
+    <div class="container">
+      <div class="letter-card" data-reveal>
+        <p class="letter-kicker">Lời tri ân và món quà dành tặng cho bạn</p>
+        <p>Kính gửi Quý học viên và toàn thể Anh Chị,</p>
+        <p>Lời đầu tiên, Ngô Lâm xin gửi lời cảm ơn chân thành nhất đến tất cả mọi người đã luôn tin tưởng, yêu thương và đồng hành cùng Lâm trong suốt chặng đường vừa qua.</p>
+        <p>Do nhiều Anh Chị mong muốn có được sự đồng hành chăm sóc sức khỏe thuận tự nhiên, Lâm xin chia sẻ một quyết định hoàn toàn mới. Trước đây, Lâm chủ yếu đồng hành 1-1 trực tiếp với các bệnh nhân K và người mắc bệnh mãn tính. Chi phí cho chương trình đồng hành chuyên sâu 377 ngày này là <strong>250.000.000 VNĐ / người</strong>.</p>
+        <p class="letter-pull">"Qua thực tế quan sát, Lâm nhận thấy còn rất nhiều người khao khát tham gia nhưng lại bị rào cản về chi phí, thời gian hoặc khoảng cách địa lý."</p>
+        <p>Chính vì vậy, Lâm quyết định mở rộng mô hình hỗ trợ — để tất cả những ai mong muốn tìm hiểu chuyên sâu về sức khỏe đều có thể tham gia dễ dàng, với cùng một nội dung và quy trình chuẩn như gói coach 1-1 trước đây.</p>
+        <p class="sig">Biết ơn Anh Chị đã đọc tin,<span class="name">Ngô Lâm</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container" id="mo-rong">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Từ 1-1 đến cộng đồng</span>
+      <h2>Cùng một hệ phương pháp, mở rộng cách tiếp cận</h2>
+    </div>
+    <div class="bridge-grid" data-reveal>
+      <div class="bridge-col before">
+        <h3>Trước đây</h3>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>Đồng hành 1-1 trực tiếp, 250.000.000đ/người/năm</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>Giới hạn số lượng bệnh nhân K và bệnh mãn tính có thể nhận</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>Rào cản chi phí, thời gian, khoảng cách địa lý</li>
+        </ul>
+      </div>
+      <div class="bridge-arrow" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="bridge-col after">
+        <h3>Từ tháng 10/2026</h3>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Zoom trực tiếp định kỳ mùng Một và ngày Rằm hàng tháng</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Lộ trình cá nhân hóa theo từng ngày, tự điều chỉnh mỗi ngày một tốt hơn</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Nội dung trọn gói 377 ngày — giống hệt gói coach 1-1</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="rhythm" id="nhip-dong-hanh">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow">Hình thức đồng hành</span>
+        <h2>Một nhịp điệu đều đặn, suốt <span class="nb">377 ngày</span></h2>
+      </div>
+      <div class="rhythm-row">
+        <div class="rhythm-item reveal-item">
+          <div class="rhythm-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M2 12h2.2M19.8 12H22M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5"/></svg>
+          </div>
+          <div class="rhythm-body">
+            <span class="rhythm-tag">Mỗi ngày · Mặt trời</span>
+            <h3>Lộ trình cá nhân hóa</h3>
+            <p>Nhận hướng dẫn chi tiết theo từng ngày — ăn uống, thanh lọc, thải độc, thay đổi lối sống, duy trì luyện tập — giúp bản thân tự điều chỉnh và tốt hơn mỗi ngày.</p>
+          </div>
+        </div>
+        <div class="rhythm-item reveal-item">
+          <div class="rhythm-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M15 3a9 9 0 1 0 0 18c-3.2-1.9-5-5.4-5-9s1.8-7.1 5-9Z"/></svg>
+          </div>
+          <div class="rhythm-body">
+            <span class="rhythm-tag">Mùng Một hàng tháng · Trăng non</span>
+            <h3>Zoom trực tiếp cùng Ngô Lâm</h3>
+            <p>Tương tác trực tiếp, giải đáp và điều chỉnh lộ trình theo tình trạng thực tế của từng người.</p>
+          </div>
+        </div>
+        <div class="rhythm-item reveal-item">
+          <div class="rhythm-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="rhythm-body">
+            <span class="rhythm-tag">Ngày Rằm hàng tháng · Trăng tròn</span>
+            <h3>Zoom trực tiếp, tổng kết chu kỳ</h3>
+            <p>Tổng kết chặng đường trong tháng, chuẩn bị bước tiếp theo trên hành trình 377 ngày.</p>
+          </div>
+        </div>
+      </div>
+      <p class="rhythm-note" data-reveal>Không ngẫu nhiên khi chọn mùng Một và ngày Rằm — hai cột mốc thanh lọc quen thuộc trong nhịp sống của người Việt, nay trở thành nhịp đồng hành xuyên suốt hành trình.</p>
+    </div>
+  </section>
+
+  <section class="container" id="noi-dung">
+    <div class="offer-intro" data-reveal>
+      <div class="section-head" style="margin-bottom:0">
+        <span class="eyebrow">Bên trong hành trình 377 ngày</span>
+        <h2>10 nội dung trọng tâm — một offer trọn vẹn</h2>
+      </div>
+      <span class="value-tag">Tổng giá trị quy đổi <strong>58.000.000đ</strong></span>
+    </div>
+    <div class="offer-stack">
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19C5 10 11 4 19 4c1 8-5 15-14 15Z"/><path d="M5 19c2-4 5-8 10-11"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 01</span>
+          <h3>Dinh dưỡng ngũ hành</h3>
+          <p>Cá nhân hóa chế độ dinh dưỡng cân bằng theo cơ địa Hàn – Nhiệt.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">5.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 2.5-7 6-11Z"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 02</span>
+          <h3>Chuyển hóa sức khỏe gốc</h3>
+          <p>Trở về gốc rễ sinh mệnh — dưỡng sinh, chăm sóc và phục hồi Lục phủ Ngũ tạng.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">6.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="9.3" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="14.6" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="19.9" r="1.3" fill="currentColor" stroke="none"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 03</span>
+          <h3>Khai thông kinh lạc</h3>
+          <p>Kích hoạt cơ chế tự chữa lành bằng Y học bản địa Việt Nam — Tác động cột sống.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">7.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 13.5-5.5L20 9"/><path d="M20 5v4h-4"/><path d="M20 12a8 8 0 0 1-13.5 5.5L4 15"/><path d="M4 19v-4h4"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 04</span>
+          <h3>Chu kỳ sinh học</h3>
+          <p>Thấu hiểu và chủ động vận hành quá trình tái tạo cơ thể ở cấp độ tế bào.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">5.400.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 05</span>
+          <h3>Phong thủy nhà ở</h3>
+          <p>Khơi thông sinh khí, chuyển hóa năng lượng không gian sống, nâng cao sức khỏe toàn diện.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">4.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v10c0 1.7 3.1 3 7 3s7-1.3 7-3V7"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 06</span>
+          <h3>Phong thủy tài chính</h3>
+          <p>Nghệ thuật quản trị và tối ưu phong thủy tài chính cá nhân và gia đình.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">5.400.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 07</span>
+          <h3>Năm vòng tròn lỗi đạo</h3>
+          <p>Hàn gắn, chuyển hóa mối quan hệ và nâng cao tần số năng lượng.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">4.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="10" opacity="0.5"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 08</span>
+          <h3>Năm vòng tròn kiểm soát</h3>
+          <p>Làm chủ tư duy và phát triển tâm thức.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">4.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 6.5l1.8 4.3 4.5 1.7-4.5 1.7-1.8 4.3-1.8-4.3-4.5-1.7 4.5-1.7Z"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 09</span>
+          <h3>Lập trình vận mệnh</h3>
+          <p>Khai phóng tiềm năng, kiến tạo bản đồ cuộc đời viên mãn.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">5.900.000đ</span>
+        </div>
+      </div>
+      <div class="offer-row reveal-item">
+        <div class="offer-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5c4.7 0 8.5 3.8 8.5 8.5S16.7 20.5 12 20.5c-2.3 0-2.3-4.25 0-4.25s2.3-4.25 0-4.25-2.3-4.25 0-4.25Z"/><circle cx="12" cy="7.75" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="16.25" r="1" fill="currentColor" stroke="none"/></svg></div>
+        <div class="offer-body">
+          <span class="offer-num">Nội dung 10</span>
+          <h3>Trí tuệ Kinh Dịch</h3>
+          <p>Ứng dụng nghệ thuật cân bằng Thân – Tâm theo trí tuệ Kinh Dịch.</p>
+        </div>
+        <div class="offer-meta">
+          <span class="offer-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Có trong gói</span>
+          <span class="offer-value">5.900.000đ</span>
+        </div>
+      </div>
+    </div>
+    <div class="offer-total" data-reveal>
+      <span class="label">Tổng giá trị quy đổi<span>10 nội dung trong hành trình 377 ngày</span></span>
+      <strong>58.000.000đ</strong>
+    </div>
+  </section>
+
+  <section class="ladder" id="thang-gia-tri">
+    <div class="container">
+      <div class="section-head" data-reveal style="text-align:center; max-width:60ch; margin-inline:auto;">
+        <span class="eyebrow" style="justify-content:center">Thang giá trị</span>
+        <h2>Cùng một người thầy, khác nhau ở độ sâu và thời gian đồng hành</h2>
+      </div>
+      <div class="ladder-grid">
+        <div class="rung r1 reveal-item">
+          <div class="rung-top">
+            <div class="rung-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M12 10c0-4-3-6-7-6 0 4 3 7 7 6Z"/><path d="M12 13c0-3 2.5-5 6-5 0 3-2.5 6-6 5Z"/></svg></div>
+            <span class="step">Bậc 1 · Làm quen</span>
+          </div>
+          <h3>Workshop 3 buổi</h3>
+          <span class="src">ngolam.com</span>
+          <div class="price">Miễn phí</div>
+          <ul class="rung-steps">
+            <li><span class="n">1</span>Hiểu cơ thể hàn nhiệt, ăn uống theo ngũ hành</li>
+            <li><span class="n">2</span>Khai thông kinh lạc vùng đầu</li>
+            <li><span class="n">3</span>Thanh lọc và tái tạo cấp tế bào</li>
+          </ul>
+          <span class="rung-tagline">Khởi động thể chất và năng lượng sống</span>
+        </div>
+        <div class="rung r2 reveal-item">
+          <div class="rung-top">
+            <div class="rung-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6 0 1.5 1 2 2 2 1.5 0 2-1.3 2-2.5 2 1.5 3 4 3 6.5a6 6 0 1 1-12 0c0-3 1.5-5 2.5-6.5.3 1 1 1.8 2 1.8-.5-2-1-4 1.5-7Z"/></svg></div>
+            <span class="step">Bậc 2 · Đào sâu kỹ thuật</span>
+          </div>
+          <h3>Chuyên sâu 8 buổi</h3>
+          <span class="src">dienvienduong.com</span>
+          <div class="price">4.800.000đ</div>
+          <ul class="rung-steps">
+            <li><span class="n">1</span>Hiểu cơ thể hàn nhiệt, ăn uống theo ngũ hành</li>
+            <li><span class="n">2</span>Trừ phong tà</li>
+            <li><span class="n">3</span>Thanh lọc và tái tạo cấp tế bào</li>
+            <li><span class="n">4</span>Tăng miễn dịch, sauna thải độc, chấm dứt viêm mãn tính</li>
+            <li><span class="n">5</span>Nhịp sinh học 4 mùa</li>
+            <li><span class="n">6</span>Phong thủy không gian sống</li>
+            <li><span class="n">7</span>Thiết lập lối sống dài hạn</li>
+            <li><span class="n">8</span>Tổng kết và hoàn thiện hành trình</li>
+          </ul>
+          <span class="rung-tagline">Chuyên sâu kiến thức – Thực hành chuyển hóa</span>
+          <p class="rung-credit">Học phí 4.800.000đ được khấu trừ toàn bộ khi nâng cấp lên Hành trình 377 ngày.</p>
+        </div>
+        <div class="rung r3 reveal-item">
+          <span class="badge">Đầy đủ nhất</span>
+          <div class="rung-top">
+            <div class="rung-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20c-4 0-7-3-7-7 3 0 5 1.5 7 4 2-2.5 4-4 7-4 0 4-3 7-7 7Z"/><path d="M12 20V10"/></svg></div>
+            <span class="step">Bậc 3 · Đồng hành trọn vẹn</span>
+          </div>
+          <h3>Hành trình 377 ngày</h3>
+          <span class="src">Hồi Sinh Thân – Tâm – Mệnh</span>
+          <div class="price"><span class="strike">37.800.000đ</span><br>11.800.000đ</div>
+          <p class="desc">Cá nhân hóa mỗi ngày, Zoom định kỳ mùng Một &amp; Rằm, trọn vẹn 10 hệ tri thức Thân – Tâm – Mệnh trong hơn 1 năm — tổng giá trị quy đổi 58.000.000đ.</p>
+        </div>
+      </div>
+      <p class="ladder-line" data-reveal>Workshop giúp bạn làm quen. Khóa 8 buổi giúp bạn đào sâu kỹ thuật. Hành trình 377 ngày là nơi duy nhất bạn được đồng hành cá nhân hóa mỗi ngày, suốt một năm trọn vẹn.</p>
+    </div>
+  </section>
+
+  <section class="container" id="pricing">
+    <div class="pricing" data-reveal>
+      <div class="pricing-inner">
+        <div>
+          <span class="eyebrow">Mức đầu tư &amp; đặc quyền tham gia</span>
+          <h2>Cơ hội duy nhất trong Tháng 10/2026</h2>
+          <p class="copy">Nhằm đồng hành cùng Dự án cộng đồng "1.000 Tổ Ấm Việt Thắp Sáng Y Học Bản Địa Việt Nam" do Ngô Lâm triển khai, Ban dự án dành tặng mức trợ giá giới hạn cho những Anh Chị đăng ký trong tháng này. Suất tham gia của Anh Chị sẽ được tính vào Dự án cộng đồng "1.000 Gia Đình Việt Nam chăm sóc sức khỏe chủ động tại nhà".</p>
+        </div>
+        <div class="price-block">
+          <div class="value-row"><span>Tổng giá trị quy đổi 10 nội dung</span><span>58.000.000đ</span></div>
+          <div class="value-row list"><span>Giá niêm yết</span><span>37.800.000đ</span></div>
+          <div class="new">11.800.000đ</div>
+          <div class="per-day">Hơn 30.000đ / ngày cho trọn gói 377 ngày — một khoản tích lũy cho sức khỏe gốc và tương lai trọn đời.</div>
+          <button type="button" class="btn btn-primary js-open-lead-form">Đăng ký suất ưu đãi</button>
+          <a class="phone-link" href="tel:0946583966">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            0946 583 966
+          </a>
+        </div>
+      </div>
+      <div class="upgrade-note">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.86L20 7.9l-4 3.9.94 5.5L12 14.9l-4.94 2.4.94-5.5-4-3.9 5.6-1.04L12 2z"/></svg>
+        <p>Đã tham gia <strong>Chuyên sâu 8 buổi (4.800.000đ)</strong>? Anh Chị chỉ cần bổ sung <strong>7.000.000đ</strong> để hoàn tất trọn vẹn Hành trình 377 ngày.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container" id="chuyen-giao">
+    <div class="bonus-card" data-reveal>
+      <div class="offer-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.86L20 7.9l-4 3.9.94 5.5L12 14.9l-4.94 2.4.94-5.5-4-3.9 5.6-1.04L12 2z"/></svg></div>
+      <div>
+        <h3>Đặc quyền chuyển giao thương hiệu</h3>
+        <p>Dành riêng cho các Anh Chị có định hướng kiến tạo hoặc vận hành Trung tâm Chăm sóc Sức khỏe. Vui lòng liên hệ trực tiếp <a href="tel:0946583966" style="color:var(--gold-deep); font-weight:600;">0946 583 966</a> để nhận lộ trình cố vấn và chuyển giao chuyên sâu.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container" id="faq">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Câu hỏi thường gặp</span>
+      <h2>Trước khi Anh Chị gọi cho Lâm</h2>
+    </div>
+    <div class="faq-list">
+      <details class="reveal-item">
+        <summary><span class="q">Vì sao hành trình kéo dài đúng 377 ngày?</span><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+        <p class="faq-a">Đây là chương trình đồng hành chuyên sâu trong hơn 1 năm, đủ dài để chuyển hóa toàn diện Thân – Tâm – Mệnh qua từng giai đoạn — từ ăn uống, thanh lọc, thải độc đến thay đổi lối sống và duy trì luyện tập, không rút ngắn nội dung so với gói coach 1-1 trước đây.</p>
+      </details>
+      <details class="reveal-item">
+        <summary><span class="q">Tôi bận, không tham gia Zoom trực tiếp được thì sao?</span><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+        <p class="faq-a">Mỗi ngày Anh Chị vẫn nhận lộ trình cá nhân hóa riêng để tự thực hành. Hai buổi Zoom vào mùng Một và ngày Rằm là các mốc tương tác trực tiếp định kỳ trong tháng.</p>
+      </details>
+      <details class="reveal-item">
+        <summary><span class="q">Tôi đang điều trị bệnh, có tham gia được không?</span><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+        <p class="faq-a">Đây là chương trình dưỡng sinh, chăm sóc sức khỏe chủ động theo hướng thuận tự nhiên, đồng hành song song. Anh Chị vui lòng gọi trực tiếp 0946 583 966 để được tư vấn phù hợp với tình trạng cá nhân trước khi đăng ký.</p>
+      </details>
+      <details class="reveal-item">
+        <summary><span class="q">Tôi đã học Chuyên sâu 8 buổi rồi, có phải đóng lại từ đầu không?</span><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+        <p class="faq-a">Không. Học phí 4.800.000đ của khóa Chuyên sâu 8 buổi được khấu trừ toàn bộ — Anh Chị chỉ cần bổ sung 7.000.000đ để hoàn tất trọn vẹn Hành trình 377 ngày.</p>
+      </details>
+      <details class="reveal-item">
+        <summary><span class="q">Vì sao giá chỉ còn 11.800.000đ so với 37.800.000đ?</span><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+        <p class="faq-a">Đây là mức trợ giá giới hạn trong Tháng 10/2026, dành cho những suất đăng ký được tính vào Dự án cộng đồng "1.000 Gia Đình Việt Nam chăm sóc sức khỏe chủ động tại nhà" do Ngô Lâm điều hành.</p>
+      </details>
+      <details class="reveal-item">
+        <summary><span class="q">Nếu tôi muốn mở Trung tâm Chăm sóc Sức khỏe riêng?</span><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+        <p class="faq-a">Vui lòng liên hệ trực tiếp 0946 583 966 để nhận đặc quyền chuyển giao thương hiệu và lộ trình cố vấn chuyên sâu từ Ngô Lâm.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="container final-cta">
+    <div class="final-glow" aria-hidden="true"></div>
+    <div data-reveal>
+      <span class="eyebrow" style="justify-content:center">Bước tiếp theo</span>
+      <h2>Sẵn sàng bắt đầu hành&nbsp;trình <span class="nb">377 ngày</span> của Anh Chị?</h2>
+      <p class="prose">Gọi trực tiếp cho Ngô Lâm để giữ suất trong Dự án cộng đồng Tháng 10/2026 — trước khi mức trợ giá 11.800.000đ kết thúc.</p>
+      <div class="final-ctas">
+        <button type="button" class="btn btn-primary js-open-lead-form">Đăng ký ngay</button>
+        <a class="btn btn-ghost" href="#noi-dung">Xem lại 10 nội dung</a>
+      </div>
+      <p class="final-thanks">"Biết ơn Anh Chị đã đọc tin. Trân trọng, Ngô Lâm."</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="container">
+  <div class="footer-grid">
+    <p class="footer-note"><strong>Hồi Sinh Thân – Tâm – Mệnh</strong> là chương trình mang tính giáo dục và hỗ trợ xây dựng lối sống chăm sóc sức khỏe chủ động. Không khám chữa bệnh — không thay thế chẩn đoán, thuốc, điều trị hoặc theo dõi của bác sĩ. Các mức giá trị quy đổi theo từng nội dung mang tính tham khảo, minh họa cho quy mô hệ tri thức được chia sẻ.</p>
+    <p class="footer-contact">Ngô Lâm<br><a href="tel:0946583966">0946 583 966</a></p>
+  </div>
+</footer>
+
+<dialog id="lead-dialog" class="lead-dialog" aria-labelledby="lead-title">
+  <div class="lead-head">
+    <div>
+      <h3 id="lead-title">Đăng ký suất ưu đãi</h3>
+      <p>Để lại thông tin, Ngô Lâm sẽ liên hệ tư vấn trực tiếp cho Anh Chị.</p>
+    </div>
+    <button type="button" class="lead-close" id="lead-close" aria-label="Đóng biểu mẫu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <form id="lead-form" class="lead-form">
+    <div class="field">
+      <label for="lead-name">Họ và tên <span class="lead-required">*</span></label>
+      <input id="lead-name" name="name" type="text" required autocomplete="name" placeholder="Nguyễn Văn A">
+    </div>
+    <div class="field">
+      <label for="lead-phone">Số điện thoại <span class="lead-required">*</span></label>
+      <input id="lead-phone" name="phone" type="tel" required autocomplete="tel" placeholder="0912 345 678" pattern="[0-9 +]{8,15}">
+    </div>
+    <div class="field">
+      <label for="lead-email">Email</label>
+      <input id="lead-email" name="email" type="email" autocomplete="email" placeholder="ban@email.com">
+    </div>
+    <div class="field">
+      <label for="lead-note">Nội dung</label>
+      <textarea id="lead-note" name="note" placeholder="Anh/Chị muốn Ngô Lâm tư vấn thêm điều gì?"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Gửi thông tin đăng ký</button>
+  </form>
+  <div id="lead-success" class="lead-success" hidden>
+    <p>Cảm ơn Anh Chị<span id="lead-success-name"></span>. Ngô Lâm đã sẵn sàng tư vấn — bấm gọi ngay để được hỗ trợ trực tiếp:</p>
+    <div class="lead-actions">
+      <a class="btn btn-primary" href="tel:0946583966">Gọi ngay 0946 583 966</a>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  (function(){
+    var dialog = document.getElementById('lead-dialog');
+    var openBtns = document.querySelectorAll('.js-open-lead-form');
+    var closeBtn = document.getElementById('lead-close');
+    var form = document.getElementById('lead-form');
+    var successView = document.getElementById('lead-success');
+    var successName = document.getElementById('lead-success-name');
+    if(!dialog || !form) return;
+
+    function openDialog(){
+      form.hidden = false;
+      successView.hidden = true;
+      form.reset();
+      if(typeof dialog.showModal === 'function'){ dialog.showModal(); }
+      else { dialog.setAttribute('open',''); }
+    }
+    function closeDialog(){
+      if(typeof dialog.close === 'function'){ dialog.close(); }
+      else { dialog.removeAttribute('open'); }
+    }
+    openBtns.forEach(function(btn){ btn.addEventListener('click', openDialog); });
+    closeBtn.addEventListener('click', closeDialog);
+    dialog.addEventListener('click', function(e){ if(e.target === dialog){ closeDialog(); } });
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(typeof form.reportValidity === 'function' && !form.reportValidity()) return;
+      var name = form.name.value.trim();
+      successName.textContent = name ? ' ' + name : '';
+      form.hidden = true;
+      successView.hidden = false;
+    });
+  })();
+</script>
+
+<script>
+  (function(){
+    var els = Array.prototype.slice.call(document.querySelectorAll('[data-reveal], .reveal-item'));
+    if(!('IntersectionObserver' in window) || !els.length){ return; }
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    els.forEach(function(el){
+      var r = el.getBoundingClientRect();
+      if(r.top > vh * 0.92){ el.classList.add('will-settle'); }
+    });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+    els.forEach(function(el){ io.observe(el); });
+    setTimeout(function(){
+      els.forEach(function(el){ el.classList.add('is-visible'); });
+    }, 2500);
+  })();
+</script>

@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô hình Doanh nghiệp Tự hành 1 người — Chăm sóc sức khoẻ Ngô Lâm — Đề xuất dự án</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ink: #16241C;
+      --ink-2: #1E2F24;
+      --paper: #FAF7F0;
+      --paper-2: #F1ECDD;
+      --gold: #6F8F5E;
+      --gold-soft: #96B588;
+      --gold-deep: #4B6B44;
+      --text-dark: #26302A;
+      --text-mute: #75806F;
+      --text-light: #EAF0E4;
+      --text-light-mute: #AFC0A8;
+      --sage: #B9714A;
+      --sage-soft: #F3E1D3;
+      --rust: #9C5B45;
+      --rule: #E3DFCB;
+      --shadow: 0 18px 40px -22px rgba(21, 18, 14, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: var(--paper);
+      color: var(--text-dark);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 288px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+      color: var(--text-light);
+      padding: 36px 0 28px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid rgba(111, 143, 94, 0.25);
+    }
+
+    .brand {
+      padding: 0 28px 28px;
+      border-bottom: 1px solid rgba(111, 143, 94, 0.22);
+      margin-bottom: 22px;
+    }
+
+    .brand-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold-soft);
+      margin: 0 0 8px;
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 25px;
+      line-height: 1.2;
+      margin: 0 0 6px;
+      color: var(--text-light);
+    }
+
+    .brand-sub {
+      font-size: 12.5px;
+      color: var(--text-light-mute);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    nav.spines {
+      padding: 6px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .spine {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(111, 143, 94, 0.18);
+      border-left: 4px solid rgba(111, 143, 94, 0.28);
+      color: var(--text-light-mute);
+      padding: 16px 16px 16px 14px;
+      border-radius: 2px 8px 8px 2px;
+      cursor: pointer;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      transition: all .22s ease;
+    }
+
+    .spine:hover {
+      border-left-color: var(--gold);
+      color: var(--text-light);
+      background: rgba(111, 143, 94, 0.08);
+    }
+
+    .spine.active {
+      border-left-color: var(--gold);
+      border-left-width: 6px;
+      background: linear-gradient(90deg, rgba(111, 143, 94, 0.18), rgba(111, 143, 94, 0.02));
+      color: var(--text-light);
+      box-shadow: inset 0 0 0 1px rgba(111, 143, 94, 0.24);
+    }
+
+    .spine .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--gold-soft);
+      letter-spacing: 0.04em;
+      min-width: 20px;
+    }
+
+    .spine .label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .spine .label .t1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .spine .label .t2 {
+      font-size: 11px;
+      color: var(--text-light-mute);
+    }
+
+    .spine.active .label .t2 {
+      color: var(--gold-soft);
+    }
+
+    .sidebar-foot {
+      margin-top: 24px;
+      padding: 18px 28px 0;
+      border-top: 1px solid rgba(111, 143, 94, 0.2);
+      font-size: 11.5px;
+      color: var(--text-light-mute);
+      line-height: 1.6;
+    }
+
+    .sidebar-foot b {
+      color: var(--gold-soft);
+      font-weight: 600;
+    }
+
+    /* ===== MAIN ===== */
+    main {
+      padding: 52px 64px 90px;
+      max-width: 980px;
+    }
+
+    .page-head {
+      margin-bottom: 38px;
+    }
+
+    .page-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold-deep);
+      margin: 0 0 10px;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 44px;
+      line-height: 1.08;
+      margin: 0 0 14px;
+      color: var(--text-dark);
+    }
+
+    .page-desc {
+      font-size: 15.5px;
+      color: var(--text-mute);
+      line-height: 1.65;
+      max-width: 640px;
+      margin: 0;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    /* ===== Intro block ===== */
+    .intro-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      padding: 28px 30px;
+      margin-bottom: 36px;
+    }
+
+    .intro-card p {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text-dark);
+      margin: 0 0 14px;
+    }
+
+    .intro-card p:last-child {
+      margin-bottom: 0;
+    }
+
+    .goal-list {
+      list-style: none;
+      margin: 18px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .goal-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text-dark);
+    }
+
+    .goal-list li::before {
+      content: "";
+      flex: none;
+      width: 7px;
+      height: 7px;
+      margin-top: 7px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+
+    /* ===== Accordion ===== */
+    .section-block {
+      margin-bottom: 14px;
+    }
+
+    .acc {
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: #fff;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .acc-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      background: #fff;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    .acc-head:hover {
+      background: #FFFDF8;
+    }
+
+    .acc-head-left {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .acc-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--gold-deep);
+      letter-spacing: 0.04em;
+      min-width: 30px;
+    }
+
+    .acc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 21px;
+      color: var(--text-dark);
+    }
+
+    .acc-chevron {
+      flex: none;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-deep);
+      transition: transform .25s ease;
+    }
+
+    .acc.open .acc-chevron {
+      transform: rotate(180deg);
+    }
+
+    .acc-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .32s ease;
+      border-top: 1px solid transparent;
+    }
+
+    .acc.open .acc-body {
+      border-top: 1px solid var(--rule);
+    }
+
+    .acc-body-inner {
+      padding: 22px;
+    }
+
+    table.feat {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.6px;
+    }
+
+    table.feat th {
+      text-align: left;
+      background: var(--ink);
+      color: var(--text-light);
+      font-weight: 600;
+      font-size: 11.5px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 10px 14px;
+    }
+
+    table.feat th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+
+    table.feat th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+
+    table.feat td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+      line-height: 1.55;
+      color: var(--text-dark);
+    }
+
+    table.feat tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.feat td:first-child {
+      width: 34%;
+      font-weight: 600;
+      color: var(--text-dark);
+      background: var(--paper-2);
+    }
+
+    table.feat td:last-child {
+      color: var(--text-mute);
+    }
+
+    .note-line {
+      font-size: 13.5px;
+      color: var(--text-mute);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    /* ===== Roadmap ===== */
+    .roadmap {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 20px;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .stage.optional {
+      border-style: dashed;
+      background: var(--paper-2);
+    }
+
+    .stage-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stage-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 19px;
+    }
+
+    .stage-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--gold-deep);
+      background: rgba(111, 143, 94, 0.14);
+      padding: 3px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .stage-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-mute);
+    }
+
+    .timeline-note {
+      font-size: 13px;
+      color: var(--text-mute);
+      font-style: italic;
+      margin: 14px 2px 0;
+    }
+
+    /* pricing */
+    .price-grid {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+
+    .price-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 18px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .price-card.hi {
+      background: linear-gradient(90deg, #fff, var(--paper-2));
+      border-color: var(--gold-soft);
+    }
+
+    .price-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 19px;
+    }
+
+    .price-includes {
+      font-size: 13.5px;
+      color: var(--text-mute);
+      line-height: 1.6;
+    }
+
+    .price-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 19px;
+      color: var(--gold-deep);
+      white-space: nowrap;
+    }
+
+    .price-value small {
+      display: block;
+      font-size: 10.5px;
+      color: var(--text-mute);
+      font-weight: 500;
+      letter-spacing: .04em;
+    }
+
+    .price-group-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-deep);
+      background: var(--sage-soft);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin: 22px 0 10px;
+    }
+
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.6px;
+      margin-top: 6px;
+    }
+
+    .cost-table td {
+      padding: 11px 4px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .cost-table td:first-child {
+      font-weight: 600;
+      width: 42%;
+    }
+
+    .cost-table td:last-child {
+      color: var(--text-mute);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+    }
+
+    .terms {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .terms li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-dark);
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .terms li::before {
+      content: "§";
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--gold-deep);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    /* ===== ROI ===== */
+    .roi-callout {
+      background: var(--ink);
+      color: var(--text-light);
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 18px;
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+
+    .roi-callout b {
+      color: var(--gold-soft);
+    }
+
+    .roi-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 18px 0 22px;
+    }
+
+    .roi-stat {
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 18px 18px;
+      box-shadow: var(--shadow);
+      text-align: left;
+    }
+
+    .roi-stat .k {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      margin: 0 0 8px;
+    }
+
+    .roi-stat .v {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--gold-deep);
+      margin: 0;
+    }
+
+    .roi-stat .d {
+      font-size: 12px;
+      color: var(--text-mute);
+      margin: 6px 0 0;
+      line-height: 1.5;
+    }
+
+    table.roi {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.6px;
+      margin-bottom: 8px;
+    }
+
+    table.roi th {
+      text-align: left;
+      background: var(--ink);
+      color: var(--text-light);
+      font-weight: 600;
+      font-size: 11.5px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 10px 14px;
+    }
+
+    table.roi th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+
+    table.roi th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+
+    table.roi td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+      line-height: 1.55;
+      color: var(--text-dark);
+    }
+
+    table.roi tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.roi tr.total td {
+      font-weight: 700;
+      background: var(--sage-soft);
+    }
+
+    table.roi td:first-child {
+      font-weight: 600;
+    }
+
+    /* ===== Checklist tab ===== */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      border-radius: 6px;
+      background: var(--paper-2);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+      width: 0%;
+      transition: width .3s ease;
+    }
+
+    .progress-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: var(--text-mute);
+      white-space: nowrap;
+    }
+
+    .check-group {
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: #fff;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .check-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #fff;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .check-head:hover {
+      background: #FFFDF8;
+    }
+
+    .check-head-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .check-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 19px;
+    }
+
+    .check-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--sage);
+      background: var(--sage-soft);
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .check-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .32s ease;
+    }
+
+    .check-group.open .check-body {
+      border-top: 1px solid var(--rule);
+    }
+
+    .check-body-inner {
+      padding: 6px 20px 18px;
+      display: grid;
+      gap: 2px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 4px;
+      border-bottom: 1px dashed var(--rule);
+      font-size: 14px;
+      color: var(--text-dark);
+      cursor: pointer;
+    }
+
+    .check-item:last-child {
+      border-bottom: none;
+    }
+
+    .check-item input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--sage);
+      flex: none;
+      cursor: pointer;
+    }
+
+    .check-item span {
+      transition: color .2s ease, text-decoration-color .2s ease;
+    }
+
+    .check-item input:checked+span {
+      color: var(--text-mute);
+      text-decoration: line-through;
+      text-decoration-color: var(--sage);
+    }
+
+    .check-group.open .acc-chevron {
+      transform: rotate(180deg);
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(111, 143, 94, 0.35);
+      border-radius: 8px;
+    }
+
+    @media (max-width: 880px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+      }
+
+      main {
+        padding: 36px 22px 70px;
+      }
+
+      .stage {
+        grid-template-columns: 1fr;
+      }
+
+      .price-card {
+        grid-template-columns: 1fr;
+        text-align: left;
+      }
+
+      .roi-stats {
+        grid-template-columns: 1fr;
+      }
+
+      table.feat,
+      table.feat thead,
+      table.feat tbody,
+      table.feat th,
+      table.feat td,
+      table.feat tr {
+        display: block;
+      }
+
+      table.feat thead {
+        display: none;
+      }
+
+      table.feat td {
+        width: 100% !important;
+      }
+
+      table.feat tr {
+        margin-bottom: 10px;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      table.roi,
+      table.roi thead,
+      table.roi tbody,
+      table.roi th,
+      table.roi td,
+      table.roi tr {
+        display: block;
+      }
+
+      table.roi thead {
+        display: none;
+      }
+
+      table.roi tr {
+        margin-bottom: 10px;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="layout">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+      <div class="brand">
+        <p class="brand-eyebrow">AI Agents CC · Đề xuất 2026</p>
+        <h1 class="brand-title">Mô hình Doanh nghiệp Tự hành 1 người — Chăm sóc sức khoẻ Ngô Lâm</h1>
+        <p class="brand-sub">AI Agent tư vấn &amp; thiết kế lộ trình — Đồng hành hằng ngày — Marketing tự động — Đo
+          lường &amp; tối ưu, vận hành trên nền tảng GoClaw</p>
+      </div>
+      <nav class="spines">
+        <button class="spine active" data-tab="tab-proposal">
+          <span class="num">01</span>
+          <span class="label"><span class="t1">Đề xuất dự án</span><span class="t2">Tổng quan · Tính năng · Kiến
+              trúc</span></span>
+        </button>
+        <button class="spine" data-tab="tab-plan">
+          <span class="num">02</span>
+          <span class="label"><span class="t1">Kế hoạch thực hiện</span><span class="t2">Lộ trình · Bảng giá · ROI ·
+              Điều khoản</span></span>
+        </button>
+        <button class="spine" data-tab="tab-checklist">
+          <span class="num">03</span>
+          <span class="label"><span class="t1">Checklist hạng mục</span><span class="t2">Danh sách theo dõi tiến
+              độ</span></span>
+        </button>
+      </nav>
+      <div class="sidebar-foot">
+        Mức giá, thời gian và số liệu ROI trong tài liệu là <b>đề xuất/ minh hoạ tham khảo</b>, có thể điều chỉnh theo
+        số liệu thực tế và thoả thuận cụ thể với khách hàng.
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main>
+
+      <!-- ========== TAB 1: ĐỀ XUẤT DỰ ÁN ========== -->
+      <section id="tab-proposal" class="panel active">
+        <div class="page-head">
+          <p class="page-eyebrow">01 — Đề xuất dự án</p>
+          <h2 class="page-title">Tổng quan, tính năng &amp; kiến trúc hệ thống</h2>
+          <p class="page-desc">Toàn bộ nội dung sản phẩm: vấn đề đang gặp phải, tính năng đề xuất theo từng AI Agent
+            kèm lợi ích cụ thể, và cách hệ thống được xây dựng trên nền tảng GoClaw.</p>
+        </div>
+
+        <div class="intro-card">
+          <p><b>Bối cảnh:</b> Ngô Lâm / Điền Viên Đường sở hữu kiến thức chuyên môn thuận tự nhiên sâu — ăn uống thuận
+            tự nhiên, thải độc cơ thể — và khách hàng tin tưởng qua tư vấn 1-1, nhưng năng lực tư vấn bị giới hạn hoàn
+            toàn bởi thời gian cá nhân. Thay đổi lối sống ăn uống cần sự đồng hành sát sao; khách hàng dễ bỏ cuộc giữa
+            chừng nếu thiếu nhắc nhở, động viên đúng lúc. Mô hình vận hành truyền thống (thuê đội tư vấn, CSKH, content,
+            phân tích) có chi phí nhân sự cao và khó nhân bản khi mở rộng quy mô.</p>
+          <p>Dự án xây dựng một hệ thống doanh nghiệp tự hành hoàn chỉnh — <b>1 máy tính + 1 hệ thống AI Agent + 1
+              người vận hành</b> — gồm: <b>(1)</b> website/booking tiếp nhận khách hàng, <b>(2)</b> đội ngũ AI Agent
+            (trên nền tảng GoClaw) tư vấn, thiết kế lộ trình cá nhân hoá, đồng hành hằng ngày và chăm sóc hậu mãi, và
+            <b>(3)</b> quy trình marketing &amp; đo lường tự động — cho phép Ngô Lâm phục vụ đồng thời hàng trăm khách
+            hàng mà vẫn giữ trải nghiệm cá nhân hoá, trong khi chỉ can thiệp ở các điểm quyết định quan trọng.</p>
+          <p style="font-weight:600; margin-top:20px;">Mục tiêu kinh doanh</p>
+          <ul class="goal-list">
+            <li>Xây dựng thương hiệu chăm sóc sức khoẻ chủ động, chuyên nghiệp trên nền tảng số — thay vì chỉ dựa vào
+              tư vấn 1-1 truyền thống.</li>
+            <li>Tự động hoá tư vấn ban đầu — khách điền khảo sát, nhận lộ trình cá nhân hoá đã qua kiểm duyệt, không
+              cần chờ lịch hẹn trực tiếp.</li>
+            <li>Tăng tỷ lệ khách hoàn thành lộ trình nhờ đồng hành và nhắc nhở hằng ngày tự động, giảm bỏ cuộc giữa
+              chừng.</li>
+            <li>Xây kênh nội dung Facebook / Instagram / TikTok bền vững, thu hút khách mới đều đặn thay vì phụ thuộc
+              hoàn toàn vào khách quen giới thiệu.</li>
+            <li>Có dữ liệu thật về khách hàng, lộ trình, doanh thu và hiệu suất để ra quyết định kinh doanh thay vì
+              quản lý bằng trí nhớ.</li>
+          </ul>
+        </div>
+
+        <div class="section-block">
+          <div id="feature-accordions"></div>
+        </div>
+
+        <div class="acc" data-acc>
+          <button class="acc-head" data-acc-head>
+            <div class="acc-head-left"><span class="acc-tag">10</span><span class="acc-title">Kiến trúc hệ thống (tóm
+                tắt)</span></div>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-body-inner">
+              <p class="note-line" style="margin-bottom:14px;">Nguyên lý vận hành: 1 máy tính + 1 hệ thống AI + 1
+                người là đủ để vận hành toàn trình. AI đảm nhận phần việc lặp lại, có quy trình rõ ràng; con người tập
+                trung vào giám sát chất lượng, an toàn và các quyết định đòi hỏi chuyên môn sâu.</p>
+              <table class="feat">
+                <thead>
+                  <tr>
+                    <th>Tầng</th>
+                    <th>Vai trò</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Tầng 1 — Frontend (React/Node)</td>
+                    <td>Landing page, trang giới thiệu, đặt lịch hẹn theo buổi — nơi khách hàng tiếp cận và thao tác
+                      trên điện thoại/máy tính</td>
+                  </tr>
+                  <tr>
+                    <td>Tầng 2 — Backend (React/Node/Python-FastAPI)</td>
+                    <td>Quản trị admin, điều phối API, xử lý nghiệp vụ, kết nối các kênh giao tiếp</td>
+                  </tr>
+                  <tr>
+                    <td>Tầng 3 — Database (brain.db)</td>
+                    <td>Lưu trữ hồ sơ khách hàng, lộ trình, nội dung, hiệu suất — SQLite khởi đầu, nâng cấp PostgreSQL +
+                      pgvector khi scale</td>
+                  </tr>
+                  <tr>
+                    <td>Tầng 4 — AI Agent (GoClaw)</td>
+                    <td>Orchestration, bộ nhớ, tư vấn, đồng hành, marketing và đo lường tự động</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="font-weight:600; margin:20px 0 8px;">Vì sao dùng GoClaw thay vì tự xây dựng</p>
+              <p class="note-line">GoClaw (goclaw.sh, tài liệu tại docs.goclaw.sh) là nền tảng AI Agent Gateway đóng
+                gói sẵn toàn bộ hạ tầng cần thiết cho hệ thống agent vận hành thật (production-ready): pipeline xử lý
+                8 bước, Agent Team Orchestration, bộ nhớ 3 tầng (System Context / Working Memory / Knowledge Vault
+                RAG), Skills &amp; Cron Jobs. Đội triển khai không phải tự thiết kế lại pipeline, hệ thống bộ nhớ hay
+                cơ sở dữ liệu vector từ đầu — tiết kiệm thời gian và giảm rủi ro kỹ thuật. Kiến trúc multi-tenant cho
+                phép mở rộng sang nhiều chuyên gia/chi nhánh trong tương lai mà không cần đổi nền tảng.</p>
+              <p style="font-weight:600; margin:20px 0 8px;">Kênh giao tiếp</p>
+              <p class="note-line">Người dùng và quản trị giao tiếp qua Telegram, Zalo (OA và cá nhân), Facebook/
+                Messenger — toàn bộ đều được GoClaw hỗ trợ sẵn dưới dạng "channel" tích hợp trực tiếp vào Agent, kết
+                nối liên thông với Backend, Database và Frontend.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc" data-acc>
+          <button class="acc-head" data-acc-head>
+            <div class="acc-head-left"><span class="acc-tag">11</span><span class="acc-title">An toàn y khoa, bảo mật
+                &amp; vận hành</span></div>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-body-inner">
+              <p class="note-line" style="margin-bottom:14px;">Một dịch vụ tư vấn sức khoẻ có AI tham gia cần minh
+                bạch về giới hạn trách nhiệm và bảo vệ dữ liệu nhạy cảm để tạo niềm tin với khách hàng mới và bảo vệ
+                chính Ngô Lâm khi vận hành lâu dài.</p>
+              <table class="feat">
+                <thead>
+                  <tr>
+                    <th>Hạng mục</th>
+                    <th>Vì sao cần thiết</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Bắt buộc Ngô Lâm duyệt mọi lộ trình trước khi gửi khách, kèm disclaimer "không thay thế tư vấn
+                      y tế"</td>
+                    <td>Giảm rủi ro sai lệch chuyên môn y khoa, bảo vệ pháp lý cho Ngô Lâm và AI Agents CC</td>
+                  </tr>
+                  <tr>
+                    <td>Bộ quy tắc gắn cờ khẩn cấp khi khách báo triệu chứng bất thường trong quá trình thải độc</td>
+                    <td>Chuyển tiếp tức thì tới Ngô Lâm/kênh hỗ trợ khẩn, đảm bảo an toàn khách hàng</td>
+                  </tr>
+                  <tr>
+                    <td>Mã hoá dữ liệu sức khoẻ nhạy cảm (health_conditions, report_text), phân quyền truy cập theo vai
+                      trò trong brain.db</td>
+                    <td>Thông tin sức khoẻ khách hàng chỉ hiển thị cho tài khoản quản trị đã đăng nhập, không công khai
+                      hay chia sẻ cho bên thứ ba</td>
+                  </tr>
+                  <tr>
+                    <td>Tài liệu hoá quy trình vận hành, tài khoản quản trị dự phòng, giám sát uptime hệ thống</td>
+                    <td>Giảm phụ thuộc vào một người vận hành duy nhất, đảm bảo hệ thống chạy liên tục</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========== TAB 2: KẾ HOẠCH THỰC HIỆN ========== -->
+      <section id="tab-plan" class="panel">
+        <div class="page-head">
+          <p class="page-eyebrow">02 — Kế hoạch thực hiện</p>
+          <h2 class="page-title">Lộ trình, bảng giá, ROI &amp; điều khoản</h2>
+          <p class="page-desc">Thời gian triển khai từng giai đoạn, mức giá đề xuất theo gói hệ thống &amp; AI Agent,
+            phân tích hiệu quả đầu tư (ROI) và điều khoản hợp tác.</p>
+        </div>
+
+        <div class="acc open" data-acc>
+          <button class="acc-head" data-acc-head>
+            <div class="acc-head-left"><span class="acc-tag">04</span><span class="acc-title">Lộ trình triển khai</span>
+            </div>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-body-inner">
+              <div class="roadmap">
+                <div class="stage">
+                  <div class="stage-meta"><span class="stage-name">Giai đoạn 1</span><span class="stage-time">Tuần
+                      1–2</span></div>
+                  <div class="stage-desc">Hạ tầng nền: cài đặt GoClaw, kết nối kênh Telegram/Zalo, dựng schema brain.db
+                    cơ bản, landing page + intake form MVP.</div>
+                </div>
+                <div class="stage">
+                  <div class="stage-meta"><span class="stage-name">Giai đoạn 2</span><span class="stage-time">Tuần
+                      3–4</span></div>
+                  <div class="stage-desc">Nạp Knowledge Vault kiến thức chuyên môn; xây luồng intake form → duyệt lộ
+                    trình (Agent 1); thiết lập Nhóm 377 và nhắc nhở tự động (Agent 2).</div>
+                </div>
+                <div class="stage">
+                  <div class="stage-meta"><span class="stage-name">Giai đoạn 3</span><span class="stage-time">Tuần
+                      5–6</span></div>
+                  <div class="stage-desc">Tự động hoá content pipeline (Agent 3 — content pillar, kịch bản Reels/
+                    TikTok, lịch đăng bài); tích hợp cổng thanh toán VNPay/Momo (Agent 5).</div>
+                </div>
+                <div class="stage">
+                  <div class="stage-meta"><span class="stage-name">Giai đoạn 4</span><span class="stage-time">Tuần
+                      7–8</span></div>
+                  <div class="stage-desc">Triển khai đo lường &amp; báo cáo (Agent 4), CSKH/chatbot tiền bán hàng
+                    (Agent 6); kiểm thử toàn trình, đào tạo Ngô Lâm sử dụng hệ thống.</div>
+                </div>
+                <div class="stage">
+                  <div class="stage-meta"><span class="stage-name">Giai đoạn 5</span><span class="stage-time">Liên
+                      tục</span></div>
+                  <div class="stage-desc">Tối ưu dựa trên performance_logs; mở rộng chuỗi email nurture (Agent 7) và
+                    các agent khác theo nhu cầu thực tế.</div>
+                </div>
+                <div class="stage optional">
+                  <div class="stage-meta"><span class="stage-name">Giai đoạn 6</span><span class="stage-time">2 – 3
+                      tuần · tùy chọn</span></div>
+                  <div class="stage-desc">Mở rộng: nâng cấp Database lên PostgreSQL + pgvector đa tenant, thêm kênh
+                    WhatsApp/Discord, PWA cho Nhóm 377, chương trình giới thiệu bạn bè.</div>
+                </div>
+              </div>
+              <p class="timeline-note">Tổng thời gian dự kiến: 7 – 8 tuần để hoàn thiện hệ thống + đội ngũ AI Agent
+                cốt lõi, sau đó vận hành tối ưu liên tục. Có thể đưa Phase 1 vào dùng ngay để bắt đầu nhận khách trong
+                khi các giai đoạn sau tiếp tục hoàn thiện.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc open" data-acc>
+          <button class="acc-head" data-acc-head>
+            <div class="acc-head-left"><span class="acc-tag">05</span><span class="acc-title">Bảng giá đề xuất</span>
+            </div>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-body-inner">
+              <p class="note-line" style="margin-bottom:8px;">Bảng giá dưới đây đưa ra nhiều mức để Ngô Lâm chọn theo
+                ngân sách phù hợp — hệ thống/AI Agent và vận hành marketing là hai hạng mục tách riêng, có thể chọn kết
+                hợp hoặc từng phần.</p>
+
+              <p class="price-group-label">Hệ thống &amp; AI Agent — thanh toán 1 lần theo gói</p>
+              <div class="price-grid">
+                <div class="price-card">
+                  <div class="price-name">Gói Khởi động</div>
+                  <div class="price-includes">Landing page + intake form, booking cơ bản, schema brain.db nền tảng,
+                    cài đặt GoClaw + kết nối 1 kênh (Zalo hoặc Telegram)</div>
+                  <div class="price-value">35.000.000<small>VND</small></div>
+                </div>
+                <div class="price-card">
+                  <div class="price-name">Gói Chuyên nghiệp</div>
+                  <div class="price-includes">Gói Khởi động + Agent 1 (tư vấn &amp; lộ trình cá nhân hoá) + Agent 2
+                    (đồng hành Coaching) + Knowledge Vault + Nhóm 377 tự động</div>
+                  <div class="price-value">65.000.000<small>VND</small></div>
+                </div>
+                <div class="price-card hi">
+                  <div class="price-name">Gói Toàn diện</div>
+                  <div class="price-includes">Gói Chuyên nghiệp + Agent 3 (content), Agent 4 (đo lường), Agent 5
+                    (thanh toán), Agent 6 (CSKH), Agent 7 (email nurture) + dashboard báo cáo</div>
+                  <div class="price-value">110.000.000<small>VND</small></div>
+                </div>
+              </div>
+
+              <p class="price-group-label">Vận hành AI &amp; Marketing — gói riêng</p>
+              <div class="price-grid">
+                <div class="price-card">
+                  <div class="price-name">Setup Knowledge Vault</div>
+                  <div class="price-includes">Nạp toàn bộ kiến thức chuyên môn thuận tự nhiên vào RAG, tinh chỉnh
+                    giọng điệu Agent 1 &amp; Agent 2 (1 lần)</div>
+                  <div class="price-value">15.000.000<small>VND</small></div>
+                </div>
+                <div class="price-card">
+                  <div class="price-name">Vận hành nội dung khởi động</div>
+                  <div class="price-includes">Bên triển khai trực tiếp giám sát Agent 3 sản xuất &amp; đăng bài FB/IG/
+                    TikTok (theo tháng, khuyến nghị 1 – 2 tháng đầu)</div>
+                  <div class="price-value">8.000.000<small>VND/tháng</small></div>
+                </div>
+                <div class="price-card">
+                  <div class="price-name">Duy trì &amp; tối ưu Agent</div>
+                  <div class="price-includes">Giám sát chất lượng phản hồi AI, cập nhật Knowledge Vault, xử lý vận
+                    hành hệ thống (tùy chọn, theo tháng)</div>
+                  <div class="price-value">5.000.000<small>VND/tháng</small></div>
+                </div>
+              </div>
+
+              <p class="price-group-label">Gợi ý gói trọn bộ</p>
+              <div class="price-grid">
+                <div class="price-card hi">
+                  <div class="price-name">Trọn bộ tiết kiệm</div>
+                  <div class="price-includes">Gói Chuyên nghiệp (65tr) + Setup Knowledge Vault (15tr) + 1 tháng vận
+                    hành khởi động (8tr) — tiết kiệm so với mua lẻ</div>
+                  <div class="price-value">82.000.000<small>VND (thay vì 88tr mua lẻ)</small></div>
+                </div>
+              </div>
+
+              <p style="font-weight:600; margin:24px 0 6px;">5.1 Chi phí vận hành hàng tháng (sau khi bàn giao)</p>
+              <table class="cost-table">
+                <tr>
+                  <td>Hosting/VPS chạy GoClaw + tên miền + SSL</td>
+                  <td>800.000 – 1.500.000 VND/tháng</td>
+                </tr>
+                <tr>
+                  <td>Chi phí LLM API (Anthropic/OpenAI...), theo lượng khách hoạt động</td>
+                  <td>1.500.000 – 4.000.000 VND/tháng</td>
+                </tr>
+                <tr>
+                  <td>Zalo OA / Telegram Bot nhắc lịch, chăm sóc tự động</td>
+                  <td>~150.000 – 400.000 VND/tháng</td>
+                </tr>
+                <tr>
+                  <td>Phí cổng thanh toán VNPay/Momo</td>
+                  <td>Theo % giao dịch, do đối tác thanh toán quy định</td>
+                </tr>
+                <tr>
+                  <td>Bảo trì, sửa lỗi, cập nhật nhỏ (tùy chọn)</td>
+                  <td>2.000.000 VND/tháng</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc open" data-acc>
+          <button class="acc-head" data-acc-head>
+            <div class="acc-head-left"><span class="acc-tag">06</span><span class="acc-title">Phân tích hiệu quả đầu tư
+                (ROI)</span></div>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-body-inner">
+              <div class="roi-callout">
+                <b>Lưu ý quan trọng:</b> Các con số dưới đây là <b>giả định minh hoạ</b> để hình dung cách tính ROI,
+                không phải số liệu thống kê thật của Ngô Lâm. Khi có số liệu thực tế (số khách/tháng, đơn giá trung
+                bình, thời gian tư vấn hiện tại), bảng tính sẽ được cập nhật lại chính xác hơn.
+              </div>
+
+              <p style="font-weight:600; margin:0 0 10px;">Giả định hiện trạng (trước khi triển khai)</p>
+              <table class="roi">
+                <thead>
+                  <tr>
+                    <th>Chỉ số</th>
+                    <th>Giả định hiện tại</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Số khách/tháng</td>
+                    <td>~20 khách (giới hạn bởi thời gian tư vấn 1-1 của Ngô Lâm)</td>
+                  </tr>
+                  <tr>
+                    <td>Đơn giá trung bình</td>
+                    <td>~2.500.000 VND (gói tư vấn + lộ trình + đồng hành)</td>
+                  </tr>
+                  <tr>
+                    <td>Thời gian Ngô Lâm dành cho tư vấn thủ công</td>
+                    <td>~70 giờ/tháng</td>
+                  </tr>
+                  <tr>
+                    <td>Doanh thu ước tính/tháng</td>
+                    <td>~50.000.000 VND</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p style="font-weight:600; margin:20px 0 10px;">Giả định sau khi vận hành hệ thống AI Agent (3 – 6
+                tháng)</p>
+              <table class="roi">
+                <thead>
+                  <tr>
+                    <th>Chỉ số</th>
+                    <th>Giả định sau triển khai</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Số khách/tháng</td>
+                    <td>~42 khách (+110% nhờ Agent 1/2 xử lý tư vấn &amp; đồng hành song song nhiều khách)</td>
+                  </tr>
+                  <tr>
+                    <td>Thời gian Ngô Lâm cần bỏ ra</td>
+                    <td>~20 giờ/tháng (chỉ duyệt lộ trình &amp; xử lý case được gắn cờ)</td>
+                  </tr>
+                  <tr>
+                    <td>Tỷ lệ khách hoàn thành lộ trình</td>
+                    <td>Tăng rõ rệt nhờ nhắc nhở &amp; đồng hành tự động hằng ngày (Agent 2)</td>
+                  </tr>
+                  <tr class="total">
+                    <td>Doanh thu ước tính/tháng</td>
+                    <td>~105.000.000 VND (+~110% so với hiện tại)</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="roi-stats">
+                <div class="roi-stat">
+                  <p class="k">Doanh thu tăng thêm</p>
+                  <p class="v">+55tr/tháng</p>
+                  <p class="d">Chênh lệch ước tính giữa trước và sau triển khai, theo giả định minh hoạ ở trên.</p>
+                </div>
+                <div class="roi-stat">
+                  <p class="k">Tổng đầu tư ví dụ</p>
+                  <p class="v">82tr</p>
+                  <p class="d">Gói Chuyên nghiệp + Setup Knowledge Vault + 1 tháng vận hành khởi động.</p>
+                </div>
+                <div class="roi-stat">
+                  <p class="k">Thời gian hoàn vốn</p>
+                  <p class="v">~1,5 tháng</p>
+                  <p class="d">Dựa trên doanh thu tăng thêm hàng tháng so với tổng đầu tư ban đầu.</p>
+                </div>
+              </div>
+              <p class="note-line">Ngay cả khi mức tăng trưởng thực tế thấp hơn giả định (ví dụ chỉ bằng một nửa),
+                khoản đầu tư vẫn có khả năng hoàn vốn trong vòng 3 – 4 tháng đầu — đây là cơ sở để trao đổi với Ngô Lâm
+                về mức độ chấp nhận được của rủi ro.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc" data-acc>
+          <button class="acc-head" data-acc-head>
+            <div class="acc-head-left"><span class="acc-tag">07</span><span class="acc-title">Điều khoản thanh toán
+                &amp; bảo hành</span></div>
+            <span class="acc-chevron">▾</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-body-inner">
+              <ul class="terms">
+                <li>Thanh toán hệ thống: 50% khi ký hợp đồng / bắt đầu Giai đoạn 1, 30% khi hoàn thành Giai đoạn 2
+                  (Agent 1 &amp; 2 hoạt động) và bàn giao thử nghiệm, 20% khi bàn giao chính thức toàn bộ gói đã chọn.
+                </li>
+                <li>Thanh toán vận hành AI: gói Setup Knowledge Vault thanh toán khi bắt đầu; gói vận hành khởi động
+                  thanh toán theo từng tháng, trước khi bắt đầu tháng mới.</li>
+                <li>Bảo hành lỗi kỹ thuật hệ thống: 30 ngày miễn phí sau bàn giao mỗi giai đoạn.</li>
+                <li>Nội dung do AI Agent soạn (lộ trình, tư vấn) luôn cần Ngô Lâm duyệt trước khi gửi khách — đơn vị
+                  triển khai không chịu trách nhiệm về nội dung tư vấn y khoa cuối cùng đã được duyệt.</li>
+                <li>Thay đổi phạm vi công việc ngoài mô tả ở Mục 2 và Mục 11 sẽ được báo giá bổ sung trước khi thực
+                  hiện.</li>
+                <li>Toàn bộ mã nguồn, dữ liệu hệ thống (brain.db) và Knowledge Vault thuộc quyền sở hữu của khách hàng
+                  sau khi thanh toán đầy đủ.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== TAB 3: CHECKLIST ========== -->
+      <section id="tab-checklist" class="panel">
+        <div class="page-head">
+          <p class="page-eyebrow">03 — Checklist hạng mục</p>
+          <h2 class="page-title">Danh sách theo dõi tiến độ triển khai</h2>
+          <p class="page-desc">Tick vào từng hạng mục khi hoàn thành để theo dõi tiến độ theo từng giai đoạn. Danh sách
+            này chỉ để tham khảo trong phiên làm việc, không được lưu lại.</p>
+        </div>
+
+        <div class="progress-wrap">
+          <span class="progress-label" id="progress-text">0 / 0 hạng mục</span>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <span class="progress-label" id="progress-pct">0%</span>
+        </div>
+
+        <div id="checklist-groups"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    /* ================= DATA: NHÓM TÍNH NĂNG (Tab 1) ================= */
+    const FEATURES = [
+      {
+        tag: "2.1", title: "Landing page & Intake Form cá nhân hoá",
+        rows: [
+          ["Trang giới thiệu dịch vụ chăm sóc sức khoẻ thuận tự nhiên, câu chuyện và thế mạnh chuyên môn của Ngô Lâm", "Tạo ấn tượng chuyên nghiệp ngay từ lần đầu khách tìm thấy qua Facebook/TikTok/Zalo"],
+          ["Form khảo sát tình trạng sức khoẻ: chiều cao, cân nặng, thói quen ăn uống, bệnh lý hiện có", "Thu thập đủ dữ liệu đầu vào để AI phân tích và thiết kế lộ trình cá nhân hoá ngay từ đầu"],
+          ["Đặt lịch hẹn theo buổi (cho các buổi tư vấn trực tiếp khi cần)", "Khách chủ động chọn giờ mà không cần nhắn tin qua lại"],
+        ]
+      },
+      {
+        tag: "2.2", title: "Agent 1 — Tư vấn & Thiết kế Lộ trình cá nhân hoá",
+        rows: [
+          ["Nạp toàn bộ kiến thức chuyên môn, sách vở, tài liệu thuận tự nhiên của Ngô Lâm vào Knowledge Vault (RAG)", "Agent tư vấn đúng trường phái chuyên môn của Ngô Lâm, không lệch kiến thức nguồn"],
+          ["Tự động phân tích dữ liệu từ intake form và thiết kế lộ trình ăn uống thuận tự nhiên / thực đơn thải độc riêng biệt cho từng khách", "Khách nhận lộ trình cá nhân hoá ngay, không cần chờ lịch tư vấn trực tiếp"],
+          ["Ngô Lâm duyệt nhanh lộ trình do AI soạn trước khi gửi khách", "Đảm bảo an toàn và chuẩn xác y khoa/chuyên môn trước khi đến tay khách hàng"],
+        ]
+      },
+      {
+        tag: "2.3", title: "Agent 2 — Đồng hành & Thúc đẩy lối sống (Coaching)",
+        rows: [
+          ["Tích hợp vào Zalo/Messenger/Telegram, tự động nhắn nhắc uống nước juice, ăn đúng giờ, hỏi thăm cảm nhận hằng ngày", "Duy trì sự kiên trì của khách trong suốt quá trình thay đổi lối sống, giảm bỏ cuộc giữa chừng"],
+          ["Giải thích hiện tượng thải độc tự nhiên và đưa lời khuyên làm dịu cơ thể tức thời khi khách báo mệt", "Khách yên tâm tiếp tục lộ trình thay vì hoảng hốt dừng giữa chừng"],
+          ["Gắn cờ cảnh báo khi khách báo triệu chứng đặc biệt cần chuyên gia thật xử lý", "Ngô Lâm chỉ can thiệp đúng lúc cần, không phải theo dõi từng khách thủ công"],
+        ]
+      },
+      {
+        tag: "2.4", title: "Nhóm 377 & Vận hành nhiệm vụ hằng ngày",
+        rows: [
+          ["Mở khoá nhiệm vụ mỗi ngày cho khách trong nhóm, khách báo cáo tình hình ăn uống và cải thiện sức khoẻ", "Tạo nhịp độ đồng hành rõ ràng, khách biết chính xác cần làm gì mỗi ngày"],
+          ["Khách được tương tác và học tập cùng đội ngũ, Ngô Lâm và cộng đồng", "Tăng cảm giác được hỗ trợ thật sự, không chỉ nói chuyện với máy"],
+          ["Lưu báo cáo nhiệm vụ hằng ngày vào brain.db (bảng daily_tasks_logs)", "Có dữ liệu thật về tiến độ từng khách để đo lường hiệu quả chương trình"],
+        ]
+      },
+      {
+        tag: "2.5", title: "Agent 3 — Sáng tạo Nội dung & Tiếp thị tự động",
+        rows: [
+          ["Tự động đọc nghiên cứu mới về sống khoẻ, viết kịch bản video ngắn (TikTok/Reels), tạo infographic ăn uống thuận tự nhiên", "Duy trì kênh nội dung đều đặn mà không cần phòng marketing riêng"],
+          ["Tự động lên lịch đăng bài trên các kênh Facebook/Instagram/TikTok", "Xuất hiện ổn định trước khách hàng tiềm năng, xây thương hiệu cá nhân lâu dài"],
+          ["Ngô Lâm chỉ cần quay video theo kịch bản có sẵn hoặc duyệt bài để đúng giọng điệu", "Tiết kiệm thời gian sáng tạo nội dung mà vẫn giữ đúng chất riêng"],
+        ]
+      },
+      {
+        tag: "2.6", title: "Agent 4 — Đo lường, Phân tích & Báo cáo",
+        rows: [
+          ["Theo dõi doanh thu, hiệu quả dịch vụ, hành vi khách hàng, dự báo xu hướng", "Ra quyết định kinh doanh dựa trên số liệu thật thay vì cảm tính"],
+          ["Chạy báo cáo định kỳ tự động qua Skills & Cron của GoClaw", "Không cần tổng hợp số liệu thủ công mỗi tuần/tháng"],
+          ["Ghi nhận chỉ số vào performance_logs (views, leads, revenue...)", "Biết nội dung/kênh nào đang mang lại khách thật để tối ưu ngân sách"],
+        ]
+      },
+      {
+        tag: "2.7", title: "Agent 5 — Thanh toán & Đối soát",
+        rows: [
+          ["Tự động tạo link thanh toán (VNPay/Momo/chuyển khoản), theo dõi trạng thái đơn hàng", "Khách thanh toán ngay khi sẵn sàng, không cần chờ nhắn tay chuyển khoản"],
+          ["Nhắc thanh toán tự động, ghi nhận giao dịch vào bảng doanh thu", "Giảm thất thoát doanh thu do quên đối soát thủ công"],
+          ["Ngô Lâm xử lý ngoại lệ đối soát, hoàn tiền khi cần", "Vẫn giữ quyền kiểm soát các trường hợp đặc biệt"],
+        ]
+      },
+      {
+        tag: "2.8", title: "Agent 6 — CSKH & Chatbot tiền bán hàng",
+        rows: [
+          ["Trả lời câu hỏi trước khi đăng ký (giá, chính sách, quy trình) qua Zalo/Messenger", "Khách nhận phản hồi tức thì thay vì chờ nhắn tin qua lại"],
+          ["Phân loại lead nóng/lạnh, chuyển sang Agent 1 khi khách sẵn sàng đăng ký", "Tập trung nguồn lực đúng vào khách có khả năng chuyển đổi cao"],
+          ["Ngô Lâm xử lý câu hỏi ngoài kịch bản, khiếu nại nhạy cảm", "Đảm bảo trải nghiệm khách hàng vẫn có con người thật khi cần"],
+        ]
+      },
+      {
+        tag: "2.9", title: "Agent 7 — Chăm sóc Email tự động (Nurture)",
+        rows: [
+          ["Chuỗi email tự động trước – trong – sau chương trình (drip sequence)", "Duy trì liên lạc với khách xuyên suốt hành trình mà không cần soạn tay từng email"],
+          ["Dùng Skills & Cron của GoClaw để lên lịch gửi theo mốc thời gian phù hợp", "Đúng thời điểm, đúng nội dung, không trùng lặp hay bỏ sót khách"],
+          ["Ngô Lâm duyệt nội dung chuỗi email theo mùa vụ / chương trình mới", "Giữ giọng điệu thương hiệu nhất quán qua từng chiến dịch"],
+        ]
+      },
+      {
+        tag: "2.10", title: "Trang quản trị (Admin)",
+        rows: [
+          ["Quản lý hồ sơ khách hàng, lộ trình, lịch sử nhiệm vụ hằng ngày — không cần biết lập trình", "Ngô Lâm/đội kỹ thuật tự vận hành hàng ngày mà không phụ thuộc lập trình viên"],
+          ["Quản lý đơn hàng, gói đã bán, trạng thái thanh toán của từng khách", "Tra cứu tức thì, tránh nhầm lẫn khi khách hỏi về gói đang dùng"],
+          ["Báo cáo doanh thu theo ngày/tuần/tháng, nội dung hiệu quả nhất", "Ra quyết định điều chỉnh chiến lược dựa trên báo cáo thật"],
+        ]
+      },
+    ];
+
+    const featureWrap = document.getElementById('feature-accordions');
+    FEATURES.forEach((group, i) => {
+      const acc = document.createElement('div');
+      acc.className = 'acc' + (i === 0 ? ' open' : '');
+      acc.setAttribute('data-acc', '');
+      acc.innerHTML = `
+    <button class="acc-head" data-acc-head>
+      <div class="acc-head-left"><span class="acc-tag">${group.tag}</span><span class="acc-title">${group.title}</span></div>
+      <span class="acc-chevron">▾</span>
+    </button>
+    <div class="acc-body">
+      <div class="acc-body-inner">
+        <table class="feat">
+          <thead><tr><th>Tính năng</th><th>Lợi ích cho khách hàng</th></tr></thead>
+          <tbody>
+            ${group.rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+      featureWrap.appendChild(acc);
+    });
+
+    /* ================= DATA: CHECKLIST (Tab 3) ================= */
+    const CHECKLIST = [
+      {
+        title: "Giai đoạn 1 — Hạ tầng nền", items: [
+          "Cài đặt GoClaw",
+          "Kết nối kênh Telegram/Zalo",
+          "Dựng schema brain.db cơ bản",
+          "Landing page + intake form MVP",
+        ]
+      },
+      {
+        title: "Giai đoạn 2 — Agent 1 & 2, Nhóm 377", items: [
+          "Nạp Knowledge Vault kiến thức chuyên môn",
+          "Luồng intake form → duyệt lộ trình (Agent 1)",
+          "Thiết lập Nhóm 377",
+          "Nhắc nhở & đồng hành tự động (Agent 2)",
+        ]
+      },
+      {
+        title: "Giai đoạn 3 — Content & Thanh toán", items: [
+          "Xác định content pillar theo từng kênh (Agent 3)",
+          "Mẫu kịch bản Reels/TikTok",
+          "Lịch đăng bài tự động",
+          "Tích hợp cổng thanh toán VNPay/Momo (Agent 5)",
+        ]
+      },
+      {
+        title: "Giai đoạn 4 — Đo lường, CSKH & đào tạo", items: [
+          "Triển khai đo lường & báo cáo (Agent 4)",
+          "CSKH/chatbot tiền bán hàng (Agent 6)",
+          "Kiểm thử toàn trình",
+          "Đào tạo Ngô Lâm sử dụng hệ thống",
+        ]
+      },
+      {
+        title: "Giai đoạn 5 — Tối ưu liên tục", items: [
+          "Theo dõi & tối ưu dựa trên performance_logs",
+          "Mở rộng chuỗi email nurture (Agent 7)",
+          "Đánh giá và bổ sung agent theo nhu cầu thực tế",
+          "Rà soát chi phí LLM & Usage Quota hàng tháng",
+        ]
+      },
+      {
+        title: "Giai đoạn 6 — Mở rộng (tùy chọn)", items: [
+          "Nâng cấp Database lên PostgreSQL + pgvector đa tenant",
+          "Thêm kênh WhatsApp/Discord",
+          "PWA cho Nhóm 377",
+          "Chương trình giới thiệu bạn bè",
+          "Sao lưu dữ liệu tự động",
+          "Trang cam kết bảo mật thông tin sức khoẻ khách hàng",
+        ]
+      },
+    ];
+
+    const checklistWrap = document.getElementById('checklist-groups');
+    CHECKLIST.forEach((group, gi) => {
+      const el = document.createElement('div');
+      el.className = 'check-group' + (gi === 0 ? ' open' : '');
+      el.innerHTML = `
+    <button class="check-head" data-check-head>
+      <div class="check-head-left"><span class="check-title">${group.title}</span></div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="check-count" data-check-count>0 / ${group.items.length}</span>
+        <span class="acc-chevron">▾</span>
+      </div>
+    </button>
+    <div class="check-body">
+      <div class="check-body-inner">
+        ${group.items.map((it, ii) => `
+          <label class="check-item">
+            <input type="checkbox" data-check-box data-group="${gi}">
+            <span>${it}</span>
+          </label>`).join('')}
+      </div>
+    </div>`;
+      checklistWrap.appendChild(el);
+    });
+
+    /* ================= INTERACTIONS ================= */
+    // Sidebar tab switching
+    document.querySelectorAll('.spine').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.spine').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+    });
+
+    // Generic accordion open/close (feature + roadmap/pricing/terms)
+    document.body.addEventListener('click', (e) => {
+      const head = e.target.closest('[data-acc-head]');
+      if (head) {
+        const acc = head.closest('[data-acc]');
+        const body = acc.querySelector('.acc-body');
+        const willOpen = !acc.classList.contains('open');
+        acc.classList.toggle('open');
+        body.style.maxHeight = willOpen ? body.scrollHeight + 'px' : '0px';
+      }
+      const chead = e.target.closest('[data-check-head]');
+      if (chead) {
+        const group = chead.closest('.check-group');
+        const body = group.querySelector('.check-body');
+        const willOpen = !group.classList.contains('open');
+        group.classList.toggle('open');
+        body.style.maxHeight = willOpen ? body.scrollHeight + 'px' : '0px';
+      }
+    });
+
+    // Keep open accordions correctly sized on load
+    function initOpenAccordions(selector, bodyClass) {
+      document.querySelectorAll(selector + '.open').forEach(el => {
+        const body = el.querySelector(bodyClass);
+        body.style.maxHeight = body.scrollHeight + 'px';
+      });
+    }
+
+    // Checklist progress logic
+    function updateProgress() {
+      const boxes = document.querySelectorAll('[data-check-box]');
+      const checked = document.querySelectorAll('[data-check-box]:checked');
+      document.getElementById('progress-text').textContent = `${checked.length} / ${boxes.length} hạng mục`;
+      const pct = boxes.length ? Math.round((checked.length / boxes.length) * 100) : 0;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-pct').textContent = pct + '%';
+
+      // per-group counters
+      document.querySelectorAll('.check-group').forEach((group, gi) => {
+        const gboxes = group.querySelectorAll('[data-check-box]');
+        const gchecked = group.querySelectorAll('[data-check-box]:checked');
+        group.querySelector('[data-check-count]').textContent = `${gchecked.length} / ${gboxes.length}`;
+      });
+    }
+    document.body.addEventListener('change', (e) => {
+      if (e.target.matches('[data-check-box]')) updateProgress();
+    });
+
+    // init
+    window.addEventListener('load', () => {
+      initOpenAccordions('[data-acc]', '.acc-body');
+      initOpenAccordions('.check-group', '.check-body');
+      updateProgress();
+    });
+  </script>
+</body>
+
+</html>

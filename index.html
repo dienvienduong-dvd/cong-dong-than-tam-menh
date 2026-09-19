@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Đăng nhập — AI AGENTS CC</title>
+<title>Đăng nhập — Ăn Uống Ngũ Hành</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
@@ -168,16 +168,16 @@
   <!-- Left panel -->
   <div class="auth-left">
     <div class="auth-left-content">
-      <div class="auth-tagline" id="homeTagline">Cộng đồng AI Agent</div>
+      <div class="auth-tagline" id="homeTagline">Cộng đồng Ăn Uống Ngũ Hành</div>
 
       <h1 class="auth-heading">
         <span id="homeHeadingLine1">Làm chủ</span><br>
-        <span class="hl" id="homeHeadingHighlight">AI Agent</span><br>
+        <span class="hl" id="homeHeadingHighlight">Ngũ Hành</span><br>
         <span id="homeHeadingLine2">từ hôm nay.</span>
       </h1>
 
       <p class="auth-desc" id="homeDesc">
-        Nơi học viên thực chiến cùng nhau — từ prompt engineering đến deploy agent thực tế trong 21 ngày.
+        Nơi mọi người cùng học ăn theo ngũ sắc – ngũ vị – tạng phủ, thanh lọc và cân bằng cơ thể tự nhiên.
       </p>
 
       <div class="auth-stats">
@@ -196,11 +196,11 @@
       </div>
 
       <div class="auth-tags" id="homeTagsWrap">
-        <span class="auth-tag">AI Agent</span>
-        <span class="auth-tag">Prompt Engineering</span>
-        <span class="auth-tag">n8n / Make</span>
-        <span class="auth-tag">Automation</span>
-        <span class="auth-tag">LLM Apps</span>
+        <span class="auth-tag">Ngũ Hành</span>
+        <span class="auth-tag">Ngũ Sắc</span>
+        <span class="auth-tag">Ngũ Vị</span>
+        <span class="auth-tag">Âm Dương</span>
+        <span class="auth-tag">Thải Độc</span>
       </div>
     </div>
   </div>
@@ -216,7 +216,7 @@
           <path d="M5.5 5.5l1.5 1.5M13 13l1.5 1.5M14.5 5.5L13 7M7 13l-1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
-      <div class="form-logo-name">AI AGENTS <span>CC</span></div>
+      <div class="form-logo-name">Ngũ Hành <span>ĂU</span></div>
     </div>
 
     <div class="form-header">
@@ -475,9 +475,19 @@ async function savePendingIntakeProfile(userId) {
 }
 
 function redirectAfterLogin() {
+  // Bắt buộc hoàn thành khảo sát Thân-Tâm-Mệnh trước khi vào các tính năng
+  // khác của cộng đồng — ưu tiên hơn mọi giá trị ?redirect= khác.
+  let user = null;
+  try { user = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) {}
+  if (user && !user.ttm_intake_done_at) {
+    return window.location.href = 'intake-than-tam-menh.html';
+  }
+
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get('redirect');
-  window.location.href = redirect === 'intake' ? 'intake.html' : 'feed.html';
+  if (redirect === 'intake') return window.location.href = 'intake.html';
+  if (redirect === 'ttm') return window.location.href = 'intake-than-tam-menh.html';
+  window.location.href = 'feed.html';
 }
 </script>
 </body>

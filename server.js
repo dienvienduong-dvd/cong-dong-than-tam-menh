@@ -14,9 +14,6 @@ const cors      = require('cors');
 const path      = require('path');
 const fs        = require('fs');
 const initSqlJs = require('sql.js');
-const multer    = require('multer');
-const { PDFParse } = require('pdf-parse');
-const mammoth   = require('mammoth');
 
 const https    = require('https');
 const http     = require('http');
@@ -25,26 +22,26 @@ const { Resend } = require('resend');
 
 const app      = express();
 const PORT     = process.env.PORT || 3000;
-const ADMIN_KEY   = process.env.ADMIN_KEY   || 'aiagent-admin-2025';
+const ADMIN_KEY   = process.env.ADMIN_KEY   || 'nguhanh-admin-2025';
 const SEPAY_KEY   = process.env.SEPAY_KEY   || 'ae3066fa595768259e92553aa371405a8fa814c6';
 const GSHEET_ID   = process.env.GSHEET_ID   || '1TNzXmIR9Qcu_oqeNxYGFdnFxt2YN9xik4OPJOtac4nI';
 const RESEND_KEY       = process.env.RESEND_API_KEY    || '';
 const OPENROUTER_KEY   = process.env.OPENROUTER_API_KEY || '';
-const FROM_EMAIL  = process.env.FROM_EMAIL || 'Cộng đồng tiếng anh Chương Cà Mau <tienganh@chuongcm.com>';
+
+// ── Community identity (override via .env) ───────────────────
+const COMMUNITY_NAME = process.env.COMMUNITY_NAME || 'Cộng đồng Ăn Uống Ngũ Hành';
+// ASCII-only version for HTTP headers (Latin-1 only) — strips Vietnamese diacritics
+const COMMUNITY_NAME_ASCII = COMMUNITY_NAME
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+  .replace(/[^\x20-\x7E]/g, '').trim() || 'Community';
+const SITE_URL       = (process.env.SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
+const SITE_DOMAIN    = SITE_URL.replace(/^https?:\/\//, '');
+const FROM_EMAIL  = process.env.FROM_EMAIL || `${COMMUNITY_NAME} <no-reply@${SITE_DOMAIN.split(':')[0]}>`;
+const SEPAY_MEMO_PREFIX = process.env.SEPAY_MEMO_PREFIX || 'NGUHANH';
 const ADMIN_EMAIL = 'tuchinguyen.ctv@gmail.com';
 
 const resendClient = RESEND_KEY ? new Resend(RESEND_KEY) : null;
-
-// Memory-storage upload for IELTS test-bank file extraction (PDF/DOCX) — files are
-// parsed to text immediately and never written to disk.
-const ieltsFileUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ok = /\.(pdf|docx)$/i.test(file.originalname);
-    cb(ok ? null : new Error('Chỉ hỗ trợ file .pdf hoặc .docx'), ok);
-  },
-});
 
 async function sendEmail({ to, subject, html }) {
   if (!resendClient) {
@@ -77,10 +74,10 @@ function emailWrap(title, body) {
     .green{color:#10b981;font-weight:700}
   </style></head><body>
   <div class="box">
-    <p style="color:#0ea5e9;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">CỘNG ĐỒNG IELTS CHƯƠNG CÀ MAU</p>
+    <p style="color:#0ea5e9;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">${COMMUNITY_NAME.toUpperCase()}</p>
     <h1>${title}</h1>
     ${body}
-    <div class="footer">Cộng đồng IELTS Chương Cà Mau<br>chuongcm.com</div>
+    <div class="footer">${COMMUNITY_NAME}<br>${SITE_DOMAIN}</div>
   </div></body></html>`;
 }
 
@@ -118,7 +115,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname), {
   setHeaders(res, filePath) {
     if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      // `no-cache` (not `no-store`): browser still revalidates every request
+      // (never serves stale JS/CSS after an edit) but can get a 304 instead
+      // of re-downloading the whole file — full downloads on every single
+      // page navigation were a major source of the menu-click stutter.
+      res.setHeader('Cache-Control', 'no-cache');
     }
   }
 }));
@@ -374,6 +375,14 @@ const SCHEMA = `
     submitted_at    TEXT DEFAULT (datetime('now','localtime')),
     UNIQUE(user_id, lesson_id)
   );
+  CREATE TABLE IF NOT EXISTS lesson_comments (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    lesson_id  INTEGER NOT NULL REFERENCES course_lessons(id),
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    content    TEXT    NOT NULL,
+    parent_id  INTEGER REFERENCES lesson_comments(id),
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
+  );
   CREATE TABLE IF NOT EXISTS lesson_exercise_questions (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     lesson_id     INTEGER NOT NULL REFERENCES course_lessons(id),
@@ -461,181 +470,356 @@ const SCHEMA = `
     order_num  INTEGER DEFAULT 0,
     created_at TEXT    DEFAULT (datetime('now','localtime'))
   );
+  CREATE TABLE IF NOT EXISTS foods (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    element    TEXT,          -- kim | moc | thuy | hoa | tho
+    color      TEXT,          -- trắng | xanh | đen | đỏ | vàng
+    taste      TEXT,          -- cay | chua | mặn | đắng | ngọt | chát
+    nature     TEXT,          -- hàn | lương | bình | ôn | nhiệt
+    organ      TEXT,          -- Phổi/Đại tràng, Gan/Mật, ...
+    note       TEXT,
+    order_num  INTEGER DEFAULT 0,
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS recipes (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    title        TEXT    NOT NULL,
+    element_tags TEXT,        -- comma-separated: kim,moc,...
+    buoi         TEXT,        -- sáng | trưa | tối | cả ngày
+    summary      TEXT,
+    ingredients  TEXT,
+    steps        TEXT,
+    dung_khi     TEXT,        -- "dùng khi" — điều kiện phù hợp
+    note         TEXT,
+    order_num    INTEGER DEFAULT 0,
+    created_at   TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS meal_logs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    log_date   TEXT    NOT NULL,   -- YYYY-MM-DD
+    breakfast  TEXT,
+    lunch      TEXT,
+    dinner     TEXT,
+    colors     TEXT,   -- JSON array: ["xanh","đỏ",...]
+    tastes     TEXT,   -- JSON array: ["chua","cay",...]
+    note       TEXT,
+    created_at TEXT    DEFAULT (datetime('now','localtime')),
+    UNIQUE(user_id, log_date)
+  );
+  CREATE TABLE IF NOT EXISTS assistant_usage (
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    usage_date TEXT    NOT NULL,   -- YYYY-MM-DD (localtime)
+    count      INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(user_id, usage_date)
+  );
+  CREATE TABLE IF NOT EXISTS assistant_logs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    question   TEXT    NOT NULL,
+    answer     TEXT    NOT NULL,
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS ttm_intake_responses (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL REFERENCES users(id),
+    answers_json TEXT    NOT NULL,
+    summary_text TEXT    NOT NULL,
+    submitted_at TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS ttm_roadmaps (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id),
+    intake_id     INTEGER NOT NULL REFERENCES ttm_intake_responses(id),
+    draft_content TEXT    NOT NULL,
+    status        TEXT    DEFAULT 'pending_approval',
+    admin_note    TEXT,
+    final_content TEXT,
+    reviewed_at   TEXT,
+    created_at    TEXT    DEFAULT (datetime('now','localtime'))
+  );
 `;
 
-// [day_number, title, description, instructions, xp_reward]
-const CHALLENGE_DAYS = [
-  [1,  'Kick Off: Cài Tool & Sẵn Sàng Chiến',
-   '<h3>📋 Phần 1 — Tại sao cần những tool này?</h3>\n<p>Trước khi xây nhà cần có búa và đinh. Trước khi build hệ thống bán hàng bằng AI, bạn cần 4 công cụ này:</p>\n<ul>\n<li><strong>Claude.ai</strong> — AI cố vấn của bạn. Bí chỗ nào, hỏi nó. Nó giải thích và chỉ cách làm.</li>\n<li><strong>VS Code</strong> — Nơi AI đọc và ghi file trên máy của bạn. Không có nó, AI không biết làm việc ở đâu.</li>\n<li><strong>Claude Desktop</strong> — Phiên bản Claude chạy trực tiếp trên máy tính, kết nối với VS Code.</li>\n<li><strong>Antigravity</strong> — Tool quan trọng nhất. Bạn ra lệnh bằng tiếng Việt, nó tự viết code và chạy. Không cần biết lập trình.</li>\n<li><strong>Node.js</strong> — Nền tảng kỹ thuật để Antigravity hoạt động được. Cài một lần, không cần nghĩ đến nữa.</li>\n</ul>',
-   '<h3>🛠 Phần 2 — SOP từng bước</h3>\n<p><strong>Bước 1 — Tạo tài khoản Claude:</strong><br>Vào claude.ai → Đăng ký bằng Google hoặc email → Xác nhận email nếu được yêu cầu.</p>\n<p><strong>Bước 2 — Cài 4 tool theo thứ tự:</strong></p>\n<table><thead><tr><th>Thứ tự</th><th>Tool</th><th>Link tải</th></tr></thead><tbody>\n<tr><td>1</td><td>Node.js (cài trước tiên)</td><td>Tải Node.js</td></tr>\n<tr><td>2</td><td>VS Code</td><td>Tải VS Code</td></tr>\n<tr><td>3</td><td>Claude Desktop</td><td>Tải Claude Desktop</td></tr>\n<tr><td>4</td><td>Antigravity</td><td>Google từ khóa "Antigravity AI" → tải bản mới nhất</td></tr>\n</tbody></table>\n<blockquote>⚠️ <strong>Bị lỗi khi cài?</strong> Chụp màn hình lỗi → paste vào Claude.ai → hỏi "Lỗi này là gì, fix thế nào?" → nó giải thích được.</blockquote>\n<p><strong>Bước 3 — Tham gia cộng đồng Telegram:</strong><br>Vào nhóm "AI AGENT CHALLENGE" → Gửi tin nhắn:<br><em>"Xin chào mọi người và @cindyagentscc_bot — Tôi là [tên], tôi đang bán [sản phẩm], tôi tham gia 21 ngày để [mục tiêu của bạn]"</em></p>\n<p>Giới thiệu đầy đủ giúp cộng đồng hỗ trợ bạn đúng hơn sau này.</p>\n<p><strong>Bước 4 — ⭐ Quan trọng nhất: Chọn sản phẩm của bạn</strong><br>Đây là thứ bạn sẽ dùng suốt 21 ngày để kiếm tiền thật.<br>Chọn 1 trong 3 loại sau:</p>\n<table><thead><tr><th>Loại</th><th>Ví dụ</th><th>Khuyên dùng?</th></tr></thead><tbody>\n<tr><td>Sản phẩm số</td><td>Ebook, khóa học, template, file Canva</td><td>⭐⭐⭐ Tốt nhất — giao hàng tự động</td></tr>\n<tr><td>Dịch vụ</td><td>Thiết kế, tư vấn, viết content, chạy ads</td><td>⭐⭐ Tốt — bạn là sản phẩm</td></tr>\n<tr><td>Sản phẩm vật lý</td><td>Đồ handmade, thực phẩm, hàng có sẵn</td><td>⭐ Được — nhưng phức tạp hơn</td></tr>\n</tbody></table>\n<p>Chưa biết bán gì? Không sao. Ghi ra 3 thứ bạn biết làm tốt hơn người xung quanh. Đó có thể là sản phẩm. Hỏi cộng đồng Telegram để được góp ý.</p>\n<blockquote>📝 <strong>Ghi lại ngay:</strong> Tên sản phẩm: ___ | Giá dự kiến: ___ | Ai sẽ mua: ___</blockquote>\nNộp bài:\n<p>Chụp ảnh màn hình và gửi trực tiếp vào platform (không cần Google Drive):</p>\n<ul>\n<li>Ảnh Claude.ai đã đăng nhập (thấy giao diện chat)</li>\n<li>Ảnh VS Code đã mở (thấy cửa sổ editor)</li>\n<li>Ảnh Claude Desktop đã đăng nhập</li>\n<li>Ảnh Antigravity đã mở</li>\n<li>Ảnh Node.js đã cài (chạy lệnh <code>node -v</code> trong terminal, thấy số version)</li>\n<li>Ảnh đã vào nhóm Telegram và gửi lời chào</li>\n<li>Viết 1 dòng: "Tôi sẽ bán: ___ trong 21 ngày tới"</li>\n</ul>\n✅ Được duyệt khi: Có đủ 7 mục chứng minh hoàn thành.',
-   10],
-  [2,  'Làm Landing Page Với AI: Từ 0 Đến Website Trong 1 Buổi',
-   '<h3>📖 Bài học — Vòng lặp Agent & Visual Prompting</h3>\n\n<h3>Vòng lặp Agent — Cách agent hoạt động:</h3>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Nhận nhiệm vụ → Lên kế hoạch → Thực hiện → Kiểm tra kết quả\n→ Đúng? Tiếp tục.\n→ Sai? Đọc lỗi → Tự sửa → Thử lại\n→ Lặp đến khi hoạt động đúng → Báo cáo</pre>\n<p><em>Agent không làm đúng ngay lần đầu — và đó là bình thường, được thiết kế như vậy. Sức mạnh của agent là nó tự sửa mà không mệt mỏi.</em></p>\n\n<h3>Visual Prompting — Kỹ năng quan trọng nhất hôm nay:</h3>\n<p>Đừng mô tả bằng lời (<em>"trông hiện đại"</em>, <em>"màu xanh đẹp"</em>). AI không biết "đẹp" theo tiêu chuẩn của bạn. Thay vào đó: <strong>chụp ảnh website bạn thích → ném vào Antigravity → "làm theo phong cách này"</strong>. Kết quả tốt hơn 10 lần.</p>\n\n<h3>Khi bị lỗi — đừng hoảng:</h3>\n<p>Copy toàn bộ thông báo lỗi đỏ → paste vào Claude.ai → hỏi <em>"lỗi này nghĩa là gì, sửa thế nào?"</em> — kỹ năng này bạn dùng suốt 21 ngày.</p>\n\n<blockquote>⭐ <strong>Nguyên tắc vàng:</strong> "Cái gì bạn có thể thấy bằng mắt — AI phải tạo được bằng code. Việc của bạn là nhìn và nhận xét."</blockquote>',
-   '<h3>⚙️ SOP 5 bước — Tạo Landing Page Bằng AI</h3>\n\n<p><strong>Bước 1 — Viết nội dung trước (đừng nghĩ design trước)</strong><br>\nMở Antigravity → tạo folder <code>landing-page</code> → paste prompt sau:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Tôi không biết gì về làm web và marketing. Tôi đang muốn tạo Landing Page\nđể giới thiệu/bán: [điền sản phẩm của bạn — cụ thể nhất có thể].\n\nHãy đóng vai chuyên gia copywriting, viết cho tôi đầy đủ nội dung gồm:\n(1) Tiêu đề chính gây chú ý\n(2) Vấn đề khách hàng đang gặp phải\n(3) Giải pháp của tôi\n(4) 3–5 lợi ích cụ thể\n(5) Testimonial mẫu\n(6) Nút kêu gọi hành động (CTA)\nViết theo phong cách người Việt tự nhiên, không dùng từ hoa mỹ.</pre>\n\n<p><strong>Bước 2 — Visual Prompting (làm design bằng ảnh)</strong><br>\nLên Pinterest hoặc Google → tìm <em>"landing page design 2024"</em> → chụp ảnh màn hình trang đẹp nhất → kéo thả ảnh vào Antigravity → paste:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Đây là phong cách thiết kế tôi muốn. Tạo giao diện Landing Page HTML\ntheo bố cục, màu sắc, typography trong ảnh này.\nDùng nội dung bạn đã viết ở bước trước. File tên index.html.</pre>\n\n<p><strong>Bước 3 — Tinh chỉnh (yêu cầu sửa từng phần)</strong><br>\nMở <code>index.html</code> trong trình duyệt → nhìn từng phần → yêu cầu sửa cụ thể. Ví dụ:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Màu nền header đang quá tối. Đổi sang màu trắng ngà #F5F5F0.\nNút CTA nhỏ quá, to hơn và đổi màu thành #E74C3C.</pre>\n\n<p><strong>Bước 4 — Deploy (đưa lên internet)</strong><br>\nKhi ưng với giao diện, paste:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Xuất bản Landing Page này thành trang web thực tế trên Netlify.\nCho tôi đường link để người khác truy cập được.</pre>\n\n<p><strong>Bước 5 — Test thực tế</strong><br>\nCopy link → ném vào nhóm Telegram → nhờ mọi người click thử → hỏi <em>"giao diện trên điện thoại có bị lệch không?"</em>. Nếu bị lỗi → quay lại Antigravity báo lỗi → nó sửa.</p>\n\n<blockquote>💡 <strong>Mẹo:</strong> Đừng tự sửa HTML bằng tay — paste lỗi vào Antigravity để nó sửa. Chưa biết bán gì? Làm landing page giới thiệu bản thân trước. Ghi lại: agent thử mấy lần mới xong — đây là data quý.</blockquote>\nNộp bài:\n<p>Chụp ảnh/screenshot và gửi trực tiếp vào platform:</p>\n<ul>\n<li>Link landing page public (người khác click vào được, không phải localhost)</li>\n<li>Screenshot giao diện trên desktop</li>\n<li>Screenshot giao diện trên điện thoại (test mobile không bị vỡ layout)</li>\n</ul>\n✅ Được duyệt khi: Link landing page truy cập được công khai, có đủ tiêu đề + mô tả + CTA, đã test trên điện thoại không bị vỡ layout.\n❌ Chưa đạt khi: Chỉ nộp ảnh chụp màn hình không có link · Link mở ra thấy lỗi 404 hoặc trang trắng · Chỉ có localhost người khác không vào được.',
-   5],
-  [3,  'Deploy Website Thật: Domain Thật, Data Thật, Bán Hàng Thật',
-   '<h3>📖 Bài học — Sự khác biệt giữa "thử nghiệm" và "thật sự kinh doanh"</h3>\n\n<p>Link netlify ngẫu nhiên trông như dự án học sinh. Domain thật (<em>tensanpham.vn</em>) trông như business nghiêm túc. Khách hàng quyết định mua hay không trong 3 giây đầu tiên — domain là tín hiệu đầu tiên.</p>\n\n<h3>3 thành phần tạo hệ thống thu lead:</h3>\n<ul>\n<li><strong>Domain thật</strong> (.com hoặc .vn) → uy tín, khách tin tưởng, dễ nhớ và chia sẻ</li>\n<li><strong>Form thu thông tin</strong> (Google Forms hoặc Formspree) → bắt được tên + email/sđt của người quan tâm</li>\n<li><strong>Google Sheet tự động</strong> → mọi lead được lưu tự động, không sót, theo dõi real-time</li>\n</ul>\n\n<h3>Mẹo AI-First cho ngày 3:</h3>\n<p>Đừng tự nghĩ nội dung website. Dump hết thông tin thô vào AI: bạn bán gì, cho ai, giá bao nhiêu, khách hay hỏi gì — rồi để AI viết headline, mô tả, CTA. Bạn chỉ review và chỉnh. Cả bước content chỉ mất 10 phút.</p>\n\n<blockquote>⭐ <strong>Nguyên tắc vàng:</strong> "Không có lead = chưa có business. Có lead = bắt đầu có business. Domain là cánh cửa vào business đó."</blockquote>',
-   '<h3>⚙️ SOP 6 bước — Deploy Website Thật</h3>\n\n<p><strong>Bước 1 — Mua domain</strong><br>\nVào 123host.vn → tìm tên domain phù hợp → <strong>.com</strong> (~250k/năm) hoặc <strong>.vn</strong> (~350k/năm) hoặc <strong>.id.vn</strong> rẻ nhất (~10k/năm) → thanh toán → lưu thông tin đăng nhập vào file <code>notes.txt</code>.</p>\n\n<p><strong>Bước 2 — Kết nối domain với Netlify</strong><br>\nNetlify dashboard → Sites → chọn site ngày 2 → <em>Domain settings</em> → <em>Add custom domain</em> → nhập domain vừa mua → copy DNS nameservers → vào 123host → cập nhật nameservers → chờ 10–30 phút để DNS propagate.</p>\n\n<p><strong>Bước 3 — Điền nội dung thật</strong><br>\nMở Antigravity → thư mục <code>landing-page</code> → paste prompt:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Tôi cần cập nhật nội dung website. Thay toàn bộ placeholder bằng:\nTên sản phẩm: [điền]\nMô tả: [điền]\nGiá: [điền]\nLợi ích: [điền]\nSố điện thoại/Zalo: [điền]\nẢnh: [mô tả hoặc đính kèm]\nGiữ nguyên design, chỉ đổi nội dung.</pre>\n\n<p><strong>Bước 4 — Tạo form thu lead</strong><br>\nTạo Google Form có các trường: Họ tên + SĐT/Zalo + Email + 1–2 câu hỏi nhu cầu → <em>Responses</em> → <em>Link to Sheets</em> → copy link embed → paste vào Antigravity:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Nhúng Google Form này vào cuối landing page thay cho CTA button hiện tại.\nLink form: [dán link Google Form vào đây]</pre>\n\n<p><strong>Bước 5 — Kiểm tra trước khi mở cửa</strong></p>\n<ul>\n<li>Mở trên điện thoại — có bị lệch layout không?</li>\n<li>Tự điền form 1 lần test</li>\n<li>Kiểm tra Google Sheet — data có xuất hiện không?</li>\n</ul>\n\n<p><strong>Bước 6 — Nộp bài</strong><br>\nSubmit link website có domain thật vào platform.</p>\n\n<blockquote>💡 <strong>Mẹo:</strong> Domain .id.vn rẻ nhất (~10k/năm) | .com ~250k/năm | .vn ~350k/năm. Tag Lửng Mật trong nhóm nếu DNS chưa propagate sau 1 tiếng.</blockquote>\nNộp bài:\n<ul>\n<li>Link website domain thật (ví dụ: tensanpham.vn — không phải netlify.app)</li>\n<li>Link Google Sheet có ít nhất 1 dòng data test</li>\n<li>Screenshot website trên desktop + điện thoại</li>\n</ul>\n✅ Được duyệt khi: Website mở được trên domain thật · Form thu lead hoạt động · Google Sheet có ít nhất 1 dòng data test.\n❌ Chưa đạt khi: Vẫn dùng link netlify ngẫu nhiên · Form không hoạt động hoặc data không vào Sheet · Chỉ nộp ảnh không có link.',
-   5],
-  [4,  'Traffic – Lead – Money: Kéo Người Thật Vào Website',
-   '<h3>📖 Bài học — Tại sao phải làm thủ công trước khi tự động hóa</h3>\n\n<h3>Công thức Traffic → Lead → Money:</h3>\n<ul>\n<li><strong>Traffic:</strong> người thật click link website của bạn</li>\n<li><strong>Lead:</strong> họ điền form → bạn có tên + email/sđt → có thể liên hệ</li>\n<li><strong>Money:</strong> bạn liên hệ → tư vấn → chốt đơn</li>\n</ul>\n<p><em>Giai đoạn này LÀM THỦ CÔNG 100%: để hiểu từng bước, cảm nhận đau điểm, mới biết cần tự động hóa gì.</em></p>\n\n<h3>Bí quyết viết bài đăng hiệu quả:</h3>\n<p>Bài không cần dài, cần <strong>THẬT</strong>. Kể câu chuyện thật: bạn đang làm gì, tại sao làm, kết quả như thế nào. Người ta follow và click vì tò mò về hành trình của bạn — không phải vì bạn quảng cáo.</p>\n\n<blockquote>⭐ <strong>Nguyên tắc vàng:</strong> "Lead đầu tiên bao giờ cũng khó nhất — và quan trọng nhất. Lead thứ hai dễ hơn 10 lần."<br><br>\n🎯 <strong>Skill cốt lõi:</strong> Chọn 1 kênh duy nhất bạn đang có audience sẵn — đừng cố đăng khắp nơi. Tập trung > phân tán.</blockquote>',
-   '<h3>⚙️ SOP 4 bước</h3>\n\n<p><strong>Bước 1 — Nhờ AI viết bài đăng</strong><br>\nChụp màn hình website → paste vào Claude.ai hoặc ChatGPT → paste prompt:</p>\n<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap">Viết 3 bài đăng Facebook theo 3 góc độ khác nhau để quảng bá trang web này.\nTone tự nhiên như người thật viết, không dùng emoji loạn.\nMỗi bài dưới 200 chữ, có câu kết kêu gọi click link.</pre>\n<p>→ Chọn bài hợp nhất → chỉnh lại giọng của bạn → đăng thật lên ít nhất 1 kênh có audience sẵn.</p>\n\n<p><strong>Bước 2 — Tăng độ phủ thủ công</strong></p>\n<ul>\n<li>Nhắn tin trực tiếp 5–10 bạn bè phù hợp nhờ vào xem + cho ý kiến</li>\n<li>Share vào 1–2 group Facebook liên quan</li>\n<li>Reply tất cả comment trong 1 giờ đầu — thuật toán thưởng bài có tương tác sớm</li>\n</ul>\n\n<p><strong>Bước 3 — Xử lý lead đầu tiên</strong><br>\nMở Google Sheet → có ai điền form chưa? → nếu có: <strong>nhắn tin/email ngay</strong> (đừng để qua ngày), giới thiệu bản thân, hỏi nhu cầu thật sự → đây là bước đầu tiên trong hành trình bán hàng.</p>\n\n<p><strong>Bước 4 — Ghi lại insight</strong><br>\nSau khi tương tác với lead, ghi lại vào <code>notes.txt</code>:</p>\n<ul>\n<li>Họ quan tâm điều gì nhất?</li>\n<li>Câu hỏi họ hỏi là gì?</li>\n<li>Lo ngại họ có là gì?</li>\n</ul>\n<p>Data này sẽ dùng để cải thiện chatbot và email sequence ở ngày 9–11.</p>\n\n<blockquote>💡 <strong>Mẹo:</strong> Chưa có audience? Đăng trong nhóm Telegram challenge — 160+ thành viên đang xem. Bài đăng hiệu quả nhất: kể về 21-day challenge bạn đang làm + kết quả thật + link website. Chưa có lead sau 24h? Thử đổi góc bài đăng hoặc đăng vào group khác.</blockquote>\nNộp bài:\n<ul>\n<li>Link bài đăng public (ít nhất 1 bài, người ngoài xem được)</li>\n<li>Screenshot Google Sheet có lead thật (email/sđt thật, không phải test của bạn)</li>\n<li>Screenshot tin nhắn/email bạn đã gửi cho lead đầu tiên (nếu có)</li>\n</ul>\n✅ Được duyệt khi: Có ít nhất 1 bài đăng public người ngoài xem được · Google Sheet có lead thật (không phải test của bản thân).\n❌ Chưa đạt khi: Link bài đăng bị private · Google Sheet trống hoặc chỉ có data test của bạn · Chưa đăng bài lên kênh nào.',
-   5],
-  [5,  'Build Bộ Não Thứ 2 (SQLite brain.db + Brand Voice)',
-   'Tạo "bộ não kỹ thuật số" — database SQLite lưu brand voice và kiến thức của bạn.',
-   'Cấu trúc thư mục:\nmy-brain/\n  brain.db ← SQLite database\n  brain_score.md ← Tracking điểm mỗi ngày\n\nBảng brand_voice gồm: tone, words_to_use, words_to_avoid, target_audience, writing_example\n\nSau khi AI tạo xong:\n- Điền brand voice THẬT của bạn (không dùng data mẫu)\n- Nhờ AI đọc brain.db → viết 1 bài theo giọng bạn → lưu vào post.txt\n- Nhận xét: bài có nghe giống giọng bạn không?\n\nNộp bài:\n1. Screenshot thư mục my-brain có brain.db\n2. Screenshot bảng brand_voice đã điền đầy đủ (data thật, không phải mẫu)\n3. Nội dung file post.txt + nhận xét về độ chính xác\n\n✅ Được duyệt khi: brain.db chạy được, brand_voice có data thật, AI đã viết được bài từ database.',
-   5],
-  [6,  'Mở Danh Sách Chờ + Bắt Đầu 7 Ngày Đăng Bài Liên Tục',
-   'Ra mắt trang waitlist + lên kế hoạch content 7 ngày + đăng bài ngày đầu tiên.',
-   '⚠️ Chuỗi 7 ngày này chạy song song từ Ngày 6 đến Ngày 12. Mỗi ngày phải đăng ≥ 3 bài.\n\nBước 1: Tạo trang /dang-ky.html — form: tên, email, số điện thoại. Khi submit → lưu vào waitlist.json.\n\nBước 2: Lên kế hoạch content 7 ngày với bộ não thứ 2 → lưu vào plan.md:\nFormat: Ngày X | Ý tưởng | Hook gợi ý | CTA\n\nBước 3: Viết và đăng bài ngày 1 lên ≥ 3 kênh.\n\nNộp bài:\n- Link trang waitlist (reviewer phải điền được)\n- Link bài đăng ngày 1 (≥ 3 kênh, link public)\n- Screenshot file plan.md (7 ngày × 3 ý tưởng)\n- Screenshot brain_score.md đã cập nhật\n\n✅ Được duyệt khi: Waitlist mở được + form submit được + plan.md có 7 ngày × 3 ý tưởng.',
-   5],
-  [7,  'Week 1 Review Meeting',
-   'Review tuần 1 cùng toàn bộ thành viên. Học cách dùng agent đọc thư mục và tự quản lý công việc.',
-   'Bài tập thực hành TRONG meeting (7 hạng mục):\n1. Dùng Agent tạo toàn bộ cấu trúc thư mục bằng 1 câu lệnh duy nhất\n2. Dùng Agent điền nội dung vào README.md\n3. Dùng Agent tạo danh sách task trong tasks/\n4. Ra lệnh cho Agent đọc toàn bộ thư mục và phân tích\n5. Ra lệnh cho Agent lên lịch tuần tự động\n6. Ra lệnh cho Agent cập nhật task khi xong việc\n7. Chia sẻ 3 câu hỏi cốt lõi: Use case là gì? Agent làm được gì? Tiết kiệm bao nhiêu thời gian?\n\nNộp bài: Screenshot từng bước + link recording nếu không tham gia live.\n\n✅ Được duyệt khi: Có đủ 7 screenshot + chứng minh đã tham gia/xem recording.',
-   10],
-  [8,  'Relax Day (Nghỉ Lễ 30/4–1/5)',
-   'Không có task bắt buộc. Nghỉ ngơi, tái nạp năng lượng.',
-   'Ngày nghỉ — không có yêu cầu bắt buộc.\n\nGợi ý:\n- Nghiên cứu thêm về AI agents, xem video về MCP hoặc Claude\n- Xem lại ghi chú tuần 1, ôn lại những gì đã học được\n- Hoặc đơn giản là nghỉ ngơi — bạn xứng đáng!\n\nNộp bài:\n- Ảnh hoặc note bất kỳ — suy nghĩ về hành trình 7 ngày đầu, điều thú vị học được, hoặc ảnh bạn đang nghỉ ngơi\n\n✅ Được duyệt khi: Nộp bất cứ nội dung nào — ảnh, note, suy nghĩ về hành trình 7 ngày đầu.',
-   3],
-  [9,  'Build Chatbot Bán Hàng 24/7',
-   'Gắn chatbot có kịch bản bán hàng thật vào website. Khách vào là chatbot chào và tư vấn.',
-   'SOP 6 bước:\n1. Tạo kho dữ liệu: /data/products, /data/faq, /data/customers, /data/objections\n2. Copy brain.db vào thư mục website\n3. Nhờ AI viết kịch bản bán hàng → lưu vào sales_script.md (câu chào, 10 FAQ, câu chốt đơn, hướng vào form)\n4. Gắn chatbot vào website (góc dưới phải màn hình)\n5. Test 3 tình huống: hỏi giá / hỏi phù hợp không / "để tôi nghĩ thêm"\n6. Đăng bài thông báo lên ≥ 2 kênh + cập nhật brain_score.md\n\nNộp bài:\n- Link website có chatbot (reviewer vào và chat thử)\n- Link bài đăng (≥ 2 kênh, link public)\n- Screenshot 4 thư mục /data (phải có data THẬT)\n- Screenshot brain_score.md đã cập nhật\n\n✅ Được duyệt khi: Chatbot trả lời được ≥ 3 câu hỏi cơ bản, có câu chốt đơn, /data có data thật.',
-   5],
-  [10, 'Nhận Tiền Tự Động + CRM + Admin Panel',
-   'Hoàn thiện hệ thống bán hàng — nhận tiền qua QR tự động, quản lý đơn hàng và khách hàng.',
-   'SOP 7 bước:\n1. Đăng ký Sepay (sepay.vn) — miễn phí, kết nối ngân hàng\n2. Kết nối Sepay vào website (đọc docs.sepay.vn)\n3. Build CRM trong brain.db: bảng products, customers, orders\n4. Build Admin Panel tại /admin — 3 tab: Sản phẩm, Khách hàng, Đơn hàng\n5. Tạo sản phẩm số nếu chưa có (ebook, template, checklist)\n6. Test nhận tiền thật: tự chuyển 2.000đ cho chính mình\n7. Viết tổng kết bộ não thứ 2 sau 7 ngày → brain_review.md\n\nNộp bài:\n- Link trang thanh toán (reviewer thấy QR, quét được)\n- Link trang /admin (đủ 3 tab có data thật)\n- Screenshot nhận tiền 2.000đ thành công\n- Link bài đăng (≥ 2 kênh)\n\n✅ Được duyệt khi: Sepay kết nối thật, /admin có 3 tab, đã test nhận tiền thật.',
-   5],
-  [11, 'Email Marketing Tự Động (Resend.com)',
-   'Biến danh sách khách hàng thành cỗ máy chăm sóc tự động — khách điền form → tự nhận 3 email.',
-   'SOP 6 bước:\n1. Thêm trường email vào form và CRM (nếu chưa có)\n2. Đăng ký Resend.com (miễn phí) → lấy API Key\n3. Kết nối Resend vào website\n4. Viết 3 email tự động:\n   - Email 1: Chào mừng — gửi ngay khi khách điền form\n   - Email 2: Nurture — gửi ngày +2 (insight có giá trị, không bán hàng)\n   - Email 3: Chốt — gửi ngày +3 (giới thiệu sản phẩm + CTA)\n5. Gắn email sequence + chế độ test (email chứa "+test" → gửi cả 3 ngay)\n6. Thêm email xác nhận đơn hàng tự động\n\nTest: Điền form với ten+test@gmail.com → nhận cả 3 email ngay.\n\nNộp bài:\n- Screenshot hộp thư (cả 3 email sau khi test)\n- Screenshot email xác nhận đơn\n- Screenshot email_sequence.md\n- Link bài đăng (≥ 2 kênh)\n\n✅ Được duyệt khi: Nhận được cả 3 email trong hộp thư thật sau khi test +test.',
-   5],
-  [12, 'Week 2 Review + Chuẩn Bị Deploy',
-   'Nhìn lại 2 tuần, viết thật, chuẩn bị sẵn sàng đưa project lên server thật.',
-   'Ngày hôm nay KHÔNG build thêm gì — đây là ngày nhìn lại, viết thật, và chuẩn bị.\n\nSOP 4 bước:\n1. Tự viết week2_review.md (KHÔNG nhờ AI viết thay) — 5 câu hỏi:\n   - Tôi đã build được gì sau 12 ngày?\n   - Số liệu thật: bao nhiêu lead, bao nhiêu bài đăng, đã có đơn chưa?\n   - Điều gì khó nhất tôi đã vượt qua?\n   - Điều gì tôi thấy chưa tốt?\n   - Nếu bắt đầu lại, tôi sẽ làm khác gì?\n2. AI biến review thành bài đăng (week2_post.md) — giữ đúng giọng thật\n3. Kiểm tra dự án sẵn sàng deploy (deploy_checklist.md)\n4. Đăng ≥ 3 bài hôm nay (ngày cuối chuỗi 7 ngày)\n\nNộp bài:\n- Link bài cảm nhận 2 tuần (≥ 2 kênh)\n- Screenshot week2_review.md (5 câu trả lời thật tự viết)\n- Screenshot deploy_checklist.md đã tick đủ\n\n✅ Được duyệt khi: Bài cảm nhận có tiếng nói thật của bạn (không phải AI viết hoàn toàn).',
-   10],
-  [13, 'Build AI Agent (Goclaw) trên VPS',
-   'Thiết lập AI Agent hoàn chỉnh để hỗ trợ công việc + hỗ trợ mọi người trong group Telegram.',
-   'Tool: goclaw — open source AI agent framework\nRepo: github.com/nextlevelbuilder/goclaw\n\nPrompt mẫu paste vào AI coding agent:\n"Tôi muốn clone repo goclaw từ https://github.com/nextlevelbuilder/goclaw về và chạy trên VPS. GitHub để deploy bằng GitHub Actions là: [LINK GITHUB]. Đọc repo goclaw chi tiết và lên kế hoạch cài đặt theo thông tin VPS bên dưới. Domain [TÊN DOMAIN] đã được trỏ tới IP VPS rồi. Đảm bảo phân tích sâu để tôi chỉ cần vào domain là dùng được goclaw.\nTHÔNG TIN VPS: [Điền thông tin VPS — IP, OS, RAM, CPU...]"\n\nNộp bài:\n- Screenshot goclaw đang chạy trên domain thật (URL hiển thị rõ trên thanh địa chỉ)\n- Screenshot terminal hoặc dashboard cho thấy service đang active\n- Theo hướng dẫn bổ sung được chia sẻ trong meeting\n\n✅ Được duyệt khi: Vào domain thấy goclaw hoạt động, agent phản hồi được lệnh cơ bản.',
-   10],
-  [14, 'Website Lên VPS + Trao Cánh Tay Cho Agent (MCP)',
-   'Deploy website lên VPS Linux thật + trang bị cho AI Agent khả năng thao tác server qua MCP.',
-   'MCP (Model Context Protocol) cho phép AI agent không chỉ trả lời — mà còn thực sự thao tác được: đọc/ghi file, SSH vào server, chạy commands, gọi API...\n\nKết quả: Agent của bạn từ "biết nói" trở thành "biết làm".\n\nHướng dẫn chi tiết: taip.io/day14-vps-mcp.html (chỉ cho thành viên)\n\n⚠️ Đừng share link hướng dẫn ra nhóm hay cho người ngoài thử thách.\n\nNộp bài:\n- Screenshot VPS đang chạy website thật (domain hiển thị rõ)\n- Screenshot Claude Desktop đã kết nối MCP (list tools hiện)\n- Screenshot demo agent thực hiện 1 thao tác thật qua MCP (tạo file, đọc log, hoặc tương tự)\n\n✅ Được duyệt khi: Website chạy trên VPS với domain thật, MCP connected, agent thao tác được ít nhất 1 việc thật trên server.',
-   5],
-  [15, 'Agent Trở Thành Cộng Sự Tức Thì',
-   'Cho agent việc cụ thể, giọng riêng, và thói quen chủ động. Lần đầu agent tự Telegram khi có đơn mới.',
-   'Cách làm (~2-3 giờ):\n1. AI coding agent viết MCP function + MD files\n2. Upload lên VPS\n3. Bật Heartbeat qua Dashboard (không cần SSH)\n\nAgent sẽ tự động:\n- Telegram khi có đơn hàng mới\n- Telegram khi có form waitlist mới\n- Mỗi sáng: tổng kết hoạt động đêm trước\n\nHướng dẫn: taip.io/day15-agent-brain.html (chỉ cho thành viên)\n\nNộp bài:\n- Screenshot agent đang chạy trên VPS (dashboard hoặc terminal)\n- Screenshot Telegram notification thật (đơn hàng hoặc form mới)\n- Screenshot báo cáo sáng tự động (nếu đã test qua đêm)\n\n✅ Được duyệt khi: Agent gửi được ít nhất 1 Telegram notification thật từ event thực tế (đơn hàng hoặc form submission).',
-   5],
-  [16, 'Tự Tay Tạo Skill Cho Claude',
-   'Biến tri thức thành tài sản số có thể tái sử dụng vĩnh viễn — tự tạo Claude Skill đầu tiên.',
-   '5 cấp độ Claude Skills:\nCấp 1: SKILL.md — tác vụ đơn giản, không cần file phụ\nCấp 2: SKILL.md + assets/ — cần template, file mẫu\nCấp 3: SKILL.md + scripts/ — cần code chạy được (Python, FFmpeg...)\nCấp 4: SKILL.md + references/ — cần kiến thức sâu (pháp lý, kỹ thuật...)\nCấp 5: Đầy đủ tất cả — tác vụ phức tạp tổng hợp\n\nNhiệm vụ:\n1. Làm quiz 10 câu trong hướng dẫn (mỗi câu đúng = +2 XP)\n2. Chọn 1 ý tưởng → agent coding tạo skill → test ở 2 nơi khác nhau\n\nHướng dẫn: taip.io/day16-tu-tao-skill.html (chỉ cho thành viên)\n\nNộp bài:\n- Screenshot SKILL.md đã tạo (tên skill + nội dung hướng dẫn)\n- Screenshot kết quả test lần 1 (project hoặc context đầu tiên)\n- Screenshot kết quả test lần 2 (project hoặc context khác)\n- Bonus: Ảnh kết quả quiz 10 câu\n\n✅ Được duyệt khi: Skill tạo được, chạy đúng ở 2 context khác nhau, output có ích thật sự.',
-   5],
-  [17, 'Skill Sản Xuất Content + Auto-Post Facebook',
-   'Agent tự gen full content (ảnh đẹp + văn bản) và tự đăng lên Facebook Page mỗi sáng 9h.',
-   '2 Mode:\n- Mode 1 — Content Free: Agent gen ý tưởng 9h sáng → Telegram bạn duyệt → tự đăng\n- Mode 2 — Creative Ads: Gen 3 bộ ảnh + copy để paste vào Ads Manager\n\n14 bước trong guide:\n1. Lấy OpenAI API key\n2. Setup project Facebook Developer\n3. Lấy Permanent Page Token ⚠️ (phần khó nhất)\n4. Test token với Token Debugger\n5-14. Build skill 2 mode, setup cron 9h sáng, test, monitoring\n\nKết quả: Dậy sáng thấy Facebook Page đã có bài đăng đầy đủ ảnh + văn bản — bạn không làm gì.\n\nHướng dẫn: taip.io/day17-skill-creative-fb.html (chỉ cho thành viên)\n\nNộp bài:\n- Screenshot Facebook Page có bài vừa được đăng tự động (timestamp tự động, không phải tay)\n- Screenshot Telegram nhận thông báo duyệt bài (Mode 1) hoặc 3 bộ creative đã tạo (Mode 2)\n- Screenshot cron job đang chạy hoặc scheduler đã cài\n\n✅ Được duyệt khi: Facebook Page có ít nhất 1 bài được đăng tự động bởi agent, có timestamp chứng minh không đăng tay.',
-   5],
-  [18, 'Skill Sản Xuất Video AI Trên Higgsfield',
-   'Tạo video AI với Higgsfield (Stream 4.5 sinh ảnh + Kling 2.6/3.0 animate). Tạm dừng đến 04/05/2026.',
-   '⏸ TẠM DỪNG — Tiếp tục 04/05/2026. Timer đóng băng, không bị tính trễ.\n\n1 tool duy nhất: Higgsfield AI — vừa sinh ảnh vừa animate.\n\nChọn 1 trong 2 hướng:\nA. Sản phẩm/dịch vụ đang kinh doanh — gen video quảng bá đăng Reels/TikTok/FB Page\nB. Video vui tặng bạn bè — sinh nhật, kỷ niệm (áp lực thấp, tập trung học workflow)\n\nWorkflow 9 bước:\n1. Chọn chủ đề A hoặc B\n2. Dùng ChatGPT viết kịch bản\n3. Tạo ảnh với Stream 4.5 trong Higgsfield Image\n4. Mặc đồ cho model (nếu cần)\n5. Animate với Kling 2.6 hoặc 3.0\n6. Multishot — nối nhiều shot tự động\n7. Edit ghép trong CapCut\n8. Build skill tao-video-ai\n9. Tích hợp auto-post (mở rộng pipeline Day 17)\n\nNguyên tắc: "Ra ảnh ưng cái nào lụm cái đó, đừng mất công sửa hoài"\n\nNộp bài:\n- Link video AI đã tạo (Reels, TikTok, YouTube Shorts, hoặc Google Drive)\n- Screenshot quy trình Higgsfield (ít nhất bước sinh ảnh + bước animate)\n- Mô tả ngắn: chọn hướng A hay B, kết quả thế nào\n\n✅ Được duyệt khi: Có video thật được tạo từ Higgsfield, độ dài ≥ 5 giây, đã đăng lên ít nhất 1 kênh hoặc chia sẻ link Google Drive.',
-   5],
-  [19, 'Agent Logging & Monitoring',
-   'Thêm logging và monitoring cho Agent — track được usage, errors, và performance.',
-   'SOP 5 bước:\n1. Thêm logging vào agent: mỗi request/response ghi vào logs/agent.log với timestamp\n2. Phân loại log: INFO (request thường), WARN (chậm > 3s), ERROR (thất bại) + lưu context đầy đủ\n3. Build dashboard đơn giản tại /admin/logs — xem 50 log gần nhất, lọc theo loại\n4. Cấu hình alert: nếu ≥ 3 ERROR trong 10 phút → Telegram thông báo ngay\n5. Tạo báo cáo tự động hàng ngày: tổng requests, tỷ lệ lỗi, thời gian phản hồi trung bình\n\nNộp bài:\n- Screenshot /admin/logs đang hiển thị log thật (có dữ liệu thật)\n- Screenshot Telegram alert khi có lỗi (test bằng cách trigger lỗi cố ý)\n- Screenshot báo cáo hàng ngày của agent (hoặc preview dashboard)\n- Mô tả ngắn: agent đang log những gì, alert khi nào\n\n✅ Được duyệt khi: Logs ghi được ít nhất 10 entries thật, có ≥ 1 alert được gửi qua Telegram khi test lỗi.',
-   5],
-  [20, 'Optimize & Scale',
-   'Tối ưu chi phí API, caching responses, xử lý concurrent requests.',
-   'SOP 6 bước:\n1. Audit chi phí: xem lại logs ngày 19, tính token usage và cost mỗi ngày\n2. Thêm response cache: câu hỏi đã trả lời → lưu cache 1 giờ (Redis hoặc file JSON)\n3. Xử lý concurrent: queue system đơn giản, tránh gọi API trùng lặp\n4. Rate limiting: tối đa 10 requests/user/phút để tránh lạm dụng\n5. Optimize prompt: cắt context thừa, rút ngắn system prompt\n6. Load test: gửi 50 requests cùng lúc, đo thời gian phản hồi trước và sau\n\nNộp bài:\n- Screenshot chi phí API trước và sau optimize (so sánh cụ thể)\n- Screenshot cache đang hoạt động (cache hit count > 0)\n- Kết quả load test: response time với nhiều requests cùng lúc\n- Mô tả: đã tối ưu được bao nhiêu % chi phí hoặc thời gian phản hồi\n\n✅ Được duyệt khi: Cache đang hoạt động với ít nhất 1 cache hit thật, thể hiện được số liệu cải thiện cụ thể.',
-   5],
-  [21, 'Demo Cuối Khoá & Tổng Kết',
-   'Trình bày Agent hoàn chỉnh của bạn — chia sẻ bài học, kết quả, kế hoạch tiếp theo.',
-   'Chuẩn bị bài demo (làm trước meeting 30-60 phút):\n1. Chạy thử toàn bộ hệ thống lần cuối — đảm bảo không có lỗi\n2. Chuẩn bị số liệu thật: bao nhiêu đơn, bao nhiêu lead, tiết kiệm bao nhiêu giờ/tuần\n3. Slide hoặc demo live: agent làm được gì (chọn 3-5 tính năng nổi bật nhất)\n4. Chuẩn bị 3 bài học quan trọng nhất sau 21 ngày\n5. Chuẩn bị kế hoạch tiếp theo: bạn sẽ làm gì với agent này sau khoá học?\n\nNộp bài:\n- Link recording demo (YouTube, Google Drive, hoặc Loom)\n- Link sản phẩm/website agent đang chạy thật\n- Số liệu kết quả cụ thể (dù nhỏ): đơn hàng, lead, thời gian tiết kiệm được\n- Cảm nhận cá nhân: điều gì thay đổi nhất sau 21 ngày\n\n✅ Được duyệt khi: Có demo agent thật đang chạy (không chỉ là code), chia sẻ ≥ 1 số liệu kết quả cụ thể, và cảm nhận thật (không phải AI viết hoàn toàn).',
-   10],
+// [day_number, title, description, instructions, xp_reward] — 28 ngày Dưỡng Hóa theo Ngũ Hành
+const PROTOCOL_SOP = `<h3>🕒 Quy trình 1 ngày 3 buổi (làm mỗi ngày)</h3>
+<table><thead><tr><th>Giờ</th><th>Việc</th><th>Hướng dẫn</th></tr></thead><tbody>
+<tr><td>05:30</td><td>Uống sữa kháng thể</td><td>Pha với nước nguội, lắc dọc ~30 giây; uống trước ăn 30 phút (trước thuốc 60 phút nếu có).</td></tr>
+<tr><td>06:00</td><td>Mật mía chanh + vận động 30 phút</td><td>~5 thìa mật mía + 250ml nước ấm + 1 lát chanh (dùng chanh có hạt). Trời lạnh thêm 1 lát gừng. Sau đó vỗ tay 4 nhịp / yoga / chạy bộ — nơi nhiều oxy, chân tiếp đất, tắm nắng.</td></tr>
+<tr><td>06:30–07:30</td><td>Ăn sáng theo Ngũ Hành</td><td>Ưu tiên vị CHUA (Hành Mộc): vắt chanh vào nước chấm, ăn kèm lá diếp cá, uống nước cam. Trời lạnh thêm vị CAY: tỏi, ớt, tiêu, lá bạc hà.</td></tr>
+<tr><td>08:00–09:00</td><td>Café / cacao / trà tim sen</td><td>Huyết áp thấp hoặc bình thường → vị đắng màu đỏ (café / cacao / socola). Huyết áp cao → vị đắng màu xanh (trà tim sen).</td></tr>
+<tr><td>11:30–12:00</td><td>Ăn trưa theo Ngũ Hành</td><td>Kết hợp vị + màu: Xanh+Chua, Đỏ+Đắng, thêm Chát. VD canh chua lá giang, canh sườn nấu sấu, canh khổ qua, chuối xanh nấu tía tô.</td></tr>
+<tr><td>18:30–19:00</td><td>Ăn tối theo Ngũ Hành + 1 ly rượu vang (20–50ml)</td><td>Ưu tiên vị CAY màu trắng (Hành Kim) + vị MẶN màu đen (Hành Thủy). VD lẩu Thái, rau muống xào tỏi, mè đen rang muối, canh gà ác, tỏi đen ngâm tương.</td></tr>
+<tr><td>19:30</td><td>Uống trà thải độc</td><td>1 gói + 200ml nước sôi (trời lạnh 100ml). Nếu hôm sau không đi vệ sinh được → tăng 2 gói với 300ml.</td></tr>
+</tbody></table>
+<blockquote>Lưu ý chung: dùng chanh có hạt · nhai kỹ (ăn như uống) · cố ăn đủ 5 màu + 5 vị · nếu không đủ cả màu cả vị thì ưu tiên VỊ.</blockquote>`;
+
+const SUBMIT_BLOCK = `Nộp bài:
+<ul>
+<li>Ảnh ít nhất 1 bữa ăn hôm nay (nêu rõ có những màu gì / vị gì)</li>
+<li>Tự đánh giá: hôm nay bạn ăn đủ mấy màu (xanh/đỏ/vàng/trắng/đen) và mấy vị (chua/cay/đắng/mặn/ngọt)?</li>
+<li>Cảm nhận cơ thể trong ngày (tiêu hóa, năng lượng, giấc ngủ, tâm trạng)</li>
+</ul>
+✅ Được duyệt khi: Có ảnh bữa ăn thật + phần tự đánh giá màu/vị + 1–2 câu cảm nhận cơ thể.`;
+
+const NGU_HANH_DAYS = [
+  [1, 'Khởi động — Hiểu quy trình & chuẩn bị', 'Chào mừng bạn đến với 28 ngày Dưỡng Hóa. Mục tiêu tuần 1: <strong>Bổ sung dinh dưỡng – kích hoạt phục hồi</strong>. Cơ thể được nạp lại dưỡng chất thiếu hụt, tăng lượng máu và kháng thể. 3–7 ngày đầu có thể thấy lừ đừ, mệt nhẹ, đi ngoài nặng mùi — đó là dấu hiệu tốt.', 'Chuẩn bị nguyên liệu: sữa kháng thể, mật mía, chanh có hạt, gừng, trà thải độc, café/cacao hoặc tim sen, rau xanh, mè đen. Đọc kỹ quy trình dưới đây và làm theo ngay hôm nay.'],
+  [2, 'Ngũ Sắc – Ngũ Vị: ăn đủ 5 màu, 5 vị', 'Theo Ngũ Hành, thực phẩm nên đủ 5 màu (Xanh–Đỏ–Vàng–Trắng–Đen) và 5 vị (Chua–Đắng–Ngọt–Cay–Mặn). Mỗi màu/vị đi vào một tạng phủ. Ăn đủ ngũ sắc ngũ vị giúp dưỡng chất phát huy tối ưu.', 'Trọng tâm hôm nay: cố tình sắp một bữa có <strong>đủ 5 màu</strong>. Gợi ý: rau xanh + cà chua/gấc (đỏ) + bắp/nghệ (vàng) + nấm/củ sen (trắng) + mè đen/nấm mèo (đen).'],
+  [3, 'Hành Mộc — bữa sáng vị Chua nuôi Gan', 'Hành Mộc: màu Xanh, vị Chua, ứng Gan/Mật, mùa Xuân. Vị chua thanh lọc Gan (Gan tàng huyết). Uống nước chanh gừng mật mía buổi sáng giúp thải độc Gan và rửa hệ tiêu hóa.', 'Trọng tâm: bữa sáng ưu tiên <strong>vị chua + màu xanh</strong>. Vắt chanh vào nước chấm, ăn kèm lá diếp cá, uống nước cam hoặc nước chanh gừng mật mía.'],
+  [4, 'Hành Hỏa — vị Đắng & màu Đỏ cho Tim', 'Hành Hỏa: màu Đỏ, vị Đắng, ứng Tim/Ruột non, mùa Hạ. Đắng nhiệt (café, cacao) tăng nhịp tim; đắng hàn (tim sen, khổ qua, rau má) hạ nhịp tim và huyết áp. Chọn theo huyết áp của bạn.', 'Trọng tâm: 08:00–09:00 chọn đúng vị đắng theo huyết áp. Bữa trưa thêm màu đỏ: củ dền, cà chua, gấc, rau dền.'],
+  [5, 'Hành Thổ — vị Ngọt tốt nuôi Tỳ Vị & miễn dịch', 'Hành Thổ: màu Vàng, vị Ngọt, ứng Tỳ/Vị (Lá Lách/Bao Tử), giao mùa. Đường tốt (mật mía, mật ong, nước mía, đường thô) làm mát Lá Lách, tăng miễn dịch — khác hẳn đường tinh luyện.', 'Trọng tâm: dùng <strong>đường tốt</strong> thay đường trắng. Thêm món màu vàng: bí đỏ, bắp, khoai, xoài, dứa.'],
+  [6, 'Hành Kim — vị Cay & màu Trắng cho Phổi/Đại tràng', 'Hành Kim: màu Trắng, vị Cay, ứng Phổi/Đại tràng, mùa Thu. Vị cay giúp thông mũi, hỗ trợ hô hấp. Cay nhiệt: tỏi, sả, gừng, tiêu, quế. Cay hàn: bạc hà, húng chanh.', 'Trọng tâm: bữa tối ưu tiên <strong>vị cay + màu trắng</strong>: nấm, củ sen, bông cải, đậu hũ, tỏi, sả. Rau muống xào tỏi là món điển hình.'],
+  [7, 'Hành Thủy — vị Mặn & màu Đen + Tổng kết tuần 1', 'Hành Thủy: màu Đen, vị Mặn, ứng Thận/Bàng quang, mùa Đông. Vị mặn vừa đủ đi vào Thận; mặn quá hại Tim và gây tích nước — nên dùng vị mặn buổi trưa, hạn chế buổi tối.', 'Trọng tâm tối nay: <strong>màu đen + mặn nhẹ</strong>: mè đen rang muối, đậu đen, nấm mèo, gà ác tiềm. Tổng kết tuần 1: viết 3 thay đổi bạn thấy rõ nhất ở cơ thể.'],
+  [8, 'Giai đoạn Đào thải — dấu hiệu là bình thường', 'Tuần 2: cơ thể tự làm sạch — thải độc Gan, Thận, Ruột, máu qua da, hơi thở, nước tiểu, phân. Có thể nổi mụn, ngứa, tiêu chảy nhẹ, ho, xổ mũi, cảm giả — kéo dài 1–2 tuần tùy cơ địa. Uống đủ nước, nghỉ ngơi.', 'Giữ nguyên quy trình. Trọng tâm: ghi lại các dấu hiệu thải độc bạn gặp (nếu có) để theo dõi.'],
+  [9, 'Thải độc Gan — nước chanh gừng mật mía', 'Gan sạch sẽ sinh máu tốt, máu tốt giúp Tim khỏe. Uống nước chanh + vài lát gừng + mật mía (hoặc mật ong) lúc bụng đói buổi sáng giúp thải độc Gan. Chất béo tốt (các loại hạt, dầu ô liu, dầu dừa) tốt cho Mật.', 'Trọng tâm sáng nay: <strong>nước chanh gừng mật mía</strong> khi bụng đói. Thêm chất béo tốt vào bữa trong ngày.'],
+  [10, 'Thải độc Đại tràng — chất xơ & trà đúng cách', 'Đại tràng bẩn dễ gây viêm xoang, đau đầu, da khô, mẩn ngứa. Ăn nhiều rau xanh, chất xơ; uống trà thải độc buổi tối đúng liều. Trà nhuận tràng nhẹ, làm sạch tiêu hóa sau 6–8 giờ.', 'Trọng tâm: rau xanh trong cả 3 bữa. Trà thải độc 19:30 — nếu sáng hôm sau không đi được, tăng liều theo hướng dẫn.'],
+  [11, 'Cân bằng Chua – Ngọt để không xót Bao Tử', 'Vị chua đi vào Gan nhưng chua quá làm hỏng Tỳ Vị (Mộc khắc Thổ) — gây đau bao tử, xót ruột. Luôn cân bằng chua với vị ngọt: canh chua, nước chanh đường, lẩu riêu.', 'Trọng tâm: mỗi khi dùng vị chua, thêm chút vị ngọt tốt để cân bằng.'],
+  [12, 'Tính Hàn – Nhiệt: nhìn màu đoán tính', 'Rau quả màu nhạt phần nhiều hàn/mát; màu thẫm thường ấm/nóng. Củ cải, lê, chuối tiêu tính mát; táo, đậu đen, đậu đỏ tính ấm. Thủy sản vỏ cứng (cua, ốc) tính lạnh; lươn, tôm tính ấm.', 'Trọng tâm: với mỗi món hôm nay, thử đoán tính hàn/nhiệt và ghi lại.'],
+  [13, 'Ăn theo thể trạng: người hàn / người nhiệt', 'Không có công thức chung cho tất cả. Cơ thể hàn → ăn món tính ấm, vị cay. Cơ thể nhiệt → ăn món tính mát. Dùng máy đo huyết áp để biết hàn hay nhiệt (nhịp tim cao = nhiệt, thấp = hàn).', 'Trọng tâm: xác định bạn thiên hàn hay nhiệt, điều chỉnh vị/tính món ăn cho phù hợp.'],
+  [14, 'Tổng kết tuần 2 — đo huyết áp, quan sát nước tiểu', 'Huyết áp là "Khí" trong cơ thể: số 1 = Khí, số 2 = Huyết, số 3 = nhịp tim. Nước tiểu vàng nhạt là tốt; vàng cam = thiếu nước / vấn đề Gan Mật; trong suốt = uống quá nhiều nước.', 'Trọng tâm: đo huyết áp buổi sáng + sau ăn 30 phút; quan sát màu nước tiểu. Ghi lại kết quả.'],
+  [15, 'Lưu thông Khí Huyết — vận động buổi sáng', 'Tuần 3: máu huyết lưu thông là nền tảng để cơ thể tự chữa lành. Chỗ nào tắc sẽ mỏi; khi khai thông, cảm giác mỏi tan biến. Vỗ tay 4 nhịp, tắm nắng sáng, đi chân trần trên đất.', 'Trọng tâm: 06:00 vận động đủ 30 phút, ưu tiên nơi nhiều oxy, chân tiếp đất.'],
+  [16, 'Nhai kỹ — "ăn như uống, uống như ăn"', 'Khi nhai kỹ, dưỡng chất cùng nước bọt (ngọc dịch) thẩm thấu vào ruột non tốt nhất, giúp tạo máu. Ăn trong tâm trạng thư giãn, tạm gác lo âu để cảm nhận trọn hương vị.', 'Trọng tâm: mỗi miếng nhai ~30 lần; không xem điện thoại khi ăn.'],
+  [17, 'Tương sinh – Tương khắc trong bữa ăn', 'Kim sinh Thủy, Thủy sinh Mộc, Mộc sinh Hỏa, Hỏa sinh Thổ, Thổ sinh Kim. Vị nào quá nhiều sẽ hại tạng bị khắc: cay quá hại Gan, mặn quá hại Tim, chua quá hại Tỳ, đắng quá hại Phổi, ngọt quá hại Thận.', 'Trọng tâm: rà lại 1 ngày ăn của bạn — có vị nào đang quá nhiều không?'],
+  [18, 'Hormone hạnh phúc & tâm trạng khi ăn', 'Dopamine (đạt mục tiêu), Serotonin (ánh nắng), Oxytocin (ôm người thương), Endorphin (vận động). Mùa Thu dễ buồn → ảnh hưởng Phổi; hãy ra ngoài hít thở, hòa mình thiên nhiên.', 'Trọng tâm: kết hợp 1 việc tạo hormone hạnh phúc hôm nay (tắm nắng / vận động / ôm người thân).'],
+  [19, 'Cháo bổ âm — khi nào dùng, cách nấu', 'Cháo bổ âm nấu loãng, dùng khi cơ thể nhiệt, khô, mất ngủ, người mệt. Nấu nhừ, nhai kỹ để ngọc dịch tạo máu và làm dịu cơ thể. Có thể thêm hạt sen, đậu, gạo lứt.', 'Trọng tâm: nấu một nồi cháo bổ âm cho bữa tối hoặc bữa phụ; ghi lại cảm nhận.'],
+  [20, 'Cách dùng gừng — cay nhiệt vs cay hàn', 'Gừng thuộc vị cay nhiệt: làm ấm cơ thể, tốt khi trời lạnh hoặc thể hàn. Thêm gừng vào mật mía chanh buổi sáng khi lạnh; trà gừng mật ong khi cảm lạnh. Người thể nhiệt, huyết áp cao nên hạn chế.', 'Trọng tâm: dùng gừng đúng lúc (trời lạnh / thể hàn); nếu thể nhiệt thì dùng bạc hà, húng chanh thay thế.'],
+  [21, 'Tổng kết tuần 3 — quan sát phân & mồ hôi', 'Phân hình trụ, màu vàng là chế độ ăn lành mạnh. Phân trắng xám = vấn đề Gan; phân đen = cảnh báo xuất huyết tiêu hóa. Mồ hôi nặng mùi = stress; mồ hôi mặn = thiếu muối/điện giải.', 'Trọng tâm: quan sát phân (tham khảo bảng Bristol) và mồ hôi; ghi lại. Viết 3 tiến bộ của tuần 3.'],
+  [22, 'Vị Chát & thực phẩm chống oxy hóa', 'Vị chát giúp chống oxy hóa, giữ tươi trẻ: quả sung, chuối xanh, lựu, quả vả, trà, rượu vang chát. Trà chia theo màu Ngũ Hành: bạch trà, hồng trà, trà đen, trà xanh, trà hoa vàng.', 'Trọng tâm: thêm 1 món vị chát vào bữa trưa (chuối xanh nấu, canh sung...).'],
+  [23, 'Ăn theo mùa — Hành ứng với mùa hiện tại', 'Mỗi mùa ứng một Hành: Xuân–Mộc, Hạ–Hỏa, giao mùa Hè–Thu là Thổ, Thu–Kim, Đông–Thủy. Ăn tăng cường Hành của mùa để phòng bệnh giao mùa.', 'Trọng tâm: xác định mùa hiện tại → tăng cường vị/màu của Hành tương ứng trong ngày.'],
+  [24, 'Bữa ăn gia đình đủ ngũ sắc ngũ vị', 'Áp dụng cho cả nhà: một mâm cơm đủ 5 màu 5 vị vừa ngon vừa cân bằng âm dương. Kết hợp món tính hàn với gia vị tính nhiệt (đậu hũ + sả ớt) để hài hòa.', 'Trọng tâm: nấu một mâm cơm gia đình đủ ngũ sắc; chụp lại.'],
+  [25, 'Trà dưỡng sinh theo Ngũ Hành', 'Bạch trà (Kim), trà đen (Thủy), trà xanh (Mộc), hồng trà (Hỏa), trà hoa vàng (Thổ). Vị chát trong trà chống oxy hóa mạnh. Uống trà buổi sáng cho tỉnh táo, tránh trà đậm buổi tối.', 'Trọng tâm: chọn loại trà hợp Hành bạn cần bổ; uống đúng thời điểm.'],
+  [26, 'Xây thực đơn 3 ngày cho riêng bạn', 'Dựa trên thể trạng (hàn/nhiệt), huyết áp và mùa, lên thực đơn 3 ngày theo quy trình 3 buổi. Sáng vị chua, trưa chua–đắng–chát, tối cay–mặn, cả ngày ngọt tốt.', 'Trọng tâm: viết ra thực đơn 3 ngày (9 bữa) của riêng bạn và bắt đầu áp dụng.'],
+  [27, 'Thói quen giữ lại sau 28 ngày', 'Chọn 3–5 thói quen dễ duy trì: nước chanh gừng mật mía buổi sáng, vận động 30 phút, ăn đủ 5 màu, nhai kỹ, trà thải độc khi cần. Duy trì đều quan trọng hơn làm nhiều một hôm.', 'Trọng tâm: viết cam kết 3–5 thói quen bạn sẽ giữ lại và cách nhắc bản thân.'],
+  [28, 'Tổng kết & cảm nhận toàn hành trình', 'Không có công thức phù hợp cho tất cả — tùy thể trạng, mùa và vùng miền. Điều quan trọng nhất bạn mang theo: hiểu cơ thể mình qua màu – vị – tạng phủ, và ăn trong tâm trạng an vui.', 'Trọng tâm: so sánh cơ thể ngày 1 và ngày 28 (cân nặng, tiêu hóa, giấc ngủ, năng lượng, huyết áp, da).'],
 ];
 
-const CHALLENGE_DAYS_TEACHER = [
-  [1,  'Kick Off: Cài Tool & Chọn Hướng Đi',
-   'Cài đặt công cụ, tham gia cộng đồng, và chọn hướng đi (thương hiệu cá nhân hay lớp học/khóa học) cho 21 ngày tới.',
-   '<h3>🛠 Việc cần làm</h3>\n<ol>\n<li>Xem recording buổi kick-off (link chia sẻ trong nhóm Telegram)</li>\n<li>Cài đặt 3 công cụ theo thứ tự: <strong>Node.js</strong> → <strong>Claude Desktop</strong> → <strong>Antigravity</strong> (AI coding agent)</li>\n<li>Tham gia nhóm Telegram hỗ trợ, gửi tin nhắn giới thiệu bản thân</li>\n<li>⭐ Chọn hướng đi: website thương hiệu cá nhân, khóa học, hay lớp học/gia sư — bạn sẽ theo đuổi hướng này suốt 21 ngày tới</li>\n</ol>\n<p>📄 Hướng dẫn chi tiết từng bước, kèm link tải công cụ và mẫu tin nhắn giới thiệu: xem <a href="/giao-vien/sop-ngay-1.html" target="_blank" rel="noopener">SOP Ngày 1</a>.</p>\nNộp bài:\n<ul>\n<li>Ảnh chụp màn hình 3 công cụ đã cài đặt thành công (Node.js, Claude Desktop, Antigravity)</li>\n<li>Ảnh đã vào nhóm Telegram và gửi lời chào</li>\n</ul>\n✅ Được duyệt khi: Có đủ ảnh chứng minh 3 công cụ đã cài đặt + đã tham gia nhóm Telegram.',
-   10],
-  [2,  'Build Website Thương Hiệu Cá Nhân Giáo Viên',
-   'Dùng Antigravity dựng landing page giới thiệu bản thân: môn dạy, kinh nghiệm, phương pháp giảng dạy, thành tích/học sinh tiêu biểu — rồi đưa lên internet miễn phí.',
-   '<h3>🛠 Việc cần làm</h3>\n<ol>\n<li>Dùng Antigravity tạo landing page giới thiệu bản thân, gồm: môn dạy, số năm kinh nghiệm, phương pháp giảng dạy, thành tích/học sinh tiêu biểu, testimonial, thông tin liên hệ</li>\n<li>Quy trình 5 bước: viết nội dung trước → visual prompting (dùng ảnh tham chiếu) → tinh chỉnh từng phần → deploy qua GitHub + Vercel → kiểm thử trên desktop và điện thoại</li>\n</ol>\n<p>📄 Hướng dẫn chi tiết + prompt mẫu: xem <a href="/giao-vien/sop-ngay-2-landing-page-giao-vien.html" target="_blank" rel="noopener">SOP Ngày 2</a>.</p>\nNộp bài:\n<ul>\n<li>Link landing page có thể truy cập công khai (dạng ...vercel.app)</li>\n</ul>\n✅ Được duyệt khi: Link mở được công khai, đủ nội dung môn dạy/kinh nghiệm/phương pháp/thành tích, không bị vỡ layout trên điện thoại.\n❌ Chưa đạt khi: Chỉ nộp ảnh chụp màn hình không có link · Link mở ra lỗi 404 hoặc trang trắng · Chỉ có localhost người khác không vào được.',
-   5],
-  [3,  'Deploy Website Thật + Form Thu Học Viên/Phụ Huynh',
-   'Mua domain thật, trỏ qua Cloudflare, kết nối lại với site Ngày 2, và gắn form thu thông tin phụ huynh/học viên tự động chảy vào Google Sheet.',
-   '<h3>🛠 Việc cần làm</h3>\n<ol>\n<li>Đăng ký domain thật tại <a href="https://inet.vn/dang-ky-ten-mien?aff=318105" target="_blank" rel="noopener">inet.vn</a></li>\n<li>Trỏ domain vào Cloudflare (nameservers), chờ Active, rồi kết nối domain đó vào Vercel (project Ngày 2)</li>\n<li>Gắn form đăng ký tư vấn/học thử (Google Form hoặc form tự tạo + Apps Script) vào landing page → data tự chảy vào Google Sheet</li>\n</ol>\n<p>📄 Hướng dẫn chi tiết + code Apps Script: xem <a href="/giao-vien/sop-ngay-3.html" target="_blank" rel="noopener">SOP Ngày 3</a>.</p>\nNộp bài:\n<ul>\n<li>Link website domain thật (VD: tensanpham.vn — không phải *.vercel.app)</li>\n<li>Link Google Sheet có ít nhất 1 dòng data test</li>\n<li>Screenshot website trên desktop + điện thoại</li>\n</ul>\n✅ Được duyệt khi: Website mở được trên domain thật, form thu lead hoạt động, Google Sheet có ít nhất 1 dòng data test.\n❌ Chưa đạt khi: Vẫn dùng link Vercel ngẫu nhiên · Form không hoạt động hoặc data không vào Sheet · Chỉ nộp ảnh không có link.',
-   5],
-  [4,  'Traffic – Lead – Liên Hệ Đầu Tiên',
-   'Đăng bài giới thiệu lớp học/khóa học lên ít nhất 3 kênh, kiểm tra lead thật trong Google Sheet, và liên hệ tư vấn ngay trong ngày.',
-   '<h3>🛠 Việc cần làm</h3>\n<ol>\n<li>Nhờ AI viết 3 bài đăng Facebook theo 3 góc độ khác nhau, chọn bài phù hợp nhất, chỉnh lại giọng văn của bạn</li>\n<li>Đăng bài lên ít nhất 3 kênh: Facebook cá nhân, nhóm phụ huynh, Zalo...</li>\n<li>Tăng độ phủ: nhắn tin trực tiếp 5–10 phụ huynh/đồng nghiệp, share vào nhóm liên quan, reply comment trong 1 giờ đầu</li>\n<li>Kiểm tra Google Sheet — có lead thật chưa? Nếu có, nhắn tin/gọi điện tư vấn ngay trong ngày, đừng để lead nguội</li>\n<li>Ghi lại insight sau khi trò chuyện với lead (họ quan tâm gì, hỏi gì, lo ngại gì) — dùng cho chatbot và email sequence ở Ngày 9–12</li>\n</ol>\n<p>📄 Hướng dẫn chi tiết + prompt mẫu: xem <a href="/giao-vien/sop-ngay-4.html" target="_blank" rel="noopener">SOP Ngày 4</a>.</p>\nNộp bài:\n<ul>\n<li>Link bài đăng public (ít nhất 1 bài, người ngoài xem được)</li>\n<li>Link Google Sheet có lead thật (không phải data tự điền test)</li>\n</ul>\n✅ Được duyệt khi: Bài đăng ở chế độ công khai, Google Sheet có lead thật, đã liên hệ lead đó trong ngày.\n❌ Chưa đạt khi: Bài đăng riêng tư/chỉ mình tôi · Google Sheet trống hoặc chỉ có data test · Có lead nhưng chưa liên hệ.',
-   5],
-  [5,  'Build Bộ Não Thứ 2 (SQLite brain.db + Brand Voice)',
-   'Tạo "bộ não kỹ thuật số" — database SQLite lưu brand voice giảng dạy của bạn, làm nền tảng để AI viết bài đúng giọng bạn.',
-   'Dùng Antigravity tạo thư mục my-brain/ chứa brain.db (SQLite database).\n\nTạo bảng brand_voice gồm: tone giảng dạy, từ hay dùng, từ không dùng, đối tượng (học sinh/phụ huynh theo cấp/môn), ví dụ bài giảng hoặc bài viết thật.\n\nTạo file brain_score.md để track điểm mỗi ngày.\n\nPrompt mẫu:\n"Tạo thư mục my-brain với file brain.db SQLite. Tạo bảng brand_voice gồm: tone, words_to_use, words_to_avoid, target_audience, writing_example. Insert 1 row dữ liệu mẫu. Tạo file brain_score.md để track điểm mỗi ngày."\n\nAI đọc bộ não → viết thử 1 bài chia sẻ kiến thức chuyên môn theo giọng của bạn → bạn nhận xét và chỉnh brand_voice.\n\n⚠️ Lưu ý bảo mật: brain.db ở ngày này chỉ chứa nội dung/brand voice (công khai) — chưa đưa dữ liệu học sinh thật vào, để tránh trộn dữ liệu cá nhân trẻ em với dữ liệu content công khai (xem thêm ghi chú ở Ngày 9).\n\nNộp bài:\n- Screenshot brain.db + bảng brand_voice đầy đủ\n- File bài AI viết từ database\n\n✅ Được duyệt khi: brain.db chạy được, brand_voice có data thật, AI đã viết được bài từ database.',
-   5],
-  [6,  'Mở Waitlist Khóa Học + Bắt Đầu 7 Ngày Đăng Bài Chia Sẻ Kiến Thức',
-   'Mở trang đăng ký khóa học/lớp học mới và bắt đầu chuỗi 7 ngày đăng bài chia sẻ kiến thức chuyên môn (chạy song song đến Ngày 12).',
-   '⚠️ Chuỗi này chạy song song từ Ngày 6 đến Ngày 12. Mỗi ngày cần đăng ≥ 3 bài.\n\nDùng AI coding agent tạo trang waitlist (/dang-ky.html) — form đăng ký khóa học/lớp học mới, lưu vào waitlist.json.\n\nDùng bộ não thứ 2 viết kế hoạch content 7 ngày (plan.md): chia sẻ kiến thức chuyên môn, mẹo học tập, câu chuyện lớp học.\n\nĐăng bài ngày 1 của chuỗi lên ít nhất 3 kênh.\n\nCập nhật brain_score.md mỗi tối.\n\nNộp bài:\n- Link trang waitlist (reviewer điền được)\n- File plan.md (7 ngày, mỗi ngày có ý tưởng/hook/CTA)\n- Link bài đăng ngày 1 (≥ 3 kênh, link public)\n\n✅ Được duyệt khi: Waitlist mở được và form submit được, plan.md có đủ 7 ngày nội dung.',
-   5],
-  [7,  'Week 1 Review Meeting',
-   'Meeting live tổng kết tuần 1 — thực hành để AI Agent tự lên lịch tuần và tự cập nhật task cho bạn.',
-   'Meeting live: 19h30 (2–2.5 giờ).\n\nBài tập thực hành trực tiếp trong meeting:\n1. Dùng Agent tạo toàn bộ cấu trúc thư mục bằng 1 câu lệnh duy nhất\n2. Dùng Agent điền nội dung vào README.md\n3. Dùng Agent tạo danh sách task trong tasks/\n4. Ra lệnh cho Agent đọc toàn bộ thư mục và phân tích\n5. Ra lệnh cho Agent lên lịch tuần tự động\n6. Ra lệnh cho Agent cập nhật task khi xong việc\n\nNộp bài:\n- Screenshot tham gia/xem lại buổi meeting\n- Screenshot từng bước thực hành (6 hạng mục)\n\n✅ Được duyệt khi: Có đủ screenshot chứng minh đã tham gia/xem lại và hoàn thành các bước thực hành.',
-   10],
-  [8,  'Relax Day',
-   'Ngày nghỉ — không có task bắt buộc.',
-   'Không có yêu cầu bắt buộc.\n\nGợi ý:\n- Xem lại ghi chú tuần 1, ôn lại những gì đã học được\n- Nghỉ ngơi, tái nạp năng lượng — bạn xứng đáng!\n\nNộp bài:\n- Ảnh hoặc note bất kỳ về hành trình 7 ngày đầu\n\n✅ Được duyệt khi: Nộp bất cứ nội dung nào — ảnh, note, suy nghĩ về hành trình 7 ngày đầu.',
-   3],
-  [9,  'Build App E-Learning + Ngân Hàng Đề Thi',
-   'Build app quản lý khóa học/bài học/học viên và ngân hàng đề thi tự sinh — nền tảng vận hành lớp học của bạn.',
-   'Dùng AI coding agent tạo app quản lý khóa học, bài học, học viên (CRUD đầy đủ). Học viên đăng nhập xem được danh sách bài học và tiến độ học của mình.\n\nThêm bảng question_bank (câu hỏi theo chủ đề/độ khó) — AI tự sinh đề kiểm tra và đáp án từ ngân hàng câu hỏi, học viên có thể tự luyện tập và nhận điểm ngay.\n\nNhờ AI viết sales_script.md giới thiệu khóa học dựa trên brain.db.\n\n⚠️ Lưu ý kiến trúc: tách riêng một file school.db cho dữ liệu học viên/điểm/học phí (dữ liệu cá nhân trẻ em), khác với brain.db nội dung công khai ở Ngày 5.\n\nNộp bài:\n- Link app e-learning\n- Screenshot bảng khóa học/bài học/học viên\n- Screenshot 1 đề tự sinh từ ngân hàng câu hỏi\n\n✅ Được duyệt khi: App CRUD hoạt động đầy đủ, question_bank sinh được đề kiểm tra, school.db tách riêng khỏi brain.db.',
-   5],
-  [10, 'App Quản Lý Lớp Học: Điểm Danh, Bảng Điểm & Chấm Bài Tự Động',
-   'Thêm điểm danh, bảng điểm và tính năng AI chấm bài tự luận vào app quản lý lớp học.',
-   'AI tạo thêm 2 bảng trong school.db: attendance (điểm danh) và grades (điểm số).\n\nBuild trang giáo viên để điểm danh, nhập điểm theo buổi học; học viên/phụ huynh xem lại kết quả.\n\nThử tính năng AI chấm bài tự luận/bài viết: học viên nộp bài text → AI chấm theo rubric (thang điểm + nhận xét), giáo viên duyệt lại trước khi công bố điểm.\n\nTest 1 buổi điểm danh + nhập điểm mẫu cho cả lớp + 1 bài tự luận được AI chấm thử.\n\nNộp bài:\n- Link trang điểm danh/bảng điểm\n- Screenshot dữ liệu mẫu\n- Screenshot 1 bài được AI chấm\n\n✅ Được duyệt khi: Điểm danh/nhập điểm hoạt động với data thật, có ít nhất 1 bài tự luận được AI chấm và giáo viên duyệt lại.',
-   5],
-  [11, 'Kết Nối Thanh Toán Học Phí + Nhắc Nợ Tự Động',
-   'Kết nối thanh toán học phí qua QR (Sepay) và tự động nhắc học viên chưa đóng học phí.',
-   'Đăng ký Sepay kết nối QR payment.\n\nAI tạo bảng orders/học phí trong school.db, gắn thanh toán vào app: học viên đóng học phí → trạng thái tự chuyển "đã thanh toán".\n\nTest nhận tiền thật 2.000đ → đơn/học phí tự cập nhật.\n\nThêm tính năng nhắc nợ: agent rà danh sách học viên chưa đóng học phí đến hạn và tự nhắc qua email/Zalo (kết nối với Ngày 12 và Ngày 18).\n\nNộp bài:\n- Link trang thanh toán\n- Screenshot nhận tiền 2.000đ\n- Screenshot danh sách nhắc nợ tự động\n\n✅ Được duyệt khi: Sepay kết nối thật, đã test nhận tiền thật, có danh sách nhắc nợ tự động hoạt động.',
-   5],
-  [12, 'Kết Nối Email Chăm Sóc Học Viên & Phụ Huynh',
-   'Kết nối Resend.com để tự động gửi email chào mừng, nhắc lịch học, và thông báo điểm/điểm danh cho phụ huynh.',
-   'Đăng ký Resend.com lấy API Key, kết nối vào app.\n\nAI viết 3 email theo brand voice: chào mừng học viên mới, nhắc lịch học, thông báo điểm/điểm danh cho phụ huynh.\n\nTest gửi email và xác nhận đã nhận.\n\nNộp bài:\n- Screenshot 3 email\n- Email test đã gửi thành công\n- File email_sequence.md\n\n✅ Được duyệt khi: Nhận được cả 3 email trong hộp thư thật sau khi test.',
-   5],
-  [13, 'Chatbot Tư Vấn Học Sinh/Phụ Huynh 24/7',
-   'Gắn chatbot tư vấn học sinh/phụ huynh 24/7 lên website, trả lời câu hỏi về học phí, lịch học, nội dung khóa học.',
-   'Tạo kho dữ liệu /data/ (khóa học, FAQ, học viên, câu hỏi/thắc mắc thường gặp).\n\nCopy brain.db (không copy school.db có dữ liệu cá nhân) vào thư mục website, nhờ AI gắn chatbot vào website.\n\nĐóng vai phụ huynh/học sinh test 3 tình huống hỏi đáp (học phí, lịch học, nội dung khóa học).\n\n⚠️ Lưu ý: chatbot chỉ trả lời thông tin chung (học phí, lịch, nội dung khóa học) — không để lộ điểm số/thông tin riêng của học viên khác qua chatbot công khai.\n\nNộp bài:\n- Link website test chatbot\n- Screenshot /data\n- Screenshot brain_score.md\n\n✅ Được duyệt khi: Chatbot trả lời được cả 3 tình huống test, không để lộ thông tin riêng tư của học viên khác.',
-   5],
-  [14, 'Kênh YouTube Bài Giảng',
-   'Quay 1 video bài giảng ngắn, nhúng vào bài học tương ứng trong app e-learning.',
-   'Quay 1 video bài giảng ngắn (5–10 phút) về chủ đề chuyên môn của bạn.\n\nDùng AI hỗ trợ viết kịch bản/dựng phụ đề, upload lên kênh YouTube.\n\nNhúng video vào bài học tương ứng trong app e-learning (Ngày 9) để học viên xem trực tiếp.\n\nNộp bài:\n- Link video YouTube\n- Link bài học đã nhúng video\n\n✅ Được duyệt khi: Video có nội dung chuyên môn thật, đã nhúng thành công vào app e-learning.',
-   5],
-  [15, 'Week 2 Review + Chuẩn Bị Deploy',
-   'Nhìn lại 2 tuần, viết review thật, chuẩn bị checklist deploy lên VPS ở tuần 3.',
-   'Tự viết week2_review.md (KHÔNG nhờ AI viết thay) trả lời 5 câu hỏi:\n- Tôi đã build được gì sau 15 ngày?\n- Số liệu thật: bao nhiêu lead, bao nhiêu học viên, đã có ai đóng học phí chưa?\n- Điều gì khó nhất tôi đã vượt qua?\n- Điều gì tôi thấy chưa tốt?\n- Nếu bắt đầu lại, tôi sẽ làm khác gì?\n\nAI biến review thành bài đăng, tạo deploy_checklist.md.\n\nNộp bài:\n- Link bài cảm nhận\n- File week2_review.md\n- File deploy_checklist.md\n- File brain_review.md\n\n✅ Được duyệt khi: Bài cảm nhận có tiếng nói thật của bạn (không phải AI viết hoàn toàn).',
-   10],
-  [16, 'Build AI Agent (Goclaw) trên VPS',
-   'Cài đặt goclaw (AI agent framework mã nguồn mở) lên VPS Linux, chuẩn bị nền tảng cho agent thực sự trong tuần 3.',
-   'Cài goclaw (open source AI agent framework) lên VPS Linux.\n\nDùng AI coding agent để clone repo và lên kế hoạch cài đặt theo domain (website + app dạy học đã có).\n\nNộp bài:\n- Screenshot goclaw đang chạy trên domain thật\n- Screenshot terminal/dashboard cho thấy service đang active\n\n✅ Được duyệt khi: Vào domain thấy goclaw hoạt động, agent phản hồi được lệnh cơ bản.',
-   10],
-  [17, 'VPS + MCP (Model Context Protocol) [Nâng cao / tuỳ chọn]',
-   'Deploy website/app e-learning lên VPS và trao cho agent khả năng thao tác server, dữ liệu lớp học qua MCP.',
-   'Deploy website/app e-learning lên VPS và trao cho agent khả năng thao tác server, dữ liệu lớp học qua MCP.\n\nThiết lập backup định kỳ cho school.db/brain.db (ví dụ: cron job đẩy bản sao lên Google Drive mỗi đêm) để không mất dữ liệu điểm/học phí nếu VPS gặp sự cố.\n\n⚠️ Ngày này khá kỹ thuật — nếu chưa quen thao tác VPS, có thể nhờ AI agent làm từng bước và tập trung hiểu luồng hoạt động thay vì tự gõ lệnh.\n\nNộp bài:\n- Screenshot website/app chạy trên VPS (domain hiển thị rõ)\n- Screenshot MCP đã kết nối (list tools hiện)\n- Screenshot cấu hình backup định kỳ\n\n✅ Được duyệt khi: Website/app chạy trên VPS với domain thật, MCP connected, có backup định kỳ cho dữ liệu lớp học.',
-   5],
-  [18, 'Agent Tương Tác Nhóm Zalo (OA) & Telegram',
-   'Agent tự nhắn vào nhóm lớp Zalo/Telegram: nhắc lịch học, điểm danh, thông báo điểm, nhắc học phí còn nợ.',
-   'Agent tự nhắn vào nhóm lớp Zalo/Telegram: nhắc lịch học, điểm danh, thông báo điểm, nhắc học phí còn nợ, tổng kết hoạt động lớp mỗi tối.\n\n⭐ Ưu tiên dùng Zalo Official Account (OA) thay vì nhóm Zalo cá nhân — Zalo OA có API chính thức, gửi broadcast ổn định và phù hợp vận hành lâu dài hơn.\n\nCách làm: AI viết MCP function + MD files, bật Heartbeat qua Dashboard.\n\nNộp bài:\n- Screenshot agent đang chạy\n- Screenshot tin nhắn thật agent gửi vào nhóm Zalo OA/Telegram (nhắc lịch, điểm, học phí, hoặc tổng kết)\n\n✅ Được duyệt khi: Agent gửi được ít nhất 1 tin nhắn thật từ event thực tế (lịch học, điểm, hoặc học phí).',
-   5],
-  [19, 'Tự Tạo Claude Skill Soạn Giáo Án + Quiz 10 Câu',
-   'Tự tạo Claude Skill soạn giáo án/bài giảng tự động theo brand voice, và làm quiz 10 câu.',
-   '5 cấp độ Claude Skill (từ chỉ tài liệu đến đầy đủ scripts) — build skill soạn giáo án/bài giảng tự động theo brand voice.\n\nLàm quiz 10 câu (mỗi câu đúng +2 XP, phải dùng Agent để giải).\n\nNộp bài:\n- Screenshot SKILL.md đã tạo\n- Screenshot kết quả test skill (soạn 1 giáo án/bài giảng mẫu)\n- Ảnh kết quả quiz 10 câu\n\n✅ Được duyệt khi: Skill tạo được và chạy đúng, có kết quả test thật, đã hoàn thành quiz.',
-   5],
-  [20, 'Kế Hoạch Tuyển Sinh Đơn Giản',
-   'Dùng AI agent xây kế hoạch tuyển sinh cho khóa học/lớp học tiếp theo — tập trung vào các file thực tế.',
-   'Dùng AI agent xây kế hoạch tuyển sinh cho khóa học/lớp học tiếp theo, tập trung vào các file thực tế thay vì thuật ngữ marketing phức tạp.\n\nOutput cần có:\n- avatar-hoc-vien.md — chân dung học viên mục tiêu\n- uu-dai-khai-giang.md — ưu đãi học phí/khai giảng\n- thu-moi-phu-huynh.md — thư mời phụ huynh\n- kich-ban-tu-van.md — kịch bản tư vấn tuyển sinh\n- video giới thiệu khóa học\n- ke-hoach-dang-bai.md — kế hoạch đăng bài tuyển sinh\n\nTạo index.html tổng hợp, deploy ke-hoach-tuyen-sinh/ lên VPS với URL public.\n\nNộp bài:\n- URL public mở được (≥6 file output thật)\n- File roadmap-90-ngay.md có kế hoạch 90 ngày tới cụ thể\n\n✅ Được duyệt khi: Có đủ 6 file output thật, URL public mở được, roadmap-90-ngay.md có kế hoạch cụ thể.',
-   5],
-  [21, 'Video Feedback Cuối Chương Trình',
-   'Quay video 5–10 phút tổng kết hành trình 21 ngày — niềm tin ban đầu, những gì đã build, turning point, và kế hoạch tiếp theo.',
-   'Quay video 5–10 phút trả lời 6 phần:\n1. Giới thiệu bản thân\n2. Niềm tin trước thử thách\n3. Những gì đã build sau 21 ngày\n4. Cột mốc turning point\n5. Cảm xúc chân thật (lúc muốn bỏ / điều bất ngờ)\n6. Kế hoạch 30–90 ngày tới\n\nUpload lên Loom / YouTube unlisted / Google Drive — set quyền "Anyone with the link can view".\n\nNộp bài:\n- Link video (có giọng nói thật, đủ 6 phần)\n- Link 1 thành quả muốn khoe\n\n✅ Được duyệt khi: Video có giọng nói thật, đủ 6 phần, và có ít nhất 1 thành quả thật được chia sẻ.',
-   10],
+const CHALLENGE_DAYS = NGU_HANH_DAYS.map(([num, title, lesson, focus]) => {
+  const milestone = (num % 7 === 0) || num === 1;
+  const description = `<h3>📖 Bài học ngày ${num}</h3>\n<p>${lesson}</p>`;
+  const instructions = `<h3>🎯 Trọng tâm hôm nay</h3>\n<p>${focus}</p>\n${PROTOCOL_SOP}\n${SUBMIT_BLOCK}`;
+  return [num, title, description, instructions, milestone ? 10 : 5];
+});
+
+const CHALLENGE_DAYS_TEACHER = [];
+
+// ── Seed courses (Ngũ Hành) ──────────────────────────────────
+// [title, description, cover_color, [ [lessonTitle, contentHTML, durationMin], ... ] ]
+// ── Seed dữ liệu Ngũ Hành: thực phẩm + công thức ─────────────
+// food: [name, element, color, taste, nature, organ, note]
+const FOOD_SEED = [
+  // KIM — Phổi/Đại tràng — trắng — cay
+  ['Nấm (bào ngư, rơm)', 'kim', 'trắng', 'ngọt', 'lương', 'Phổi/Đại tràng', 'Màu trắng bổ Phổi; hấp sả thái rất hợp Hành Kim.'],
+  ['Củ sen', 'kim', 'trắng', 'ngọt', 'bình', 'Phổi/Đại tràng', 'Hầm canh; mát Phổi, nhuận tràng.'],
+  ['Bột sắn dây', 'kim', 'trắng', 'ngọt', 'hàn', 'Phổi/Đại tràng', 'Pha trà Bình Minh; thanh nhiệt, giải khát.'],
+  ['Bông cải trắng', 'kim', 'trắng', 'ngọt', 'lương', 'Phổi/Đại tràng', 'Nhiều chất xơ, tốt cho Đại tràng.'],
+  ['Tỏi', 'kim', 'trắng', 'cay', 'nhiệt', 'Phổi/Đại tràng', 'Cay nhiệt — làm ấm, thông mũi; hạn chế khi thể nhiệt.'],
+  ['Sả', 'kim', 'trắng', 'cay', 'ôn', 'Phổi/Đại tràng', 'Màu trắng vị cay, tốt cho Phổi; hấp/nấu canh.'],
+  ['Gừng', 'kim', 'vàng', 'cay', 'nhiệt', 'Phổi/Đại tràng', 'Cay nhiệt — dùng khi trời lạnh / thể hàn; tránh khi huyết áp cao, thể nhiệt.'],
+  ['Tiêu', 'kim', 'đen', 'cay', 'nhiệt', 'Phổi/Đại tràng', 'Cay nhiệt, làm ấm bụng.'],
+  ['Quế', 'kim', 'nâu', 'cay', 'nhiệt', 'Phổi/Đại tràng', 'Cay nhiệt, ấm; có trong nước phở.'],
+  ['Bạc hà', 'kim', 'xanh', 'cay', 'hàn', 'Phổi/Đại tràng', 'Cay hàn — dùng khi thể nhiệt thay cho gừng/tỏi.'],
+  ['Húng chanh', 'kim', 'xanh', 'cay', 'lương', 'Phổi/Đại tràng', 'Cay mát, trị ho.'],
+  ['Đậu nành / đậu hũ trắng', 'kim', 'trắng', 'ngọt', 'lương', 'Phổi/Đại tràng', 'Tính hàn — kết hợp sả ớt để cân bằng.'],
+  ['Cùi dừa / nước cốt dừa', 'kim', 'trắng', 'ngọt', 'bình', 'Phổi/Đại tràng', 'Béo tốt; màu trắng bổ Phổi.'],
+  ['Hạt điều', 'kim', 'trắng', 'ngọt', 'ôn', 'Phổi/Đại tràng', 'Chất béo tốt; làm sữa hạt.'],
+  ['Kim chi cải thảo', 'kim', 'trắng', 'cay', 'lương', 'Phổi/Đại tràng', 'Món muối lên men, vị cay — hợp Hành Kim.'],
+
+  // THỦY — Thận/Bàng quang — đen — mặn
+  ['Đậu đen', 'thuy', 'đen', 'ngọt', 'bình', 'Thận/Bàng quang', 'Bổ Thận; nấu chè, nấu với gạo lứt.'],
+  ['Mè đen (vừng đen)', 'thuy', 'đen', 'ngọt', 'bình', 'Thận/Bàng quang', 'Rang muối ăn cùng cơm; bổ Thận, đen tóc.'],
+  ['Mộc nhĩ đen (nấm mèo)', 'thuy', 'đen', 'ngọt', 'bình', 'Thận/Bàng quang', 'Bổ huyết, làm sạch mạch máu.'],
+  ['Gạo lứt đen', 'thuy', 'đen', 'ngọt', 'ôn', 'Thận/Bàng quang', 'Nấu cơm/cháo; nhiều khoáng.'],
+  ['Gà ác', 'thuy', 'đen', 'ngọt', 'ôn', 'Thận/Bàng quang', 'Tiềm thuốc bắc — bổ Thận, dùng mùa Đông.'],
+  ['Hải sâm', 'thuy', 'đen', 'mặn', 'ôn', 'Thận/Bàng quang', 'Tiềm — bổ Thận, dưỡng âm.'],
+  ['Tỏi đen', 'thuy', 'đen', 'ngọt', 'ôn', 'Thận/Bàng quang', 'Ngâm tương tamari; chống oxy hóa.'],
+  ['Rong biển', 'thuy', 'đen', 'mặn', 'hàn', 'Thận/Bàng quang', 'Vị mặn tự nhiên; sấy mè ăn vặt.'],
+  ['Nho đen / dâu tằm', 'thuy', 'đen', 'ngọt', 'lương', 'Thận/Bàng quang', 'Làm nước; bổ huyết.'],
+  ['Trà đen', 'thuy', 'đen', 'chát', 'ôn', 'Thận/Bàng quang', 'Đậm, bổ Thận; tránh uống tối muộn.'],
+  ['Mơ muối / chanh muối', 'thuy', 'đen', 'mặn', 'bình', 'Thận/Bàng quang', 'Thức uống vị mặn — dùng buổi trưa.'],
+  ['Dưa muối, cà muối', 'thuy', 'đen', 'mặn', 'lương', 'Thận/Bàng quang', 'Món mặn lên men; dùng buổi trưa.'],
+
+  // MỘC — Gan/Mật — xanh — chua
+  ['Rau xanh các loại', 'moc', 'xanh', 'chua', 'lương', 'Gan/Mật', 'Cải bó xôi, mồng tơi, rau muống... nền tảng bữa ăn.'],
+  ['Lá diếp cá', 'moc', 'xanh', 'chua', 'hàn', 'Gan/Mật', 'Ăn kèm bữa sáng — mát Gan, thải độc.'],
+  ['Chanh', 'moc', 'xanh', 'chua', 'lương', 'Gan/Mật', 'Dùng chanh có hạt; vắt vào nước chấm buổi sáng.'],
+  ['Sấu', 'moc', 'xanh', 'chua', 'lương', 'Gan/Mật', 'Nấu canh sườn, ngâm nước.'],
+  ['Khế chua', 'moc', 'vàng', 'chua', 'lương', 'Gan/Mật', 'Nấu canh chua, ăn sống.'],
+  ['Lá giang', 'moc', 'xanh', 'chua', 'lương', 'Gan/Mật', 'Nấu canh chua lá giang.'],
+  ['Chùm ruột', 'moc', 'xanh', 'chua', 'lương', 'Gan/Mật', 'Ăn vặt, ngâm; nhiều vitamin C.'],
+  ['Đậu xanh', 'moc', 'xanh', 'ngọt', 'hàn', 'Gan/Mật', 'Nấu chè, cháo — thanh nhiệt, giải độc.'],
+  ['Tảo Spirulina', 'moc', 'xanh', 'chát', 'lương', 'Gan/Mật', 'Bổ sung diệp lục, giải độc.'],
+  ['Dấm kombucha / kefir', 'moc', 'vàng', 'chua', 'lương', 'Gan/Mật', 'Lên men — bổ men vi sinh, hỗ trợ tiêu hóa.'],
+  ['Sữa chua', 'moc', 'trắng', 'chua', 'lương', 'Gan/Mật', 'Men sống, tốt đường ruột.'],
+  ['Trà xanh', 'moc', 'xanh', 'chát', 'lương', 'Gan/Mật', 'Thanh Gan, tỉnh táo — uống buổi sáng.'],
+
+  // HỎA — Tim/Ruột non — đỏ — đắng
+  ['Củ dền', 'hoa', 'đỏ', 'ngọt', 'bình', 'Tim/Ruột non', 'Bổ máu; luộc, ép nước, nấu canh.'],
+  ['Cà chua', 'hoa', 'đỏ', 'chua', 'lương', 'Tim/Ruột non', 'Nhiều lycopene; nấu canh, sốt.'],
+  ['Gấc', 'hoa', 'đỏ', 'ngọt', 'bình', 'Tim/Ruột non', 'Xôi gấc; giàu beta-caroten.'],
+  ['Rau dền đỏ', 'hoa', 'đỏ', 'ngọt', 'lương', 'Tim/Ruột non', 'Bổ máu, mát.'],
+  ['Lựu', 'hoa', 'đỏ', 'chát', 'lương', 'Tim/Ruột non', 'Chống oxy hóa, bảo vệ tim mạch.'],
+  ['Kỷ tử', 'hoa', 'đỏ', 'ngọt', 'bình', 'Tim/Ruột non', 'Cho vào trà, cháo, canh tiềm.'],
+  ['Ớt chuông đỏ', 'hoa', 'đỏ', 'ngọt', 'ôn', 'Tim/Ruột non', 'Xào, ăn sống; nhiều vitamin C.'],
+  ['Cà phê', 'hoa', 'nâu', 'đắng', 'nhiệt', 'Tim/Ruột non', 'Đắng nhiệt — hợp người huyết áp thấp / nhịp tim thấp; dùng trước 14:00.'],
+  ['Ca cao', 'hoa', 'nâu', 'đắng', 'ôn', 'Tim/Ruột non', 'Đắng nhiệt; kèm mật mía.'],
+  ['Tim sen', 'hoa', 'xanh', 'đắng', 'hàn', 'Tim/Ruột non', 'Đắng hàn — hạ nhịp tim, hạ huyết áp, an thần; hợp người thể nhiệt.'],
+  ['Khổ qua (mướp đắng)', 'hoa', 'xanh', 'đắng', 'hàn', 'Tim/Ruột non', 'Đắng hàn — thanh nhiệt; xào trứng, nấu canh.'],
+  ['Rau má', 'hoa', 'xanh', 'đắng', 'hàn', 'Tim/Ruột non', 'Đắng hàn — mát gan, hạ nhiệt.'],
+  ['Ngải cứu', 'hoa', 'xanh', 'đắng', 'ôn', 'Tim/Ruột non', 'Trứng chiên ngải cứu; điều huyết.'],
+
+  // THỔ — Tỳ/Vị — vàng — ngọt
+  ['Bí đỏ', 'tho', 'vàng', 'ngọt', 'ôn', 'Tỳ/Vị', 'Nấu cháo, canh — bổ Tỳ, dễ tiêu.'],
+  ['Bắp (ngô) vàng', 'tho', 'vàng', 'ngọt', 'bình', 'Tỳ/Vị', 'Luộc, nấu chè; lợi tiểu nhẹ.'],
+  ['Khoai lang / khoai tây', 'tho', 'vàng', 'ngọt', 'bình', 'Tỳ/Vị', 'Tinh bột tốt, no lâu, nhuận tràng.'],
+  ['Chuối chín', 'tho', 'vàng', 'ngọt', 'lương', 'Tỳ/Vị', 'Bổ sung kali; ăn khi tập luyện.'],
+  ['Dứa (thơm)', 'tho', 'vàng', 'chua', 'bình', 'Tỳ/Vị', 'Enzyme bromelain hỗ trợ tiêu hóa đạm.'],
+  ['Xoài chín', 'tho', 'vàng', 'ngọt', 'ôn', 'Tỳ/Vị', 'Ngọt mát; ăn lượng vừa.'],
+  ['Mật mía', 'tho', 'nâu', 'ngọt', 'ôn', 'Tỳ/Vị', 'Đường tốt — làm mát Lá Lách, tăng miễn dịch; pha nước sáng.'],
+  ['Mật ong', 'tho', 'vàng', 'ngọt', 'bình', 'Tỳ/Vị', 'Đường tốt; pha trà gừng khi cảm lạnh.'],
+  ['Nước mía', 'tho', 'vàng', 'ngọt', 'lương', 'Tỳ/Vị', 'Làm mát Lá Lách, giải độc máu; uống trước vận động.'],
+  ['Đường thốt nốt', 'tho', 'nâu', 'ngọt', 'bình', 'Tỳ/Vị', 'Đường thô — thay đường tinh luyện.'],
+  ['Trà hoa vàng', 'tho', 'vàng', 'ngọt', 'lương', 'Tỳ/Vị', 'Dịu, hỗ trợ Tỳ Vị, thư giãn.'],
+
+  // CHÁT — chống oxy hóa
+  ['Quả sung', 'moc', 'xanh', 'chát', 'bình', 'Chống oxy hóa', 'Nấu canh, kho; chống oxy hóa.'],
+  ['Chuối xanh', 'moc', 'xanh', 'chát', 'lương', 'Chống oxy hóa', 'Nấu với tía tô; nhiều tinh bột kháng.'],
+  ['Quả vả', 'moc', 'xanh', 'chát', 'bình', 'Chống oxy hóa', 'Trộn gỏi, kho.'],
+  ['Bạch trà (trà trắng)', 'kim', 'trắng', 'chát', 'lương', 'Chống oxy hóa', 'Nhẹ nhất trong các loại trà; chống oxy hóa.'],
+];
+
+// recipe: [title, element_tags, buoi, summary, ingredients, steps, dung_khi, note]
+const RECIPE_SEED = [
+  ['Cháo bổ âm', 'thuy,tho', 'tối', 'Cháo loãng nấu nhừ, làm dịu cơ thể khi nhiệt, khô, mất ngủ.',
+   'Gạo lứt 1/2 chén · hạt sen 2 thìa · đậu xanh hoặc đậu đen 2 thìa · bí đỏ 1 miếng nhỏ · nước 1.5 lít · chút muối.',
+   '1. Vo gạo, ngâm 1 giờ.\n2. Nấu gạo + hạt sen + đậu với nước, lửa nhỏ 40–50 phút cho thật nhừ.\n3. Thêm bí đỏ nấu thêm 10 phút.\n4. Nêm nhạt. Ăn ấm, nhai kỹ.',
+   'Khi cơ thể nhiệt, khô, mất ngủ, người mệt, sau khi ăn nhiều đồ cay nóng.',
+   'Nấu càng nhừ càng tốt để "ngọc dịch" (nước bọt khi nhai) thấm vào ruột non tạo máu.'],
+
+  ['Nước chanh gừng mật mía (buổi sáng)', 'moc,tho', 'sáng', 'Thức uống bụng đói buổi sáng — thải độc Gan, rửa hệ tiêu hóa.',
+   '1 lát chanh có hạt · 2–3 lát gừng tươi · 1 thìa mật mía · 250ml nước ấm.',
+   '1. Cho gừng vào cốc, chế nước ấm (không sôi).\n2. Thêm mật mía, khuấy tan.\n3. Vắt chanh, thả cả lát vào.\n4. Uống lúc bụng đói, trước ăn sáng 20–30 phút.',
+   'Mỗi sáng. Trời lạnh / thể hàn: tăng gừng. Thể nhiệt, huyết áp cao: giảm hoặc bỏ gừng.',
+   'Gan tàng huyết — Gan sạch sinh máu tốt, máu tốt giúp Tim khỏe.'],
+
+  ['Mật mía chanh + vận động (06:00)', 'tho', 'sáng', 'Uống trước khi vận động 30 phút để nạp năng lượng, chống mỏi cơ.',
+   '~5 thìa canh mật mía · 250ml nước ấm · 1 lát chanh · (trời lạnh: thêm 1 lát gừng).',
+   '1. Pha mật mía với nước ấm.\n2. Vắt chanh.\n3. Uống, rồi vỗ tay 4 nhịp / yoga / chạy bộ 30 phút — nơi nhiều oxy, chân tiếp đất, tắm nắng.',
+   'Mỗi sáng trong 28 ngày, trước khi vận động.',
+   'Đường tốt trong mật mía làm mát Lá Lách, tăng miễn dịch.'],
+
+  ['Trà Bình Minh', 'kim,moc', 'sáng', 'Trà ấm buổi sáng — tốt cho Phổi, hỗ trợ tiêu hóa.',
+   'Bột sắn dây 1 thìa · trà Bancha hoặc Shan Tuyết 1 túi · chanh muối 1 lát · cốt gừng hoặc 2 lát gừng tươi · mật mía 1 thìa · nước sôi 250ml.',
+   '1. Hòa bột sắn dây với chút nước lạnh.\n2. Hãm trà với nước sôi 3 phút.\n3. Thêm bột sắn dây đã hòa, gừng, chanh muối, mật mía.\n4. Khuấy đều, uống ấm.',
+   'Buổi sáng, đặc biệt mùa Thu khi hanh khô, dễ ho.',
+   'Bột sắn dây và gừng đều tốt cho Phổi (Hành Kim).'],
+
+  ['Trà gừng mật ong', 'kim', 'sáng', 'Dùng khi mới chớm cảm lạnh, người ớn lạnh.',
+   '3–4 lát gừng tươi · 1–2 thìa mật ong · 200ml nước sôi.',
+   '1. Cho gừng vào cốc, chế nước sôi, đậy 5 phút.\n2. Chờ nguội bớt còn ấm, thêm mật ong (không cho mật ong vào nước quá nóng).\n3. Uống khi còn ấm.',
+   'Khi trời lạnh, chớm cảm, tay chân lạnh. KHÔNG dùng khi sốt cao, thể nhiệt, huyết áp cao.',
+   'Gừng là vị cay nhiệt — làm ấm, phát tán phong hàn.'],
+
+  ['Trà tim sen', 'hoa', 'sáng', 'Đắng hàn — hạ nhịp tim, hạ huyết áp, an thần dễ ngủ.',
+   'Tim sen khô 1–2g (khoảng 1 nhúm nhỏ) · nước sôi 200ml.',
+   '1. Tráng tim sen qua nước sôi, bỏ nước đầu.\n2. Hãm với nước sôi 5–7 phút.\n3. Uống ấm, buổi sáng đến đầu giờ chiều.',
+   'Người thể nhiệt, huyết áp cao, nhịp tim nhanh, hay hồi hộp, khó ngủ. Không dùng cho người huyết áp thấp.',
+   'Rất đắng — bắt đầu với lượng ít. Không uống quá muộn dù có tác dụng an thần.'],
+
+  ['Mè đen rang muối', 'thuy', 'tối', 'Món ăn kèm cơm — bổ Thận, màu đen vị mặn nhẹ.',
+   'Mè đen 100g · muối hạt 1 thìa cà phê.',
+   '1. Rang mè đen lửa nhỏ, đảo đều đến khi nghe tiếng nổ lách tách và dậy mùi.\n2. Rang muối riêng cho khô.\n3. Giã sơ mè với muối (không quá nhuyễn).\n4. Rắc lên cơm gạo lứt.',
+   'Bữa tối, đặc biệt mùa Đông. Người đau lưng, tiểu đêm, tóc bạc sớm.',
+   'Bảo quản lọ kín, dùng trong 1 tuần.'],
+
+  ['Canh chua lá giang', 'moc,tho', 'trưa', 'Canh vị chua cân bằng với ngọt — kích thích tiêu hóa bữa trưa.',
+   'Lá giang 1 nắm · cá hoặc đậu hũ · cà chua 1 quả · thơm (dứa) vài miếng · giá, bạc hà · gia vị.',
+   '1. Nấu nước dùng, cho cà chua và thơm.\n2. Cho cá/đậu hũ, nấu chín.\n3. Vò lá giang cho ra vị chua, thả vào.\n4. Nêm nếm cân bằng chua – ngọt, thêm giá và rau thơm.',
+   'Bữa trưa, khi cần kích thích ăn ngon. Trời nóng.',
+   'Vị chua vào Gan nhưng phải cân bằng với ngọt (thơm) để không hại Tỳ Vị.'],
+
+  ['Rau muống xào tỏi', 'kim', 'tối', 'Món tối điển hình của Hành Kim — vị cay (tỏi) + màu trắng (thân rau).',
+   'Rau muống 1 bó · tỏi 4–5 tép · dầu ăn · chút muối.',
+   '1. Nhặt rau, chần sơ nước sôi có chút muối rồi vớt ra ngâm nước đá (giữ xanh giòn).\n2. Phi thơm tỏi băm.\n3. Cho rau vào xào lửa lớn nhanh tay, nêm vừa ăn.\n4. Rắc thêm tỏi phi.',
+   'Bữa tối. Trời lạnh có thể thêm ớt.',
+   'Tỏi là vị cay màu trắng — dẫn vào Phổi/Đại tràng.'],
+
+  ['Nước mía (trước vận động)', 'tho', 'cả ngày', 'Làm mát Lá Lách, tăng miễn dịch, bù năng lượng nhanh.',
+   'Nước mía tươi 1 ly (200–250ml) · vài lát tắc/quất (tùy chọn).',
+   '1. Ép mía tươi, lọc bã.\n2. Uống ngay khi còn tươi, có thể thêm tắc cho đỡ ngọt gắt.',
+   'Trước khi luyện tập / vận động để chống mỏi cơ do thiếu đường. Người cần tăng đề kháng.',
+   'Uống ngay sau khi ép; để lâu dễ lên men, mất chất.'],
+];
+
+const COURSE_SEED = [
+  ['Nền tảng Âm Dương Ngũ Hành',
+   'Bắt đầu từ đây: Ngũ Hành – Ngũ Sắc – Ngũ Vị – Tạng Phủ và 3 nguyên tắc cân bằng Âm Dương trong bữa ăn.',
+   '#10b981',
+   [
+     ['Ngũ Hành là gì — Kim, Mộc, Thủy, Hỏa, Thổ',
+      '<p>Triết lý Âm Dương Ngũ Hành trong ẩm thực Việt đã có từ rất xa xưa — bánh phu thê ngũ sắc, bát phở đủ mùi vị màu sắc… đều là ứng dụng của nó.</p><h3>Năm Hành tương ứng năm tạng, năm màu</h3><ul><li><strong>Hành Mộc</strong> — Gan — màu Xanh</li><li><strong>Hành Hỏa</strong> — Tim — màu Đỏ</li><li><strong>Hành Thổ</strong> — Lá Lách / Dạ Dày — màu Vàng</li><li><strong>Hành Kim</strong> — Phổi — màu Trắng</li><li><strong>Hành Thủy</strong> — Thận — màu Đen</li></ul><p>Nguyên tắc Ngũ Sắc: mỗi bữa nên có đủ 5 màu Xanh – Đỏ – Vàng – Trắng – Đen. Thực phẩm khác màu có tác dụng khác nhau khi vào cơ thể.</p><blockquote>Đây là hướng dẫn ăn uống dưỡng sinh, không thay thế việc khám chữa bệnh.</blockquote>', 8],
+     ['Ngũ Vị tương ứng Ngũ Hành và tạng phủ',
+      '<p>Theo Đông Y, mỗi vị đi vào một tạng. Chuộng vị nào sẽ bổ cho tạng đó — nhưng quá nhiều sẽ hại tạng bị khắc.</p><table><thead><tr><th>Vị</th><th>Hành</th><th>Tạng</th></tr></thead><tbody><tr><td>Chua</td><td>Mộc</td><td>Can (Gan)</td></tr><tr><td>Đắng</td><td>Hỏa</td><td>Tâm (Tim)</td></tr><tr><td>Ngọt</td><td>Thổ</td><td>Tỳ (Lá Lách)</td></tr><tr><td>Cay</td><td>Kim</td><td>Phế (Phổi)</td></tr><tr><td>Mặn</td><td>Thủy</td><td>Thận</td></tr></tbody></table><p>Nhìn màu sắc rau quả có thể đoán tính: màu nhạt thường hàn/mát, màu thẫm thường ấm/nóng. Củ cải, lê, chuối tiêu tính mát; táo, đậu đen, đậu đỏ tính ấm.</p>', 8],
+     ['3 nguyên tắc cân bằng Âm Dương trong ăn uống',
+      '<p>Mối tương quan Âm Dương trong ẩm thực gồm 3 yếu tố:</p><ol><li><strong>Hài hòa âm dương của thức ăn:</strong> đa dạng màu sắc và vị trong một món / một bữa.</li><li><strong>Cân bằng âm dương trong cơ thể:</strong> cơ thể hàn thì ăn món tính ấm, vị cay; cơ thể nhiệt thì ăn món tính mát.</li><li><strong>Cân bằng với môi trường:</strong> tùy thời tiết, mùa, vùng miền mà chọn món. Trời lạnh → vị cay, trà gừng, mật mía gừng. Trời nóng → vị mát, nước dừa, rau má.</li></ol><p>Ví dụ khéo kết hợp: đậu hũ (hàn) xào sả ớt (nhiệt); củ hũ dừa (ngọt mát) trộn gỏi chua cay + đậu phộng rang (béo).</p>', 7],
+     ['Tương sinh – Tương khắc – Tương thừa – Tương vũ',
+      '<h3>Tương sinh</h3><p>Mộc sinh Hỏa → Hỏa sinh Thổ → Thổ sinh Kim → Kim sinh Thủy → Thủy sinh Mộc.</p><h3>Tương khắc</h3><p>Mộc khắc Thổ, Thổ khắc Thủy, Thủy khắc Hỏa, Hỏa khắc Kim, Kim khắc Mộc.</p><h3>Ứng dụng vào vị</h3><ul><li>Vị chua vào Gan, nhưng chua quá hại Tỳ Vị → luôn cân bằng chua với ngọt (canh chua, nước chanh đường).</li><li>Vị mặn vào Thận, mặn quá hại Tim và gây tích nước → dùng mặn buổi trưa, hạn chế buổi tối.</li><li>Vị cay vào Phổi, cay quá hại Gan (ra mồ hôi, hao huyết).</li><li>Vị đắng vào Tim, đắng quá hại Phổi/Ruột già.</li><li>Vị ngọt vào Tỳ, ngọt quá hại Thận.</li></ul>', 8],
+   ]],
+
+  ['Ăn theo từng Hành',
+   'Mỗi Hành một bài: màu, vị dẫn, tạng phủ, mùa trong năm, thực phẩm nên dùng và những lưu ý tương sinh – tương khắc.',
+   '#8b5cf6',
+   [
+     ['Hành Kim — Phổi / Đại tràng — màu Trắng, vị Cay',
+      '<p>Hành Kim ứng Phổi và Đại tràng, quan hệ với da lông, biểu hiện ra mũi họng. Ưu tiên <strong>màu Trắng</strong> và <strong>vị Cay</strong>.</p><p><strong>Thực phẩm màu trắng:</strong> nấm, bông cải, bột sắn dây, hành tây, củ sắn, củ sen, đậu nành, cùi dừa, hạt điều, tỏi, sả, đậu trắng.</p><p><strong>Vị cay 2 thể:</strong> cay nhiệt (ớt, tiêu, quế, gừng, sả) và cay hàn (bạc hà, húng chanh).</p><p><strong>Mùa Thu</strong> là mùa của Kim — hanh khô, dễ ho khan, viêm mũi, viêm họng, táo bón. Nên dùng đường phèn trắng chưng chanh/tắc trị ho; trà có bột sắn dây + chanh muối + gừng + mật mía.</p><p>Người viêm xoang, đau đầu, da khô, mẩn ngứa nên thanh lọc Đại tràng (ăn nhiều rau, chất xơ).</p>', 9],
+     ['Hành Thủy — Thận / Bàng quang — màu Đen, vị Mặn',
+      '<p>Hành Thủy ứng Thận và Bàng quang, quan hệ với Xương, biểu hiện ra Tai. Ưu tiên <strong>màu Đen</strong> và <strong>vị Mặn</strong> (vừa phải).</p><p><strong>Thực phẩm màu đen:</strong> đậu đen, nho đen, tỏi đen, hải sâm, gạo lứt đen, mè đen, mộc nhĩ đen (nấm mèo), táo đen, gà ác, dâu tằm, trà đen.</p><p><strong>Món mặn:</strong> các loại dưa muối, cà muối, mè đen rang muối. Thức uống: mơ muối, chanh muối.</p><p>Vị mặn nhiều <strong>chỉ nên dùng buổi trưa</strong> — muối hút nước, tăng thể tích máu, ảnh hưởng giấc ngủ nếu dùng tối.</p><p><strong>Mùa Đông</strong> là mùa của Thủy — hàn, dễ nhức xương, đau lưng, mất ngủ, ù tai, tiểu đêm. Món tốt: gà ác tiềm, mì tiềm chay, hải sâm tiềm, muối mè đen.</p>', 9],
+     ['Hành Mộc — Gan / Mật — màu Xanh, vị Chua',
+      '<p>Hành Mộc ứng Gan và Mật, làm chủ Gân, biểu hiện ra Mắt. Ưu tiên <strong>màu Xanh</strong> và <strong>vị Chua</strong>.</p><p>Uống nước chanh gừng mật mía (hoặc mật ong) buổi sáng giúp thải độc Gan và rửa sạch hệ tiêu hóa. Để tốt cho Mật nên dùng chất béo tốt: các loại hạt, dầu ô liu, dầu dừa, mỡ cá.</p><p><strong>Thực phẩm màu xanh:</strong> các loại rau xanh, tảo spirulina, rong biển, đậu xanh.</p><p><strong>Vị chua:</strong> sấu, chanh, khế, lá me, lá giang, chùm ruột; dấm kefir, dấm kombucha, sữa chua.</p><p><strong>Mùa Xuân</strong> là mùa của Mộc — ẩm, gió lạnh. Buổi sáng ngủ dậy nên nghiêng sang phải rồi từ từ chống tay ngồi lên (Gan tàng huyết, tránh chóng mặt). Nóng Gan → lòng trắng mắt có tia máu đỏ.</p>', 9],
+     ['Hành Hỏa — Tim / Ruột non — màu Đỏ, vị Đắng',
+      '<p>Hành Hỏa ứng Tim và Ruột non, quan hệ Huyết Mạch, biểu hiện ra Lưỡi. Ưu tiên <strong>màu Đỏ</strong> và <strong>vị Đắng</strong>.</p><p>Lưỡi hồng = đủ máu; lưỡi nhạt = thiếu máu; lưỡi đóng cặn trắng = có thể nhiễm nấm Candida.</p><p><strong>Thực phẩm màu đỏ:</strong> rau dền, củ dền, lựu, gấc, ớt chuông, cà chua, kỷ tử.</p><p><strong>Vị đắng nhiệt:</strong> cà phê, ca cao. <strong>Vị đắng hàn:</strong> khổ qua, tim sen, ngải cứu, rau đắng, rau má.</p><p><strong>Chọn theo huyết áp:</strong> huyết áp thấp / nhịp tim thấp (thể hàn) → cà phê. Huyết áp cao / nhịp tim cao (thể nhiệt) → trà tim sen, trà khổ qua, rau má để hạ nhịp tim. Nên dùng trước 14:00; vị chua và đắng chỉ nên uống buổi sáng.</p><p><strong>Mùa Hè</strong> là mùa của Hỏa — nắng nóng, đổ mồ hôi nhiều, máu cô đặc. Uống nhiều nước, ăn nhiều trái cây, hạn chế đồ cay nóng.</p>', 10],
+     ['Hành Thổ — Tỳ / Vị — màu Vàng, vị Ngọt',
+      '<p>Hành Thổ ứng Tỳ (Lá Lách) và Vị (Bao Tử), quan hệ với Cơ, biểu hiện ra Môi. Ưu tiên <strong>màu Vàng</strong> và <strong>vị Ngọt</strong> (đường tốt).</p><p><strong>Thực phẩm màu vàng:</strong> khoai tây, bắp vàng, khế, ớt chuông vàng, bông bí, chuối, thơm (dứa), xoài, lê, trà hoa vàng.</p><p><strong>Đường tốt:</strong> đường vàng, mạch nha, mật ong, mật mía, đường thốt nốt, nước mía. Khác hẳn đường tinh luyện — đường tốt làm mát Lá Lách, tăng miễn dịch, giải độc máu.</p><p>Lá Lách tham gia chống nhiễm trùng, lọc vi khuẩn ở máu. Tỳ hư → sút cân, kém ăn, chậm tiêu, đầy hơi, tiêu chảy kéo dài, cơ nhão.</p><p><strong>Giao mùa Hè – Thu</strong> là thời của Thổ — nắng mưa thất thường, dễ bệnh hô hấp, dị ứng, cảm cúm. Tách trà hoa vàng, nước mía giúp Tuyến Tụy hoạt động tốt.</p>', 10],
+     ['Vị Chát & thực phẩm chống oxy hóa',
+      '<p>Ngoài ngũ vị, vị <strong>Chát</strong> giúp chống oxy hóa rất tốt, giữ sự tươi trẻ, hỗ trợ tim mạch.</p><p><strong>Thực phẩm vị chát:</strong> quả sung, chuối xanh, lựu, quả vả, trà, rượu vang chát.</p><p>Trà chia theo màu Ngũ Hành: bạch trà (Kim), hồng trà (Hỏa), trà đen (Thủy), trà xanh (Mộc), trà hoa vàng (Thổ). Vị chát trong trà giúp cơ thể chống oxy hóa cực tốt — văn hóa uống trà là một cách "trẻ hóa tự nhiên".</p><p>Món tham khảo: canh chuối xanh, canh sung, chuối xanh nấu tía tô.</p>', 6],
+   ]],
+
+  ['Hormone hạnh phúc theo mùa',
+   'Tâm trạng khi ăn cũng quan trọng như món ăn. 4 hormone hạnh phúc và cách nương theo từng mùa để giữ cân bằng cảm xúc.',
+   '#ec4899',
+   [
+     ['4 hormone hạnh phúc',
+      '<ul><li><strong>Dopamine</strong> — hormone của động lực, kích hoạt khi bạn đạt được mục tiêu.</li><li><strong>Serotonin</strong> — điều hòa tâm trạng, tăng khi tiếp xúc ánh sáng mặt trời.</li><li><strong>Oxytocin</strong> — hormone tình yêu, tạo ra khi ôm người mình thương.</li><li><strong>Endorphin</strong> — thuốc giảm đau tự nhiên, đến từ vận động thể chất.</li></ul><p>Khi ăn, hãy tạm gác lo âu để cảm nhận trọn hương vị — đó cũng là một cách trải nghiệm điều thú vị của cuộc sống.</p>', 5],
+     ['Mùa Thu (Kim) & mùa Đông (Thủy)',
+      '<p><strong>Mùa Thu</strong>: ngày ngắn, nắng ít → não sản xuất ít Serotonin, nhiều Melatonin → dễ buồn, mệt mỏi, chán nản. Buồn làm hơi thở ngắn, Phổi thu hẹp. Nên ra ngoài hít thở không khí trong lành, hòa mình vào thiên nhiên, ra biển. Uống trà Bạc Kim buổi chiều tối kèm các loại hạt.</p><p><strong>Mùa Đông</strong>: lạnh, máu co cụm, tứ chi thiếu máu. Tuyến thượng thận tiết Adrenaline/Cortisol để giữ thăng bằng. Cách hỗ trợ: chơi thể thao, tập thở, bơi lội; tắt thiết bị điện tử, khép cửa và thở sâu trong yên lặng; chuyển suy nghĩ từ thụ động sang tích cực.</p>', 7],
+     ['Mùa Xuân (Mộc), mùa Hè (Hỏa) & giao mùa (Thổ)',
+      '<p><strong>Mùa Xuân</strong>: ngày dài, mắt tiếp xúc nhiều ánh sáng (kể cả ánh sáng xanh từ màn hình) → thay đổi nội tiết, dễ nóng giận. Uống trà xanh, trà mạn buổi sáng; tìm nơi thanh tịnh, thiền để cân bằng cảm xúc.</p><p><strong>Mùa Hè</strong>: nắng giúp cơ thể tiết beta-endorphin → vui vẻ hơn. Thời điểm tốt để vận động, tiếp xúc ánh nắng. Khóc cũng giúp thải Oxytocin và Endorphin, giảm đau và giải tỏa nỗi buồn. Dùng trà nóng vị đắng chát: trà tim sen, hồng trà.</p><p><strong>Giao mùa Hè – Thu (Thổ)</strong>: nhiệt độ thất thường, dễ mất ngủ, stress, đau bao tử. Tách trà hoa vàng, nước mía giúp thả lỏng và hỗ trợ Tuyến Tụy điều tiết Insulin.</p>', 7],
+   ]],
+
+  ['Tự kiểm tra cơ thể',
+   'Đọc tín hiệu cơ thể mỗi ngày qua huyết áp, nước tiểu, phân và mồ hôi — để biết mình hàn hay nhiệt, đủ nước hay thiếu.',
+   '#0ea5e9',
+   [
+     ['Đo & đọc huyết áp theo Đông Y',
+      '<p>Huyết áp là "Khí" chứa trong cơ thể. Nên đo nhiều lần trong ngày: sáng khi ngủ dậy, trước ăn, sau ăn 30 phút, sau ăn 2 tiếng, trước khi ngủ.</p><p><strong>Đọc 3 số theo Đông Y:</strong></p><ul><li>Số 1 — Khí: cao hơn chuẩn = khí Thực, thấp hơn = khí Hư.</li><li>Số 2 — Huyết: cao hơn chuẩn = hở van tim, thấp hơn = hẹp van tim.</li><li>Số 3 — Nhịp tim: cao hơn chuẩn = Nhiệt, thấp hơn = Hàn.</li></ul><p>Cơ thể lạnh (hàn) → máu lưu thông kém → nhiều nơi bị tắc gây đau nhức. Nhịp tim quá cao có thể là sốt/viêm nhiễm.</p><blockquote>Chỉ số bất thường kéo dài → nên đi khám bác sĩ. Đây là công cụ theo dõi, không thay chẩn đoán y khoa.</blockquote>', 8],
+     ['Màu nước tiểu',
+      '<ul><li><strong>Vàng nhạt</strong> — bình thường, đủ nước.</li><li><strong>Trong suốt như nước lọc</strong> — uống quá nhiều nước, có thể mất chất điện giải (Thủy dập Hỏa, ảnh hưởng Tim).</li><li><strong>Vàng cam</strong> — uống quá ít nước, hoặc vấn đề túi Mật / Gan.</li><li><strong>Nâu sẫm như nước trà</strong> — mất nước ngoài da, hoặc tác dụng phụ của thuốc; kéo dài → lưu ý bệnh Gan.</li><li><strong>Trắng đục</strong> — có thể nhiễm trùng đường tiết niệu, bệnh thận.</li><li><strong>Hồng đỏ</strong> — đôi khi do ăn củ dền, nếp cẩm; nếu kéo dài → đi khám (tiểu máu, sỏi thận…).</li></ul>', 6],
+     ['Phân (bảng Bristol) & mồ hôi',
+      '<p><strong>Phân</strong> tốt: hình trụ dài, màu vàng — chế độ ăn lành mạnh. Đi ngoài nhiều nước → có thể viêm dạ dày ruột cấp, khó tiêu.</p><ul><li>Màu đất trắng xám — dấu hiệu bệnh Gan.</li><li>Màu đen — khả năng xuất huyết tiêu hóa.</li><li>Mùi tanh khó chịu đột ngột kèm phân đen — cần đi khám.</li></ul><p><strong>Mồ hôi</strong>: nặng mùi = đang stress nặng; vị mặn nhiều = cơ thể thiếu muối/điện giải. Sau khi tập thể thao nên bổ sung chất điện giải.</p>', 6],
+   ]],
+
+  ['Công thức nền tảng',
+   'Những món nên biết trong 28 ngày: cháo bổ âm, trà Bình Minh, nước chanh gừng mật mía, cách dùng gừng và trà dưỡng sinh theo Ngũ Hành.',
+   '#ef4444',
+   [
+     ['Cháo bổ âm — khi nào dùng, cách nấu',
+      '<p><strong>Dùng khi:</strong> cơ thể nhiệt, khô, mất ngủ, người mệt, sau khi ăn nhiều đồ cay nóng.</p><p><strong>Cách nấu:</strong> nấu gạo (ưu tiên gạo lứt) thật nhừ, loãng. Có thể thêm hạt sen, đậu xanh/đậu đen, bí đỏ. Nêm nhạt.</p><p><strong>Cách ăn:</strong> ăn ấm, <strong>nhai kỹ</strong> để nước bọt (ngọc dịch) thấm vào ruột non — giúp tạo máu và làm dịu cơ thể. Ăn trong tâm trạng thư giãn.</p>', 6],
+     ['Trà Bình Minh & nước chanh gừng mật mía',
+      '<p><strong>Trà Bình Minh:</strong> bột sắn dây + trà Bancha hoặc Shan Tuyết + chanh muối + cốt gừng (hoặc 2 lát gừng tươi) + mật mía. Tốt cho Phổi, ấm người buổi sáng.</p><p><strong>Nước chanh gừng mật mía (buổi sáng, bụng đói):</strong> 1 lát chanh có hạt + vài lát gừng + 1 thìa mật mía + nước ấm. Giúp thải độc Gan, rửa hệ tiêu hóa. Trời lạnh tăng gừng; thể nhiệt / huyết áp cao thì giảm gừng.</p><p><strong>Mật mía chanh (06:00):</strong> ~5 thìa mật mía + 250ml nước ấm + 1 lát chanh, uống trước khi vận động 30 phút.</p>', 6],
+     ['Cách dùng gừng — cay nhiệt vs cay hàn',
+      '<p>Gừng thuộc <strong>vị cay nhiệt</strong>: làm ấm cơ thể, tốt khi trời lạnh hoặc người thể hàn (tay chân lạnh, sợ lạnh, nhịp tim thấp).</p><ul><li>Thêm 1 lát gừng vào mật mía chanh buổi sáng khi trời lạnh.</li><li>Trà gừng mật ong khi mới chớm cảm lạnh.</li><li>Vài lát gừng khi ăn sáng nếu thời tiết lạnh.</li></ul><p><strong>Hạn chế gừng</strong> nếu: thể nhiệt (hay nóng, khát, táo bón), huyết áp cao, đang có mụn nhọt, ra mồ hôi nhiều. Khi đó dùng vị cay hàn thay thế: bạc hà, húng chanh.</p>', 6],
+     ['Trà tim sen & trà dưỡng sinh theo Ngũ Hành',
+      '<p><strong>Trà tim sen:</strong> vị đắng hàn — hạ nhịp tim, hạ huyết áp, an thần dễ ngủ. Dùng cho người thể nhiệt, huyết áp cao, hay hồi hộp. Uống buổi sáng đến đầu giờ chiều, không uống quá muộn.</p><p><strong>Trà theo màu Ngũ Hành:</strong></p><ul><li>Bạch trà (Kim) — nhẹ, tốt cho Phổi</li><li>Trà xanh (Mộc) — thanh Gan, tỉnh táo, dùng buổi sáng</li><li>Hồng trà (Hỏa) — ấm, vị đắng chát nhẹ</li><li>Trà đen (Thủy) — đậm, bổ Thận</li><li>Trà hoa vàng (Thổ) — dịu, hỗ trợ Tỳ Vị</li></ul><p>Tránh trà đậm buổi tối để không ảnh hưởng giấc ngủ.</p>', 6],
+   ]],
 ];
 
 // ── Boot ──────────────────────────────────────────────────────
@@ -675,6 +859,40 @@ const CHALLENGE_DAYS_TEACHER = [
     return `${key.slice(0, 5)}...${key.slice(-4)}`;
   }
 
+  // ── GoClaw Agent 1 ("An Lộ") webhook ────────────────────────
+  // Calls the LLM webhook (mode=sync) created on the GoClaw dashboard for the
+  // Thân-Tâm-Mệnh roadmap-drafting agent. Bearer auth (webhook has
+  // require_hmac=false) — simplest, no signing needed. Returns { ok, text, error }.
+  const GOCLAW_BASE_URL = process.env.GOCLAW_BASE_URL || 'https://agent.dienvienduong.com';
+  const GOCLAW_WEBHOOK_SECRET = process.env.GOCLAW_WEBHOOK_SECRET || '';
+
+  async function callGoclawAgent1(summaryText) {
+    if (!GOCLAW_WEBHOOK_SECRET) {
+      return { ok: false, error: 'Chưa cấu hình GOCLAW_WEBHOOK_SECRET trong .env' };
+    }
+    try {
+      const body = JSON.stringify({ input: summaryText, mode: 'sync' });
+
+      const resp = await fetch(`${GOCLAW_BASE_URL}/v1/webhooks/llm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GOCLAW_WEBHOOK_SECRET}`,
+        },
+        body,
+        signal: AbortSignal.timeout(35000), // webhook sync mode itself times out at 30s
+      });
+
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data) {
+        return { ok: false, error: (data && data.error) || `GoClaw webhook lỗi (HTTP ${resp.status})` };
+      }
+      return { ok: true, text: data.output || '' };
+    } catch (err) {
+      return { ok: false, error: `Không gọi được GoClaw: ${err.message}` };
+    }
+  }
+
   // Unified chat call across providers. `messages` is OpenAI-style [{role, content}] (role:
   // system/user/assistant) — the shape every caller already builds. Returns a normalized
   // { ok, text, truncated, error } regardless of which provider actually served the request.
@@ -695,8 +913,8 @@ const CHALLENGE_DAYS_TEACHER = [
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${provider.api_key}`,
-          'HTTP-Referer': 'https://chuongcm.com',
-          'X-Title': 'Chuong Ca Mau IELTS Community',
+          'HTTP-Referer': SITE_URL,
+          'X-Title': COMMUNITY_NAME_ASCII,
         },
         body: JSON.stringify({
           model: provider.model || 'google/gemini-2.5-flash',
@@ -847,6 +1065,12 @@ const CHALLENGE_DAYS_TEACHER = [
     db.exec('ALTER TABLE users ADD COLUMN intake_profile TEXT');
     db.exec('ALTER TABLE users ADD COLUMN intake_done_at TEXT');
     console.log('  Migrated users: added intake_profile.');
+  }
+  // Migrate users: add ttm_intake_done_at (Thân-Tâm-Mệnh intake — dùng để
+  // bắt buộc redirect khách mới chưa làm khảo sát 29 câu trước khi dùng site)
+  if (!userCols.includes('ttm_intake_done_at')) {
+    db.exec('ALTER TABLE users ADD COLUMN ttm_intake_done_at TEXT');
+    console.log('  Migrated users: added ttm_intake_done_at.');
   }
 
   // Migrate posts: add space_id
@@ -1034,39 +1258,21 @@ const CHALLENGE_DAYS_TEACHER = [
     console.log('  Migrated spaces: added allow_join_requests.');
   }
 
-  const dayCount = db.get('SELECT COUNT(*) AS n FROM challenge_days').n;
-  if (dayCount === 0) {
+  const seedChallengeDays = () => {
+    db.run('DELETE FROM challenge_days WHERE challenge_id = 1');
     CHALLENGE_DAYS.forEach(([num, title, desc, instructions, xp]) =>
       db.run(
         'INSERT INTO challenge_days (challenge_id, day_number, title, description, instructions, xp_reward) VALUES (1,?,?,?,?,?)',
         [num, title, desc, instructions, xp]
       )
     );
-    console.log('  Seeded 21 challenge days.');
-  } else {
-    // One-time content migration: overwrite placeholder seed data with real content
-    const day1 = db.get('SELECT title FROM challenge_days WHERE day_number = 1 LIMIT 1');
-    if (day1 && day1.title === 'Giới thiệu bản thân') {
-      CHALLENGE_DAYS.forEach(([num, title, desc, instructions, xp]) =>
-        db.run(
-          'UPDATE challenge_days SET title = ?, description = ?, instructions = ?, xp_reward = ? WHERE day_number = ?',
-          [title, desc, instructions, xp, num]
-        )
-      );
-      console.log('  One-time content migration: updated all 21 days with real content.');
-    }
-  }
-
-  // Migration: update days 13-21 with complete Nộp bài + ✅ format
-  const day19check = db.get('SELECT instructions FROM challenge_days WHERE day_number = 19 LIMIT 1');
-  const needsFormatUpdate = day19check && day19check.instructions &&
-    day19check.instructions.includes('chưa unlock');
-  if (needsFormatUpdate) {
-    [13, 14, 15, 16, 17, 18, 19, 20, 21].forEach(num => {
-      const d = CHALLENGE_DAYS.find(c => c[0] === num);
-      if (d) db.run('UPDATE challenge_days SET title=?,description=?,instructions=?,xp_reward=? WHERE day_number=?', [d[1], d[2], d[3], d[4], num]);
-    });
-    console.log('  Updated challenge days 13-21: added Nộp bài + ✅ Được duyệt khi sections.');
+    console.log(`  Seeded ${CHALLENGE_DAYS.length} challenge days (Ngũ Hành).`);
+  };
+  const day1 = db.get('SELECT title FROM challenge_days WHERE challenge_id = 1 AND day_number = 1 LIMIT 1');
+  const cd1Count = db.get('SELECT COUNT(*) AS n FROM challenge_days WHERE challenge_id = 1').n;
+  const looksLikeOldContent = day1 && /Kick Off|Cài Tool|Giới thiệu bản thân|Landing Page/i.test(day1.title || '');
+  if (cd1Count === 0 || looksLikeOldContent || cd1Count !== CHALLENGE_DAYS.length) {
+    seedChallengeDays();
   }
 
   // Seed default site settings
@@ -1078,47 +1284,72 @@ const CHALLENGE_DAYS_TEACHER = [
     ['calendar_embed_url',     ''],
     ['about_intro',            ''],
     ['about_media',            '[]'],
-    ['community_name',         'Cộng đồng IELTS Chương Cà Mau'],
-    ['challenge_hero_icon',    '⚡'],
-    ['challenge_hero_title',   'Thử thách AI Agent'],
-    ['challenge_hero_desc',    'Chọn thử thách phù hợp với bạn. Mỗi ngày một task thực chiến — từ prompt engineering đến deploy agent thật.'],
-    ['mp_store_name',          'IELTS Chương Cà Mau Marketplace'],
-    ['mp_store_desc',          'Chợ tài liệu, đề thi và công cụ học IELTS dành cho cộng đồng.'],
+    ['community_name',         COMMUNITY_NAME],
+    ['challenge_hero_icon',    '🌱'],
+    ['challenge_hero_title',   'Thử thách 28 ngày Dưỡng Hóa'],
+    ['challenge_hero_desc',    'Mỗi ngày một bước — ăn uống theo Ngũ Hành, thanh lọc và cân bằng cơ thể. Bổ sung → Đào thải → Lưu thông Khí Huyết → Duy trì.'],
+    ['mp_store_name',          COMMUNITY_NAME + ' Marketplace'],
+    ['mp_store_desc',          'Combo thực phẩm, tài liệu và công cụ ăn uống theo Ngũ Hành dành cho cộng đồng.'],
     ['mp_bank_name',           'BIDV'],
     ['mp_bank_account_name',   'TỪ CHÍ NGUYỆN'],
     ['mp_bank_account_number', '96247NGUYEN'],
-    ['home_tagline',           'Cộng đồng IELTS'],
-    ['home_heading_line1',     'Làm chủ'],
-    ['home_heading_highlight', 'IELTS'],
-    ['home_heading_line2',     'từ hôm nay.'],
-    ['home_desc',              'Nơi học viên luyện thi cùng nhau — từ nền tảng đến nâng band điểm IELTS.'],
-    ['home_stat1_value',       '2K+'],
-    ['home_stat1_label',       'Học viên'],
-    ['home_stat2_value',       '120+'],
-    ['home_stat2_label',       'Bài học'],
-    ['home_stat3_value',       '21'],
-    ['home_stat3_label',       'Day Challenge'],
-    ['home_tags',              'IELTS, Nghe, Nói, Đọc, Viết'],
-    ['courses_hero_icon',      '🎓'],
-    ['courses_hero_title',     'Khóa học IELTS'],
-    ['courses_hero_desc',      'Học từ cơ bản đến nâng cao — luyện đề, chấm bài, nâng band điểm IELTS'],
+    ['home_tagline',           'Cộng đồng Ăn Uống Ngũ Hành'],
+    ['home_heading_line1',     'Ăn uống thuận'],
+    ['home_heading_highlight', 'Ngũ Hành'],
+    ['home_heading_line2',     'mỗi ngày.'],
+    ['home_desc',              'Nơi mọi người cùng học cách ăn theo ngũ sắc — ngũ vị — tạng phủ, thanh lọc và cân bằng cơ thể một cách tự nhiên.'],
+    ['home_stat1_value',       '5'],
+    ['home_stat1_label',       'Hành'],
+    ['home_stat2_value',       '3'],
+    ['home_stat2_label',       'Buổi / ngày'],
+    ['home_stat3_value',       '28'],
+    ['home_stat3_label',       'Ngày Dưỡng Hóa'],
+    ['home_tags',              'Ngũ Hành, Ngũ Sắc, Ngũ Vị, Âm Dương, Thải Độc'],
+    ['courses_hero_icon',      '📗'],
+    ['courses_hero_title',     'Khóa học Ăn Uống Ngũ Hành'],
+    ['courses_hero_desc',      'Từ nền tảng Âm Dương Ngũ Hành đến ăn theo từng Hành, công thức cháo bổ âm và cách dùng gừng.'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
     if (!existing) db.run('INSERT INTO site_settings (key, value) VALUES (?,?)', [key, value]);
   });
 
+  // One-time re-theme migration: overwrite leftover IELTS / AI-Agent branding values
+  const rethemeMarker = db.get("SELECT value FROM site_settings WHERE key = 'retheme_nguhanh'");
+  if (!rethemeMarker || rethemeMarker.value !== '2') {
+    const stale = /IELTS|AI Agent|prompt engineering|deploy agent|luyện thi|nâng band|Chương Cà Mau/i;
+    // These pure-branding keys are always reset to the Ngũ Hành defaults on this migration;
+    // admin-authored content keys (about_intro, calendar, announcement) are left untouched.
+    const forceKeys = new Set([
+      'community_name', 'challenge_hero_icon', 'challenge_hero_title', 'challenge_hero_desc',
+      'mp_store_name', 'mp_store_desc',
+      'home_tagline', 'home_heading_line1', 'home_heading_highlight', 'home_heading_line2', 'home_desc',
+      'home_stat1_value', 'home_stat1_label', 'home_stat2_value', 'home_stat2_label',
+      'home_stat3_value', 'home_stat3_label', 'home_tags',
+      'courses_hero_icon', 'courses_hero_title', 'courses_hero_desc',
+    ]);
+    defaultSettings.forEach(([key, value]) => {
+      if (key === 'about_intro' || key === 'about_media' || key === 'calendar_embed_url') return;
+      const row = db.get('SELECT value FROM site_settings WHERE key = ?', [key]);
+      if (row && (forceKeys.has(key) || stale.test(row.value || ''))) {
+        db.run('UPDATE site_settings SET value = ? WHERE key = ?', [value, key]);
+      }
+    });
+    db.run("INSERT OR REPLACE INTO site_settings (key, value) VALUES ('retheme_nguhanh', '2')");
+    console.log('  Re-theme migration: refreshed branding settings for Ngũ Hành.');
+  }
+
   // Seed sample products if empty
   const prodCount = db.get('SELECT COUNT(*) AS n FROM products').n;
-  if (prodCount === 0) {
+  const seedSampleProducts = () => {
     const adminUser = db.get('SELECT id FROM users LIMIT 1');
     if (adminUser) {
       const sampleProducts = [
-        [adminUser.id, 'Bộ Prompt ChatGPT Bán Hàng 2025', 'Tập hợp 50+ prompt đã kiểm chứng giúp viết copy bán hàng, email marketing và content mạng xã hội cực nhanh.', '## Nội dung bộ prompt\n\n- 20 prompt viết caption Facebook/Instagram\n- 15 prompt viết email marketing\n- 10 prompt tạo kịch bản video TikTok\n- 5 prompt phân tích đối thủ\n\n**Phù hợp cho:** Người kinh doanh online, marketer, content creator\n\n**Cách dùng:** Copy prompt → dán vào ChatGPT → chỉnh thông tin sản phẩm → dùng ngay', 199000, 'prompt', '#f59e0b'],
-        [adminUser.id, 'Template Slide Pitch AI Agent', 'Bộ slide PowerPoint/Canva chuyên nghiệp để trình bày dự án AI Agent cho khách hàng hoặc nhà đầu tư.', '## Bao gồm\n\n- 30 slide thiết kế sẵn (Canva + PPTX)\n- Hướng dẫn điền nội dung\n- 3 màu theme: Dark, Light, Gradient\n\n**Định dạng:** Canva Template + File PPTX editable', 149000, 'agent', '#8b5cf6'],
-        [adminUser.id, 'Ebook: Xây Dựng AI Workflow Tự Động', 'Hướng dẫn từng bước tạo workflow AI tự động hóa công việc hàng ngày — không cần biết code.', '## Nội dung 120 trang\n\n**Chương 1:** Tư duy về tự động hóa\n**Chương 2:** Các công cụ AI phổ biến (Make, Zapier, n8n)\n**Chương 3:** 10 workflow mẫu có thể dùng ngay\n**Chương 4:** Kết hợp AI + CRM\n**Chương 5:** Scale hệ thống', 89000, 'ebook', '#10b981'],
-        [adminUser.id, 'Script Python Tự Động Đăng Bài Facebook', 'Tool Python tự động đăng bài lên Facebook Page theo lịch, hỗ trợ thêm ảnh, hashtag và lên lịch đăng.', '## Tính năng\n\n- Đăng bài theo lịch (hàng ngày, hàng tuần)\n- Hỗ trợ text + ảnh\n- Tự động thêm hashtag\n- Log hoạt động\n- Retry khi lỗi\n\n**Yêu cầu:** Python 3.10+, Facebook Developer Account', 249000, 'tool', '#3b82f6'],
-        [adminUser.id, 'Mini Course: Prompt Engineering Nâng Cao', 'Khóa học 6 buổi video về kỹ thuật viết prompt cho GPT-4, Claude và Gemini — từ cơ bản đến nâng cao.', '## Chương trình học\n\n**Buổi 1:** Nền tảng Prompt Engineering\n**Buổi 2:** Chain-of-Thought & Few-shot\n**Buổi 3:** Prompt cho phân tích dữ liệu\n**Buổi 4:** Prompt cho sáng tạo nội dung\n**Buổi 5:** Tối ưu hóa và đánh giá\n**Buổi 6:** Dự án thực hành\n\n**Thời lượng:** ~8 giờ video + tài liệu', 399000, 'course', '#ec4899'],
+        [adminUser.id, 'Combo Dưỡng Hóa 28 ngày', 'Bộ thực phẩm hỗ trợ hành trình 28 ngày: sữa kháng thể, mật mía, trà thải độc, chanh muối bổ Thận — kèm hướng dẫn ăn theo Ngũ Hành.', '## Trọn bộ combo gồm\n\n- Sữa kháng thể IGG (tăng miễn dịch, canxi & D3)\n- Mật mía nguyên chất (chống oxy hóa, tạo máu)\n- Trà thải độc (nhuận tràng nhẹ)\n- Chanh muối bổ Thận – dưỡng Tùy\n- Tài liệu hướng dẫn ăn theo Ngũ Hành + tác động cột sống\n\n**Chống chỉ định:** người cấy ghép nội tạng; hạn chế với người có bệnh lý đông máu.\n\nLịch trình mẫu trong ngày cho từng tuần (giờ giấc dùng combo kết hợp bữa ăn) xem trong mục Thử thách 28 ngày Dưỡng Hóa.', 1200000, 'combo', '#10b981'],
+        [adminUser.id, 'Ebook: Ngũ Hành – Chìa Khóa Của Sức Khỏe', 'Sách hướng dẫn ăn uống theo Âm Dương Ngũ Hành: ngũ sắc – ngũ vị – tạng phủ – mùa, cách đọc huyết áp/nước tiểu/phân.', '## Nội dung\n\n**Phần 1:** Tổng quan Âm Dương Ngũ Hành trong ẩm thực Việt\n**Phần 2:** Ăn theo từng Hành (Kim/Mộc/Thủy/Hỏa/Thổ)\n**Phần 3:** Hormone hạnh phúc theo mùa\n**Phần 4:** Tự kiểm tra huyết áp, nước tiểu, phân, mồ hôi', 89000, 'ebook', '#f59e0b'],
+        [adminUser.id, 'Bộ công thức Cháo Bổ Âm & Trà dưỡng sinh', 'Tuyển tập công thức nền tảng: cháo bổ âm, trà Bình Minh, nước chanh gừng mật mía, trà tim sen — kèm cách dùng gừng.', '## Bao gồm\n\n- Cháo bổ âm (làm dịu cơ thể khi nhiệt)\n- Trà Bình Minh (bột sắn dây + trà + chanh muối + gừng + mật mía)\n- Nước chanh gừng mật mía buổi sáng\n- Trà tim sen hạ nhịp tim\n- Hướng dẫn dùng gừng: cay nhiệt vs cay hàn', 149000, 'cong-thuc', '#ef4444'],
+        [adminUser.id, 'Mini Course: Ăn theo từng Hành', 'Khóa học 5 buổi video: mỗi Hành một buổi — màu, vị dẫn, tạng phủ, mùa, thực phẩm nên dùng và tương sinh – tương khắc.', '## Chương trình\n\n**Buổi 1:** Hành Kim – Phổi/Đại tràng\n**Buổi 2:** Hành Thủy – Thận/Bàng quang\n**Buổi 3:** Hành Mộc – Gan/Mật\n**Buổi 4:** Hành Hỏa – Tim/Ruột non\n**Buổi 5:** Hành Thổ – Tỳ/Vị', 399000, 'course', '#8b5cf6'],
+        [adminUser.id, 'Thảo dược: Gừng – Sả – Tim sen', 'Bộ thảo dược nền tảng cho ăn uống Ngũ Hành — gừng (cay nhiệt), sả (màu trắng tốt Phổi), tim sen (đắng hàn hạ nhiệt).', '## Công dụng\n\n- **Gừng:** làm ấm khi trời lạnh, thêm vào bữa sáng vị cay\n- **Sả:** màu trắng, vị cay — tốt cho Phổi/Đại tràng\n- **Tim sen:** đắng hàn — hạ huyết áp, hạ nhịp tim, dễ ngủ', 129000, 'thao-duoc', '#3b82f6'],
       ];
       sampleProducts.forEach(([sid, title, desc, longDesc, price, cat, color]) => {
         db.run(
@@ -1126,11 +1357,20 @@ const CHALLENGE_DAYS_TEACHER = [
           [sid, title, desc, longDesc, price, cat, color]
         );
       });
-      console.log('  Seeded 5 sample products.');
+      console.log('  Seeded sample products.');
     }
+  };
+  if (db.get("SELECT id FROM products WHERE title LIKE '%AI Agent%' OR title LIKE '%Prompt ChatGPT%' OR title LIKE '%Prompt Engineering%' OR title LIKE '%AI Workflow%' OR title LIKE '%Đăng Bài Facebook%' OR title LIKE '%Slide Pitch%'")
+      && db.get('SELECT COUNT(*) AS n FROM orders').n === 0) {
+    db.run("DELETE FROM products WHERE title LIKE '%AI Agent%' OR title LIKE '%Prompt ChatGPT%' OR title LIKE '%Prompt Engineering%' OR title LIKE '%AI Workflow%' OR title LIKE '%Đăng Bài Facebook%' OR title LIKE '%Slide Pitch%'");
+    console.log('  Re-theme migration: removed AI-Agent sample products.');
+  }
+  if (db.get("SELECT COUNT(*) AS n FROM products WHERE is_featured = 0 AND course_id IS NULL").n === 0
+      && db.get('SELECT COUNT(*) AS n FROM orders').n === 0) {
+    seedSampleProducts();
   }
 
-  // Seed flagship featured product — 21-day AI Agent challenge, shown in the marketplace hero
+  // Seed flagship featured product — 28-day Dưỡng Hóa program, shown in the marketplace hero
   const featuredCount = db.get('SELECT COUNT(*) AS n FROM products WHERE is_featured = 1').n;
   if (featuredCount === 0) {
     const adminUser = db.get('SELECT id FROM users LIMIT 1');
@@ -1138,29 +1378,68 @@ const CHALLENGE_DAYS_TEACHER = [
       db.run(
         `INSERT INTO products (seller_id, title, description, long_description, price, compare_price, category, cover_color, status, is_featured, detail_url)
          VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-        [adminUser.id, 'Thử Thách 21 Ngày AI Agent',
-         '21 ngày cầm tay chỉ việc xây dựng AI Agent thực chiến — từ số 0 đến có sản phẩm dùng được, kèm mentor và cộng đồng đồng hành.',
-         '## Bạn sẽ nhận được gì\n\n- 21 ngày bài học + bài tập thực hành, chấm bài từng ngày\n- Mentor đồng hành, feedback trực tiếp\n- Cộng đồng học viên hỗ trợ 21 ngày\n- Chứng nhận hoàn thành thử thách\n- Truy cập trọn đời toàn bộ tài liệu & template\n\n**Giá trị thực tế: 56.500.000đ**\n**Giá ưu đãi hôm nay: chỉ 5.000.000đ**',
-         5000000, 56500000, 'agent', '#7c3aed', 'published', 1, 'challenge.html']
+        [adminUser.id, 'Chương trình 28 Ngày Dưỡng Hóa – Mở Khóa Cơ Thể',
+         '28 ngày cầm tay chỉ việc ăn uống theo Ngũ Hành — thanh lọc, đào thải độc tố và cân bằng cơ thể, kèm combo thực phẩm và cộng đồng đồng hành.',
+         '## Bạn sẽ nhận được gì\n\n- 28 ngày hướng dẫn ăn uống theo Ngũ Hành, quy trình 1 ngày 3 buổi\n- Combo thực phẩm hỗ trợ (sữa kháng thể, mật mía, trà thải độc, chanh muối bổ Thận)\n- Đồng hành, giải đáp mỗi ngày\n- Cộng đồng học viên hỗ trợ suốt 28 ngày\n- Truy cập trọn đời tài liệu, công thức & video\n\n**3 giai đoạn:** Bổ sung dinh dưỡng → Đào thải độc tố → Lưu thông Khí Huyết',
+         5000000, 0, 'combo', '#10b981', 'published', 1, 'challenge.html']
       );
-      console.log('  Seeded featured product: Thử Thách 21 Ngày AI Agent.');
+      console.log('  Seeded featured product: 28 Ngày Dưỡng Hóa.');
     }
   }
 
-  // Seed default pillars (business growth-funnel framework: Offer/Traffic/Conversion/Delivery/Continuity)
+  // Capitalizes the first letter of each word ("từ chí nguyện" → "Từ Chí
+  // Nguyện"). Used to normalize user display names — many were stored
+  // exactly as typed at registration (often all-lowercase on mobile).
+  // String.prototype.toUpperCase/toLowerCase are Unicode-aware in Node, so
+  // Vietnamese diacritics (đ/Đ, ạ/Ạ, ...) round-trip correctly.
+  function toTitleCase(s) {
+    return String(s || '')
+      .trim()
+      .split(/\s+/)
+      .map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w)
+      .join(' ');
+  }
+
+  // One-time cleanup: normalize any already-stored names that aren't Title
+  // Case yet. Idempotent — once names are fixed, this is a no-op on every
+  // future startup.
+  db.all('SELECT id, first_name, last_name FROM users').forEach(u => {
+    const fn = toTitleCase(u.first_name);
+    const ln = toTitleCase(u.last_name);
+    if (fn !== u.first_name || ln !== u.last_name) {
+      db.run('UPDATE users SET first_name = ?, last_name = ? WHERE id = ?', [fn, ln, u.id]);
+    }
+  });
+
+  // Seed default pillars = 5 Hành (Ngũ Hành): Kim / Mộc / Thủy / Hỏa / Thổ
   const pillarCount = db.get('SELECT COUNT(*) AS n FROM pillars').n;
   if (pillarCount === 0) {
     const defaultPillars = [
-      ['offer', 'Offer', '🔥', '#f59e0b', 0],
-      ['traffic', 'Thu hút', '✨', '#3b82f6', 1],
-      ['conversion', 'Chuyển đổi', '🎯', '#8b5cf6', 2],
-      ['delivery', 'Cung ứng', '⚙️', '#10b981', 3],
-      ['continuity', 'Continuity', '🔄', '#ec4899', 4],
+      ['kim',  'Hành Kim — Phổi/Đại tràng · vị Cay · màu Trắng',   '⚪', '#94a3b8', 0],
+      ['moc',  'Hành Mộc — Gan/Mật · vị Chua · màu Xanh',           '🟢', '#10b981', 1],
+      ['thuy', 'Hành Thủy — Thận/Bàng quang · vị Mặn · màu Đen',    '⚫', '#1f2937', 2],
+      ['hoa',  'Hành Hỏa — Tim/Ruột non · vị Đắng · màu Đỏ',        '🔴', '#ef4444', 3],
+      ['tho',  'Hành Thổ — Tỳ/Vị · vị Ngọt · màu Vàng',             '🟡', '#f59e0b', 4],
     ];
     defaultPillars.forEach(([key, label, icon, color, order_num]) => {
       db.run('INSERT INTO pillars (key, label, icon, color, order_num) VALUES (?,?,?,?,?)', [key, label, icon, color, order_num]);
     });
-    console.log('  Seeded 5 default pillars.');
+    console.log('  Seeded 5 Ngũ Hành pillars.');
+  } else if (db.get("SELECT id FROM pillars WHERE key = 'offer'")) {
+    // Re-theme migration: replace old business pillars with Ngũ Hành, remap existing posts
+    const remap = { offer: 'tho', traffic: 'moc', conversion: 'hoa', delivery: 'kim', continuity: 'thuy' };
+    Object.entries(remap).forEach(([oldKey, newKey]) =>
+      db.run('UPDATE posts SET pillar = ? WHERE pillar = ?', [newKey, oldKey]));
+    db.run('DELETE FROM pillars');
+    [
+      ['kim',  'Hành Kim — Phổi/Đại tràng · vị Cay · màu Trắng',   '⚪', '#94a3b8', 0],
+      ['moc',  'Hành Mộc — Gan/Mật · vị Chua · màu Xanh',           '🟢', '#10b981', 1],
+      ['thuy', 'Hành Thủy — Thận/Bàng quang · vị Mặn · màu Đen',    '⚫', '#1f2937', 2],
+      ['hoa',  'Hành Hỏa — Tim/Ruột non · vị Đắng · màu Đỏ',        '🔴', '#ef4444', 3],
+      ['tho',  'Hành Thổ — Tỳ/Vị · vị Ngọt · màu Vàng',             '🟡', '#f59e0b', 4],
+    ].forEach(([key, label, icon, color, order_num]) =>
+      db.run('INSERT INTO pillars (key, label, icon, color, order_num) VALUES (?,?,?,?,?)', [key, label, icon, color, order_num]));
+    console.log('  Re-theme migration: replaced business pillars with Ngũ Hành.');
   }
 
   // ── Helpers ────────────────────────────────────────────────
@@ -1170,6 +1449,29 @@ const CHALLENGE_DAYS_TEACHER = [
       'INSERT INTO xp_log (user_id, amount, source, note) VALUES (?,?,?,?)',
       [userId, amount, source, note]
     );
+  }
+
+  // Recompute a user's streak = number of consecutive days (ending today) that have a meal_log.
+  // Returns the new streak. Awards a bonus XP the first time each 7-day milestone is reached.
+  function recomputeStreak(userId) {
+    const set = new Set(
+      db.all("SELECT DISTINCT log_date FROM meal_logs WHERE user_id = ? ORDER BY log_date DESC LIMIT 90", [userId])
+        .map(r => r.log_date)
+    );
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const todayStr = db.get("SELECT date('now','localtime') AS d").d;
+    const cur = new Date(todayStr + 'T12:00:00');
+    // if today not logged yet, count from yesterday so the streak doesn't drop mid-day
+    if (!set.has(iso(cur))) cur.setDate(cur.getDate() - 1);
+    let streak = 0;
+    while (set.has(iso(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+    const prev = db.get('SELECT streak FROM users WHERE id = ?', [userId])?.streak || 0;
+    db.run('UPDATE users SET streak = ? WHERE id = ?', [streak, userId]);
+    // milestone bonus: +10 XP each new multiple of 7, only when crossing upward
+    if (streak > prev && streak % 7 === 0) {
+      addXP(userId, 10, 'streak', `Chuỗi ${streak} ngày ghi nhật ký ăn uống`);
+    }
+    return streak;
   }
 
   function slugify(label) {
@@ -1212,50 +1514,15 @@ const CHALLENGE_DAYS_TEACHER = [
     return { score, issues, hints };
   }
 
-  // IELTS reading questions (mc/tfng/gap_fill/matching) all store correct_answer as a JSON
-  // array of acceptable literal strings, so one comparison covers every question type.
-  function normalizeAnswerStr(s) {
-    return String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
-  }
-
-  function gradeIeltsReadingExercise(questions, answers, maxScore) {
-    const issues = [];
-    const hints = [];
-    let correctCount = 0;
-    questions.forEach((q, i) => {
-      const accepted = JSON.parse(q.correct_answer);
-      const submitted = normalizeAnswerStr(answers[q.id]);
-      const isCorrect = accepted.some(a => normalizeAnswerStr(a) === submitted);
-      if (isCorrect) {
-        correctCount++;
-      } else {
-        issues.push(`Câu ${i + 1}${q.passage_ref ? ' (Bài đọc ' + q.passage_ref + ')' : ''}: "${q.question_text}" — chưa đúng.`);
-        if (q.explanation) hints.push(`Câu ${i + 1}: ${q.explanation}`);
-      }
-    });
-    const score = questions.length ? Math.round((correctCount / questions.length) * maxScore) : 0;
-    return { score, issues, hints };
-  }
-
-  async function gradeExerciseWithGemini({ lessonTitle, exercisePrompt, rubric, maxScore, studentAnswer, ieltsWriting = null }) {
-    const systemPrompt = ieltsWriting
-      ? `Bạn là giám khảo chấm thi IELTS Writing ${ieltsWriting.taskType === 'task1' ? 'Task 1' : 'Task 2'} cho khoá học "${lessonTitle}". Chấm nghiêm túc theo đúng 4 tiêu chí chính thức của IELTS Writing: Task Response/Achievement, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.
-
-Trả lời DUY NHẤT một JSON object theo đúng format sau, không thêm chữ nào khác trước/sau:
-{"score": <số nguyên 0-${maxScore}, quy đổi tương ứng với band_overall>, "band_overall": <số thập phân 0-9, bước 0.5>, "band_task_response": <số thập phân 0-9, bước 0.5>, "band_coherence_cohesion": <số thập phân 0-9, bước 0.5>, "band_lexical_resource": <số thập phân 0-9, bước 0.5>, "band_grammar": <số thập phân 0-9, bước 0.5>, "issues": [<chuỗi tiếng Việt, mỗi phần tử là 1 lỗi/điểm yếu cụ thể trong bài làm>], "hints": [<chuỗi tiếng Việt, mỗi phần tử là 1 gợi ý để học viên TỰ cải thiện>]}
-
-QUY TẮC BẮT BUỘC:
-- Chấm band theo đúng thang điểm và tiêu chí chính thức IELTS Writing, không dễ dãi.
-- "issues" phải cụ thể, chỉ đúng chỗ yếu trong bài làm của học viên, không nói chung chung.
-- "hints" phải mang tính gợi mở, KHÔNG viết sẵn câu/đoạn văn thay học viên.`
-      : `Bạn là trợ giảng chấm bài tập cho khoá học "${lessonTitle}". Chấm nghiêm túc, công bằng theo đúng tiêu chí chấm điểm được cung cấp.
+  async function gradeExerciseWithGemini({ lessonTitle, exercisePrompt, rubric, maxScore, studentAnswer }) {
+    const systemPrompt = `Bạn là trợ giảng chấm bài tập cho khoá học "${lessonTitle}". Chấm nghiêm túc, công bằng theo đúng tiêu chí chấm điểm được cung cấp.
 
 Trả lời DUY NHẤT một JSON object theo đúng format sau, không thêm chữ nào khác trước/sau:
 {"score": <số nguyên 0-${maxScore}>, "issues": [<chuỗi tiếng Việt, mỗi phần tử là 1 lỗi/điểm sai cụ thể trong bài làm>], "hints": [<chuỗi tiếng Việt, mỗi phần tử là 1 gợi ý/câu hỏi dẫn dắt để học viên TỰ nhận ra và TỰ sửa lỗi>]}
 
 QUY TẮC BẮT BUỘC:
 - "issues" phải cụ thể, chỉ đúng chỗ sai trong bài làm của học viên, không nói chung chung.
-- "hints" phải mang tính gợi mở, đặt câu hỏi hoặc chỉ ra hướng suy nghĩ — TUYỆT ĐỐI KHÔNG được viết ra đáp án đúng, lời giải hoàn chỉnh, hay đoạn code/văn bản sửa sẵn. Mục tiêu là để học viên tự hiểu và tự sửa, không phải giải hộ.
+- "hints" phải mang tính gợi mở, đặt câu hỏi hoặc chỉ ra hướng suy nghĩ — TUYỆT ĐỐI KHÔNG được viết ra đáp án đúng, lời giải hoàn chỉnh, hay đoạn văn bản sửa sẵn. Mục tiêu là để học viên tự hiểu và tự sửa, không phải giải hộ.
 - Nếu bài làm tốt/đúng hoàn toàn, "issues" và "hints" có thể là mảng rỗng.`;
 
     const userPrompt = `ĐỀ BÀI (học viên thấy):\n${exercisePrompt}\n\nTIÊU CHÍ CHẤM ĐIỂM (nội bộ, học viên không thấy):\n${rubric || '(không có tiêu chí riêng, chấm theo mức độ đúng/đủ so với đề bài)'}\n\nBÀI LÀM CỦA HỌC VIÊN:\n${studentAnswer}`;
@@ -1279,129 +1546,13 @@ QUY TẮC BẮT BUỘC:
 
       const toStrArray = v => Array.isArray(v) ? v.map(x => String(x).trim()).filter(Boolean) : (v ? [String(v).trim()] : []);
 
-      let bandFeedback = null;
-      if (ieltsWriting) {
-        const clampBand = v => {
-          const n = Number(v);
-          if (!Number.isFinite(n)) return null;
-          return Math.max(0, Math.min(9, Math.round(n * 2) / 2));
-        };
-        bandFeedback = {
-          band_overall: clampBand(parsed.band_overall),
-          band_task_response: clampBand(parsed.band_task_response),
-          band_coherence_cohesion: clampBand(parsed.band_coherence_cohesion),
-          band_lexical_resource: clampBand(parsed.band_lexical_resource),
-          band_grammar: clampBand(parsed.band_grammar),
-        };
-      }
-
-      return { ok: true, score, issues: toStrArray(parsed.issues), hints: toStrArray(parsed.hints), raw, bandFeedback };
+      return { ok: true, score, issues: toStrArray(parsed.issues), hints: toStrArray(parsed.hints), raw };
     } catch (err) {
       console.error('[ExerciseGrade] Error:', err.message);
       return { ok: false, error: err.message };
     }
   }
 
-  // Reads a raw IELTS test dump (extracted from an uploaded PDF/DOCX) and asks the AI to
-  // restructure it into the exact { test, passages, questions } shape POST /ielts-tests/import
-  // expects. The result is returned to the admin for review — it is never saved automatically,
-  // since a misread answer key would silently mis-grade every student who takes the test.
-  async function extractIeltsTestFromText(rawText) {
-    const systemPrompt = `Bạn là trợ lý chuyển đổi đề thi IELTS từ văn bản thô (trích từ file PDF/DOCX, có thể lộn xộn định dạng) sang JSON có cấu trúc để nhập vào ngân hàng đề.
-
-Trước tiên xác định đây là đề dạng nào:
-- LISTENING: văn bản là TRANSCRIPT/lời thoại của audio — ưu tiên chọn skill này nếu thấy BẤT KỲ dấu hiệu nào sau: tiêu đề/đầu file có chữ "Listening", "Transcript", "Audio", "Section" (SECTION 1/2/3/4 kiểu IELTS Listening thật); nội dung là hội thoại giữa 2 người có nhãn tên/vai (VD "RECEPTIONIST:", "CALLER:", "MAN:", "WOMAN:") hoặc một bài nói/thuyết trình liên tục (monologue); câu hỏi dạng "complete the notes/form/table" hoặc điền số điện thoại/tên/địa chỉ nghe được.
-- READING: đoạn văn/passage dạng bài báo, bài luận thông tin để ĐỌC (không có nhãn người nói, không phải hội thoại), kèm câu hỏi và đáp án.
-- WRITING: chỉ có 1 đề bài luận/report, không có câu hỏi trắc nghiệm hay đáp án đúng/sai.
-Nếu văn bản là hội thoại/transcript nhưng bạn không chắc, VẪN chọn "listening" chứ không phải "reading" — đề reading thật của IELTS không bao giờ ở dạng hội thoại có nhãn người nói.
-
-Trả lời DUY NHẤT một JSON object theo đúng schema sau, không thêm chữ nào khác trước/sau, không dùng markdown code fence:
-{
-  "test": {
-    "skill": "reading" hoặc "listening" hoặc "writing",
-    "title": "<tên đề, tự đặt nếu văn bản không có tên rõ ràng>",
-    "description": "<hướng dẫn ngắn cho học viên, có thể để trống>",
-    "time_limit_minutes": <số phút, mặc định 60 cho reading, 30 cho listening, 40 cho writing task2 hoặc 20 cho task1>,
-    "max_score": <reading/listening: bằng tổng số câu hỏi tìm được; writing: 100>,
-    "task_type": "task1" hoặc "task2" (CHỈ set nếu skill=writing, ngược lại null),
-    "writing_prompt": "<đề bài luận, CHỈ nếu skill=writing, ngược lại chuỗi rỗng>",
-    "writing_rubric": "<tiêu chí chấm điểm theo 4 tiêu chí IELTS Writing (Task Response, Coherence & Cohesion, Lexical Resource, Grammar) — nếu văn bản không có sẵn, tự đề xuất tiêu chí chuẩn IELTS, CHỈ nếu skill=writing>",
-    "writing_image_url": ""
-  },
-  "passages": [
-    { "ref": "1", "title": "<reading: tên bài đọc — listening: tên phần, VD 'Part 1'>", "body_html": "<toàn bộ nội dung bài đọc/transcript, bọc mỗi đoạn hoặc mỗi câu thoại trong thẻ <p>...</p>, escape đúng HTML — GIỐNG HỆT cách làm cho reading, kể cả khi skill=listening>", "video_url": "<CHỈ nếu skill=listening, luôn để chuỗi rỗng vì không có sẵn link video từ file văn bản — người quản trị sẽ tự dán link sau>" }
-  ],
-  "questions": [
-    {
-      "order_num": <số thứ tự câu hỏi>,
-      "passage_ref": "<ref của passage/phần câu này thuộc về>",
-      "question_type": "mc" | "tfng" | "gap_fill" | "matching",
-      "question_text": "<nội dung câu hỏi, KHÔNG kèm số thứ tự phía trước>",
-      "options": [<mảng các lựa chọn dạng chuỗi, bao gồm cả nhãn A/B/C/D nếu có — chỉ dùng cho mc/tfng/matching, để null nếu gap_fill>],
-      "correct_answer": [<mảng các chuỗi đáp án được chấp nhận — với mc dùng ĐÚNG NGUYÊN VĂN 1 trong các chuỗi ở "options", với tfng dùng "TRUE"/"FALSE"/"NOT GIVEN", với gap_fill liệt kê mọi cách viết đúng nếu có đề cập>],
-      "explanation": "<giải thích ngắn tại sao đây là đáp án đúng, nếu văn bản có đủ thông tin, nếu không để trống>"
-    }
-  ]
-}
-
-QUY TẮC BẮT BUỘC:
-- "passages" và "questions" để mảng RỖNG [] nếu skill là "writing".
-- Nếu skill là "reading"/"listening" mà không tìm thấy đáp án rõ ràng cho 1 câu hỏi nào đó, vẫn PHẢI đưa câu hỏi đó vào với "correct_answer" là suy đoán hợp lý nhất, và bắt buộc ghi "CẦN KIỂM TRA LẠI ĐÁP ÁN" ở đầu "explanation" của câu đó để người dùng biết mà rà soát lại — TUYỆT ĐỐI không được bỏ sót câu hỏi.
-- Giữ nguyên văn bản gốc (tiếng Anh) của bài đọc/transcript và câu hỏi, không dịch, không tóm tắt, không bịa thêm nội dung.
-- Mọi chuỗi trong JSON PHẢI escape đúng chuẩn JSON (dấu " thành \\", xuống dòng thành \\n) — đây là lỗi hay gặp nhất, hãy đặc biệt cẩn thận với các đoạn transcript/passage dài có chứa dấu ngoặc kép.
-- Chỉ trả về JSON hợp lệ, không giải thích gì thêm ngoài JSON.`;
-
-    const MAX_CHARS = 50000;
-    const truncated = rawText.length > MAX_CHARS;
-    const userPrompt = `NỘI DUNG FILE ĐỀ THI (văn bản thô trích xuất từ PDF/DOCX):\n\n${rawText.slice(0, MAX_CHARS)}${truncated ? '\n\n[... văn bản đã bị cắt bớt do quá dài ...]' : ''}`;
-
-    try {
-      // This is a straightforward text→JSON restructuring task, not a reasoning task — Gemini
-      // 2.5's internal "thinking" tokens otherwise eat into the same maxTokens budget as the
-      // actual JSON output, which is what was truncating large (40+ question) tests mid-string.
-      const result = await callAiChat({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        maxTokens: 60000,
-        disableReasoning: true,
-      });
-      if (!result.ok) return { ok: false, error: result.error };
-
-      const raw = result.text;
-
-      if (result.truncated) {
-        console.error('[IeltsExtract] Truncated: AI response hit max tokens before completing JSON.');
-        return { ok: false, error: 'Đề quá dài — AI bị cắt nội dung giữa chừng nên không tạo được JSON hợp lệ. Hãy thử với file ngắn hơn (VD: tách riêng từng Part/passage) rồi thử lại.' };
-      }
-
-      let parsed;
-      try {
-        parsed = extractJsonObject(raw);
-      } catch (parseErr) {
-        console.error('[IeltsExtract] JSON parse error:', parseErr.message);
-        return { ok: false, error: 'AI trả về JSON không hợp lệ (có thể do nội dung quá dài hoặc phức tạp). Hãy thử lại, hoặc chia nhỏ file rồi thử từng phần.' };
-      }
-
-      if (!parsed.test || !['reading', 'writing', 'listening'].includes(parsed.test.skill)) {
-        throw new Error('AI không xác định được kỹ năng (reading/writing/listening) hợp lệ.');
-      }
-
-      return {
-        ok: true,
-        extracted: {
-          test: parsed.test,
-          passages: Array.isArray(parsed.passages) ? parsed.passages : [],
-          questions: Array.isArray(parsed.questions) ? parsed.questions : [],
-        },
-        truncated,
-      };
-    } catch (err) {
-      console.error('[IeltsExtract] Error:', err.message);
-      return { ok: false, error: 'AI không đọc được nội dung file: ' + err.message };
-    }
-  }
 
   // ── Admin middleware ───────────────────────────────────────
   // Accepts either the shared ADMIN_KEY (master/bootstrap) or a per-admin
@@ -1434,7 +1585,7 @@ QUY TẮC BẮT BUỘC:
     const to = req.query.to || ADMIN_EMAIL;
     await sendEmail({
       to,
-      subject: '🧪 Test email từ Cộng đồng IELTS Chương Cà Mau',
+      subject: `🧪 Test email từ ${COMMUNITY_NAME}`,
       html: emailWrap('Email test thành công!', `
         <p>Email system đang hoạt động bình thường.</p>
         <p>From: <strong>${FROM_EMAIL}</strong></p>
@@ -1503,52 +1654,24 @@ QUY TẮC BẮT BUỘC:
     const lessons = unlocked
       ? db.all(
           `SELECT id, title, content, video_url, duration_min, order_num,
-                  exercise_enabled, exercise_type, exercise_prompt, exercise_max_score, exercise_pass_score, ielts_test_id
+                  exercise_enabled, exercise_type, exercise_prompt, exercise_max_score, exercise_pass_score
            FROM course_lessons WHERE course_id = ? AND status = 'published' ORDER BY order_num ASC, id ASC`,
           [req.params.id]
         ).map(l => {
           if (!l.exercise_enabled) return { ...l, my_submission: null };
           const s = user_id ? db.get(
-            'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, ielts_band_feedback, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
+            'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
             [user_id, l.id]
           ) : null;
           const my_submission = s ? {
             ...s,
             issues: JSON.parse(s.issues || '[]'),
             hints: JSON.parse(s.hints || '[]'),
-            ielts_band_feedback: s.ielts_band_feedback ? JSON.parse(s.ielts_band_feedback) : null,
           } : null;
           const result = { ...l, my_submission };
           const needsForm = !my_submission || my_submission.status === 'needs_resubmit';
 
-          if (l.ielts_test_id) {
-            const test = db.get(
-              'SELECT id, skill, title, description, time_limit_minutes, max_score, passages, task_type, writing_prompt, writing_image_url, chatgpt_url FROM ielts_tests WHERE id = ?',
-              [l.ielts_test_id]
-            );
-            result.ielts_test = test ? { ...test, passages: test.passages ? JSON.parse(test.passages) : [] } : null;
-            if (test && (test.skill === 'reading' || test.skill === 'listening')) {
-              const questions = db.all(
-                'SELECT id, question_type, passage_ref, question_text, options, order_num FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC',
-                [test.id]
-              );
-              if (needsForm) {
-                result.ielts_questions = questions.map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null }));
-              } else {
-                const fullQuestions = db.all('SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC', [test.id]);
-                const answers = JSON.parse(s.answer_text || '{}');
-                my_submission.ielts_review = fullQuestions.map(q => ({
-                  question_text: q.question_text,
-                  question_type: q.question_type,
-                  passage_ref: q.passage_ref,
-                  options: q.options ? JSON.parse(q.options) : null,
-                  submitted: answers[q.id] ?? null,
-                  correct_answer: JSON.parse(q.correct_answer),
-                  explanation: q.explanation,
-                }));
-              }
-            }
-          } else if (l.exercise_type === 'quiz') {
+          if (l.exercise_type === 'quiz') {
             const questions = db.all(
               'SELECT id, question_text, options, correct_index, order_num FROM lesson_exercise_questions WHERE lesson_id = ? ORDER BY order_num ASC, id ASC',
               [l.id]
@@ -1621,43 +1744,9 @@ QUY TẮC BẮT BUỘC:
       });
     }
 
-    let answerText, score, issues, hints, raw = '', maxScore = lesson.exercise_max_score || 100, bandFeedback = null;
+    let answerText, score, issues, hints, raw = '', maxScore = lesson.exercise_max_score || 100;
 
-    if (lesson.ielts_test_id) {
-      const test = db.get('SELECT * FROM ielts_tests WHERE id = ?', [lesson.ielts_test_id]);
-      if (!test) return res.status(404).json({ error: 'Đề thi không tồn tại.' });
-      maxScore = test.max_score || maxScore;
-
-      if (test.skill === 'reading' || test.skill === 'listening') {
-        if (!answers || typeof answers !== 'object') return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
-        const questions = db.all('SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC', [test.id]);
-        if (!questions.length) return res.status(400).json({ error: 'Đề thi chưa có câu hỏi.' });
-        const normalizedAnswers = {};
-        questions.forEach(q => { if (answers[q.id] !== undefined) normalizedAnswers[q.id] = String(answers[q.id]); });
-        if (Object.keys(normalizedAnswers).length < questions.length)
-          return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
-        const graded = gradeIeltsReadingExercise(questions, normalizedAnswers, maxScore);
-        answerText = JSON.stringify(normalizedAnswers);
-        score = graded.score; issues = graded.issues; hints = graded.hints;
-      } else if (test.skill === 'speaking') {
-        // Self-report: no AI grading — clicking "Đã hoàn thành" always awards full score.
-        answerText = 'Đã hoàn thành luyện nói.';
-        score = maxScore; issues = []; hints = [];
-      } else {
-        if (!answer || !answer.trim()) return res.status(400).json({ error: 'Vui lòng nhập nội dung bài làm.' });
-        const result = await gradeExerciseWithGemini({
-          lessonTitle: lesson.title,
-          exercisePrompt: test.writing_prompt || '',
-          rubric: test.writing_rubric || '',
-          maxScore,
-          studentAnswer: answer.trim(),
-          ieltsWriting: { taskType: test.task_type },
-        });
-        if (!result.ok) return res.status(502).json({ error: 'AI chấm bài gặp lỗi, vui lòng thử lại sau.' });
-        answerText = answer.trim(); score = result.score; issues = result.issues; hints = result.hints; raw = result.raw || '';
-        bandFeedback = result.bandFeedback;
-      }
-    } else if (lesson.exercise_type === 'quiz') {
+    if (lesson.exercise_type === 'quiz') {
       if (!answers || typeof answers !== 'object') return res.status(400).json({ error: 'Vui lòng trả lời tất cả câu hỏi.' });
       const questions = db.all('SELECT * FROM lesson_exercise_questions WHERE lesson_id = ? ORDER BY order_num ASC, id ASC', [lesson.id]);
       if (!questions.length) return res.status(400).json({ error: 'Bài tập trắc nghiệm chưa có câu hỏi.' });
@@ -1685,24 +1774,23 @@ QUY TẮC BẮT BUỘC:
     const alreadyAwarded = existing ? existing.xp_awarded > 0 : false;
     const newlyAwardedXp = (passed && !alreadyAwarded) ? (lesson.exercise_xp_reward || 0) : 0;
     const xp_awarded = alreadyAwarded ? existing.xp_awarded : newlyAwardedXp;
-    const bandFeedbackJson = bandFeedback ? JSON.stringify(bandFeedback) : null;
 
     if (existing) {
       db.run(
         `UPDATE lesson_exercise_submissions
-           SET answer_text=?, score=?, max_score=?, pass_score=?, passed=?, issues=?, hints=?, ai_feedback_raw=?, ielts_band_feedback=?, xp_awarded=?,
+           SET answer_text=?, score=?, max_score=?, pass_score=?, passed=?, issues=?, hints=?, ai_feedback_raw=?, xp_awarded=?,
                status='graded', teacher_note=NULL, submitted_at=datetime('now','localtime')
          WHERE id=?`,
         [answerText, score, maxScore, lesson.exercise_pass_score, passed,
-         JSON.stringify(issues), JSON.stringify(hints), raw, bandFeedbackJson, xp_awarded, existing.id]
+         JSON.stringify(issues), JSON.stringify(hints), raw, xp_awarded, existing.id]
       );
     } else {
       db.run(
         `INSERT INTO lesson_exercise_submissions
-          (user_id, lesson_id, course_id, answer_text, score, max_score, pass_score, passed, issues, hints, ai_feedback_raw, ielts_band_feedback, xp_awarded)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          (user_id, lesson_id, course_id, answer_text, score, max_score, pass_score, passed, issues, hints, ai_feedback_raw, xp_awarded)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
         [user_id, lesson.id, lesson.course_id, answerText, score, maxScore, lesson.exercise_pass_score,
-         passed, JSON.stringify(issues), JSON.stringify(hints), raw, bandFeedbackJson, xp_awarded]
+         passed, JSON.stringify(issues), JSON.stringify(hints), raw, xp_awarded]
       );
     }
 
@@ -1711,7 +1799,7 @@ QUY TẮC BẮT BUỘC:
     }
 
     const saved = db.get(
-      'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, ielts_band_feedback, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
+      'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
       [user_id, lesson.id]
     );
     res.status(201).json({
@@ -1720,9 +1808,34 @@ QUY TẮC BẮT BUỘC:
         ...saved,
         issues: JSON.parse(saved.issues || '[]'),
         hints: JSON.parse(saved.hints || '[]'),
-        ielts_band_feedback: saved.ielts_band_feedback ? JSON.parse(saved.ielts_band_feedback) : null,
       },
     });
+  });
+
+  // ── Lesson discussion (comments right under a course lesson) ────────
+  app.get('/api/courses/lessons/:lessonId/comments', (req, res) => {
+    const comments = db.all(
+      `SELECT c.id, c.parent_id, c.content, c.created_at,
+              u.id AS author_id, u.first_name, u.last_name, u.level
+       FROM lesson_comments c JOIN users u ON u.id = c.user_id
+       WHERE c.lesson_id = ?
+       ORDER BY COALESCE(c.parent_id, c.id), c.id ASC`,
+      [req.params.lessonId]
+    );
+    res.json({ comments });
+  });
+
+  app.post('/api/courses/lessons/:lessonId/comments', (req, res) => {
+    const lesson = db.get('SELECT id FROM course_lessons WHERE id = ?', [req.params.lessonId]);
+    if (!lesson) return res.status(404).json({ error: 'Bài học không tồn tại.' });
+
+    const { user_id, content, parent_id = null } = req.body;
+    if (!user_id || !content?.trim()) return res.status(400).json({ error: 'Thiếu thông tin' });
+
+    db.run('INSERT INTO lesson_comments (lesson_id, user_id, content, parent_id) VALUES (?,?,?,?)',
+      [lesson.id, user_id, content.trim(), parent_id || null]);
+    addXP(user_id, 2, 'lesson_comment', 'Bình luận bài học');
+    res.json({ success: true });
   });
 
   // Register
@@ -1743,7 +1856,7 @@ QUY TẮC BẮT BUỘC:
     const hash   = bcrypt.hashSync(password, 10);
     const result = db.run(
       'INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?,?,?,?)',
-      [first_name, last_name, email, hash]
+      [toTitleCase(first_name), toTitleCase(last_name), email, hash]
     );
 
     const userId = result.lastInsertRowid;
@@ -1758,18 +1871,18 @@ QUY TẮC BẮT BUỘC:
     // Welcome email (fire-and-forget after response)
     sendEmail({
       to: email,
-      subject: '🎉 Chào mừng bạn đến với Cộng đồng IELTS Chương Cà Mau!',
+      subject: `🎉 Chào mừng bạn đến với ${COMMUNITY_NAME}!`,
       html: emailWrap('Chào mừng đến với cộng đồng!', `
-        <p>Xin chào <strong>${first_name} ${last_name}</strong>,</p>
-        <p>Bạn đã đăng ký thành công tài khoản tại <strong>Cộng đồng IELTS Chương Cà Mau</strong>.</p>
+        <p>Xin chào <strong>${user.first_name} ${user.last_name}</strong>,</p>
+        <p>Bạn đã đăng ký thành công tài khoản tại <strong>${COMMUNITY_NAME}</strong>.</p>
         <p>Với tài khoản này, bạn có thể:</p>
         <ul style="color:#475569;line-height:2">
-          <li>📝 Chia sẻ bài viết và học hỏi từ cộng đồng</li>
-          <li>🏆 Tham gia Thử Thách 21 Ngày</li>
-          <li>🛒 Mua sắm sản phẩm số từ các thành viên</li>
-          <li>📚 Truy cập khoá học và tài liệu độc quyền</li>
+          <li>📝 Chia sẻ bữa ăn và học hỏi từ cộng đồng</li>
+          <li>🌱 Tham gia Thử Thách 28 Ngày Dưỡng Hóa</li>
+          <li>🍚 Tra cứu thực phẩm theo màu – vị – ngũ hành</li>
+          <li>📗 Truy cập khoá học và công thức độc quyền</li>
         </ul>
-        <a class="btn" href="https://chuongcm.com/feed.html">Vào Bảng Tin Ngay</a>
+        <a class="btn" href="${SITE_URL}/feed.html">Vào Bảng Tin Ngay</a>
         <p>Nếu có bất kỳ câu hỏi nào, hãy đăng lên cộng đồng — chúng tôi luôn sẵn sàng hỗ trợ!</p>
       `)
     });
@@ -1794,7 +1907,8 @@ QUY TẮC BẮT BUỘC:
     res.json({
       success: true,
       user: { id: user.id, first_name: user.first_name, last_name: user.last_name,
-              email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin },
+              email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin,
+              ttm_intake_done_at: user.ttm_intake_done_at || null },
     });
   });
 
@@ -1817,8 +1931,8 @@ QUY TẮC BẮT BUỘC:
     if (!gUser.email_verified) return res.status(401).json({ error: 'Email Google chưa xác minh.' });
 
     const { sub: google_id, email, given_name, family_name, picture } = gUser;
-    const first_name = given_name || (gUser.name || '').split(' ').pop() || 'Thành viên';
-    const last_name  = family_name || (gUser.name || '').split(' ').slice(0, -1).join(' ') || '';
+    const first_name = toTitleCase(given_name || (gUser.name || '').split(' ').pop() || 'Thành viên');
+    const last_name  = toTitleCase(family_name || (gUser.name || '').split(' ').slice(0, -1).join(' ') || '');
 
     let user = db.get('SELECT * FROM users WHERE google_id = ?', [google_id]);
 
@@ -1839,11 +1953,11 @@ QUY TẮC BẮT BUỘC:
         user = db.get('SELECT * FROM users WHERE id = ?', [result.lastInsertRowid]);
         sendEmail({
           to: email,
-          subject: '🎉 Chào mừng bạn đến với Cộng đồng IELTS Chương Cà Mau!',
+          subject: `🎉 Chào mừng bạn đến với ${COMMUNITY_NAME}!`,
           html: emailWrap('Chào mừng đến với cộng đồng!', `
             <p>Xin chào <strong>${first_name}</strong>,</p>
-            <p>Bạn đã đăng ký thành công tài khoản tại <strong>Cộng đồng IELTS Chương Cà Mau</strong> qua Google.</p>
-            <a class="btn" href="https://chuongcm.com/feed.html">Vào Bảng Tin Ngay</a>
+            <p>Bạn đã đăng ký thành công tài khoản tại <strong>${COMMUNITY_NAME}</strong> qua Google.</p>
+            <a class="btn" href="${SITE_URL}/feed.html">Vào Bảng Tin Ngay</a>
           `)
         });
       }
@@ -1858,6 +1972,7 @@ QUY TẮC BẮT BUỘC:
         id: user.id, first_name: user.first_name, last_name: user.last_name,
         email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin,
         avatar: user.avatar_url || picture,
+        ttm_intake_done_at: user.ttm_intake_done_at || null,
       },
     });
   });
@@ -1880,10 +1995,10 @@ QUY TẮC BẮT BUỘC:
     db.run('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?,?,?)',
       [user.id, token, expires_at]);
 
-    const resetLink = `https://chuongcm.com/reset-password.html?token=${token}`;
+    const resetLink = `${SITE_URL}/reset-password.html?token=${token}`;
     sendEmail({
       to: user.email,
-      subject: '🔑 Đặt lại mật khẩu — Cộng đồng IELTS Chương Cà Mau',
+      subject: `🔑 Đặt lại mật khẩu — ${COMMUNITY_NAME}`,
       html: emailWrap('Đặt lại mật khẩu', `
         <p>Xin chào <strong>${user.first_name}</strong>,</p>
         <p>Có yêu cầu đặt lại mật khẩu cho tài khoản này. Bấm nút bên dưới để đặt mật khẩu mới (link có hiệu lực trong 1 giờ):</p>
@@ -2113,11 +2228,11 @@ QUY TẮC BẮT BUỘC:
     if (!uRow) return;
     const uid = uRow.id;
     const samples = [
-      ['How to Win With AI in 2026', 'Chia sẻ video hay về chiến lược dùng AI để thắng trong năm 2026. AI không phải công cụ — đó là đối tác chiến lược.', 'traffic', 'post', 33, 31],
-      ['AI first mindset', 'Chỉ một khi bạn muốn làm, thì 1 bà nội trợ cũng có thể làm được bài tập theo SOP hướng dẫn, và AI first!!!', 'delivery', 'post', 26, 25],
-      ['Giới thiệu bản thân — Ngày 1 Challenge', 'Hello mọi người! Em là người mới tham gia cộng đồng. Rất vui được học AI Agent cùng các bạn. 🙌', 'offer', 'cot', 30, 56],
-      ['Kickoff: AI Agent Challenge 04.2026', 'Thứ tư, 1 tháng 4 · 7:30 – 10:30PM · Asia/Ho_Chi_Minh. Cùng nhau kickoff thử thách tháng 4 nào! 🚀', 'conversion', 'signal', 25, 42],
-      ['Tìm hiểu Prompt Engineering từ A-Z', 'Tổng hợp 20 kỹ thuật prompt engineering hiệu quả nhất hiện tại. Chain-of-thought, few-shot, role prompting...', 'traffic', 'cot', 24, 27],
+      ['Bữa sáng vị chua nuôi Gan (Hành Mộc)', 'Sáng nay mình vắt 1 lát chanh vào nước chấm, ăn kèm lá diếp cá và uống nước cam. Người nhẹ hẳn, đỡ đầy bụng.', 'moc', 'post', 33, 31],
+      ['Nước chanh gừng mật mía buổi sáng', 'Công thức thải độc Gan + rửa hệ tiêu hóa: 1 lát chanh + vài lát gừng + 1 thìa mật mía + nước ấm, uống lúc bụng đói.', 'moc', 'post', 26, 25],
+      ['Chào cả nhà — Ngày 1 Dưỡng Hóa', 'Em mới tham gia cộng đồng, bắt đầu 28 ngày ăn theo Ngũ Hành. Rất mong được đồng hành cùng mọi người 🙌', 'tho', 'cot', 30, 56],
+      ['Kickoff: Thử thách 28 ngày Dưỡng Hóa', 'Cùng nhau bắt đầu hành trình thanh lọc và cân bằng cơ thể. Mỗi ngày một bữa ăn đúng màu – đúng vị – đúng Hành 🌱', 'hoa', 'signal', 25, 42],
+      ['Cháo bổ âm — món nền tảng nên biết', 'Cháo bổ âm nấu loãng, nhai kỹ để nước bọt (ngọc dịch) thấm vào ruột non, giúp tạo máu và làm dịu cơ thể khi nhiệt.', 'thuy', 'cot', 24, 27],
     ];
     samples.forEach(([title, content, pillar, type, likes, comments]) =>
       db.run(
@@ -2129,32 +2244,71 @@ QUY TẮC BẮT BUỘC:
   };
 
   const postCount = db.get('SELECT COUNT(*) AS n FROM posts').n;
-  if (postCount === 0) seedPosts();
+  if (postCount === 0) {
+    seedPosts();
+  } else if (db.get("SELECT id FROM posts WHERE title LIKE 'How to Win With AI%' OR title LIKE '%Prompt Engineering%' OR title LIKE '%AI Agent Challenge%' OR title LIKE '%AI first mindset%'")) {
+    // Re-theme: remove leftover AI-Agent sample posts (only while site has no real activity yet)
+    const totalComments = db.get('SELECT COUNT(*) AS n FROM comments').n;
+    const totalSubs = db.get('SELECT COUNT(*) AS n FROM challenge_submissions').n;
+    if (postCount <= 5 && totalComments === 0 && totalSubs === 0) {
+      db.run('DELETE FROM posts');
+      seedPosts();
+      console.log('  Re-theme migration: replaced sample posts.');
+    }
+  }
 
+  const NGUHANH_CHALLENGE_TITLE = '28 Ngày Dưỡng Hóa – Mở Khóa Cơ Thể';
+  const NGUHANH_CHALLENGE_DESC = 'Ăn uống theo Ngũ Hành để thanh lọc và cân bằng cơ thể. Mỗi ngày một quy trình 3 buổi cụ thể: Bổ sung → Đào thải → Lưu thông Khí Huyết → Duy trì.';
   const challengeCount = db.get('SELECT COUNT(*) AS n FROM challenges').n;
   if (challengeCount === 0) {
     db.run(
-      `INSERT INTO challenges (id, title, description, duration, status, cover_color) VALUES (1,?,?,21,'active','#0ea5e9')`,
-      ['21 Ngày Làm Chủ AI Agent', 'Thử thách thực chiến từ prompt engineering đến deploy agent thật. Mỗi ngày một task cụ thể, học qua làm.']
+      `INSERT INTO challenges (id, title, description, duration, status, cover_color) VALUES (1,?,?,28,'active','#10b981')`,
+      [NGUHANH_CHALLENGE_TITLE, NGUHANH_CHALLENGE_DESC]
     );
     db.exec('UPDATE challenge_days SET challenge_id = 1');
     console.log('  Seeded default challenge.');
+  } else {
+    // Re-theme migration: rename the flagship challenge #1 and drop the old teacher challenge
+    const ch1 = db.get('SELECT title FROM challenges WHERE id = 1');
+    if (ch1 && /AI Agent|Làm Chủ|21 Ngày/i.test(ch1.title || '')) {
+      db.run('UPDATE challenges SET title = ?, description = ?, duration = 28, cover_color = ? WHERE id = 1',
+        [NGUHANH_CHALLENGE_TITLE, NGUHANH_CHALLENGE_DESC, '#10b981']);
+      db.run("DELETE FROM challenge_days WHERE challenge_id IN (SELECT id FROM challenges WHERE id != 1 AND (title LIKE '%AI Agent%' OR title LIKE '%Giáo Viên%'))");
+      db.run("DELETE FROM challenges WHERE id != 1 AND (title LIKE '%AI Agent%' OR title LIKE '%Giáo Viên%')");
+      console.log('  Re-theme migration: renamed flagship challenge, removed AI-Agent challenges.');
+    }
   }
 
-  const teacherChallengeTitle = '21 Ngày Làm Chủ AI Agent Dành Cho Giáo Viên';
-  const teacherChallenge = db.get('SELECT id FROM challenges WHERE title = ?', [teacherChallengeTitle]);
-  if (!teacherChallenge) {
-    const { lastInsertRowid: teacherChallengeId } = db.run(
-      `INSERT INTO challenges (title, description, duration, status, cover_color) VALUES (?,?,21,'active','#f59e0b')`,
-      [teacherChallengeTitle, 'Thử thách thực chiến dành riêng cho giáo viên: xây thương hiệu cá nhân, hệ thống dạy học tự động, và AI Agent thật — từ landing page đến lớp học vận hành bằng AI.']
-    );
-    CHALLENGE_DAYS_TEACHER.forEach(([num, title, desc, instructions, xp]) =>
-      db.run(
-        'INSERT INTO challenge_days (challenge_id, day_number, title, description, instructions, xp_reward) VALUES (?,?,?,?,?,?)',
-        [teacherChallengeId, num, title, desc, instructions, xp]
-      )
-    );
-    console.log('  Seeded teacher challenge (21 days).');
+  // Seed Ngũ Hành courses (public, free) if none exist yet
+  const courseCount = db.get('SELECT COUNT(*) AS n FROM courses').n;
+  if (courseCount === 0) {
+    COURSE_SEED.forEach(([title, description, cover, lessons], ci) => {
+      const c = db.run(
+        "INSERT INTO courses (title, description, cover_color, status, instructor, order_num, visibility, price) VALUES (?,?,?,'published',?,?,'public',0)",
+        [title, description, cover, 'Điền Viên Đường', ci]
+      );
+      lessons.forEach(([lt, lc, dur], li) => {
+        db.run(
+          "INSERT INTO course_lessons (course_id, title, content, duration_min, order_num, status) VALUES (?,?,?,?,?,'published')",
+          [c.lastInsertRowid, lt, lc, dur || 0, li]
+        );
+      });
+    });
+    console.log(`  Seeded ${COURSE_SEED.length} Ngũ Hành courses.`);
+  }
+
+  // Seed foods lookup + recipe library if empty
+  if (db.get('SELECT COUNT(*) AS n FROM foods').n === 0) {
+    FOOD_SEED.forEach(([name, element, color, taste, nature, organ, note], i) =>
+      db.run('INSERT INTO foods (name, element, color, taste, nature, organ, note, order_num) VALUES (?,?,?,?,?,?,?,?)',
+        [name, element, color, taste, nature, organ, note, i]));
+    console.log(`  Seeded ${FOOD_SEED.length} foods.`);
+  }
+  if (db.get('SELECT COUNT(*) AS n FROM recipes').n === 0) {
+    RECIPE_SEED.forEach(([title, tags, buoi, summary, ingredients, steps, dung_khi, note], i) =>
+      db.run('INSERT INTO recipes (title, element_tags, buoi, summary, ingredients, steps, dung_khi, note, order_num) VALUES (?,?,?,?,?,?,?,?,?)',
+        [title, tags, buoi, summary, ingredients, steps, dung_khi, note, i]));
+    console.log(`  Seeded ${RECIPE_SEED.length} recipes.`);
   }
 
   // ══════════════════════════════════════════════════════════
@@ -2496,8 +2650,7 @@ QUY TẮC BẮT BUỘC:
     db.run('UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?', [req.params.id]);
     const post = db.get('SELECT user_id FROM posts WHERE id = ?', [req.params.id]);
     if (post && post.user_id !== Number(user_id)) {
-      db.run('UPDATE users SET xp = xp + 2 WHERE id = ?', [user_id]);
-      db.run("INSERT INTO xp_log (user_id, amount, reason) VALUES (?,?,?)", [user_id, 2, 'comment']);
+      addXP(user_id, 2, 'comment', 'Bình luận bài viết');
     }
     res.json({ success: true });
   });
@@ -2732,8 +2885,11 @@ QUY TẮC BẮT BUỘC:
       "SELECT pillar, COUNT(*) AS n FROM posts WHERE user_id = ? GROUP BY pillar",
       [req.params.id]
     );
-    const pillar_counts = { offer: 0, traffic: 0, conversion: 0, delivery: 0, continuity: 0 };
-    pillarRows.forEach(r => { if (r.pillar in pillar_counts) pillar_counts[r.pillar] = r.n; });
+    // Keyed dynamically off whatever pillar keys posts actually use — not a
+    // hardcoded whitelist — so admin-created/renamed pillars (see
+    // /api/admin/pillars) are always counted correctly.
+    const pillar_counts = {};
+    pillarRows.forEach(r => { if (r.pillar) pillar_counts[r.pillar] = r.n; });
 
     res.json({ ...user, completed_days, post_count, cot_count, pillar_counts });
   });
@@ -2751,9 +2907,9 @@ QUY TẮC BẮT BUỘC:
     const { first_name, last_name, bio, location, phone, social_links } = req.body;
     if (first_name !== undefined) {
       if (!String(first_name).trim()) return res.status(400).json({ error: 'Tên không được để trống.' });
-      db.run('UPDATE users SET first_name = ? WHERE id = ?', [String(first_name).trim(), targetId]);
+      db.run('UPDATE users SET first_name = ? WHERE id = ?', [toTitleCase(first_name), targetId]);
     }
-    if (last_name !== undefined)  db.run('UPDATE users SET last_name = ? WHERE id = ?', [String(last_name).trim(), targetId]);
+    if (last_name !== undefined)  db.run('UPDATE users SET last_name = ? WHERE id = ?', [toTitleCase(last_name), targetId]);
     if (bio !== undefined)        db.run('UPDATE users SET bio = ? WHERE id = ?', [String(bio).slice(0, 300), targetId]);
     if (location !== undefined)   db.run('UPDATE users SET location = ? WHERE id = ?', [String(location).trim(), targetId]);
     if (phone !== undefined)      db.run('UPDATE users SET phone = ? WHERE id = ?', [String(phone).trim().slice(0, 20), targetId]);
@@ -2906,7 +3062,7 @@ QUY TẮC BẮT BUỘC:
           <div class="rule"><strong>${enrollChallenge.title}</strong></div>
           <p>Yêu cầu của bạn đang <span class="badge">Chờ duyệt</span>. Admin sẽ xem xét và phê duyệt trong vòng <strong>24 giờ</strong>.</p>
           <p>Khi được duyệt, bạn sẽ nhận thêm một email xác nhận kèm nội quy tham gia.</p>
-          <a class="btn" href="https://chuongcm.com/challenge.html">Xem trang thử thách</a>
+          <a class="btn" href="${SITE_URL}/challenge.html">Xem trang thử thách</a>
         `)
       });
     }
@@ -3176,14 +3332,14 @@ QUY TẮC BẮT BUỘC:
             <p>Xin chào <strong>${approvedUser.first_name}</strong>,</p>
             <p>🎉 Tuyệt vời! Bạn đã được duyệt tham gia:</p>
             <div class="rule"><strong>${approvedChallenge.title}</strong></div>
-            <a class="btn" href="https://chuongcm.com/challenge.html">Bắt đầu thử thách ngay</a>
+            <a class="btn" href="${SITE_URL}/challenge.html">Bắt đầu thử thách ngay</a>
             <p style="margin-top:24px"><strong>📋 Nội quy cộng đồng</strong></p>
             <div class="rule">1️⃣ <strong>Cam kết hoàn thành:</strong> Nộp bài đúng hạn mỗi ngày. Mỗi ngày có deadline riêng — hãy kiểm tra trang thử thách.</div>
             <div class="rule">2️⃣ <strong>Nộp bài thật:</strong> Không copy bài của người khác. Screenshot, link, ảnh phải là kết quả thực tế của bạn.</div>
             <div class="rule">3️⃣ <strong>Tương tác tích cực:</strong> Comment, like, chia sẻ bài của thành viên khác. Cộng đồng mạnh khi mọi người cùng nhau.</div>
             <div class="rule">4️⃣ <strong>Tôn trọng nhau:</strong> Không spam, không chỉ trích tiêu cực. Feedback phải mang tính xây dựng.</div>
             <div class="rule">5️⃣ <strong>Chia sẻ học hỏi:</strong> Đăng bài lên Bảng Tin sau khi hoàn thành mỗi ngày — XP sẽ được nhân đôi!</div>
-            <p style="color:#10b981;font-weight:600">Chúc bạn hoàn thành thành công 21 ngày! 💪</p>
+            <p style="color:#10b981;font-weight:600">Chúc bạn hoàn thành trọn vẹn 28 ngày Dưỡng Hóa! 💪</p>
           `)
         });
       }
@@ -3364,6 +3520,134 @@ QUY TẮC BẮT BUỘC:
   app.get('/api/pillars', (_req, res) => {
     const pillars = db.all('SELECT id, key, label, icon, color FROM pillars ORDER BY order_num ASC, created_at ASC');
     res.json({ pillars });
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // NGŨ HÀNH TOOLS — foods lookup / recipes / meal journal
+  // ══════════════════════════════════════════════════════════
+
+  // ── Tra cứu thực phẩm ──────────────────────────────────────
+  app.get('/api/foods', (req, res) => {
+    const { q = '', element = '', color = '', taste = '', nature = '' } = req.query;
+    let sql = 'SELECT id, name, element, color, taste, nature, organ, note FROM foods WHERE 1=1';
+    const params = [];
+    if (q)       { sql += ' AND name LIKE ?'; params.push(`%${q}%`); }
+    if (element) { sql += ' AND element = ?'; params.push(element); }
+    if (color)   { sql += ' AND color = ?'; params.push(color); }
+    if (taste)   { sql += ' AND taste = ?'; params.push(taste); }
+    if (nature)  { sql += ' AND nature = ?'; params.push(nature); }
+    sql += ' ORDER BY element, order_num ASC, name ASC';
+    res.json({ foods: db.all(sql, params) });
+  });
+
+  app.get('/api/admin/foods', requireAdmin, (_req, res) => {
+    res.json({ foods: db.all('SELECT * FROM foods ORDER BY element, order_num ASC, name ASC') });
+  });
+  app.post('/api/admin/foods', requireAdmin, (req, res) => {
+    const { name, element, color, taste, nature, organ, note, order_num } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Thiếu tên thực phẩm.' });
+    const r = db.run(
+      'INSERT INTO foods (name, element, color, taste, nature, organ, note, order_num) VALUES (?,?,?,?,?,?,?,?)',
+      [name.trim(), element || null, color || null, taste || null, nature || null, organ || null, note || null, Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+  app.patch('/api/admin/foods/:id', requireAdmin, (req, res) => {
+    const f = db.get('SELECT id FROM foods WHERE id = ?', [req.params.id]);
+    if (!f) return res.status(404).json({ error: 'Không tìm thấy.' });
+    ['name', 'element', 'color', 'taste', 'nature', 'organ', 'note', 'order_num'].forEach(k => {
+      if (req.body[k] !== undefined)
+        db.run(`UPDATE foods SET ${k} = ? WHERE id = ?`, [k === 'order_num' ? (Number(req.body[k]) || 0) : (req.body[k] || null), req.params.id]);
+    });
+    res.json({ success: true });
+  });
+  app.delete('/api/admin/foods/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM foods WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Thư viện công thức ─────────────────────────────────────
+  app.get('/api/recipes', (req, res) => {
+    const { q = '', element = '', buoi = '' } = req.query;
+    let sql = 'SELECT id, title, element_tags, buoi, summary, dung_khi FROM recipes WHERE 1=1';
+    const params = [];
+    if (q)       { sql += ' AND (title LIKE ? OR summary LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+    if (element) { sql += " AND (',' || element_tags || ',') LIKE ?"; params.push(`%,${element},%`); }
+    if (buoi)    { sql += ' AND buoi = ?'; params.push(buoi); }
+    sql += ' ORDER BY order_num ASC, id ASC';
+    res.json({ recipes: db.all(sql, params) });
+  });
+  app.get('/api/recipes/:id', (req, res) => {
+    const r = db.get('SELECT * FROM recipes WHERE id = ?', [req.params.id]);
+    if (!r) return res.status(404).json({ error: 'Không tìm thấy công thức.' });
+    res.json({ recipe: r });
+  });
+
+  app.get('/api/admin/recipes', requireAdmin, (_req, res) => {
+    res.json({ recipes: db.all('SELECT * FROM recipes ORDER BY order_num ASC, id ASC') });
+  });
+  app.post('/api/admin/recipes', requireAdmin, (req, res) => {
+    const { title, element_tags, buoi, summary, ingredients, steps, dung_khi, note, order_num } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Thiếu tên công thức.' });
+    const r = db.run(
+      'INSERT INTO recipes (title, element_tags, buoi, summary, ingredients, steps, dung_khi, note, order_num) VALUES (?,?,?,?,?,?,?,?,?)',
+      [title.trim(), element_tags || null, buoi || null, summary || null, ingredients || null, steps || null, dung_khi || null, note || null, Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+  app.patch('/api/admin/recipes/:id', requireAdmin, (req, res) => {
+    const rec = db.get('SELECT id FROM recipes WHERE id = ?', [req.params.id]);
+    if (!rec) return res.status(404).json({ error: 'Không tìm thấy.' });
+    ['title', 'element_tags', 'buoi', 'summary', 'ingredients', 'steps', 'dung_khi', 'note', 'order_num'].forEach(k => {
+      if (req.body[k] !== undefined)
+        db.run(`UPDATE recipes SET ${k} = ? WHERE id = ?`, [k === 'order_num' ? (Number(req.body[k]) || 0) : (req.body[k] || null), req.params.id]);
+    });
+    res.json({ success: true });
+  });
+  app.delete('/api/admin/recipes/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM recipes WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Nhật ký ăn uống ────────────────────────────────────────
+  app.get('/api/meal-logs', (req, res) => {
+    const { user_id, from = '', to = '' } = req.query;
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
+    let sql = 'SELECT * FROM meal_logs WHERE user_id = ?';
+    const params = [user_id];
+    if (from) { sql += ' AND log_date >= ?'; params.push(from); }
+    if (to)   { sql += ' AND log_date <= ?'; params.push(to); }
+    sql += ' ORDER BY log_date DESC LIMIT 120';
+    const logs = db.all(sql, params).map(l => ({
+      ...l,
+      colors: JSON.parse(l.colors || '[]'),
+      tastes: JSON.parse(l.tastes || '[]'),
+    }));
+    const user = db.get('SELECT streak FROM users WHERE id = ?', [user_id]);
+    res.json({ logs, streak: user?.streak || 0 });
+  });
+
+  app.post('/api/meal-logs', (req, res) => {
+    const { user_id, log_date, breakfast, lunch, dinner, colors, tastes, note } = req.body;
+    if (!user_id || !log_date || !/^\d{4}-\d{2}-\d{2}$/.test(log_date))
+      return res.status(400).json({ error: 'Thiếu user_id hoặc ngày không hợp lệ.' });
+    const colorsJson = JSON.stringify(Array.isArray(colors) ? colors : []);
+    const tastesJson = JSON.stringify(Array.isArray(tastes) ? tastes : []);
+    const existing = db.get('SELECT id FROM meal_logs WHERE user_id = ? AND log_date = ?', [user_id, log_date]);
+    if (existing) {
+      db.run(
+        'UPDATE meal_logs SET breakfast=?, lunch=?, dinner=?, colors=?, tastes=?, note=? WHERE id=?',
+        [breakfast || null, lunch || null, dinner || null, colorsJson, tastesJson, note || null, existing.id]
+      );
+    } else {
+      db.run(
+        'INSERT INTO meal_logs (user_id, log_date, breakfast, lunch, dinner, colors, tastes, note) VALUES (?,?,?,?,?,?,?,?)',
+        [user_id, log_date, breakfast || null, lunch || null, dinner || null, colorsJson, tastesJson, note || null]
+      );
+      addXP(user_id, 3, 'meal_log', `Ghi nhật ký ăn uống ${log_date}`);
+    }
+    const streak = recomputeStreak(user_id);
+    res.json({ success: true, streak, new_entry: !existing });
   });
 
   // ── Admin: space members (approve join requests / invite / remove) ──
@@ -3552,7 +3836,6 @@ QUY TẮC BẮT BUỘC:
     const {
       title, content, video_url, duration_min, order_num, status,
       exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward,
-      ielts_test_id,
     } = req.body;
     const l = db.get('SELECT id FROM course_lessons WHERE id = ?', [req.params.id]);
     if (!l) return res.status(404).json({ error: 'Bài học không tồn tại.' });
@@ -3569,7 +3852,6 @@ QUY TẮC BẮT BUỘC:
     if (exercise_max_score !== undefined) db.run('UPDATE course_lessons SET exercise_max_score = ? WHERE id = ?', [Number(exercise_max_score) || 100, req.params.id]);
     if (exercise_pass_score !== undefined) db.run('UPDATE course_lessons SET exercise_pass_score = ? WHERE id = ?', [Number(exercise_pass_score) || 70, req.params.id]);
     if (exercise_xp_reward !== undefined) db.run('UPDATE course_lessons SET exercise_xp_reward = ? WHERE id = ?', [Number(exercise_xp_reward) || 0, req.params.id]);
-    if (ielts_test_id !== undefined)      db.run('UPDATE course_lessons SET ielts_test_id = ? WHERE id = ?', [ielts_test_id === null || ielts_test_id === '' ? null : Number(ielts_test_id), req.params.id]);
     res.json({ success: true });
   });
 
@@ -3616,202 +3898,6 @@ QUY TẮC BẮT BUỘC:
   app.delete('/api/admin/questions/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM lesson_exercise_questions WHERE id = ?', [req.params.id]);
     res.json({ success: true });
-  });
-
-  // ── IELTS test bank (kho đề) — shared tests attachable to any lesson via ielts_test_id ──
-  app.get('/api/admin/ielts-tests', requireAdmin, (req, res) => {
-    const { skill = '' } = req.query;
-    const tests = db.all(
-      `SELECT t.*, (SELECT COUNT(*) FROM ielts_test_questions q WHERE q.test_id = t.id) AS question_count
-       FROM ielts_tests t
-       ${skill ? 'WHERE t.skill = ?' : ''}
-       ORDER BY t.created_at DESC`,
-      skill ? [skill] : []
-    );
-    res.json({ tests });
-  });
-
-  app.post('/api/admin/ielts-tests', requireAdmin, (req, res) => {
-    const {
-      skill, title, description = '', time_limit_minutes = 60, status = 'published', max_score = 100,
-      passages = [], task_type = null, writing_prompt = '', writing_rubric = '', writing_image_url = '',
-      chatgpt_url = '',
-    } = req.body;
-    if (!['reading', 'writing', 'listening', 'speaking'].includes(skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
-    if (!title?.trim()) return res.status(400).json({ error: 'Tên đề không được để trống.' });
-    const dup = db.get('SELECT id FROM ielts_tests WHERE skill = ? AND title = ?', [skill, title.trim()]);
-    if (dup) return res.status(409).json({ error: `Đã có đề trùng tên "${title.trim()}" (ID ${dup.id}). Đổi tên khác, hoặc mở đề đó (ID ${dup.id}) để sửa thay vì tạo mới.` });
-    const r = db.run(
-      `INSERT INTO ielts_tests
-        (skill, title, description, time_limit_minutes, status, max_score, passages, task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [skill, title.trim(), description || '', Number(time_limit_minutes) || 60, status === 'draft' ? 'draft' : 'published',
-       Number(max_score) || 100, JSON.stringify(passages || []), task_type || null, writing_prompt || '', writing_rubric || '', writing_image_url || '',
-       chatgpt_url || '']
-    );
-    res.status(201).json({ success: true, id: r.lastInsertRowid });
-  });
-
-  app.get('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
-    const test = db.get('SELECT * FROM ielts_tests WHERE id = ?', [req.params.id]);
-    if (!test) return res.status(404).json({ error: 'Đề không tồn tại.' });
-    const questions = db.all(
-      'SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC',
-      [req.params.id]
-    ).map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null, correct_answer: JSON.parse(q.correct_answer) }));
-    res.json({ test: { ...test, passages: test.passages ? JSON.parse(test.passages) : [] }, questions });
-  });
-
-  app.patch('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
-    const {
-      skill, title, description, time_limit_minutes, status, max_score, passages,
-      task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url, questions,
-    } = req.body;
-    const t = db.get('SELECT id FROM ielts_tests WHERE id = ?', [req.params.id]);
-    if (!t) return res.status(404).json({ error: 'Đề không tồn tại.' });
-    if (skill !== undefined) {
-      if (!['reading', 'writing', 'listening', 'speaking'].includes(skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
-      db.run('UPDATE ielts_tests SET skill = ? WHERE id = ?', [skill, req.params.id]);
-    }
-    if (title !== undefined)              db.run('UPDATE ielts_tests SET title = ? WHERE id = ?', [title, req.params.id]);
-    if (description !== undefined)        db.run('UPDATE ielts_tests SET description = ? WHERE id = ?', [description, req.params.id]);
-    if (time_limit_minutes !== undefined) db.run('UPDATE ielts_tests SET time_limit_minutes = ? WHERE id = ?', [Number(time_limit_minutes) || 60, req.params.id]);
-    if (status !== undefined)             db.run('UPDATE ielts_tests SET status = ? WHERE id = ?', [status === 'draft' ? 'draft' : 'published', req.params.id]);
-    if (max_score !== undefined)          db.run('UPDATE ielts_tests SET max_score = ? WHERE id = ?', [Number(max_score) || 100, req.params.id]);
-    if (passages !== undefined)           db.run('UPDATE ielts_tests SET passages = ? WHERE id = ?', [JSON.stringify(passages || []), req.params.id]);
-    if (task_type !== undefined)          db.run('UPDATE ielts_tests SET task_type = ? WHERE id = ?', [task_type, req.params.id]);
-    if (writing_prompt !== undefined)     db.run('UPDATE ielts_tests SET writing_prompt = ? WHERE id = ?', [writing_prompt, req.params.id]);
-    if (writing_rubric !== undefined)     db.run('UPDATE ielts_tests SET writing_rubric = ? WHERE id = ?', [writing_rubric, req.params.id]);
-    if (writing_image_url !== undefined)  db.run('UPDATE ielts_tests SET writing_image_url = ? WHERE id = ?', [writing_image_url, req.params.id]);
-    if (chatgpt_url !== undefined)        db.run('UPDATE ielts_tests SET chatgpt_url = ? WHERE id = ?', [chatgpt_url, req.params.id]);
-    // Re-importing JSON onto an existing test (e.g. after AI extraction) previously dropped
-    // "questions" silently — this endpoint never read it. Replace the question set when given one.
-    if (Array.isArray(questions)) {
-      db.run('DELETE FROM ielts_test_questions WHERE test_id = ?', [req.params.id]);
-      questions.forEach((q, i) => {
-        db.run(
-          'INSERT INTO ielts_test_questions (test_id, question_type, passage_ref, question_text, options, correct_answer, explanation, order_num) VALUES (?,?,?,?,?,?,?,?)',
-          [req.params.id, q.question_type, q.passage_ref || '', q.question_text,
-           q.options ? JSON.stringify(q.options.map(o => String(o).trim())) : null,
-           JSON.stringify((q.correct_answer || []).map(a => String(a).trim())), q.explanation || '', Number(q.order_num) || i]
-        );
-      });
-    }
-    res.json({ success: true, question_count: Array.isArray(questions) ? questions.length : undefined });
-  });
-
-  app.delete('/api/admin/ielts-tests/:id', requireAdmin, (req, res) => {
-    const linked = db.all('SELECT title FROM course_lessons WHERE ielts_test_id = ?', [req.params.id]);
-    if (linked.length) {
-      return res.status(409).json({
-        error: 'Đề đang được gắn vào bài học, vui lòng gỡ liên kết trước khi xoá.',
-        lessons: linked.map(l => l.title),
-      });
-    }
-    db.run('DELETE FROM ielts_test_questions WHERE test_id = ?', [req.params.id]);
-    db.run('DELETE FROM ielts_tests WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
-  });
-
-  app.get('/api/admin/ielts-tests/:id/questions', requireAdmin, (req, res) => {
-    const questions = db.all(
-      'SELECT * FROM ielts_test_questions WHERE test_id = ? ORDER BY order_num ASC, id ASC',
-      [req.params.id]
-    ).map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null, correct_answer: JSON.parse(q.correct_answer) }));
-    res.json({ questions });
-  });
-
-  app.post('/api/admin/ielts-tests/:id/questions', requireAdmin, (req, res) => {
-    const { question_type, passage_ref = '', question_text, options = null, correct_answer, explanation = '', order_num = 0 } = req.body;
-    if (!['mc', 'tfng', 'gap_fill', 'matching'].includes(question_type)) return res.status(400).json({ error: 'Dạng câu hỏi không hợp lệ.' });
-    if (!question_text?.trim()) return res.status(400).json({ error: 'Nội dung câu hỏi không được để trống.' });
-    if (!Array.isArray(correct_answer) || !correct_answer.length) return res.status(400).json({ error: 'Cần ít nhất 1 đáp án chấp nhận được.' });
-    const test = db.get('SELECT id FROM ielts_tests WHERE id = ?', [req.params.id]);
-    if (!test) return res.status(404).json({ error: 'Đề không tồn tại.' });
-    const r = db.run(
-      'INSERT INTO ielts_test_questions (test_id, question_type, passage_ref, question_text, options, correct_answer, explanation, order_num) VALUES (?,?,?,?,?,?,?,?)',
-      [req.params.id, question_type, passage_ref || '', question_text.trim(),
-       options ? JSON.stringify(options.map(o => String(o).trim())) : null,
-       JSON.stringify(correct_answer.map(a => String(a).trim())), explanation || '', Number(order_num) || 0]
-    );
-    res.status(201).json({ success: true, id: r.lastInsertRowid });
-  });
-
-  app.patch('/api/admin/ielts-test-questions/:id', requireAdmin, (req, res) => {
-    const { question_type, passage_ref, question_text, options, correct_answer, explanation, order_num } = req.body;
-    const q = db.get('SELECT id FROM ielts_test_questions WHERE id = ?', [req.params.id]);
-    if (!q) return res.status(404).json({ error: 'Câu hỏi không tồn tại.' });
-    if (question_type !== undefined)  db.run('UPDATE ielts_test_questions SET question_type = ? WHERE id = ?', [question_type, req.params.id]);
-    if (passage_ref !== undefined)    db.run('UPDATE ielts_test_questions SET passage_ref = ? WHERE id = ?', [passage_ref, req.params.id]);
-    if (question_text !== undefined)  db.run('UPDATE ielts_test_questions SET question_text = ? WHERE id = ?', [question_text, req.params.id]);
-    if (options !== undefined)        db.run('UPDATE ielts_test_questions SET options = ? WHERE id = ?', [options ? JSON.stringify(options.map(o => String(o).trim())) : null, req.params.id]);
-    if (correct_answer !== undefined) db.run('UPDATE ielts_test_questions SET correct_answer = ? WHERE id = ?', [JSON.stringify(correct_answer.map(a => String(a).trim())), req.params.id]);
-    if (explanation !== undefined)    db.run('UPDATE ielts_test_questions SET explanation = ? WHERE id = ?', [explanation, req.params.id]);
-    if (order_num !== undefined)      db.run('UPDATE ielts_test_questions SET order_num = ? WHERE id = ?', [Number(order_num), req.params.id]);
-    res.json({ success: true });
-  });
-
-  app.delete('/api/admin/ielts-test-questions/:id', requireAdmin, (req, res) => {
-    db.run('DELETE FROM ielts_test_questions WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
-  });
-
-  // Bulk import: { test: {...}, passages: [...], questions: [...] } — see kho-de-thi/tests/*.json
-  app.post('/api/admin/ielts-tests/import', requireAdmin, (req, res) => {
-    const { test, passages = [], questions = [] } = req.body;
-    if (!test || !['reading', 'writing', 'listening', 'speaking'].includes(test.skill)) return res.status(400).json({ error: 'Kỹ năng không hợp lệ.' });
-    if (!test.title?.trim()) return res.status(400).json({ error: 'Tên đề không được để trống.' });
-    const dup = db.get('SELECT id FROM ielts_tests WHERE skill = ? AND title = ?', [test.skill, test.title.trim()]);
-    if (dup) return res.status(409).json({ error: `Đã có đề trùng tên "${test.title.trim()}" (ID ${dup.id}). Mở đề đó để sửa/thêm câu hỏi thay vì nhập JSON lại — nhập lại sẽ tạo bản trùng.` });
-    const r = db.run(
-      `INSERT INTO ielts_tests
-        (skill, title, description, time_limit_minutes, status, max_score, passages, task_type, writing_prompt, writing_rubric, writing_image_url, chatgpt_url)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [test.skill, test.title.trim(), test.description || '', Number(test.time_limit_minutes) || 60,
-       test.status === 'draft' ? 'draft' : 'published', Number(test.max_score) || 100, JSON.stringify(passages || []),
-       test.task_type || null, test.writing_prompt || '', test.writing_rubric || '', test.writing_image_url || '', test.chatgpt_url || '']
-    );
-    const testId = r.lastInsertRowid;
-    questions.forEach((q, i) => {
-      db.run(
-        'INSERT INTO ielts_test_questions (test_id, question_type, passage_ref, question_text, options, correct_answer, explanation, order_num) VALUES (?,?,?,?,?,?,?,?)',
-        [testId, q.question_type, q.passage_ref || '', q.question_text,
-         q.options ? JSON.stringify(q.options.map(o => String(o).trim())) : null,
-         JSON.stringify((q.correct_answer || []).map(a => String(a).trim())), q.explanation || '', Number(q.order_num) || i]
-      );
-    });
-    res.status(201).json({ success: true, id: testId, question_count: questions.length });
-  });
-
-  // Upload a PDF/DOCX sample test, extract its text, and ask AI to restructure it into the
-  // { test, passages, questions } import shape. Nothing is saved here — the admin reviews the
-  // result (pre-filled into the Import JSON box) before actually importing it.
-  app.post('/api/admin/ielts-tests/extract-from-file', requireAdmin, (req, res) => {
-    ieltsFileUpload.single('file')(req, res, async (err) => {
-      if (err) return res.status(400).json({ error: err.message });
-      if (!req.file) return res.status(400).json({ error: 'Vui lòng chọn file PDF hoặc DOCX.' });
-
-      let text;
-      try {
-        if (/\.pdf$/i.test(req.file.originalname)) {
-          const parser = new PDFParse({ data: req.file.buffer });
-          text = (await parser.getText()).text;
-        } else {
-          text = (await mammoth.extractRawText({ buffer: req.file.buffer })).value;
-        }
-      } catch (e) {
-        console.error('[IeltsExtract] Parse error:', e.message);
-        return res.status(400).json({ error: 'Không đọc được nội dung file — file có thể bị lỗi hoặc là bản scan (ảnh, không có chữ chọn được).' });
-      }
-
-      if (!text || !text.trim()) {
-        return res.status(400).json({ error: 'File không có nội dung chữ nào — có thể đây là bản scan (ảnh), hệ thống hiện chỉ đọc được PDF/DOCX có chữ thật.' });
-      }
-
-      const result = await extractIeltsTestFromText(text);
-      if (!result.ok) return res.status(502).json({ error: result.error });
-      res.json({ success: true, extracted: result.extracted, truncated: result.truncated });
-    });
   });
 
   app.get('/api/admin/lesson-exercise-submissions', requireAdmin, (req, res) => {
@@ -3917,6 +4003,7 @@ QUY TẮC BẮT BUỘC:
       'home_desc', 'home_stat1_value', 'home_stat1_label', 'home_stat2_value', 'home_stat2_label',
       'home_stat3_value', 'home_stat3_label', 'home_tags',
       'courses_hero_icon', 'courses_hero_title', 'courses_hero_desc',
+      'assistant_enabled', 'assistant_daily_limit',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
@@ -3924,6 +4011,23 @@ QUY TẮC BẮT BUỘC:
       db.run('INSERT INTO site_settings (key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', [key, String(value)]);
     });
     res.json({ success: true });
+  });
+
+  // Trợ lý Ngũ Hành — lịch sử hỏi đáp để admin đánh giá chất lượng câu trả lời
+  app.get('/api/admin/assistant-logs', requireAdmin, (req, res) => {
+    const limit  = Math.min(Number(req.query.limit) || 50, 200);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const logs = db.all(`
+      SELECT l.id, l.user_id, l.question, l.answer, l.created_at,
+             u.first_name, u.last_name, u.email
+      FROM assistant_logs l JOIN users u ON u.id = l.user_id
+      ORDER BY l.id DESC LIMIT ? OFFSET ?`, [limit, offset]);
+    const total = db.get('SELECT COUNT(*) AS n FROM assistant_logs').n;
+    const today = db.get("SELECT date('now','localtime') AS d").d;
+    const asked_today = db.get(
+      'SELECT COALESCE(SUM(count),0) AS n FROM assistant_usage WHERE usage_date = ?', [today]
+    ).n;
+    res.json({ logs, total, asked_today });
   });
 
   // AI providers — kept out of site_settings/admin/settings on purpose since
@@ -4118,7 +4222,7 @@ QUY TẮC BẮT BUỘC:
           💰 Giá: <strong>${amtFmt}</strong>
         </div>
         <p>Admin sẽ duyệt trong vòng <strong>24 giờ</strong>. Bạn sẽ nhận email ngay khi có kết quả.</p>
-        <a class="btn" href="https://chuongcm.com/marketplace.html">Xem Marketplace</a>
+        <a class="btn" href="${SITE_URL}/marketplace.html">Xem Marketplace</a>
       `)
     });
     // Thông báo cho admin
@@ -4133,7 +4237,7 @@ QUY TẮC BẮT BUỘC:
           💰 Giá: <strong>${amtFmt}</strong><br>
           🆔 ID sản phẩm: #${product.id}
         </div>
-        <a class="btn" href="https://chuongcm.com/admin.html">Duyệt trong Admin Panel</a>
+        <a class="btn" href="${SITE_URL}/admin.html">Duyệt trong Admin Panel</a>
       `)
     });
   });
@@ -4158,7 +4262,7 @@ QUY TẮC BẮT BUỘC:
     // 15-min reminder email if still pending after 15 minutes
     const orderId  = order.id;
     const buyerRow = db.get('SELECT first_name, last_name, email FROM users WHERE id = ?', [buyer_id]);
-    const qrUrl    = `https://qr.sepay.vn/img?bank=BIDV&acc=96247NGUYEN&template=compact&amount=${product.price}&des=AIAGENT%20${product_id}%20${buyer_id}`;
+    const qrUrl    = `https://qr.sepay.vn/img?bank=BIDV&acc=96247NGUYEN&template=compact&amount=${product.price}&des=${SEPAY_MEMO_PREFIX}%20${product_id}%20${buyer_id}`;
     const amountFmt = Number(product.price).toLocaleString('vi-VN') + 'đ';
 
     if (buyerRow) {
@@ -4177,11 +4281,11 @@ QUY TẮC BẮT BUỘC:
               🏦 <strong>BIDV</strong> — STK: <strong>96247NGUYEN</strong><br>
               Chủ TK: <strong>TỪ CHÍ NGUYỆN</strong><br>
               Số tiền: <strong>${amountFmt}</strong><br>
-              Nội dung: <strong>AIAGENT ${product_id} ${buyer_id}</strong>
+              Nội dung: <strong>${SEPAY_MEMO_PREFIX} ${product_id} ${buyer_id}</strong>
             </div>
             <p>Quét mã QR để thanh toán nhanh:</p>
             <p><img src="${qrUrl}" alt="QR Code" style="width:180px;border-radius:8px;border:1px solid #e2e8f0"></p>
-            <a class="btn" href="https://chuongcm.com/checkout.html?id=${product_id}">Xem lại đơn hàng</a>
+            <a class="btn" href="${SITE_URL}/checkout.html?id=${product_id}">Xem lại đơn hàng</a>
             <p style="color:#94a3b8;font-size:13px">Đơn hàng sẽ tự động hủy nếu không nhận được thanh toán trong 48 giờ.</p>
           `)
         });
@@ -4284,7 +4388,7 @@ QUY TẮC BẮT BUỘC:
                 🛍️ <strong>${prod.title}</strong><br>
                 💰 Giá: <strong>${amtFmt}</strong>
               </div>
-              <a class="btn" href="https://chuongcm.com/marketplace.html">Xem trên Marketplace</a>
+              <a class="btn" href="${SITE_URL}/marketplace.html">Xem trên Marketplace</a>
             `)
           });
         } else if (status === 'rejected') {
@@ -4296,7 +4400,7 @@ QUY TẮC BẮT BUỘC:
               <p>Rất tiếc, sản phẩm dưới đây chưa đáp ứng tiêu chí duyệt của chúng tôi:</p>
               <div class="rule">🛍️ <strong>${prod.title}</strong></div>
               <p>Vui lòng liên hệ admin để biết lý do và chỉnh sửa lại trước khi đăng lại.</p>
-              <a class="btn" href="https://chuongcm.com/marketplace.html">Về Marketplace</a>
+              <a class="btn" href="${SITE_URL}/marketplace.html">Về Marketplace</a>
             `)
           });
         }
@@ -4365,7 +4469,7 @@ QUY TẮC BẮT BUỘC:
             🆔 Mã đơn: #${orderId}
           </div>
           <p>Nếu bạn đã chuyển khoản, vui lòng liên hệ admin để được hoàn tiền hoặc hỗ trợ.</p>
-          <a class="btn" href="https://chuongcm.com/marketplace.html">Xem Marketplace</a>
+          <a class="btn" href="${SITE_URL}/marketplace.html">Xem Marketplace</a>
         `)
       });
     }
@@ -4399,7 +4503,7 @@ QUY TẮC BẮT BUỘC:
           🆔 Mã đơn: #${orderId}
         </div>
         <p>Admin sẽ kiểm tra và xác nhận thanh toán trong vòng <strong>1–4 giờ</strong> (giờ hành chính). Bạn sẽ nhận thêm email sau khi được xác nhận.</p>
-        <p style="color:#94a3b8;font-size:13px">Nếu có thắc mắc, hãy liên hệ qua cộng đồng IELTS Chương Cà Mau.</p>
+        <p style="color:#94a3b8;font-size:13px">Nếu có thắc mắc, hãy liên hệ qua ${COMMUNITY_NAME}.</p>
       `)
     });
     // Notify admin
@@ -4414,7 +4518,7 @@ QUY TẮC BẮT BUỘC:
           💰 ${amtFmt}<br>
           🆔 Đơn #${orderId}
         </div>
-        <a class="btn" href="https://chuongcm.com/admin.html">Xác nhận trong Admin Panel</a>
+        <a class="btn" href="${SITE_URL}/admin.html">Xác nhận trong Admin Panel</a>
       `)
     });
   });
@@ -4459,7 +4563,7 @@ QUY TẮC BẮT BUỘC:
             📦 Trạng thái: <span class="green">Đã xác nhận</span>
           </div>
           <p>Người bán sẽ liên hệ với bạn trong vòng <strong>24 giờ</strong> để hướng dẫn nhận sản phẩm.</p>
-          <a class="btn" href="https://chuongcm.com/feed.html">Về trang cộng đồng</a>
+          <a class="btn" href="${SITE_URL}/feed.html">Về trang cộng đồng</a>
         `)
       });
 
@@ -4475,7 +4579,7 @@ QUY TẮC BẮT BUỘC:
             💰 Số tiền: <strong>${amtFmt}</strong><br>
             🆔 Đơn hàng: #${orderId}
           </div>
-          <a class="btn" href="https://chuongcm.com/admin.html">Xem trong Admin Panel</a>
+          <a class="btn" href="${SITE_URL}/admin.html">Xem trong Admin Panel</a>
         `)
       });
     } catch (err) {
@@ -4496,10 +4600,10 @@ QUY TẮC BẮT BUỘC:
 
     if (transferType !== 'in') return res.json({ success: true });
 
-    // Parse "AIAGENT {product_id} {buyer_id}" from nội dung chuyển khoản
-    const match = String(content || '').match(/AIAGENT\s+(\d+)\s+(\d+)/i);
+    // Parse "{PREFIX} {product_id} {buyer_id}" from nội dung chuyển khoản
+    const match = String(content || '').match(new RegExp(SEPAY_MEMO_PREFIX + '\\s+(\\d+)\\s+(\\d+)', 'i'));
     if (!match) {
-      console.log('SePay: content không khớp định dạng AIAGENT');
+      console.log('SePay: content không khớp định dạng memo');
       return res.json({ success: false, message: 'Nội dung không khớp.' });
     }
 
@@ -4549,8 +4653,8 @@ QUY TẮC BẮT BUỘC:
         const cells  = parseCSVRow(lines[i]);
         const rowStr = cells.join(' ');
 
-        // Tìm pattern AIAGENT {product_id} {buyer_id} trong bất kỳ cột nào
-        const match = rowStr.match(/AIAGENT[\s_]+(\d+)[\s_]+(\d+)/i);
+        // Tìm pattern {PREFIX} {product_id} {buyer_id} trong bất kỳ cột nào
+        const match = rowStr.match(new RegExp(SEPAY_MEMO_PREFIX + '[\\s_]+(\\d+)[\\s_]+(\\d+)', 'i'));
         if (!match) { processedRows.add(rowKey); continue; }
 
         const [, productId, buyerId] = match;
@@ -4604,7 +4708,7 @@ QUY TẮC BẮT BUỘC:
       const age = now - new Date(row.created_at).getTime();
       const D1 = 24 * 3600 * 1000;
       const amtFmt = Number(row.amount).toLocaleString('vi-VN') + 'đ';
-      const qrUrl = `https://qr.sepay.vn/img?bank=BIDV&acc=96247NGUYEN&template=compact&amount=${row.amount}&des=AIAGENT%20${row.product_id}%20${row.buyer_id}`;
+      const qrUrl = `https://qr.sepay.vn/img?bank=BIDV&acc=96247NGUYEN&template=compact&amount=${row.amount}&des=${SEPAY_MEMO_PREFIX}%20${row.product_id}%20${row.buyer_id}`;
 
       const drips = [
         { flag: 'mail_1d', col: 'mail_1d', min: D1,     max: 2 * D1, day: 1,
@@ -4636,10 +4740,10 @@ QUY TẮC BẮT BUỘC:
                 🏦 <strong>BIDV</strong> — STK: <strong>96247NGUYEN</strong><br>
                 Chủ TK: <strong>TỪ CHÍ NGUYỆN</strong><br>
                 Số tiền: <strong>${amtFmt}</strong><br>
-                Nội dung: <strong>AIAGENT ${row.product_id} ${row.buyer_id}</strong>
+                Nội dung: <strong>${SEPAY_MEMO_PREFIX} ${row.product_id} ${row.buyer_id}</strong>
               </div>
               <p><img src="${qrUrl}" alt="QR" style="width:160px;border-radius:8px;border:1px solid #e2e8f0"></p>
-              <a class="btn" href="https://chuongcm.com/checkout.html?id=${row.product_id}">Hoàn tất thanh toán</a>
+              <a class="btn" href="${SITE_URL}/checkout.html?id=${row.product_id}">Hoàn tất thanh toán</a>
             `)
           });
         }
@@ -4697,7 +4801,7 @@ QUY TẮC BẮT BUỘC:
               Ngày ${day.day_number}: <strong>${day.title}</strong>
             </div>
             <p>Dù trễ hạn, bài nộp của bạn vẫn được chấp nhận. Ngày tiếp theo sẽ mở sau khi bài được duyệt.</p>
-            <a class="btn" href="https://chuongcm.com/challenge-day-detail.html?challenge_id=${e.challenge_id}&day_id=${day.id}">Nộp bài ngay</a>
+            <a class="btn" href="${SITE_URL}/challenge-day-detail.html?challenge_id=${e.challenge_id}&day_id=${day.id}">Nộp bài ngay</a>
           `)
         });
         // Update late_reminders table
@@ -4722,44 +4826,44 @@ QUY TẮC BẮT BUỘC:
     const existing = db.get("SELECT value FROM site_settings WHERE key='email_templates'");
     if (existing) return;
     const defaults = [
-      { id:1, name:'Email chào mừng', subject:'Chào mừng đến với Cộng đồng IELTS Chương Cà Mau! 🎉', category:'welcome',
-        body:`<h2>Chào mừng {{first_name}} đến với Cộng đồng IELTS Chương Cà Mau! 🎉</h2>
-<p>Bạn đã chính thức gia nhập cộng đồng <strong>IELTS Chương Cà Mau</strong> — nơi học viên cùng nhau luyện thi và nâng band điểm IELTS.</p>
+      { id:1, name:'Email chào mừng', subject:`Chào mừng đến với ${COMMUNITY_NAME}! 🎉`, category:'welcome',
+        body:`<h2>Chào mừng {{first_name}} đến với ${COMMUNITY_NAME}! 🎉</h2>
+<p>Bạn đã chính thức gia nhập cộng đồng <strong>${COMMUNITY_NAME}</strong> — nơi mọi người cùng học cách ăn uống theo Ngũ Hành để thanh lọc và cân bằng cơ thể.</p>
 <p><strong>Bắt đầu ngay:</strong></p>
 <ul>
-  <li>🔥 <a href="https://chuongcm.com/challenge.html">Đăng ký Thử thách 21 ngày</a></li>
-  <li>💬 <a href="https://chuongcm.com/feed.html">Chia sẻ bài đầu tiên trên Bảng tin</a></li>
-  <li>🛍️ <a href="https://chuongcm.com/marketplace.html">Khám phá Chợ tài liệu IELTS</a></li>
+  <li>🔥 <a href="${SITE_URL}/challenge.html">Đăng ký Thử thách 28 ngày</a></li>
+  <li>💬 <a href="${SITE_URL}/feed.html">Chia sẻ bài đầu tiên trên Bảng tin</a></li>
+  <li>🛍️ <a href="${SITE_URL}/marketplace.html">Khám phá Chợ combo & tài liệu</a></li>
 </ul>
-<p>Hẹn gặp bạn trong cộng đồng!<br><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-01' },
-      { id:2, name:'Xác nhận đăng ký thử thách', subject:'Bạn đã đăng ký Thử thách 21 ngày! 🔥', category:'challenge',
-        body:`<h2>Bạn đã đăng ký Thử thách 21 ngày! 🔥</h2>
+<p>Hẹn gặp bạn trong cộng đồng!<br><strong>Ban điều hành</strong></p>`, updated_at:'2025-04-01' },
+      { id:2, name:'Xác nhận đăng ký thử thách', subject:'Bạn đã đăng ký Thử thách 28 ngày! 🔥', category:'challenge',
+        body:`<h2>Bạn đã đăng ký Thử thách 28 ngày! 🔥</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Chúc mừng! Bạn đã chính thức đăng ký <strong>Thử thách 21 Ngày</strong>.</p>
+<p>Chúc mừng! Bạn đã chính thức đăng ký <strong>Thử thách 28 Ngày</strong>.</p>
 <p>📅 Bắt đầu: <strong>{{start_date}}</strong><br>
 ✅ Mỗi ngày hoàn thành 1 nhiệm vụ<br>
 ⭐ Nhận XP và phần thưởng khi hoàn thành</p>
-<p><a href="https://chuongcm.com/challenge.html">Xem chi tiết thử thách →</a></p>
-<p>Chúng tôi sẽ gửi nhắc nhở mỗi ngày lúc 19:00.<br><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-05' },
+<p><a href="${SITE_URL}/challenge.html">Xem chi tiết thử thách →</a></p>
+<p>Chúng tôi sẽ gửi nhắc nhở mỗi ngày lúc 19:00.<br><strong>Ban điều hành</strong></p>`, updated_at:'2025-04-05' },
       { id:3, name:'Nhắc nhở hoàn thành ngày', subject:'Đừng quên nhiệm vụ hôm nay — Ngày {{day_number}} 📅', category:'reminder',
         body:`<h2>Đừng quên nhiệm vụ hôm nay! 📅</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Hôm nay là <strong>Ngày {{day_number}}</strong> trong hành trình 21 ngày của bạn.</p>
+<p>Hôm nay là <strong>Ngày {{day_number}}</strong> trong hành trình 28 ngày của bạn.</p>
 <p>🎯 Nhiệm vụ: <strong>{{task_title}}</strong></p>
 <p>Hoàn thành trước nửa đêm để không mất streak!<br>Streak hiện tại: 🔥 <strong>{{streak}} ngày</strong></p>
-<p><a href="https://chuongcm.com/challenge.html">Hoàn thành ngay →</a></p>
-<p><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-10' },
-      { id:4, name:'Chúc mừng hoàn thành 21 ngày', subject:'🏆 Bạn đã hoàn thành Thử thách 21 ngày!', category:'completion',
-        body:`<h2>🏆 Bạn đã chinh phục 21 ngày!</h2>
+<p><a href="${SITE_URL}/challenge.html">Hoàn thành ngay →</a></p>
+<p><strong>Ban điều hành</strong></p>`, updated_at:'2025-04-10' },
+      { id:4, name:'Chúc mừng hoàn thành 28 ngày', subject:'🏆 Bạn đã hoàn thành Thử thách 28 ngày!', category:'completion',
+        body:`<h2>🏆 Bạn đã chinh phục 28 ngày!</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Bạn đã hoàn thành <strong>Thử thách 21 Ngày</strong>! Chỉ có <strong>{{completion_pct}}%</strong> người đăng ký đạt được điều này.</p>
+<p>Bạn đã hoàn thành <strong>Thử thách 28 Ngày</strong>! Chỉ có <strong>{{completion_pct}}%</strong> người đăng ký đạt được điều này.</p>
 <p>🌟 +{{xp_earned}} XP<br>🏆 Huy hiệu "Streak Master"<br>🎁 Giảm 20% cho khoá học nâng cao</p>
-<p><a href="https://chuongcm.com/leaderboard.html">Xem bảng xếp hạng →</a></p>
-<p><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-04-15' },
-      { id:5, name:'Giới thiệu sản phẩm — Email 1', subject:'Khám phá bộ tài liệu IELTS chuyên nghiệp 🚀', category:'sales',
-        body:`<h2>Khám phá bộ tài liệu IELTS 🚀</h2>
+<p><a href="${SITE_URL}/leaderboard.html">Xem bảng xếp hạng →</a></p>
+<p><strong>Ban điều hành</strong></p>`, updated_at:'2025-04-15' },
+      { id:5, name:'Giới thiệu sản phẩm — Email 1', subject:'Khám phá combo Dưỡng Hóa 🌿', category:'sales',
+        body:`<h2>Khám phá combo Dưỡng Hóa 🌿</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Bộ tài liệu <strong>{{product_name}}</strong> giúp bạn rút ngắn thời gian học từ tháng xuống còn tuần.</p>
+<p>Bộ tài liệu <strong>{{product_name}}</strong> giúp bạn bắt đầu hành trình ăn uống cân bằng ngay hôm nay.</p>
 <p><strong>Bao gồm:</strong></p>
 <ul>
   <li>{{feature_1}}</li>
@@ -4767,53 +4871,53 @@ QUY TẮC BẮT BUỘC:
   <li>{{feature_3}}</li>
 </ul>
 <p>Giá: <strong>{{price}}</strong> — Hoàn tiền 7 ngày nếu không hài lòng.</p>
-<p><a href="https://chuongcm.com/marketplace.html">Xem chi tiết →</a></p>
-<p><strong>Team Chương Cà Mau</strong></p>`, updated_at:'2025-05-01' },
+<p><a href="${SITE_URL}/marketplace.html">Xem chi tiết →</a></p>
+<p><strong>Ban điều hành</strong></p>`, updated_at:'2025-05-01' },
       { id:6, name:'Bán hàng — Social Proof', subject:'Cộng đồng nói gì về sản phẩm này? 💬', category:'sales',
         body:`<h2>Cộng đồng nói gì? 💬</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Sau khi ra mắt <strong>{{product_name}}</strong>, chúng tôi nhận được rất nhiều phản hồi tích cực:</p>
 <blockquote>"{{testimonial_1}}" — <strong>{{user_1}}</strong></blockquote>
 <blockquote>"{{testimonial_2}}" — <strong>{{user_2}}</strong></blockquote>
-<p><a href="https://chuongcm.com/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-02' },
+<p><a href="${SITE_URL}/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-02' },
       { id:7, name:'Bán hàng — Last Chance', subject:'⏰ Còn 24 giờ — Ưu đãi sắp kết thúc!', category:'sales',
         body:`<h2>⏰ Còn 24 giờ!</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Chương trình ưu đãi cho <strong>{{product_name}}</strong> kết thúc lúc 23:59 ngày <strong>{{deadline}}</strong>.</p>
 <p style="text-align:center;font-size:28px;font-weight:bold;color:#ef4444">{{discount_pct}}% OFF</p>
 <p>Còn {{hours_left}} giờ — {{spots_left}} suất cuối cùng.</p>
-<p><a href="https://chuongcm.com/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-03' },
+<p><a href="${SITE_URL}/marketplace.html">Mua ngay →</a></p>`, updated_at:'2025-05-03' },
       { id:8, name:'Tái kích hoạt — Nhớ bạn', subject:'Chúng tôi nhớ bạn! Có nhiều điều mới 👋', category:'reengagement',
         body:`<h2>Chúng tôi nhớ bạn! 👋</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Đã {{days_inactive}} ngày kể từ lần cuối bạn ghé Cộng đồng IELTS Chương Cà Mau. Cộng đồng có nhiều điều mới:</p>
+<p>Đã {{days_inactive}} ngày kể từ lần cuối bạn ghé ${COMMUNITY_NAME}. Cộng đồng có nhiều điều mới:</p>
 <ul>
   <li>🔥 Thử thách mới: <strong>{{new_challenge}}</strong></li>
   <li>💬 {{new_posts}} bài đăng từ cộng đồng</li>
   <li>🛍️ {{new_products}} sản phẩm mới tại Chợ</li>
 </ul>
-<p><a href="https://chuongcm.com/feed.html">Quay lại cộng đồng →</a></p>`, updated_at:'2025-05-10' },
+<p><a href="${SITE_URL}/feed.html">Quay lại cộng đồng →</a></p>`, updated_at:'2025-05-10' },
       { id:9, name:'Tái kích hoạt — Phần thưởng', subject:'🎁 Phần thưởng đặc biệt dành riêng cho bạn', category:'reengagement',
         body:`<h2>🎁 Phần thưởng đặc biệt!</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p>Để chào đón bạn quay lại, chúng tôi tặng:</p>
 <p style="text-align:center;font-size:32px;font-weight:bold;color:#8b5cf6">+50 XP</p>
 <p>Bonus khi hoàn thành nhiệm vụ đầu tiên sau khi quay lại. Có hiệu lực trong 7 ngày.</p>
-<p><a href="https://chuongcm.com/challenge.html">Nhận phần thưởng →</a></p>`, updated_at:'2025-05-10' },
-      { id:10, name:'Newsletter hàng tuần', subject:'Tổng hợp tuần tại Cộng đồng IELTS Chương Cà Mau — {{week}}', category:'newsletter',
+<p><a href="${SITE_URL}/challenge.html">Nhận phần thưởng →</a></p>`, updated_at:'2025-05-10' },
+      { id:10, name:'Newsletter hàng tuần', subject:`Tổng hợp tuần tại ${COMMUNITY_NAME} — {{week}}`, category:'newsletter',
         body:`<h2>📰 Tổng hợp tuần {{week}}</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p><strong>Bài nổi bật tuần này:</strong></p>
 <p>📌 <strong>{{post_1_title}}</strong><br>{{post_1_excerpt}}</p>
 <p>📌 <strong>{{post_2_title}}</strong><br>{{post_2_excerpt}}</p>
-<p><a href="https://chuongcm.com/feed.html">Xem thêm →</a></p>`, updated_at:'2025-05-20' },
+<p><a href="${SITE_URL}/feed.html">Xem thêm →</a></p>`, updated_at:'2025-05-20' },
       { id:11, name:'Thông báo sản phẩm mới', subject:'🚀 Ra mắt: {{product_name}} — Xem ngay!', category:'sales',
         body:`<h2>🚀 Ra mắt: {{product_name}}</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Chúng tôi vừa ra mắt <strong>{{product_name}}</strong> — được thiết kế đặc biệt cho cộng đồng IELTS Chương Cà Mau.</p>
+<p>Chúng tôi vừa ra mắt <strong>{{product_name}}</strong> — được thiết kế đặc biệt cho ${COMMUNITY_NAME}.</p>
 <p style="text-align:center;font-size:28px;font-weight:bold;color:#10b981">{{launch_price}}</p>
 <p><strike>{{regular_price}}</strike> — Ưu đãi kết thúc sau {{launch_hours}} giờ.</p>
-<p><a href="https://chuongcm.com/marketplace.html">Xem & mua ngay →</a></p>`, updated_at:'2025-05-22' },
+<p><a href="${SITE_URL}/marketplace.html">Xem & mua ngay →</a></p>`, updated_at:'2025-05-22' },
       { id:12, name:'Nhắc nhở hoàn thiện hồ sơ', subject:'Hồ sơ chưa hoàn chỉnh — cập nhật ngay', category:'reminder',
         body:`<h2>Hồ sơ chưa hoàn chỉnh 📋</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
@@ -4825,7 +4929,7 @@ QUY TẮC BẮT BUỘC:
   <li>🌐 Website / LinkedIn</li>
 </ul>
 <p>Chỉ mất 2 phút!</p>
-<p><a href="https://chuongcm.com/profile.html">Cập nhật hồ sơ →</a></p>`, updated_at:'2025-05-23' },
+<p><a href="${SITE_URL}/profile.html">Cập nhật hồ sơ →</a></p>`, updated_at:'2025-05-23' },
     ];
     db.run("INSERT OR REPLACE INTO site_settings (key,value) VALUES ('email_templates',?)", [JSON.stringify(defaults)]);
     console.log('✅ Seeded 12 email templates');
@@ -4916,95 +5020,270 @@ QUY TẮC BẮT BUỘC:
     res.json({ ok: true });
   });
 
+  // ══════════════════════════════════════════════════════════
+  // TRỢ LÝ NGŨ HÀNH — hỏi đáp ăn uống dưỡng sinh
+  // ══════════════════════════════════════════════════════════
+  // Tính năng AI thứ 3 (cạnh chấm bài tập + chatbot intake), dùng chung callAiChat().
+  // Không streaming, không RAG — kho kiến thức nhỏ, nhồi thẳng vào system prompt mỗi request.
+
+  const ASSISTANT_SYSTEM = `Bạn là "Trợ lý Ngũ Hành" của cộng đồng Ăn Uống Ngũ Hành — đồng hành cùng thành viên trong việc ăn uống dưỡng sinh theo Âm Dương Ngũ Hành (ngũ sắc – ngũ vị – tạng phủ – mùa – khung giờ).
+
+NHIỆM VỤ: trả lời các câu hỏi thực tế về ăn uống hằng ngày, ví dụ:
+- "Vị chua thì nên ăn gì?" → gợi ý thực phẩm/món theo vị + hành + tạng, và NÊN ĂN VÀO BUỔI NÀO.
+- "Sáng nay nên ăn món gì?" → dựa vào quy trình 3 buổi + thể trạng của họ.
+- "Tôi có bí đỏ, nên nấu món gì và ăn khi nào?" → từ nguyên liệu họ có, gợi ý cách chế biến theo Ngũ Hành + thời điểm ăn hợp lý.
+
+NGUYÊN TẮC BẮT BUỘC:
+• Toàn bộ trả lời bằng tiếng Việt, xưng "mình/bạn", ấm áp như người bạn am hiểu — không phải bác sĩ hay cỗ máy.
+• Chỉ trả lời trong phạm vi ăn uống – dưỡng sinh – Ngũ Hành. Câu hỏi ngoài phạm vi (thời tiết, chính trị, lập trình, chuyện phiếm...) → lịch sự từ chối và kéo về chủ đề ăn uống.
+• Khi gợi ý món/thực phẩm, LUÔN kèm "ăn vào buổi nào / khung giờ nào" và lý do ngắn gọn theo Ngũ Hành (vị → hành → tạng).
+• Ưu tiên gợi ý các thực phẩm và công thức có trong KHO bên dưới. Được phép bổ sung kiến thức Ngũ Hành phổ thông, nhưng không bịa ra công thức phức tạp thiếu căn cứ.
+• Nếu có "Hồ sơ dưỡng sinh" hoặc nhật ký ăn uống của thành viên, hãy cá nhân hoá lời khuyên (thiên hàn/nhiệt, tạng cần chú ý, vị/màu đang thiếu).
+• TUYỆT ĐỐI KHÔNG chẩn đoán bệnh hay kê đơn thuốc. Đây là hướng dẫn ăn uống dưỡng sinh, không thay thế việc khám chữa bệnh.
+• Nếu người dùng mô tả triệu chứng nặng (đau dữ dội, chảy máu, khó thở, sụt cân nhanh, ho ra máu...) → khuyên đi khám bác sĩ ngay, không tư vấn ăn uống thay thế.
+• Trả lời gọn, đi thẳng vào việc: 3–8 câu hoặc một danh sách ngắn. Không lan man.
+• Khi phù hợp, kết thúc bằng 1 câu nhắc nhẹ: đây là gợi ý dưỡng sinh, hãy lắng nghe cơ thể mình.`;
+
+  const ASSISTANT_RULES = `
+
+═══ QUY TẮC NGŨ HÀNH CỐT LÕI ═══
+NGŨ VỊ → HÀNH → TẠNG → MÙA → MÀU:
+• Chua → Mộc → Gan/Mật → Xuân → Xanh
+• Đắng → Hỏa → Tim/Ruột non → Hạ → Đỏ
+• Ngọt (đường tốt: mật mía, mật ong, nước mía) → Thổ → Tỳ/Vị → giao mùa → Vàng
+• Cay → Kim → Phổi/Đại tràng → Thu → Trắng
+• Mặn (vừa đủ) → Thủy → Thận/Bàng quang → Đông → Đen
+• Chát → chống oxy hoá, giữ tươi trẻ (quả sung, chuối xanh, lựu, trà, vang chát)
+
+TƯƠNG SINH: Mộc→Hỏa→Thổ→Kim→Thủy→Mộc (mẹ nuôi con).
+TƯƠNG KHẮC: Mộc khắc Thổ, Thổ khắc Thủy, Thủy khắc Hỏa, Hỏa khắc Kim, Kim khắc Mộc.
+VỊ QUÁ NHIỀU HẠI TẠNG BỊ KHẮC: cay quá hại Gan, mặn quá hại Tim, chua quá hại Tỳ, đắng quá hại Phổi, ngọt quá hại Thận. Luôn cân bằng — VD dùng vị chua thì thêm chút vị ngọt tốt để không xót bao tử.
+
+HÀN – NHIỆT:
+• Thể hàn (tay chân lạnh, sợ lạnh, thích nước ấm, nhịp tim thấp) → ăn món tính ấm/nhiệt, vị cay ấm: gừng, sả, tỏi, tiêu, quế. Tránh đồ sống lạnh.
+• Thể nhiệt (nóng trong, sợ nóng, hay khát, nhịp tim/huyết áp cao) → ăn món tính mát/hàn, vị đắng hàn: tim sen, rau má, khổ qua, cháo bổ âm. Hạn chế cay nóng, chiên rán.
+• Cay chia 2: cay nhiệt (gừng, tỏi, tiêu, quế — làm ấm) vs cay hàn (bạc hà, húng chanh — mát).
+• Đắng chia 2: đắng nhiệt (cà phê, cacao — tăng nhịp tim, hợp huyết áp thấp) vs đắng hàn (tim sen, khổ qua — hạ nhịp tim, hợp huyết áp cao).
+• Nhìn màu đoán tính: rau quả màu nhạt phần nhiều hàn/mát; màu thẫm thường ấm/nóng.
+
+NGUYÊN TẮC BỮA ĂN: đủ 5 màu + 5 vị; không đủ cả thì ưu tiên VỊ. Nhai kỹ ("ăn như uống"). Ăn theo mùa — tăng cường vị/màu của Hành ứng với mùa hiện tại.`;
+
+  // PROTOCOL_SOP là HTML — chuyển sang text thuần cho prompt
+  function protocolToText(html) {
+    return html
+      .replace(/<\/(tr|h3|blockquote|table|thead|tbody)>/g, '\n')
+      .replace(/<\/(td|th)>/g, ' | ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+  }
+  const ASSISTANT_PROTOCOL = `
+
+═══ QUY TRÌNH 1 NGÀY 3 BUỔI (khung giờ chuẩn của chương trình) ═══
+${protocolToText(PROTOCOL_SOP)}`;
+
+  // Cổng truy cập: admin, hoặc đã ghi danh challenge, hoặc đã có đơn hàng hoàn tất
+  function hasProgramAccess(userId) {
+    if (!userId) return false;
+    const u = db.get('SELECT is_admin FROM users WHERE id = ?', [userId]);
+    if (!u) return false;
+    if (u.is_admin) return true;
+    const enr = db.get(
+      "SELECT 1 FROM challenge_enrollments WHERE user_id = ? AND status IN ('approved','started') LIMIT 1",
+      [userId]
+    );
+    if (enr) return true;
+    return !!db.get("SELECT 1 FROM orders WHERE buyer_id = ? AND status = 'completed' LIMIT 1", [userId]);
+  }
+
+  function assistantEnabled() {
+    const row = db.get("SELECT value FROM site_settings WHERE key = 'assistant_enabled'");
+    return !row || row.value !== '0';   // mặc định BẬT
+  }
+  function assistantDailyLimit() {
+    const row = db.get("SELECT value FROM site_settings WHERE key = 'assistant_daily_limit'");
+    const n = row ? parseInt(row.value, 10) : NaN;
+    return Number.isFinite(n) && n > 0 ? n : 30;
+  }
+  function assistantUsageToday(userId) {
+    const today = db.get("SELECT date('now','localtime') AS d").d;
+    const row = db.get('SELECT count FROM assistant_usage WHERE user_id = ? AND usage_date = ?', [userId, today]);
+    return row ? row.count : 0;
+  }
+  function bumpAssistantUsage(userId) {
+    const today = db.get("SELECT date('now','localtime') AS d").d;
+    db.run(
+      `INSERT INTO assistant_usage (user_id, usage_date, count) VALUES (?,?,1)
+       ON CONFLICT(user_id, usage_date) DO UPDATE SET count = count + 1`,
+      [userId, today]
+    );
+  }
+
+  // Dựng khối kiến thức nền theo từng request
+  function buildAssistantContext(userId) {
+    const foods = db.all('SELECT name, element, color, taste, nature, organ, note FROM foods ORDER BY element, order_num, name');
+    const foodLines = foods.map(f =>
+      `- ${f.name} | hành ${f.element || '?'} | màu ${f.color || '?'} | vị ${f.taste || '?'} | tính ${f.nature || '?'} | tạng ${f.organ || '?'}${f.note ? ' — ' + f.note : ''}`
+    ).join('\n');
+
+    const recipes = db.all('SELECT title, element_tags, buoi, summary, ingredients, steps, dung_khi, note FROM recipes ORDER BY order_num, id');
+    const recipeBlocks = recipes.map(r =>
+      `### ${r.title}\n- Hành: ${r.element_tags || '?'} · Buổi: ${r.buoi || 'cả ngày'}\n- Tóm tắt: ${r.summary || ''}\n- Nguyên liệu: ${r.ingredients || ''}\n- Cách làm: ${r.steps || ''}\n- Dùng khi: ${r.dung_khi || ''}${r.note ? '\n- Lưu ý: ' + r.note : ''}`
+    ).join('\n\n');
+
+    let personal = '';
+    const u = db.get('SELECT intake_profile FROM users WHERE id = ?', [userId]);
+    if (u && u.intake_profile) {
+      personal += `\n\n═══ HỒ SƠ DƯỠNG SINH CỦA THÀNH VIÊN NÀY ═══\n${u.intake_profile}`;
+    }
+    const logs = db.all(
+      'SELECT log_date, colors, tastes, breakfast, lunch, dinner FROM meal_logs WHERE user_id = ? ORDER BY log_date DESC LIMIT 7',
+      [userId]
+    );
+    if (logs.length) {
+      const logLines = logs.map(l => {
+        let colors = '—', tastes = '—';
+        try { colors = (JSON.parse(l.colors || '[]') || []).join(', ') || '—'; } catch {}
+        try { tastes = (JSON.parse(l.tastes || '[]') || []).join(', ') || '—'; } catch {}
+        return `- ${l.log_date}: màu [${colors}], vị [${tastes}]${l.breakfast ? ' · sáng: ' + l.breakfast : ''}${l.lunch ? ' · trưa: ' + l.lunch : ''}${l.dinner ? ' · tối: ' + l.dinner : ''}`;
+      }).join('\n');
+      personal += `\n\n═══ NHẬT KÝ ĂN UỐNG 7 NGÀY GẦN NHẤT ═══\n${logLines}`;
+    }
+
+    return `\n\n═══ KHO THỰC PHẨM NGŨ HÀNH (${foods.length} món — ưu tiên gợi ý trong danh sách này) ═══\n${foodLines}\n\n═══ THƯ VIỆN CÔNG THỨC (${recipes.length} món) ═══\n${recipeBlocks}${personal}`;
+  }
+
+  app.post('/api/assistant/chat', async (req, res) => {
+    const { user_id, messages } = req.body;
+    if (!user_id || !Array.isArray(messages) || !messages.length)
+      return res.status(400).json({ error: 'Thiếu user_id hoặc messages.' });
+
+    const user = db.get('SELECT id, is_admin FROM users WHERE id = ?', [user_id]);
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản.' });
+    const isAdmin = !!user.is_admin;
+
+    if (!assistantEnabled() && !isAdmin)
+      return res.status(503).json({ error: 'Trợ lý Ngũ Hành đang tạm khoá. Quay lại sau nhé!' });
+
+    if (!isAdmin && !hasProgramAccess(user_id))
+      return res.status(403).json({ error: 'Trợ lý Ngũ Hành dành cho thành viên đã tham gia chương trình 28 ngày Dưỡng Hóa.' });
+
+    const limit = assistantDailyLimit();
+    if (!isAdmin && assistantUsageToday(user_id) >= limit)
+      return res.status(429).json({ error: `Bạn đã dùng hết ${limit} lượt hỏi hôm nay. Hẹn gặp lại ngày mai nhé!`, remaining: 0 });
+
+    // Giữ 12 lượt gần nhất để giới hạn token; toàn bộ kiến thức nằm ở system prompt
+    const convo = messages
+      .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+      .slice(-12)
+      .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
+    if (!convo.length || convo[convo.length - 1].role !== 'user')
+      return res.status(400).json({ error: 'Chưa có câu hỏi.' });
+
+    const systemContent = ASSISTANT_SYSTEM + ASSISTANT_RULES + ASSISTANT_PROTOCOL + buildAssistantContext(user_id);
+
+    try {
+      const result = await callAiChat({
+        messages: [{ role: 'system', content: systemContent }, ...convo],
+        maxTokens: 1200,
+      });
+      if (!result.ok) return res.status(503).json({ error: result.error || 'Trợ lý đang bận, thử lại sau nhé.' });
+
+      const reply = (result.text || '').trim() || 'Mình chưa rõ ý bạn lắm, bạn nói cụ thể hơn được không?';
+
+      if (!isAdmin) bumpAssistantUsage(user_id);
+      const lastQ = [...convo].reverse().find(m => m.role === 'user');
+      db.run('INSERT INTO assistant_logs (user_id, question, answer) VALUES (?,?,?)',
+        [user_id, (lastQ ? lastQ.content : '').slice(0, 2000), reply.slice(0, 4000)]);
+
+      const remaining = isAdmin ? null : Math.max(0, limit - assistantUsageToday(user_id));
+      res.json({ reply, remaining });
+    } catch (err) {
+      console.error('[Assistant] Error:', err.message);
+      res.status(500).json({ error: 'Lỗi server. Thử lại sau nhé.' });
+    }
+  });
+
   // ── Intake Chat ───────────────────────────────────────────
-  const INTAKE_OPENING = `Điều gì đang khiến bạn chưa hài lòng với tình trạng hiện tại? Cứ nói thật, không cần câu trả lời đẹp.`;
+  const INTAKE_OPENING = `Điều gì về sức khỏe hoặc cơ thể đang khiến bạn chưa hài lòng nhất lúc này? Cứ nói thật — mệt mỏi, tiêu hóa, giấc ngủ, cân nặng, hay điều gì khác cũng được.`;
 
-  const INTAKE_SYSTEM = `Bạn là người dẫn đường cho "Thử thách 21 ngày AI Agent" — chương trình thực chiến giúp người Việt xây hệ thống kinh doanh số dùng AI, không cần biết code, không cần vốn lớn. Sau 21 ngày, học viên sẽ có: website thật, chatbot bán hàng 24/7, hệ thống thanh toán tự động (Sepay), email marketing (Resend), AI Agent trên VPS, và sản phẩm số đầu tiên đã bán được.
+  const INTAKE_SYSTEM = `Bạn là người đồng hành cho "Thử thách 28 ngày Dưỡng Hóa – Mở Khóa Cơ Thể" — chương trình ăn uống theo Âm Dương Ngũ Hành (ngũ sắc – ngũ vị – tạng phủ – mùa) để thanh lọc, đào thải độc tố và cân bằng cơ thể một cách tự nhiên, không dùng thuốc.
 
-Nhiệm vụ: Trò chuyện tự nhiên để hiểu sâu một người — họ đang ở đâu, muốn đi đâu, cái gì cản họ — rồi tổng hợp thành hồ sơ cá nhân hóa định hướng 21 ngày của họ.
+Nhiệm vụ: Trò chuyện tự nhiên để hiểu thể trạng và mục tiêu của một người — họ đang gặp gì, thiên hàn hay nhiệt, tiêu hóa/giấc ngủ ra sao — rồi tổng hợp thành hồ sơ cá nhân hóa chỉ ra Hành nào cần BỔ, Hành nào cần TẢ, và họ nên chú ý điều gì trong 28 ngày.
 
 ═══ NGUYÊN TẮC BẮT BUỘC ═══
 • Mỗi lượt CHỈ hỏi DUY NHẤT 1 câu — tuyệt đối không hỏi 2 câu cùng lúc
-• Luôn phản chiếu điều họ vừa chia sẻ trước khi hỏi tiếp — đừng nhảy thẳng vào câu hỏi tiếp
-• Giọng điệu: như người bạn thật sự tò mò, không phải form khảo sát hay nhân viên tư vấn
-• Câu trả lời mơ hồ/ngắn → đào sâu tại chỗ, chưa chuyển chặng
-• Câu trả lời rõ và đủ → gật đầu ngắn gọn + tiếp tục
+• Luôn phản chiếu điều họ vừa chia sẻ trước khi hỏi tiếp
+• Giọng điệu: như người bạn quan tâm, không phải bác sĩ hay form khảo sát
+• Câu trả lời mơ hồ → đào sâu tại chỗ
 • Tổng cộng 8–11 lượt hỏi, không nhiều hơn
 • Toàn bộ bằng tiếng Việt, xưng "mình/bạn"
-• KHÔNG hỏi tên, email, hay thông tin cá nhân
+• KHÔNG hỏi tên, email, thông tin cá nhân
+• TUYỆT ĐỐI KHÔNG chẩn đoán bệnh hay kê đơn thuốc. Đây là hướng dẫn ăn uống dưỡng sinh, không thay thế khám chữa bệnh. Nếu người dùng mô tả triệu chứng nặng (đau dữ dội, chảy máu, sụt cân nhanh...) → khuyên đi khám bác sĩ.
 
 ═══ 5 CHẶNG KHÁM PHÁ ═══
 
-CHẶNG 1 — LÝ DO THẬT (1–2 lượt)
-Câu mở đầu đã được gửi trước: hỏi về điều khiến họ chưa hài lòng.
-Đào sâu: nếu câu trả lời chung chung ("muốn tự do", "muốn kiếm tiền") → hỏi cụ thể hơn cái đó có nghĩa gì với họ.
-Mục tiêu: nghe được động lực thật, không phải câu trả lời "đúng".
+CHẶNG 1 — VẤN ĐỀ CHÍNH (1–2 lượt)
+Câu mở đầu đã gửi: hỏi điều họ chưa hài lòng về sức khỏe.
+Đào sâu: nó ảnh hưởng cuộc sống hằng ngày thế nào, kéo dài bao lâu rồi.
 
-CHẶNG 2 — HIỆN TẠI (1–2 lượt)
-Họ đang làm gì để kiếm sống? Có gì trong tay rồi?
-Mục tiêu: biết điểm xuất phát thật — đừng assume.
+CHẶNG 2 — THỂ TRẠNG HÀN / NHIỆT (2–3 lượt)
+Hỏi các dấu hiệu để đoán họ thiên hàn hay nhiệt:
+- Tay chân thường ấm hay lạnh? Sợ nóng hay sợ lạnh hơn?
+- Hay khát nước, thích uống nước mát hay nước ấm?
+- Da, môi, lưỡi: khô/đỏ hay nhợt/ẩm?
+- Nếu có: chỉ số huyết áp / nhịp tim gần nhất họ nhớ.
+Mục tiêu: kết luận thiên HÀN, thiên NHIỆT, hay tương đối cân bằng.
 
-CHẶNG 3 — SẢN PHẨM / DỊCH VỤ (2–3 lượt)
-Họ muốn bán gì / giúp ai / giải quyết vấn đề gì?
-KHÔNG chấp nhận câu trả lời mơ hồ như "tôi muốn bán khóa học" — phải biết khóa học về gì, giúp ai làm được gì cụ thể.
-Mục tiêu: sản phẩm/dịch vụ đủ cụ thể để ngày 2 viết được landing page thật cho chính họ.
+CHẶNG 3 — TIÊU HÓA & TẠNG PHỦ (2 lượt)
+- Đi vệ sinh: đều không, phân thế nào (táo/lỏng/bình thường)?
+- Ăn xong hay đầy bụng, ợ hơi, chậm tiêu không?
+- Có hay: ho/nghẹt mũi (Phổi–Kim), cáu gắt/mỏi mắt (Gan–Mộc), hồi hộp/mất ngủ (Tim–Hỏa), đau lưng/tiểu đêm (Thận–Thủy), chán ăn/mệt mỏi (Tỳ–Thổ)?
 
-CHẶNG 4 — KHÁCH HÀNG (1–2 lượt)
-Ai là người họ muốn phục vụ? Yêu cầu tả như tả một người thật, không phải "target audience" chung chung.
-Mục tiêu: chân dung khách hàng đủ sống động để sau này viết chatbot, email, bài đăng cho họ.
+CHẶNG 4 — THÓI QUEN ĂN UỐNG HIỆN TẠI (1–2 lượt)
+- Một ngày ăn mấy bữa, hay bỏ bữa nào?
+- Thường thiếu vị/màu nào (ít rau xanh? ít đồ chua? nhiều đồ ngọt/mặn?)
+- Có ăn chay, dị ứng, hay kiêng gì không?
 
-CHẶNG 5 — KẾT QUẢ & FIT CHECK (2–3 lượt)
-a) "Sau 21 ngày, nếu bạn nói 'mình thắng rồi' — bạn đang thấy gì cụ thể?" → con số hoặc trạng thái
-b) "Bạn có thứ gì có thể đóng gói thành file/link để người khác tải về dùng ngay không?" → nguyên liệu ngày 19
-c) "Mỗi ngày thực tế bạn có mấy tiếng cho thử thách?" → điều chỉnh kỳ vọng tuần 3
-
-═══ KỸ THUẬT PHẢN CHIẾU ═══
-Họ nói: "Tôi muốn kiếm thêm thu nhập"
-✗ SAI: hỏi ngay câu tiếp
-✓ ĐÚNG: "Nghe có vẻ bạn đang có nguồn thu rồi nhưng nó chưa đủ hoặc chưa ổn định. Cái 'thêm' đó với bạn — bao nhiêu thì bạn thấy thật sự khác?"
-
-Họ nói: "Tôi muốn tự do"
-✓ ĐÚNG: "Tự do theo nghĩa gì với bạn — không phải đi làm thuê nữa, không bị ràng buộc lịch của người khác, hay điều gì khác?"
+CHẶNG 5 — MỤC TIÊU & THỜI GIAN (1–2 lượt)
+a) "Sau 28 ngày, bạn muốn thấy thay đổi rõ nhất ở đâu?" → trạng thái cụ thể
+b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy trình buổi sáng (uống nước, vận động 30 phút) không?"
 
 ═══ KHI ĐỦ THÔNG TIN ═══
-Sau khi có đủ thông tin 5 chặng:
-1. Viết 2–3 câu nhận xét chân thật (không quá hoa mỹ) về người này và tiềm năng 21 ngày với họ
-2. Ngay sau đó xuất markdown profile theo đúng format dưới đây, bắt đầu bằng ===PROFILE_START=== và kết thúc bằng ===PROFILE_END===
+1. Viết 2–3 câu nhận xét chân thật, ấm áp về thể trạng của họ
+2. Ngay sau đó xuất markdown profile theo đúng format dưới, bắt đầu ===PROFILE_START=== và kết thúc ===PROFILE_END===
 
 ===PROFILE_START===
-# Hồ Sơ Cá Nhân — Thành viên
+# Hồ Sơ Dưỡng Sinh — Thành viên
 *Tạo: [ngày/tháng/năm hôm nay]*
 
-## Điểm xuất phát
-[1–2 câu về họ đang đứng ở đâu — công việc, tình trạng, điểm mạnh mang vào]
+## Vấn đề chính
+[1–2 câu — điều họ muốn cải thiện nhất]
 
-## Sản phẩm / Dịch vụ
-**Tên:** [tên cụ thể — không chung chung]
-**Mô tả:** [giúp ai, giải quyết vấn đề gì, kết quả gì]
-**Trạng thái:** [Chưa có / Có ý tưởng / Đang làm nhưng chưa bán / Đang bán rồi]
+## Thể trạng
+**Xu hướng:** [Thiên Hàn / Thiên Nhiệt / Tương đối cân bằng] — [1 câu lý do dựa trên dấu hiệu họ kể]
 
-## Khách hàng mục tiêu
-[Tả như một người thật — tuổi, nghề, vấn đề cụ thể đang gặp, điều họ muốn]
+## Tạng phủ cần chú ý
+[Liệt kê 1–2 Hành/tạng nổi bật theo triệu chứng, VD: "Hành Mộc (Gan/Mật) — hay cáu gắt, mỏi mắt" · "Hành Thổ (Tỳ/Vị) — chậm tiêu, đầy bụng"]
 
-## Mục tiêu 21 ngày
-**Kết quả cụ thể:** [con số hoặc trạng thái họ tự định nghĩa là "thắng"]
+## Định hướng Ngũ Hành 28 ngày
+**Nên BỔ (tăng cường):** [Hành + vị + màu cụ thể, VD "Hành Thủy — vị mặn nhẹ, màu đen: mè đen, đậu đen, rong biển"]
+**Nên TẢ / hạn chế:** [vị/món nên giảm, VD "giảm đồ ngọt tinh luyện, đồ chiên nóng"]
+**Nếu thiên Hàn:** thêm vị cay ấm (gừng, sả, tỏi), tránh đồ sống lạnh
+**Nếu thiên Nhiệt:** thêm vị đắng hàn (tim sen, rau má, khổ qua), cháo bổ âm
 
-## Sản phẩm số ngày 19
-[Tên sản phẩm số cụ thể phù hợp với kiến thức/kỹ năng của họ — ebook, template, SOP pack, prompt pack, mini guide... Đặt tên thật, gợi ý giá bằng VNĐ]
+## Điều chỉnh quy trình 3 buổi
+- **Sáng:** [gợi ý theo thể trạng]
+- **Trưa:** [gợi ý]
+- **Tối:** [gợi ý]
+- **08:00–09:00 café/cacao vs trà tim sen:** [chọn theo huyết áp/nhịp tim họ kể, nếu không rõ → khuyên đo huyết áp tuần 1]
 
-## Lộ trình cá nhân hóa
-- **Ngày 2–3:** Landing page bán [sản phẩm/dịch vụ cụ thể] cho [khách hàng cụ thể]
-- **Ngày 5:** Brand voice trong brain.db: [tone/phong cách cụ thể phù hợp khách hàng của họ]
-- **Ngày 9:** Chatbot trả lời "[câu hỏi thật 1 của khách]", "[câu hỏi 2]", "[câu hỏi 3]"
-- **Ngày 10–11:** Email sequence: [hành trình cụ thể từ lead → mua của khách họ]
-- **Ngày 19:** Tạo và bán [tên sản phẩm số] — giá gợi ý: [X]đ
-- **Ngày 20:** Business plan: [mô hình kinh doanh cụ thể của họ]
+## Tuần cần chú ý nhất
+[VD "Tuần 2 (Đào thải) — với người tiêu hóa yếu, uống trà thải độc liều nhẹ, theo dõi kỹ"]
 
 ## Lưu ý riêng
-[Điều cần chú ý dựa trên thời gian/kỹ năng/loại sản phẩm. Thẳng thắn nếu cần.]
-
-## Câu hỏi còn mở
-[Những thứ cần quyết định trước ngày 1. Nếu không có → bỏ section này]
+[Thẳng thắn: dị ứng, đang uống thuốc, cần hỏi bác sĩ trước, v.v. Luôn nhắc: đây là hướng dẫn dưỡng sinh, không thay khám chữa bệnh.]
 ===PROFILE_END===`;
 
   app.post('/api/intake/chat', async (req, res) => {
@@ -5023,6 +5302,17 @@ Sau khi có đủ thông tin 5 chặng:
       ...messages
     ];
 
+    // Safety net: after ~8 user turns, force the AI to wrap up and emit the profile block
+    const userTurns = messages.filter(m => m.role === 'user').length;
+    const alreadyHasProfile = messages.some(m => m.role === 'assistant' && String(m.content || '').includes('===PROFILE_START==='));
+    const todayVi = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    if (userTurns >= 8 && !alreadyHasProfile) {
+      fullMessages.push({
+        role: 'system',
+        content: `Đã đủ thông tin để tổng hợp. Ở LƯỢT NÀY: viết 2–3 câu nhận xét ấm áp về thể trạng của họ, rồi NGAY SAU ĐÓ xuất "Hồ Sơ Dưỡng Sinh" đầy đủ theo đúng format, bắt đầu bằng ===PROFILE_START=== và kết thúc bằng ===PROFILE_END===. Dòng ngày tạo ghi đúng: *Tạo: ${todayVi}*. KHÔNG hỏi thêm câu nào nữa.`,
+      });
+    }
+
     try {
       const result = await callAiChat({ messages: fullMessages, maxTokens: 1500 });
       if (!result.ok) return res.status(503).json({ error: result.error });
@@ -5039,6 +5329,8 @@ Sau khi có đủ thông tin 5 chặng:
       if (isComplete) {
         reply   = raw.slice(0, profileStart).trim();
         profile = raw.slice(profileStart + '===PROFILE_START==='.length, profileEnd).trim();
+        // the model doesn't know the real date — fix the "*Tạo: …*" line
+        profile = profile.replace(/^\*Tạo:.*\*$/m, `*Tạo: ${todayVi}*`);
       }
 
       res.json({ reply, isComplete, profile });
@@ -5077,15 +5369,139 @@ Sau khi có đủ thông tin 5 chặng:
     });
   });
 
+  // ── Thân-Tâm-Mệnh intake → Agent 1 (GoClaw) → duyệt Admin ────
+  app.post('/api/ttm/intake/save', async (req, res) => {
+    const { userId, answers, summaryText } = req.body;
+    if (!userId || !answers || !summaryText) {
+      return res.status(400).json({ error: 'userId, answers, summaryText required' });
+    }
+
+    const user = db.get('SELECT id FROM users WHERE id = ?', [userId]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const intakeId = db.run(
+      'INSERT INTO ttm_intake_responses (user_id, answers_json, summary_text) VALUES (?, ?, ?)',
+      [userId, JSON.stringify(answers), summaryText]
+    ).lastInsertRowid;
+
+    db.run("UPDATE users SET ttm_intake_done_at = datetime('now','localtime') WHERE id = ?", [userId]);
+
+    const agentResult = await callGoclawAgent1(summaryText);
+    const draftContent = agentResult.ok
+      ? agentResult.text
+      : `[Lỗi tạo bản nháp tự động: ${agentResult.error}]\n\nVui lòng bấm "Tạo lại bản nháp" trong Admin, hoặc soạn thủ công dựa trên bản tổng kết bên dưới.`;
+
+    const roadmapId = db.run(
+      'INSERT INTO ttm_roadmaps (user_id, intake_id, draft_content, status) VALUES (?, ?, ?, ?)',
+      [userId, intakeId, draftContent, 'pending_approval']
+    ).lastInsertRowid;
+
+    if (!agentResult.ok) console.error(`[TTM] Agent 1 call failed for user ${userId}:`, agentResult.error);
+    console.log(`[TTM] Intake saved for user ${userId}, roadmap #${roadmapId} pending_approval`);
+
+    res.json({ ok: true, intakeId, roadmapId, agentOk: agentResult.ok });
+  });
+
+  // Admin: regenerate a draft (e.g. after fixing GOCLAW_WEBHOOK_* config)
+  app.post('/api/admin/ttm/roadmaps/:id/regenerate', requireAdmin, async (req, res) => {
+    const roadmap = db.get('SELECT r.*, i.summary_text FROM ttm_roadmaps r JOIN ttm_intake_responses i ON i.id = r.intake_id WHERE r.id = ?', [req.params.id]);
+    if (!roadmap) return res.status(404).json({ error: 'Roadmap not found' });
+
+    const agentResult = await callGoclawAgent1(roadmap.summary_text);
+    if (!agentResult.ok) return res.status(502).json({ error: agentResult.error });
+
+    db.run('UPDATE ttm_roadmaps SET draft_content = ? WHERE id = ?', [agentResult.text, req.params.id]);
+    res.json({ ok: true });
+  });
+
+  // Khách xem lộ trình đã được Ngô Lâm duyệt (mới nhất)
+  app.get('/api/ttm/roadmap/:userId', (req, res) => {
+    const roadmap = db.get(
+      `SELECT id, draft_content, final_content, status, reviewed_at, created_at
+       FROM ttm_roadmaps WHERE user_id = ? AND status = 'approved'
+       ORDER BY reviewed_at DESC LIMIT 1`,
+      [req.params.userId]
+    );
+    if (!roadmap) return res.json({ roadmap: null });
+    res.json({
+      roadmap: {
+        id: roadmap.id,
+        content: roadmap.final_content || roadmap.draft_content,
+        reviewedAt: roadmap.reviewed_at,
+        createdAt: roadmap.created_at,
+      }
+    });
+  });
+
+  // Admin: danh sách lộ trình theo trạng thái (mặc định pending_approval)
+  app.get('/api/admin/ttm/roadmaps', requireAdmin, (req, res) => {
+    const status = req.query.status || 'pending_approval';
+    const rows = db.all(
+      `SELECT r.id, r.user_id, r.intake_id, r.draft_content, r.status, r.admin_note,
+              r.final_content, r.reviewed_at, r.created_at,
+              u.first_name, u.last_name, u.email,
+              i.summary_text, i.submitted_at
+       FROM ttm_roadmaps r
+       JOIN users u ON u.id = r.user_id
+       JOIN ttm_intake_responses i ON i.id = r.intake_id
+       WHERE r.status = ?
+       ORDER BY r.created_at DESC`,
+      [status]
+    );
+    res.json({
+      roadmaps: rows.map(r => ({
+        id: r.id,
+        userId: r.user_id,
+        userName: `${r.first_name} ${r.last_name}`.trim(),
+        userEmail: r.email,
+        draftContent: r.draft_content,
+        finalContent: r.final_content,
+        status: r.status,
+        adminNote: r.admin_note,
+        summaryText: r.summary_text,
+        submittedAt: r.submitted_at,
+        reviewedAt: r.reviewed_at,
+        createdAt: r.created_at,
+      })),
+      pending_count: db.get(
+        `SELECT COUNT(*) AS n FROM ttm_roadmaps r JOIN users u ON u.id = r.user_id
+         WHERE r.status = 'pending_approval'`
+      ).n,
+    });
+  });
+
+  // Admin: duyệt / từ chối 1 lộ trình
+  app.patch('/api/admin/ttm/roadmaps/:id', requireAdmin, (req, res) => {
+    const { action, final_content, admin_note } = req.body;
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'action phải là approve hoặc reject' });
+    }
+    const roadmap = db.get('SELECT id FROM ttm_roadmaps WHERE id = ?', [req.params.id]);
+    if (!roadmap) return res.status(404).json({ error: 'Roadmap not found' });
+
+    if (action === 'approve') {
+      db.run(
+        "UPDATE ttm_roadmaps SET status = 'approved', final_content = ?, admin_note = ?, reviewed_at = datetime('now','localtime') WHERE id = ?",
+        [(final_content || '').trim() || null, admin_note || null, req.params.id]
+      );
+    } else {
+      db.run(
+        "UPDATE ttm_roadmaps SET status = 'rejected', admin_note = ?, reviewed_at = datetime('now','localtime') WHERE id = ?",
+        [admin_note || null, req.params.id]
+      );
+    }
+    res.json({ ok: true });
+  });
+
   // ── Start ──────────────────────────────────────────────────
   app.listen(PORT, () => {
-    console.log(`\n✅  Cộng đồng IELTS Chương Cà Mau API`);
+    console.log(`\n✅  ${COMMUNITY_NAME} API`);
     console.log(`   http://localhost:${PORT}`);
     console.log(`   Admin: http://localhost:${PORT}/admin.html`);
     console.log(`   Admin key : ${ADMIN_KEY}`);
     console.log(`\n🔔  SePay Webhook`);
     console.log(`   SePay Key : ${SEPAY_KEY}`);
-    console.log(`   Webhook   : https://chuongcm.com/api/webhook/sepay`);
+    console.log(`   Webhook   : ${SITE_URL}/api/webhook/sepay`);
     console.log(`\n📧  Email (Resend)`);
     console.log(`   Status    : ${resendClient ? '✅ Active' : '⚠️  No RESEND_API_KEY — emails disabled'}`);
     console.log(`   From      : ${FROM_EMAIL}`);
