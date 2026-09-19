@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hồ sơ thành viên — AI AGENTS CC</title>
+  <title>Hồ sơ thành viên — Ăn Uống Ngũ Hành</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -294,7 +294,7 @@
 
     .power-sym.active .power-sym-icon {
       border-color: var(--sym-color, var(--color-primary));
-      background: var(--sym-bg, #e0f2fe);
+      background: var(--sym-bg, var(--color-primary-light));
     }
 
     .power-sym-name {
@@ -303,6 +303,18 @@
       font-weight: 600;
       text-align: center;
       line-height: 1.3;
+    }
+
+    .power-sym-name-main {
+      display: block;
+    }
+
+    .power-sym-name-sub {
+      display: block;
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--text-light);
+      margin-top: 1px;
     }
 
     .power-sym-count {
@@ -1086,7 +1098,7 @@
               stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </div>
-        <div class="sidebar-logo-text">AI AGENTS <span>CC</span></div>
+        <div class="sidebar-logo-text">Ngũ Hành <span>ĂU</span></div>
       </div>
       <nav id="sidebar-nav">
         <div class="nav-section-label">Cộng đồng</div>
@@ -1313,8 +1325,9 @@
 
           </div><!-- /profileContent -->
 
-          <div id="profileError" style="display:none;text-align:center;padding:60px;color:#ef4444">
-            Không tìm thấy thành viên này.
+          <div id="profileError" style="display:none;text-align:center;padding:60px;color:var(--text-muted)">
+            <div style="font-size:32px;margin-bottom:10px;opacity:.4">⚠️</div>
+            <div id="profileErrorMsg">Không tải được hồ sơ. Kiểm tra server đang chạy (<code>node server.js</code>) rồi tải lại trang.</div>
           </div>
 
         </div><!-- /feed -->
@@ -1370,7 +1383,7 @@
       <div style="width:28px;height:28px;background:var(--color-primary);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="16" height="16" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3" fill="#fff"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
-      <span class="mob-brand-name">AI AGENTS CC</span>
+      <span class="mob-brand-name">Ăn Uống Ngũ Hành</span>
     </div>
     <nav style="flex:1;overflow-y:auto;padding:8px;">
       <div class="nav-section-label">Cộng đồng</div>
@@ -1471,11 +1484,11 @@
     const API = '/api';
 
     const LEVELS = [
-      { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Học viên', xpMin: 45, xpMax: 120 },
-      { level: 3, name: 'Thực hành', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Nâng cao', xpMin: 250, xpMax: 450 },
-      { level: 5, name: 'Chuyên gia', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Bậc thầy', xpMin: 700, xpMax: 1000 },
-      { level: 7, name: 'Huyền thoại', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Tiên tri', xpMin: 1500, xpMax: 2200 },
-      { level: 9, name: 'Thần thánh', xpMin: 2200, xpMax: 9999 },
+      { level: 1, name: 'Sơ Cơ', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Nhập Môn', xpMin: 45, xpMax: 120 },
+      { level: 3, name: 'Dưỡng Khí', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Thuận Mộc', xpMin: 250, xpMax: 450 },
+      { level: 5, name: 'Hòa Hỏa', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Vượng Thổ', xpMin: 700, xpMax: 1000 },
+      { level: 7, name: 'Liễm Kim', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Thông Thủy', xpMin: 1500, xpMax: 2200 },
+      { level: 9, name: 'Ngũ Hành Hòa', xpMin: 2200, xpMax: 9999 },
     ];
     const LEVEL_COLORS = ['#64748b', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#0ea5e9', '#f97316'];
     const PILLAR_MAP = {
@@ -1553,31 +1566,40 @@
 
       try {
         const requesterQs = currentUser ? `?requester_id=${currentUser.id}` : '';
+        // Abort after 12s so a stopped/hung server shows an error instead of spinning forever
+        const ctrl = new AbortController();
+        const killer = setTimeout(() => ctrl.abort(), 12000);
+        const j = url => fetch(url, { signal: ctrl.signal }).then(r => r.json());
         const fetches = [
-          fetch(`${API}/users/${userId}${requesterQs}`).then(r => r.json()),
-          fetch(`${API}/users/${userId}/posts`).then(r => r.json()),
-          fetch(`${API}/users/${userId}/activity`).then(r => r.json()),
-          fetch(`${API}/users/${userId}/comments`).then(r => r.json()),
+          j(`${API}/users/${userId}${requesterQs}`),
+          j(`${API}/users/${userId}/posts`),
+          j(`${API}/users/${userId}/activity`),
+          j(`${API}/users/${userId}/comments`),
+          j(`/api/pillars`),
         ];
-        if (isOwnProfile) fetches.push(fetch(`/api/intake/profile/${userId}`).then(r => r.json()));
+        if (isOwnProfile) fetches.push(j(`/api/ttm/intake-status/${userId}`), j(`/api/ttm/roadmap/${userId}`));
 
-        const [uData, pData, aData, cData, intakeData] = await Promise.all(fetches);
+        const [uData, pData, aData, cData, plData, ttmStatus, ttmRoadmap] = await Promise.all(fetches);
+        const intakeData = isOwnProfile ? { status: ttmStatus, roadmap: ttmRoadmap?.roadmap || null } : null;
+        clearTimeout(killer);
 
-        if (uData.error) { showError(); return; }
+        if (uData.error) { showError('Không tìm thấy thành viên này.'); return; }
 
         _profileUser = uData;
         _posts = pData.posts || [];
         _comments = cData.posts || [];
         const activityMap = aData.activity || {};
+        const pillars = plData.pillars || [];
 
-        renderProfile(_profileUser, activityMap, intakeData || null);
+        renderProfile(_profileUser, activityMap, intakeData || null, pillars);
       } catch (e) {
         showError();
       }
     }
 
-    function showError() {
+    function showError(msg) {
       document.getElementById('profileLoading').style.display = 'none';
+      if (msg) document.getElementById('profileErrorMsg').textContent = msg;
       document.getElementById('profileError').style.display = 'block';
     }
 
@@ -1585,60 +1607,53 @@
       const wrap = document.getElementById('intakeSectionWrap');
       if (!wrap || !isMe) return;
 
-      if (intakeData && intakeData.profile) {
-        const date = intakeData.doneAt
-          ? new Date(intakeData.doneAt).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' })
+      const status = intakeData?.status;
+      const roadmap = intakeData?.roadmap;
+
+      if (roadmap) {
+        const date = roadmap.reviewedAt
+          ? new Date(roadmap.reviewedAt.replace(' ', 'T')).toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' })
           : '';
+        const preview = roadmap.content.replace(/[#*_>`-]/g, '').trim().slice(0, 160);
         wrap.innerHTML = `
           <div class="intake-card">
             <div class="intake-card-head">
               <div class="intake-card-title">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                Lộ trình cá nhân hóa
+                Lộ trình Thân-Tâm-Mệnh
               </div>
-              <div style="display:flex;align-items:center;gap:8px;">
-                ${date ? `<span class="intake-card-date">Cập nhật ${date}</span>` : ''}
-                <a href="intake.html" class="intake-redo">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
-                  Làm lại
-                </a>
-              </div>
+              ${date ? `<span class="intake-card-date">Duyệt ${date}</span>` : ''}
             </div>
             <div class="intake-card-body">
-              <div class="intake-md">${renderIntakeMd(intakeData.profile)}</div>
+              <div class="intake-md"><p>${preview}${roadmap.content.length > 160 ? '…' : ''}</p></div>
+              <a href="lo-trinh.html" class="intake-redo" style="margin-top:10px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Xem đầy đủ
+              </a>
             </div>
+          </div>`;
+      } else if (status?.done) {
+        wrap.innerHTML = `
+          <div class="intake-no-profile">
+            <p>Bạn đã hoàn thành khảo sát Thân-Tâm-Mệnh — lộ trình đang được đội ngũ xem xét và soạn riêng cho bạn, thường trong 24–48 giờ.</p>
+            <a href="lo-trinh.html" class="intake-redo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Xem trạng thái
+            </a>
           </div>`;
       } else {
         wrap.innerHTML = `
           <div class="intake-no-profile">
-            <p>Bạn chưa cá nhân hóa lộ trình — hoàn thành intake để nhận đề bài phù hợp với sản phẩm và mục tiêu của bạn.</p>
-            <a href="intake.html" class="intake-redo">
+            <p>Bạn chưa hoàn thành khảo sát Thân-Tâm-Mệnh — trả lời 29 câu hỏi để nhận lộ trình ăn uống thuận tự nhiên cá nhân hóa.</p>
+            <a href="intake-than-tam-menh.html" class="intake-redo">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              Bắt đầu cá nhân hóa lộ trình
+              Bắt đầu khảo sát
             </a>
           </div>`;
       }
     }
 
-    function renderIntakeMd(md) {
-      const lines = md.split('\n');
-      let html = '', inList = false;
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-      for (const raw of lines) {
-        const line = raw.trim();
-        if (!line) { if (inList) { html += '</ul>'; inList = false; } continue; }
-        if (line.startsWith('# '))       { if (inList) { html += '</ul>'; inList=false; } html += `<h1>${esc(line.slice(2))}</h1>`; }
-        else if (line.startsWith('## ')) { if (inList) { html += '</ul>'; inList=false; } html += `<h2>${esc(line.slice(3))}</h2>`; }
-        else if (line.startsWith('- '))  { if (!inList) { html += '<ul>'; inList=true; } html += `<li>${fmt(line.slice(2))}</li>`; }
-        else if (line.startsWith('*') && line.endsWith('*') && !line.startsWith('**')) { continue; }
-        else { if (inList) { html += '</ul>'; inList=false; } html += `<p>${fmt(line)}</p>`; }
-      }
-      if (inList) html += '</ul>';
-      return html;
-    }
-
-    function renderProfile(u, activityMap, intakeData = null) {
+    function renderProfile(u, activityMap, intakeData = null, pillars = []) {
       const lv = getLevel(u.xp || 0);
       const pct = Math.min(100, Math.round(((u.xp || 0) - lv.xpMin) / (lv.xpMax - lv.xpMin) * 100));
       const col = avColor(u.id);
@@ -1666,7 +1681,7 @@
         `<span class="badge-lv" style="border-color:var(--accent-green);color:var(--accent-green)">Lv.${lv.level}</span>`;
       document.getElementById('profileSubtitleEl').textContent = getTitleByLevel(lv.level);
       document.getElementById('profileJoinEl').textContent = 'Tham gia ' + fmtDate(u.created_at);
-      document.title = u.first_name + ' ' + (u.last_name || '') + ' — AI AGENTS CC';
+      document.title = u.first_name + ' ' + (u.last_name || '') + ' — Ăn Uống Ngũ Hành';
 
       // Bio / location / social links
       const bioEl = document.getElementById('profileBioEl');
@@ -1726,7 +1741,7 @@
     </div>`;
 
       // Power symbols
-      renderPowerSymbols(u.pillar_counts || {});
+      renderPowerSymbols(u.pillar_counts || {}, pillars);
 
       // Heatmap
       renderHeatmap(activityMap);
@@ -1752,21 +1767,30 @@
     }
 
     // ── Power Symbols ─────────────────────────────────────
-    function renderPowerSymbols(pillarCounts) {
-      const SYMS = [
-        { key: 'offer', icon: '🔥', label: 'Offer', color: '#f59e0b', bg: '#fef3c7' },
-        { key: 'traffic', icon: '⚡', label: 'Thu hút', color: '#3b82f6', bg: '#dbeafe' },
-        { key: 'conversion', icon: '🎯', label: 'Chuyển đổi', color: '#8b5cf6', bg: '#ede9fe' },
-        { key: 'delivery', icon: '⚙️', label: 'Cung ứng', color: '#10b981', bg: '#d1fae5' },
-        { key: 'continuity', icon: '🔗', label: 'Continuity', color: '#ec4899', bg: '#fce7f3' },
-      ];
-      document.getElementById('powerSymbolsEl').innerHTML = SYMS.map(s => {
-        const n = pillarCounts[s.key] || 0;
+    // Renders whatever Trụ cột (pillars) are currently defined in Admin
+    // (GET /api/pillars) — not a fixed list — so creating/renaming/deleting
+    // a pillar in Admin shows up here immediately.
+    function renderPowerSymbols(pillarCounts, pillars) {
+      const el = document.getElementById('powerSymbolsEl');
+      if (!pillars || !pillars.length) { el.innerHTML = ''; return; }
+      el.innerHTML = pillars.map(p => {
+        const n = pillarCounts[p.key] || 0;
         const active = n > 0;
-        const styleAttr = active ? `style="--sym-color:${s.color};--sym-bg:${s.bg}"` : '';
+        const color = p.color || 'var(--color-primary)';
+        const bg = /^#/.test(color) ? color + '22' : color; // light tint of the pillar color
+        const styleAttr = active ? `style="--sym-color:${color};--sym-bg:${bg}"` : '';
+        // Labels are typically "Hành Kim — Phổi/Đại tràng · vị Cay · màu Trắng" —
+        // break after the em dash so the short name always wraps onto its own
+        // line instead of an arbitrary mid-word wrap.
+        const dashIdx = p.label ? p.label.indexOf('—') : -1;
+        const nameMain = dashIdx === -1 ? (p.label || '') : p.label.slice(0, dashIdx).trim();
+        const nameSub  = dashIdx === -1 ? '' : p.label.slice(dashIdx + 1).trim();
         return `<div class="power-sym ${active ? 'active' : 'locked'}" ${styleAttr}>
-      <div class="power-sym-icon">${s.icon}</div>
-      <div class="power-sym-name">${s.label}</div>
+      <div class="power-sym-icon">${p.icon || '🔥'}</div>
+      <div class="power-sym-name">
+        <span class="power-sym-name-main">${escHtml(nameMain)}</span>
+        ${nameSub ? `<span class="power-sym-name-sub">${escHtml(nameSub)}</span>` : ''}
+      </div>
       <div class="power-sym-count">${active ? n + ' bài' : '—'}</div>
     </div>`;
       }).join('');

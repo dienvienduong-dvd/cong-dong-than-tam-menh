@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Space — AI AGENTS CC</title>
+  <title>Space — Ăn Uống Ngũ Hành</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -309,7 +309,7 @@
             stroke-width="1.5" stroke-linecap="round" />
         </svg>
       </div>
-      <div class="sidebar-logo-text">AI AGENTS <span>CC</span></div>
+      <div class="sidebar-logo-text">Ngũ Hành <span>ĂU</span></div>
     </div>
 
     <nav id="sidebar-nav">
@@ -324,6 +324,10 @@
 
       <div class="nav-section-label" style="margin-top:8px;">Học tập</div>
 
+      <a href="lo-trinh.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+        Lộ trình của tôi
+      </a>
       <a href="challenge.html" class="nav-item">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path
@@ -544,6 +548,9 @@
       <!-- Right panel -->
       <aside id="right-panel">
 
+        <!-- Courses attached to this Space (or its Group) — rendered by JS -->
+        <div class="rp-card" id="spaceCoursesCard" style="display:none;"></div>
+
         <!-- Profile card — rendered by JS -->
         <div class="rp-card" id="profileCard">
           <div style="text-align:center;padding:16px 0;color:var(--text-muted);font-size:var(--fs-sm)">Đang tải...
@@ -567,7 +574,7 @@
         <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#fff" stroke-width="2" stroke-linecap="round" />
       </svg>
     </div>
-    <span class="mob-brand-name">AI AGENTS CC</span>
+    <span class="mob-brand-name">Ăn Uống Ngũ Hành</span>
   </div>
   <nav style="flex:1;overflow-y:auto;padding:8px;">
     <div class="nav-section-label">Cộng đồng</div>
@@ -578,6 +585,10 @@
       Feed
     </a>
     <div class="nav-section-label">Học tập</div>
+    <a href="lo-trinh.html" class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+      Lộ trình của tôi
+    </a>
     <a href="challenge.html" class="nav-item">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path
@@ -691,11 +702,11 @@
   let PILLARS_LIST = [];
   const AV_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444', '#14b8a6'];
   const LEVELS = [
-    { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Học viên', xpMin: 45, xpMax: 120 },
-    { level: 3, name: 'Thực hành', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Nâng cao', xpMin: 250, xpMax: 450 },
-    { level: 5, name: 'Chuyên gia', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Bậc thầy', xpMin: 700, xpMax: 1000 },
-    { level: 7, name: 'Huyền thoại', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Tiên tri', xpMin: 1500, xpMax: 2200 },
-    { level: 9, name: 'Thần thánh', xpMin: 2200, xpMax: 9999 },
+    { level: 1, name: 'Sơ Cơ', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Nhập Môn', xpMin: 45, xpMax: 120 },
+    { level: 3, name: 'Dưỡng Khí', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Thuận Mộc', xpMin: 250, xpMax: 450 },
+    { level: 5, name: 'Hòa Hỏa', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Vượng Thổ', xpMin: 700, xpMax: 1000 },
+    { level: 7, name: 'Liễm Kim', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Thông Thủy', xpMin: 1500, xpMax: 2200 },
+    { level: 9, name: 'Ngũ Hành Hòa', xpMin: 2200, xpMax: 9999 },
   ];
   function getLevelDef(xp) { for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i].xpMin) return LEVELS[i]; return LEVELS[0]; }
 
@@ -766,7 +777,7 @@
       if (!space) { window.location.href = 'feed.html'; return; }
       currentSpace = { ...space, join_status: data.join_status, content_locked: data.content_locked };
 
-      document.title = `${space.name} — AI AGENTS CC`;
+      document.title = `${space.name} — Ăn Uống Ngũ Hành`;
       document.getElementById('mobTitle').textContent = space.name;
       document.getElementById('topbarIcon').textContent = space.icon || '💬';
       document.getElementById('topbarName').textContent = space.name;
@@ -803,10 +814,43 @@
         document.getElementById('spaceContentArea').style.display = '';
         document.getElementById('spaceLockedPanel').style.display = 'none';
         loadFeed();
+        loadSpaceCourses();
       }
     } catch (e) {
       window.location.href = 'feed.html';
     }
+  }
+
+  // ── Courses attached to this Space (or its Group) ───────────────
+  // Admin can attach a course to a single Space (only that Space's members
+  // see it here) or to a whole Space Group (every Space in that group shows
+  // it) — see admin.html's "Sửa khóa học" modal.
+  async function loadSpaceCourses() {
+    const card = document.getElementById('spaceCoursesCard');
+    if (!currentSpace) return;
+    try {
+      const uid = currentUser ? `?user_id=${currentUser.id}` : '';
+      const { courses } = await fetch(`${API}/courses${uid}`).then(r => r.json());
+      const mine = (courses || []).filter(c =>
+        c.space_id === currentSpace.id ||
+        (c.group_id && currentSpace.group_id && c.group_id === currentSpace.group_id)
+      );
+      if (!mine.length) { card.style.display = 'none'; return; }
+
+      card.style.display = 'block';
+      card.innerHTML = `
+        <p class="widget-title">📚 Khoá học</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${mine.map(c => `
+        <a href="course-view.html?id=${c.id}" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;padding:6px 0;">
+          <div style="width:34px;height:34px;border-radius:8px;background:${c.cover_color || 'var(--color-primary)'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🎓</div>
+          <div style="min-width:0;">
+            <div style="font-size:var(--fs-sm);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(c.title)}</div>
+            <div style="font-size:var(--fs-xs);color:var(--text-muted);">${c.lesson_count} bài học</div>
+          </div>
+        </a>`).join('')}
+        </div>`;
+    } catch (e) { card.style.display = 'none'; }
   }
 
   async function requestJoinSpace() {
