@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lộ trình của tôi — Ăn Uống Ngũ Hành</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky: #0ea5e9;
+      --sky-dark: #0284c7;
+      --sky-light: #e0f2fe;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --green: #10b981;
+      --amber: #f59e0b;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(14,165,233,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,.07) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .back-btn {
+      position: relative;
+      z-index: 1;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      position: relative;
+      z-index: 1;
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--sky), #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .header-text { position: relative; z-index: 1; }
+
+    .header-name {
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .header-sub {
+      color: #7dd3fc;
+      font-size: 11.5px;
+      margin-top: 1px;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+
+    .state-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 28px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .state-icon { font-size: 44px; margin-bottom: 16px; }
+
+    .state-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .state-body {
+      color: var(--muted);
+      font-size: 14.5px;
+      line-height: 1.7;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .roadmap-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .roadmap-head {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--sky-light), #fff);
+    }
+
+    .roadmap-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--sky-dark);
+      margin-bottom: 6px;
+    }
+
+    .roadmap-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .roadmap-meta {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .roadmap-body {
+      padding: 24px;
+      font-size: 14.5px;
+      line-height: 1.85;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    .roadmap-disclaimer {
+      margin: 0 24px 24px;
+      padding: 14px 16px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #92400e;
+    }
+
+    .history-note {
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 18px;
+    }
+
+    .history-note a { color: var(--sky-dark); font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="feed.html" class="back-btn" aria-label="Quay lại">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <div class="logo">🌿</div>
+    <div class="header-text">
+      <div class="header-name">Lộ trình của tôi</div>
+      <div class="header-sub">Ăn uống thuận tự nhiên — cá nhân hóa</div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="state-card">
+      <div class="state-icon">⏳</div>
+      <div class="state-title">Đang tải...</div>
+    </div>
+  </main>
+
+  <script>
+    const currentUser = (() => {
+      try { return JSON.parse(localStorage.getItem('currentUser') || 'null'); }
+      catch { return null; }
+    })();
+
+    if (!currentUser?.id) {
+      location.href = 'index.html';
+    }
+
+    function renderPending() {
+      document.getElementById('main').innerHTML = `
+        <div class="state-card">
+          <div class="state-icon">🕊️</div>
+          <div class="state-title">Lộ trình của bạn đang được soạn</div>
+          <div class="state-body">
+            Chúng tôi đã nhận được thông tin bạn chia sẻ. Đội ngũ đang xem xét kỹ lưỡng để soạn một lộ trình ăn uống thuận tự nhiên phù hợp nhất với bạn — thường mất khoảng 24–48 giờ. Quay lại trang này sau nhé.
+          </div>
+        </div>
+      `;
+    }
+
+    function renderError() {
+      document.getElementById('main').innerHTML = `
+        <div class="state-card">
+          <div class="state-icon">⚠️</div>
+          <div class="state-title">Không tải được lộ trình</div>
+          <div class="state-body">Đã có lỗi kết nối. Vui lòng thử tải lại trang.</div>
+        </div>
+      `;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso.replace(' ', 'T'));
+      if (isNaN(d)) return iso;
+      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function renderRoadmap(r) {
+      document.getElementById('main').innerHTML = `
+        <div class="roadmap-card">
+          <div class="roadmap-head">
+            <div class="roadmap-eyebrow">Lộ trình thuận tự nhiên</div>
+            <div class="roadmap-title">Dành cho ${currentUser.first_name} ${currentUser.last_name || ''}</div>
+            <div class="roadmap-meta">Được duyệt ngày ${fmtDate(r.reviewedAt || r.createdAt)}</div>
+          </div>
+          <div class="roadmap-body">${escHtml(r.content)}</div>
+          <div class="roadmap-disclaimer">
+            ⚠️ Lộ trình này mang tính tham khảo dựa trên phương pháp thuận tự nhiên, không thay thế chẩn đoán hoặc điều trị y tế chuyên khoa. Nếu có triệu chứng bất thường, hãy liên hệ ngay với đội ngũ hỗ trợ.
+          </div>
+        </div>
+        <div class="history-note">Muốn cập nhật lại thể trạng? <a href="intake-than-tam-menh.html">Làm lại khảo sát Thân-Tâm-Mệnh</a></div>
+      `;
+    }
+
+    function escHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function load() {
+      try {
+        const res = await fetch(`/api/ttm/roadmap/${currentUser.id}`);
+        const data = await res.json();
+        if (data.roadmap) renderRoadmap(data.roadmap);
+        else renderPending();
+      } catch (e) {
+        renderError();
+      }
+    }
+
+    if (currentUser?.id) load();
+  </script>
+</body>
+</html>
