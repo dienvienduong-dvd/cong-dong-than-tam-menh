@@ -215,6 +215,22 @@
     .doc-body strong { color: var(--text); }
     .doc-body > *:first-child { margin-top: 0; }
 
+    .table-wrap { overflow-x: auto; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
+    .table-wrap table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .table-wrap th, .table-wrap td {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .table-wrap th {
+      background: var(--sky-light);
+      color: var(--sky-dark);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .table-wrap tr:nth-child(even) td { background: #fafcfe; }
+
     .doc-disclaimer {
       margin: 0 24px 24px;
       padding: 14px 16px;
@@ -341,23 +357,47 @@
       const flushPara = () => { if (para.length) { html += `<p>${para.join(' ')}</p>`; para = []; } };
       const closeList = () => { if (inList) { html += listType === 'ol' ? '</ol>' : '</ul>'; inList = false; listType = null; } };
 
-      lines.forEach(raw => {
-        const line = raw.trim();
-        if (!line) { flushPara(); closeList(); return; }
-        if (/^-{3,}$/.test(line)) { flushPara(); closeList(); html += '<hr>'; return; }
+      const isTableRow = l => /^\|.+\|$/.test(l);
+      const isSepRow = l => isTableRow(l) && /^\|[\s:|-]+\|$/.test(l) && l.includes('-');
+      const splitRow = l => l.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i].trim();
+
+        if (!line) { flushPara(); closeList(); i++; continue; }
+
+        // Markdown table: header row followed by a ":---|:---" separator row
+        if (isTableRow(line) && i + 1 < lines.length && isSepRow(lines[i + 1].trim())) {
+          flushPara(); closeList();
+          const headers = splitRow(line);
+          html += '<div class="table-wrap"><table><thead><tr>' +
+            headers.map(h => `<th>${inlineFmt(h)}</th>`).join('') + '</tr></thead><tbody>';
+          i += 2;
+          while (i < lines.length && isTableRow(lines[i].trim())) {
+            const cells = splitRow(lines[i].trim());
+            html += '<tr>' + cells.map(c => `<td>${inlineFmt(c)}</td>`).join('') + '</tr>';
+            i++;
+          }
+          html += '</tbody></table></div>';
+          continue;
+        }
+
+        if (/^-{3,}$/.test(line)) { flushPara(); closeList(); html += '<hr>'; i++; continue; }
 
         let m = line.match(/^(#{1,4})\s+(.*)$/);
-        if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; return; }
+        if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; i++; continue; }
 
         m = line.match(/^[-*]\s+(.*)$/);
-        if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; return; }
+        if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
 
         m = line.match(/^\d+[.)]\s+(.*)$/);
-        if (m) { flushPara(); if (listType !== 'ol') { closeList(); html += '<ol>'; inList = true; listType = 'ol'; } html += `<li>${inlineFmt(m[1])}</li>`; return; }
+        if (m) { flushPara(); if (listType !== 'ol') { closeList(); html += '<ol>'; inList = true; listType = 'ol'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
 
         closeList();
         para.push(inlineFmt(line));
-      });
+        i++;
+      }
       flushPara(); closeList();
       return html;
     }
