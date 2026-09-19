@@ -5369,6 +5369,14 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     });
   });
 
+  // Removes the "⚠️ Bản nháp — chờ duyệt" banner (and any leading blank line
+  // after it) that Agent 1 always prepends to drafts. Only meaningful during
+  // admin review — must never reach the customer-facing final content, even
+  // if the admin approved without manually editing the draft.
+  function stripDraftBanner(text) {
+    return (text || '').replace(/^\s*⚠️[^\n]*\n+/, '').trim();
+  }
+
   // ── Thân-Tâm-Mệnh intake → Agent 1 (GoClaw) → duyệt Admin ────
   app.post('/api/ttm/intake/save', async (req, res) => {
     const { userId, answers, summaryText } = req.body;
@@ -5426,9 +5434,26 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     res.json({
       roadmap: {
         id: roadmap.id,
-        content: roadmap.final_content || roadmap.draft_content,
+        content: stripDraftBanner(roadmap.final_content || roadmap.draft_content),
         reviewedAt: roadmap.reviewed_at,
         createdAt: roadmap.created_at,
+      }
+    });
+  });
+
+  // Khách xem lại hồ sơ khảo sát Thân-Tâm-Mệnh của chính mình (mới nhất)
+  app.get('/api/ttm/intake/:userId', (req, res) => {
+    const intake = db.get(
+      `SELECT id, summary_text, submitted_at FROM ttm_intake_responses
+       WHERE user_id = ? ORDER BY submitted_at DESC LIMIT 1`,
+      [req.params.userId]
+    );
+    if (!intake) return res.json({ intake: null });
+    res.json({
+      intake: {
+        id: intake.id,
+        summaryText: intake.summary_text,
+        submittedAt: intake.submitted_at,
       }
     });
   });
@@ -5480,9 +5505,10 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     if (!roadmap) return res.status(404).json({ error: 'Roadmap not found' });
 
     if (action === 'approve') {
+      const cleaned = stripDraftBanner((final_content || '').trim());
       db.run(
         "UPDATE ttm_roadmaps SET status = 'approved', final_content = ?, admin_note = ?, reviewed_at = datetime('now','localtime') WHERE id = ?",
-        [(final_content || '').trim() || null, admin_note || null, req.params.id]
+        [cleaned || null, admin_note || null, req.params.id]
       );
     } else {
       db.run(

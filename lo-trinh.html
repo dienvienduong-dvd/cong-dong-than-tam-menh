@@ -97,10 +97,42 @@
       margin-top: 1px;
     }
 
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      max-width: 720px;
+      margin: 18px auto 0;
+      padding: 0 18px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 11px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--sky);
+      border-color: var(--sky);
+      color: #fff;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
     main {
       max-width: 720px;
       margin: 0 auto;
-      padding: 28px 18px 60px;
+      padding: 16px 18px 60px;
     }
 
     .state-card {
@@ -129,7 +161,7 @@
       margin: 0 auto;
     }
 
-    .roadmap-card {
+    .doc-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -137,13 +169,13 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.05);
     }
 
-    .roadmap-head {
+    .doc-head {
       padding: 20px 24px;
       border-bottom: 1px solid var(--border);
       background: linear-gradient(135deg, var(--sky-light), #fff);
     }
 
-    .roadmap-eyebrow {
+    .doc-eyebrow {
       font-size: 11px;
       font-weight: 700;
       letter-spacing: .06em;
@@ -152,27 +184,38 @@
       margin-bottom: 6px;
     }
 
-    .roadmap-title {
+    .doc-title {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 19px;
       font-weight: 800;
     }
 
-    .roadmap-meta {
+    .doc-meta {
       font-size: 12.5px;
       color: var(--muted);
       margin-top: 6px;
     }
 
-    .roadmap-body {
-      padding: 24px;
-      font-size: 14.5px;
-      line-height: 1.85;
-      white-space: pre-wrap;
-      color: var(--text);
-    }
+    .doc-body { padding: 24px; }
 
-    .roadmap-disclaimer {
+    /* ── Rendered roadmap markdown ── */
+    .doc-body h2, .doc-body h3, .doc-body h4 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      color: var(--text);
+      margin: 20px 0 10px;
+    }
+    .doc-body h2 { font-size: 18px; }
+    .doc-body h3 { font-size: 16.5px; color: var(--sky-dark); }
+    .doc-body h4 { font-size: 15px; }
+    .doc-body p { font-size: 14.5px; line-height: 1.85; margin-bottom: 12px; }
+    .doc-body ul, .doc-body ol { padding-left: 22px; margin-bottom: 12px; }
+    .doc-body li { font-size: 14.5px; line-height: 1.8; margin-bottom: 4px; }
+    .doc-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .doc-body strong { color: var(--text); }
+    .doc-body > *:first-child { margin-top: 0; }
+
+    .doc-disclaimer {
       margin: 0 24px 24px;
       padding: 14px 16px;
       background: #fffbeb;
@@ -189,8 +232,50 @@
       color: var(--muted);
       margin-top: 18px;
     }
-
     .history-note a { color: var(--sky-dark); font-weight: 600; text-decoration: none; }
+
+    /* ── Intake summary tab ── */
+    .intake-section { margin-bottom: 22px; }
+    .intake-section:last-child { margin-bottom: 0; }
+    .intake-section h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--sky-dark);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .contact-grid { display: grid; gap: 8px; }
+    .contact-row { display: flex; gap: 10px; font-size: 14px; }
+    .contact-k { color: var(--muted); min-width: 110px; flex-shrink: 0; }
+    .contact-v { font-weight: 600; }
+
+    .qa-row {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .qa-row:last-child { border-bottom: none; }
+    .qa-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--sky-light);
+      color: var(--sky-dark);
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qa-q { font-size: 13.5px; color: var(--muted); margin-bottom: 4px; line-height: 1.5; }
+    .qa-a { font-size: 14.5px; font-weight: 500; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -205,10 +290,17 @@
     </div>
   </header>
 
-  <main id="main">
-    <div class="state-card">
-      <div class="state-icon">⏳</div>
-      <div class="state-title">Đang tải...</div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="intake" onclick="switchTab('intake')">📋 Hồ sơ khảo sát</button>
+    <button class="tab-btn" data-tab="roadmap" onclick="switchTab('roadmap')">🌿 Lộ trình</button>
+  </div>
+
+  <main>
+    <div class="tab-panel active" id="panel-intake">
+      <div class="state-card"><div class="state-icon">⏳</div><div class="state-title">Đang tải...</div></div>
+    </div>
+    <div class="tab-panel" id="panel-roadmap">
+      <div class="state-card"><div class="state-icon">⏳</div><div class="state-title">Đang tải...</div></div>
     </div>
   </main>
 
@@ -218,30 +310,16 @@
       catch { return null; }
     })();
 
-    if (!currentUser?.id) {
-      location.href = 'index.html';
+    if (!currentUser?.id) location.href = 'index.html';
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(`panel-${name}`).classList.add('active');
     }
 
-    function renderPending() {
-      document.getElementById('main').innerHTML = `
-        <div class="state-card">
-          <div class="state-icon">🕊️</div>
-          <div class="state-title">Lộ trình của bạn đang được soạn</div>
-          <div class="state-body">
-            Chúng tôi đã nhận được thông tin bạn chia sẻ. Đội ngũ đang xem xét kỹ lưỡng để soạn một lộ trình ăn uống thuận tự nhiên phù hợp nhất với bạn — thường mất khoảng 24–48 giờ. Quay lại trang này sau nhé.
-          </div>
-        </div>
-      `;
-    }
-
-    function renderError() {
-      document.getElementById('main').innerHTML = `
-        <div class="state-card">
-          <div class="state-icon">⚠️</div>
-          <div class="state-title">Không tải được lộ trình</div>
-          <div class="state-body">Đã có lỗi kết nối. Vui lòng thử tải lại trang.</div>
-        </div>
-      `;
+    function escHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function fmtDate(iso) {
@@ -251,40 +329,140 @@
       return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    function renderRoadmap(r) {
-      document.getElementById('main').innerHTML = `
-        <div class="roadmap-card">
-          <div class="roadmap-head">
-            <div class="roadmap-eyebrow">Lộ trình thuận tự nhiên</div>
-            <div class="roadmap-title">Dành cho ${currentUser.first_name} ${currentUser.last_name || ''}</div>
-            <div class="roadmap-meta">Được duyệt ngày ${fmtDate(r.reviewedAt || r.createdAt)}</div>
-          </div>
-          <div class="roadmap-body">${escHtml(r.content)}</div>
-          <div class="roadmap-disclaimer">
-            ⚠️ Lộ trình này mang tính tham khảo dựa trên phương pháp thuận tự nhiên, không thay thế chẩn đoán hoặc điều trị y tế chuyên khoa. Nếu có triệu chứng bất thường, hãy liên hệ ngay với đội ngũ hỗ trợ.
-          </div>
-        </div>
-        <div class="history-note">Muốn cập nhật lại thể trạng? <a href="intake-than-tam-menh.html">Làm lại khảo sát Thân-Tâm-Mệnh</a></div>
-      `;
+    /* ── Lightweight markdown → HTML (escapes first, safe from injected tags) ── */
+    function mdToHtml(md) {
+      const lines = escHtml(md).split('\n');
+      let html = '', inList = false, listType = null, para = [];
+
+      const inlineFmt = s => s
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+      const flushPara = () => { if (para.length) { html += `<p>${para.join(' ')}</p>`; para = []; } };
+      const closeList = () => { if (inList) { html += listType === 'ol' ? '</ol>' : '</ul>'; inList = false; listType = null; } };
+
+      lines.forEach(raw => {
+        const line = raw.trim();
+        if (!line) { flushPara(); closeList(); return; }
+        if (/^-{3,}$/.test(line)) { flushPara(); closeList(); html += '<hr>'; return; }
+
+        let m = line.match(/^(#{1,4})\s+(.*)$/);
+        if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; return; }
+
+        m = line.match(/^[-*]\s+(.*)$/);
+        if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; return; }
+
+        m = line.match(/^\d+[.)]\s+(.*)$/);
+        if (m) { flushPara(); if (listType !== 'ol') { closeList(); html += '<ol>'; inList = true; listType = 'ol'; } html += `<li>${inlineFmt(m[1])}</li>`; return; }
+
+        closeList();
+        para.push(inlineFmt(line));
+      });
+      flushPara(); closeList();
+      return html;
     }
 
-    function escHtml(s) {
-      return String(s || '')
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    /* ── Parse buildAnswersSummaryText() format into readable HTML ── */
+    function renderIntakeSummary(summaryText) {
+      let html = '';
+      const re = /===\s*(.+?)\s*===\n([\s\S]*?)(?=\n===|\s*$)/g;
+      let m;
+      while ((m = re.exec(summaryText))) {
+        const title = m[1].trim();
+        const body = m[2].trim();
+        if (!body) continue;
 
-    async function load() {
-      try {
-        const res = await fetch(`/api/ttm/roadmap/${currentUser.id}`);
-        const data = await res.json();
-        if (data.roadmap) renderRoadmap(data.roadmap);
-        else renderPending();
-      } catch (e) {
-        renderError();
+        if (title === 'THÔNG TIN LIÊN HỆ') {
+          html += `<div class="intake-section"><h3>${escHtml(title)}</h3><div class="contact-grid">`;
+          body.split('\n').map(l => l.trim()).filter(Boolean).forEach(row => {
+            const idx = row.indexOf(':');
+            const k = idx >= 0 ? row.slice(0, idx) : row;
+            const v = idx >= 0 ? row.slice(idx + 1).trim() : '';
+            html += `<div class="contact-row"><span class="contact-k">${escHtml(k)}</span><span class="contact-v">${escHtml(v)}</span></div>`;
+          });
+          html += `</div></div>`;
+          continue;
+        }
+
+        html += `<div class="intake-section"><h3>${escHtml(title)}</h3>`;
+        let cur = null;
+        body.split('\n').forEach(l => {
+          const qm = l.match(/^(\d+)\.\s+(.*)$/);
+          const am = l.match(/^\s*→\s*(.*)$/);
+          if (qm) {
+            if (cur) html += renderQA(cur);
+            cur = { num: qm[1], q: qm[2], a: '' };
+          } else if (am && cur) {
+            cur.a = am[1];
+          }
+        });
+        if (cur) html += renderQA(cur);
+        html += `</div>`;
+      }
+      return html || `<p style="color:var(--muted);font-size:14px;">${escHtml(summaryText)}</p>`;
+
+      function renderQA(item) {
+        return `<div class="qa-row"><div class="qa-num">${item.num}</div><div><div class="qa-q">${escHtml(item.q)}</div><div class="qa-a">${escHtml(item.a)}</div></div></div>`;
       }
     }
 
-    if (currentUser?.id) load();
+    function stateCard(icon, title, body) {
+      return `<div class="state-card"><div class="state-icon">${icon}</div><div class="state-title">${title}</div><div class="state-body">${body}</div></div>`;
+    }
+
+    async function loadIntake() {
+      const panel = document.getElementById('panel-intake');
+      try {
+        const res = await fetch(`/api/ttm/intake/${currentUser.id}`);
+        const data = await res.json();
+        if (!data.intake) {
+          panel.innerHTML = stateCard('📋', 'Chưa có hồ sơ khảo sát', 'Bạn chưa hoàn thành khảo sát Thân-Tâm-Mệnh.');
+          return;
+        }
+        panel.innerHTML = `
+          <div class="doc-card">
+            <div class="doc-head">
+              <div class="doc-eyebrow">Hồ sơ khảo sát Thân-Tâm-Mệnh</div>
+              <div class="doc-title">Dành cho ${escHtml(currentUser.first_name)} ${escHtml(currentUser.last_name || '')}</div>
+              <div class="doc-meta">Gửi ngày ${fmtDate(data.intake.submittedAt)} — đã chuyển cho Ngô Lâm xem xét</div>
+            </div>
+            <div class="doc-body">${renderIntakeSummary(data.intake.summaryText)}</div>
+          </div>
+        `;
+      } catch (e) {
+        panel.innerHTML = stateCard('⚠️', 'Không tải được', 'Đã có lỗi kết nối. Vui lòng thử tải lại trang.');
+      }
+    }
+
+    async function loadRoadmap() {
+      const panel = document.getElementById('panel-roadmap');
+      try {
+        const res = await fetch(`/api/ttm/roadmap/${currentUser.id}`);
+        const data = await res.json();
+        if (!data.roadmap) {
+          panel.innerHTML = stateCard('🕊️', 'Lộ trình của bạn đang được soạn',
+            'Chúng tôi đã nhận được thông tin bạn chia sẻ. Đội ngũ đang xem xét kỹ lưỡng để soạn một lộ trình ăn uống thuận tự nhiên phù hợp nhất với bạn — thường mất khoảng 24–48 giờ. Quay lại tab này sau nhé.');
+          return;
+        }
+        const r = data.roadmap;
+        panel.innerHTML = `
+          <div class="doc-card">
+            <div class="doc-head">
+              <div class="doc-eyebrow">Lộ trình thuận tự nhiên</div>
+              <div class="doc-title">Dành cho ${escHtml(currentUser.first_name)} ${escHtml(currentUser.last_name || '')}</div>
+              <div class="doc-meta">Được duyệt ngày ${fmtDate(r.reviewedAt || r.createdAt)}</div>
+            </div>
+            <div class="doc-body">${mdToHtml(r.content)}</div>
+          </div>
+          <div class="doc-disclaimer">⚠️ Lộ trình này mang tính tham khảo dựa trên phương pháp thuận tự nhiên, không thay thế chẩn đoán hoặc điều trị y tế chuyên khoa. Nếu có triệu chứng bất thường, hãy liên hệ ngay với đội ngũ hỗ trợ.</div>
+          <div class="history-note">Muốn cập nhật lại thể trạng? <a href="intake-than-tam-menh.html">Làm lại khảo sát Thân-Tâm-Mệnh</a></div>
+        `;
+      } catch (e) {
+        panel.innerHTML = stateCard('⚠️', 'Không tải được', 'Đã có lỗi kết nối. Vui lòng thử tải lại trang.');
+      }
+    }
+
+    if (currentUser?.id) { loadIntake(); loadRoadmap(); }
   </script>
 </body>
 </html>
