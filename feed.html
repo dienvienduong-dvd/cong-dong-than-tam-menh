@@ -1312,7 +1312,22 @@
       const raw = localStorage.getItem('currentUser');
       if (!raw) { window.location.href = 'index.html'; return; }
       currentUser = JSON.parse(raw);
-      if (!currentUser.ttm_intake_done_at) { window.location.href = 'intake-than-tam-menh.html'; return; }
+      if (!currentUser.ttm_intake_done_at) {
+        // localStorage có thể bị lệch với server (cache cũ từ trước khi có
+        // tính năng này, nhiều tab, v.v.) — xác nhận lại với server trước khi
+        // khoá; tự chữa localStorage nếu server xác nhận đã làm intake rồi.
+        fetch(`/api/ttm/intake-status/${currentUser.id}`)
+          .then(r => r.json())
+          .then(status => {
+            if (status.done) {
+              currentUser.ttm_intake_done_at = status.doneAt || new Date().toISOString();
+              try { localStorage.setItem('currentUser', JSON.stringify(currentUser)); } catch (e) {}
+            } else {
+              window.location.href = 'intake-than-tam-menh.html';
+            }
+          })
+          .catch(() => { window.location.href = 'intake-than-tam-menh.html'; });
+      }
       const initials = (currentUser.first_name[0] + (currentUser.last_name ? currentUser.last_name[0] : '')).toUpperCase();
       const color = AV_COLORS[currentUser.id % AV_COLORS.length];
       document.getElementById('sbAvatar').textContent = initials;

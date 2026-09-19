@@ -5458,6 +5458,14 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     });
   });
 
+  // Nguồn sự thật cho cờ "đã làm intake chưa" — feed.html gọi endpoint này
+  // thay vì chỉ tin vào localStorage (có thể lệch do cache cũ/nhiều tab).
+  app.get('/api/ttm/intake-status/:userId', (req, res) => {
+    const user = db.get('SELECT ttm_intake_done_at FROM users WHERE id = ?', [req.params.userId]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ done: !!user.ttm_intake_done_at, doneAt: user.ttm_intake_done_at || null });
+  });
+
   // Admin: danh sách lộ trình theo trạng thái (mặc định pending_approval)
   app.get('/api/admin/ttm/roadmaps', requireAdmin, (req, res) => {
     const status = req.query.status || 'pending_approval';
