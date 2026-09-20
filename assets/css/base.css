@@ -9,22 +9,21 @@
    a visible stutter/flash to every menu click in this multi-page app. */
 
 :root {
-  /* Primary — Thổ (Earth) from the Ngũ Hành palette below, chosen over the
-     other 4 elements as the single brand color: warm/food-associated, and
-     doesn't collide with Hỏa/red (already used for form errors) or Mộc/green
-     (already used for "online"/XP progress). Deepened from the raw
-     --pillar-tho (#f59e0b, ~2.2:1) to #b45309 (~5:1) because it's used as a
-     solid background under white text (.btn-primary etc.), not just as an
-     accent — the raw amber-500 fails WCAG AA contrast for that. */
-  --color-primary:       #b45309;
-  --color-primary-dark:  #92400e;
-  --color-primary-light: #fef3c7;
+  /* Primary — xanh ngọc (teal), the brand accent color. Deepened to teal-700
+     (~5.6:1 against white) rather than a brighter teal because it's used as
+     a solid background under white text (.btn-primary etc.), not just as an
+     accent — a lighter teal would fail WCAG AA contrast for that. Distinct
+     enough from Mộc/green (--accent-green, used for "online"/XP progress)
+     to not be confused with it. */
+  --color-primary:       #0f766e;
+  --color-primary-dark:  #115e59;
+  --color-primary-light: #ccfbf1;
 
   /* Backgrounds */
   --bg-app:     #f8fafc;
   --bg-card:    #ffffff;
   --bg-hover:   #f1f5f9;
-  --bg-active:  #fef3c7;
+  --bg-active:  #ccfbf1;
   --bg-input:   #f8fafc;
 
   /* Text */
@@ -34,7 +33,7 @@
 
   /* Borders */
   --border:       #e2e8f0;
-  --border-focus: #b45309;
+  --border-focus: #0f766e;
 
   /* Accents */
   --accent-green:  #10b981;
@@ -100,7 +99,7 @@ html[data-theme="dark"] {
   --bg-app:     #0b1220;
   --bg-card:    #111827;
   --bg-hover:   #1e293b;
-  --bg-active:  #3a2409;
+  --bg-active:  #0f3d3a;
   --bg-input:   #0f172a;
 
   --text:       #f1f5f9;
@@ -108,7 +107,7 @@ html[data-theme="dark"] {
   --text-light: #64748b;
 
   --border:       #334155;
-  --border-focus: #b45309;
+  --border-focus: #0f766e;
 
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
