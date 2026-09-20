@@ -340,9 +340,17 @@ const SCHEMA = `
     order_num    INTEGER DEFAULT 0,
     created_at   TEXT DEFAULT (datetime('now','localtime'))
   );
+  CREATE TABLE IF NOT EXISTS course_modules (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id    INTEGER NOT NULL REFERENCES courses(id),
+    title        TEXT NOT NULL,
+    order_num    INTEGER DEFAULT 0,
+    created_at   TEXT DEFAULT (datetime('now','localtime'))
+  );
   CREATE TABLE IF NOT EXISTS course_lessons (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     course_id    INTEGER NOT NULL REFERENCES courses(id),
+    module_id    INTEGER REFERENCES course_modules(id),
     title        TEXT NOT NULL,
     content      TEXT,
     video_url    TEXT,
@@ -1173,6 +1181,12 @@ const COURSE_SEED = [
     console.log('  Migrated course_lessons: added status.');
   }
 
+  // Migrate course_lessons: add module_id (groups lessons into modules/chapters)
+  if (!lessonCols.includes('module_id')) {
+    db.exec('ALTER TABLE course_lessons ADD COLUMN module_id INTEGER REFERENCES course_modules(id)');
+    console.log('  Migrated course_lessons: added module_id.');
+  }
+
   // Migrate course_lessons: add AI-graded exercise fields
   if (!lessonCols.includes('exercise_enabled')) {
     db.exec('ALTER TABLE course_lessons ADD COLUMN exercise_enabled INTEGER DEFAULT 0');
@@ -1660,9 +1674,10 @@ QUY TẮC BẮT BUỘC:
     const enroll_status = user_id ? (getEnrollment(course.id, user_id)?.status || 'none') : 'none';
     const unlocked = course.visibility !== 'private' || enroll_status === 'approved';
     const lesson_count = db.get("SELECT COUNT(*) AS n FROM course_lessons WHERE course_id = ? AND status = 'published'", [req.params.id]).n;
+    const modules = db.all('SELECT id, title, order_num FROM course_modules WHERE course_id = ? ORDER BY order_num ASC, id ASC', [req.params.id]);
     const lessons = unlocked
       ? db.all(
-          `SELECT id, title, content, video_url, duration_min, order_num,
+          `SELECT id, module_id, title, content, video_url, duration_min, order_num,
                   exercise_enabled, exercise_type, exercise_prompt, exercise_max_score, exercise_pass_score
            FROM course_lessons WHERE course_id = ? AND status = 'published' ORDER BY order_num ASC, id ASC`,
           [req.params.id]
@@ -1705,6 +1720,7 @@ QUY TẮC BẮT BUỘC:
       course: { ...course, enroll_status, checkout_product_id },
       lessons,
       lesson_count,
+      modules,
     });
   });
 
@@ -3848,6 +3864,34 @@ QUY TẮC BẮT BUỘC:
     res.json({ success: true });
   });
 
+  // Course modules — group lessons into chapters
+  app.get('/api/admin/courses/:id/modules', requireAdmin, (req, res) => {
+    const modules = db.all('SELECT * FROM course_modules WHERE course_id = ? ORDER BY order_num ASC, id ASC', [req.params.id]);
+    res.json({ modules });
+  });
+  app.post('/api/admin/courses/:id/modules', requireAdmin, (req, res) => {
+    const { title, order_num = 0 } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Tên module không được để trống.' });
+    const course = db.get('SELECT id FROM courses WHERE id = ?', [req.params.id]);
+    if (!course) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
+    const r = db.run('INSERT INTO course_modules (course_id, title, order_num) VALUES (?,?,?)',
+      [req.params.id, title.trim(), Number(order_num) || 0]);
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+  app.patch('/api/admin/modules/:id', requireAdmin, (req, res) => {
+    const m = db.get('SELECT id FROM course_modules WHERE id = ?', [req.params.id]);
+    if (!m) return res.status(404).json({ error: 'Không tìm thấy module.' });
+    const { title, order_num } = req.body;
+    if (title !== undefined) db.run('UPDATE course_modules SET title = ? WHERE id = ?', [title, req.params.id]);
+    if (order_num !== undefined) db.run('UPDATE course_modules SET order_num = ? WHERE id = ?', [Number(order_num) || 0, req.params.id]);
+    res.json({ success: true });
+  });
+  app.delete('/api/admin/modules/:id', requireAdmin, (req, res) => {
+    db.run('UPDATE course_lessons SET module_id = NULL WHERE module_id = ?', [req.params.id]);
+    db.run('DELETE FROM course_modules WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
   // Course lessons
   app.get('/api/admin/courses/:id/lessons', requireAdmin, (req, res) => {
     const lessons = db.all(
@@ -3859,7 +3903,7 @@ QUY TẮC BẮT BUỘC:
 
   app.post('/api/admin/courses/:id/lessons', requireAdmin, (req, res) => {
     const {
-      title, content, video_url, duration_min = 0, order_num = 0, status = 'published',
+      title, content, video_url, duration_min = 0, order_num = 0, status = 'published', module_id = null,
       exercise_enabled = 0, exercise_type = 'text', exercise_prompt = '', exercise_rubric = '',
       exercise_max_score = 100, exercise_pass_score = 70, exercise_xp_reward = 0,
     } = req.body;
@@ -3868,10 +3912,10 @@ QUY TẮC BẮT BUỘC:
     if (!course) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
     const r = db.run(
       `INSERT INTO course_lessons
-        (course_id, title, content, video_url, duration_min, order_num, status,
+        (course_id, module_id, title, content, video_url, duration_min, order_num, status,
          exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [req.params.id, title.trim(), content || '', video_url || '', Number(duration_min), Number(order_num), status === 'draft' ? 'draft' : 'published',
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.params.id, module_id || null, title.trim(), content || '', video_url || '', Number(duration_min), Number(order_num), status === 'draft' ? 'draft' : 'published',
        exercise_enabled ? 1 : 0, exercise_type === 'quiz' ? 'quiz' : 'text', exercise_prompt || '', exercise_rubric || '', Number(exercise_max_score) || 100, Number(exercise_pass_score) || 70, Number(exercise_xp_reward) || 0]
     );
     res.status(201).json({ success: true, id: r.lastInsertRowid });
@@ -3879,7 +3923,7 @@ QUY TẮC BẮT BUỘC:
 
   app.patch('/api/admin/lessons/:id', requireAdmin, (req, res) => {
     const {
-      title, content, video_url, duration_min, order_num, status,
+      title, content, video_url, duration_min, order_num, status, module_id,
       exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward,
     } = req.body;
     const l = db.get('SELECT id FROM course_lessons WHERE id = ?', [req.params.id]);
@@ -3890,6 +3934,7 @@ QUY TẮC BẮT BUỘC:
     if (duration_min !== undefined) db.run('UPDATE course_lessons SET duration_min = ? WHERE id = ?', [Number(duration_min), req.params.id]);
     if (order_num !== undefined)   db.run('UPDATE course_lessons SET order_num = ? WHERE id = ?', [Number(order_num), req.params.id]);
     if (status !== undefined)      db.run('UPDATE course_lessons SET status = ? WHERE id = ?', [status === 'draft' ? 'draft' : 'published', req.params.id]);
+    if (module_id !== undefined)   db.run('UPDATE course_lessons SET module_id = ? WHERE id = ?', [module_id || null, req.params.id]);
     if (exercise_enabled !== undefined)   db.run('UPDATE course_lessons SET exercise_enabled = ? WHERE id = ?', [exercise_enabled ? 1 : 0, req.params.id]);
     if (exercise_type !== undefined)      db.run('UPDATE course_lessons SET exercise_type = ? WHERE id = ?', [exercise_type === 'quiz' ? 'quiz' : 'text', req.params.id]);
     if (exercise_prompt !== undefined)    db.run('UPDATE course_lessons SET exercise_prompt = ? WHERE id = ?', [exercise_prompt, req.params.id]);

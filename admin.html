@@ -1895,6 +1895,14 @@
               <h2 id="lessonsModalTitle">Bài học</h2>
               <button class="btn-sm primary" onclick="newLesson()">+ Bài học mới</button>
             </div>
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;">MODULE (CHƯƠNG)</div>
+              <div id="moduleChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+              <div style="display:flex;gap:6px;">
+                <input class="search-input" style="flex:1" id="newModuleTitle" placeholder="VD: I - Giới thiệu và hướng dẫn" onkeydown="if(event.key==='Enter')addModule()">
+                <button class="btn-sm primary" onclick="addModule()">+ Thêm module</button>
+              </div>
+            </div>
             <div id="lessonsList" style="padding:16px;">
               <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Đang tải...</div>
             </div>
@@ -1908,6 +1916,12 @@
               <div>
                 <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Tên bài học *</label>
                 <input class="search-input" style="width:100%" id="lsnTitle" placeholder="VD: Bài 1 — Giới thiệu">
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Thuộc module</label>
+                <select class="search-input" style="width:100%" id="lsnModule">
+                  <option value="">— Không thuộc module —</option>
+                </select>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                 <div>
@@ -6208,6 +6222,7 @@
     let editingCourseId = null;
     let managingCourseId = null;
     let editingLessonId = null;
+    let moduleCache = [];
     let lsnQuizQuestionsCache = [];
     let editingQuestionId = null;
 
@@ -6357,10 +6372,48 @@
       initRTE('lsnContentWrap', '', '140px');
       newLesson();
       showPage('course-lessons');
+      await loadModules();
       await refreshLessons();
     }
 
     function closeLessonsModal() { showPage('courses'); }
+
+    async function loadModules() {
+      const data = await api(`/admin/courses/${managingCourseId}/modules`);
+      moduleCache = data.modules || [];
+      document.getElementById('moduleChips').innerHTML = moduleCache.length
+        ? moduleCache.map(m => `
+      <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--bg-hover,#f1f5f9);font-size:12px;font-weight:600;color:var(--text);">
+        ${escHtml(m.title)}
+        <button onclick="deleteModule(${m.id})" style="border:none;background:none;cursor:pointer;color:#94a3b8;font-size:13px;line-height:1;padding:0;" title="Xoá module">×</button>
+      </span>`).join('')
+        : '<span style="font-size:12px;color:#94a3b8;">Chưa có module nào — bài học sẽ hiện dạng danh sách phẳng.</span>';
+      const sel = document.getElementById('lsnModule');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— Không thuộc module —</option>' +
+        moduleCache.map(m => `<option value="${m.id}">${escHtml(m.title)}</option>`).join('');
+      sel.value = current;
+    }
+
+    async function addModule() {
+      const input = document.getElementById('newModuleTitle');
+      const title = input.value.trim();
+      if (!title) return;
+      const res = await api(`/admin/courses/${managingCourseId}/modules`, {
+        method: 'POST',
+        body: JSON.stringify({ title, order_num: moduleCache.length }),
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      input.value = '';
+      await loadModules();
+    }
+
+    async function deleteModule(id) {
+      if (!confirm('Xoá module này? Các bài học bên trong sẽ chuyển về "Không thuộc module", không bị xoá.')) return;
+      await api(`/admin/modules/${id}`, { method: 'DELETE' });
+      await loadModules();
+      await refreshLessons();
+    }
 
     async function refreshLessons() {
       const data = await api(`/admin/courses/${managingCourseId}/lessons`);
@@ -6369,7 +6422,7 @@
         list.innerHTML = '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:13px;">Chưa có bài học nào.</div>';
         return;
       }
-      list.innerHTML = data.lessons.map(l => `
+      const lessonRow = l => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
       <span style="width:28px;height:28px;border-radius:50%;background:#e0e7ff;color:#4f46e5;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${l.order_num || '—'}</span>
       <div style="flex:1;min-width:0;">
@@ -6379,7 +6432,32 @@
       <span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;flex-shrink:0;background:${l.status === 'draft' ? '#f1f5f9' : '#d1fae5'};color:${l.status === 'draft' ? '#64748b' : '#065f46'}">${LESSON_STATUS_LABEL[l.status] || 'Công khai'}</span>
       <button class="btn-sm primary" onclick="editLesson(${l.id})">Sửa</button>
       <button class="btn-sm" style="color:#ef4444" onclick="deleteLesson(${l.id})">Xoá</button>
+    </div>`;
+
+      if (!moduleCache.length) {
+        list.innerHTML = data.lessons.map(lessonRow).join('');
+        return;
+      }
+      const byModule = {};
+      const noModule = [];
+      data.lessons.forEach(l => {
+        if (l.module_id && moduleCache.some(m => m.id === l.module_id)) {
+          (byModule[l.module_id] = byModule[l.module_id] || []).push(l);
+        } else noModule.push(l);
+      });
+      let html = moduleCache.map(m => `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:4px;">${escHtml(m.title)} <span style="font-weight:500;text-transform:none;">(${(byModule[m.id] || []).length} bài)</span></div>
+      ${(byModule[m.id] || []).map(lessonRow).join('') || '<div style="padding:8px 0;color:#94a3b8;font-size:12px;">Chưa có bài học trong module này.</div>'}
     </div>`).join('');
+      if (noModule.length) {
+        html += `
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:4px;">Không thuộc module</div>
+      ${noModule.map(lessonRow).join('')}
+    </div>`;
+      }
+      list.innerHTML = html;
     }
 
     async function editLesson(id) {
@@ -6388,6 +6466,7 @@
       if (!l) return;
       editingLessonId = id;
       document.getElementById('lsnTitle').value = l.title;
+      document.getElementById('lsnModule').value = l.module_id || '';
       setRteContent('lsnContentWrap', l.content || '');
       document.getElementById('lsnVideo').value = l.video_url || '';
       document.getElementById('lsnDuration').value = l.duration_min || '';
@@ -6414,6 +6493,7 @@
     function newLesson() {
       editingLessonId = null;
       document.getElementById('lsnTitle').value = '';
+      document.getElementById('lsnModule').value = '';
       setRteContent('lsnContentWrap', '');
       document.getElementById('lsnVideo').value = '';
       document.getElementById('lsnDuration').value = '';
@@ -6440,6 +6520,7 @@
     async function saveLesson() {
       const body = {
         title: document.getElementById('lsnTitle').value.trim(),
+        module_id: document.getElementById('lsnModule').value || null,
         content: getRteContent('lsnContentWrap'),
         video_url: extractVideoUrl(document.getElementById('lsnVideo').value.trim()),
         duration_min: Number(document.getElementById('lsnDuration').value) || 0,
