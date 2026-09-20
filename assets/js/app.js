@@ -708,9 +708,8 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // ── Cẩm Nang Ngũ Hành nav injector ───────────────────────────
-// Groups the 4 nutrition tools (Quy trình / Thực phẩm / Nhật ký / Công thức)
-// under a single "Cẩm nang" menu: a dropdown in the desktop sub-nav, and a
-// labelled section in the sidebar + mobile menu.
+// Groups the nutrition tools under a single "Cẩm nang" labelled section
+// in the left sidebar + mobile menu.
 (function injectNguHanhNav() {
   const ITEMS = [
     ['tro-ly.html', 'Trợ lý Ngũ Hành', '<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>'],
@@ -721,61 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ['cong-thuc.html',  'Thư viện công thức', '<path d="M12 3a6 6 0 00-6 6c0 2 1 3.5 2 4.5.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5 1-1 2-2.5 2-4.5a6 6 0 00-6-6zM9 21h6"/>'],
     ['tai-lieu.html',   'Tài liệu PDF', '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h6"/>'],
   ];
-  const HREFS = ITEMS.map(i => i[0]);
   const here = location.pathname.split('/').pop() || 'index.html';
-  const onCamNang = HREFS.includes(here);
   const svg = p => `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
-  const bookIcon = '<path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/>';
-
-  // Desktop sub-nav — single "Cẩm nang ▾" dropdown
-  const sub = document.getElementById('subnav-bar');
-  if (sub && !sub.dataset.nguhanh) {
-    sub.dataset.nguhanh = '1';
-    const right = sub.querySelector('.topbar-right');
-
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;flex-shrink:0;';
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'subnav-item' + (onCamNang ? ' active' : '');
-    btn.style.cssText = 'border:none;background:none;cursor:pointer;font-family:inherit;';
-    btn.innerHTML = svg(bookIcon) + ' Cẩm nang <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" d="M6 9l6 6 6-6"/></svg>';
-
-    // Menu is appended to <body> with position:fixed (not inside wrap/subnav-bar) so it
-    // never gets clipped by the subnav bar's overflow-x:auto scroll container.
-    const menu = document.createElement('div');
-    menu.style.cssText = 'position:fixed;min-width:210px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:6px;z-index:200;display:none;';
-    ITEMS.forEach(([href, label, path]) => {
-      const a = document.createElement('a');
-      a.href = href;
-      a.style.cssText = 'display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);font-size:var(--fs-sm);font-weight:600;text-decoration:none;color:' + (here === href ? 'var(--color-primary)' : 'var(--text)') + ';background:' + (here === href ? 'var(--bg-active)' : 'transparent') + ';';
-      a.innerHTML = svg(path).replace('viewBox="0 0 24 24"', 'viewBox="0 0 24 24" width="16" height="16"') + label;
-      a.onmouseenter = () => { if (here !== href) a.style.background = 'var(--bg-hover)'; };
-      a.onmouseleave = () => { if (here !== href) a.style.background = 'transparent'; };
-      menu.appendChild(a);
-    });
-
-    const position = () => {
-      const r = btn.getBoundingClientRect();
-      menu.style.top = (r.bottom + 6) + 'px';
-      let left = r.left + r.width / 2 - 105; // center under button (menu min-width 210)
-      left = Math.max(8, Math.min(left, window.innerWidth - 210 - 8));
-      menu.style.left = left + 'px';
-    };
-    const toggle = open => {
-      if (open) position();
-      menu.style.display = open ? 'block' : 'none';
-    };
-    btn.addEventListener('click', e => { e.stopPropagation(); toggle(menu.style.display !== 'block'); });
-    document.addEventListener('click', e => { if (!wrap.contains(e.target) && !menu.contains(e.target)) toggle(false); });
-    window.addEventListener('resize', () => toggle(false));
-    window.addEventListener('scroll', () => toggle(false), true);
-
-    wrap.appendChild(btn);
-    document.body.appendChild(menu);
-    sub.insertBefore(wrap, right || null);
-  }
 
   // "Khác" is always the last static section in the markup — after Cẩm nang
   // is appended (below) it would sit second-to-last, so move it (label + its
