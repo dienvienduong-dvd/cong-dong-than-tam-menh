@@ -29,15 +29,32 @@ function closeMainMenu() {
 
 // ── Dynamic community branding ─────────────────────────────
 (function applyCommunityBranding() {
-  const DEFAULT_NAME = 'AI AGENTS CC';
+  const DEFAULT_NAME = 'Ăn Uống Ngũ Hành';
+  const CACHE_KEY = 'communitySettingsCache';
+  let _titleObserver = null;
 
-  function replaceInTitle(name) {
-    if (document.title.includes(DEFAULT_NAME)) {
-      document.title = document.title.split(DEFAULT_NAME).join(name);
-    }
+  function readCache() {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function writeCache(s) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(s)); } catch (e) {}
   }
 
-  fetch('/api/settings').then(r => r.json()).then(s => {
+  // Replace the fallback name with the real community name — guarded so it can't loop
+  // when `name` itself contains DEFAULT_NAME (e.g. "Cộng đồng Ăn Uống Ngũ Hành").
+  function replaceInTitle(name) {
+    if (name === DEFAULT_NAME) return;
+    if (document.title.includes(name)) return;           // already branded
+    if (!document.title.includes(DEFAULT_NAME)) return;  // nothing to replace
+    const next = document.title.split(DEFAULT_NAME).join(name);
+    if (next === document.title) return;
+    // pause the observer while we set the title so our own write doesn't re-trigger it
+    if (_titleObserver) _titleObserver.disconnect();
+    document.title = next;
+    if (_titleObserver) _titleObserver.observe(document.querySelector('title'), { childList: true });
+  }
+
+  function apply(s) {
     const tagline = (s.home_tagline || '').trim();
     const taglineEl = document.getElementById('pageTagline');
     if (tagline && taglineEl) taglineEl.textContent = tagline;
@@ -45,16 +62,27 @@ function closeMainMenu() {
     const name = (s.community_name || '').trim();
     if (!name || name === DEFAULT_NAME) return;
 
+    const titleEl = document.querySelector('title');
+    if (titleEl && !_titleObserver) {
+      _titleObserver = new MutationObserver(() => replaceInTitle(name));
+      _titleObserver.observe(titleEl, { childList: true });
+    }
     replaceInTitle(name);
+
     document.querySelectorAll('.sidebar-logo-text, .form-logo-name, .mob-brand-name, #aboutCommunityName, .co-logo-text, .logo-text, .login-logo-name, .header-name').forEach(el => {
       el.textContent = name;
     });
+  }
 
-    // Some pages set document.title asynchronously after their own data loads
-    const titleEl = document.querySelector('title');
-    if (titleEl) {
-      new MutationObserver(() => replaceInTitle(name)).observe(titleEl, { childList: true });
-    }
+  // Render from last-known settings immediately (no fetch wait) so the brand
+  // name/tagline don't visibly flash from the default → real value on every
+  // page navigation; then refresh in the background and re-apply if changed.
+  const cached = readCache();
+  if (cached) apply(cached);
+
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    if (JSON.stringify(s) !== JSON.stringify(cached)) apply(s);
+    writeCache(s);
   }).catch(() => {});
 })();
 
@@ -309,13 +337,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function readCache(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+  }
+  function writeCache(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+  }
+
   async function setup() {
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const cacheKey = 'spacesNavCache:' + (user ? user.id : 'guest');
+    // Render from last-known groups immediately so the sidebar doesn't
+    // visibly pop in new items after the page has already rendered; then
+    // refresh in the background and only touch the DOM again if it changed.
+    const cached = readCache(cacheKey);
+    if (cached) {
+      insertInto(document.getElementById('sidebar-nav'), cached);
+      insertInto(document.querySelector('#mob-sidebar nav'), cached);
+    }
     try {
-      const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
       const qs = user ? `?user_id=${user.id}` : '';
       const { groups } = await fetch(`/api/space-groups${qs}`).then(r => r.json());
-      insertInto(document.getElementById('sidebar-nav'), groups || []);
-      insertInto(document.querySelector('#mob-sidebar nav'), groups || []);
+      const fresh = groups || [];
+      if (JSON.stringify(fresh) !== JSON.stringify(cached)) {
+        insertInto(document.getElementById('sidebar-nav'), fresh);
+        insertInto(document.querySelector('#mob-sidebar nav'), fresh);
+      }
+      writeCache(cacheKey, fresh);
     } catch (e) {}
   }
 
@@ -354,20 +402,36 @@ document.addEventListener('DOMContentLoaded', () => {
       const a = document.createElement('a');
       a.href = `courses.html?course_id=${c.id}`;
       a.className = 'nav-item courses-nav-item' + (String(c.id) === activeId ? ' active' : '');
-      a.innerHTML = `<span style="width:17px;flex-shrink:0;text-align:center;font-size:14px;">📖</span>${esc(c.title)}`;
+      a.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/></svg>${esc(c.title)}`;
       ref.parentNode.insertBefore(a, ref.nextSibling);
       ref = a;
     });
   }
 
+  function readCache(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+  }
+  function writeCache(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+  }
+
   async function setup() {
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!user) return;
+    const cacheKey = 'coursesNavCache:' + user.id;
+    const cached = readCache(cacheKey);
+    if (cached) {
+      insertInto(document.getElementById('sidebar-nav'), cached);
+      insertInto(document.querySelector('#mob-sidebar nav'), cached);
+    }
     try {
-      const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
-      if (!user) return;
       const { courses } = await fetch(`/api/courses?user_id=${user.id}`).then(r => r.json());
       const mine = (courses || []).filter(c => c.enroll_status === 'approved');
-      insertInto(document.getElementById('sidebar-nav'), mine);
-      insertInto(document.querySelector('#mob-sidebar nav'), mine);
+      if (JSON.stringify(mine) !== JSON.stringify(cached)) {
+        insertInto(document.getElementById('sidebar-nav'), mine);
+        insertInto(document.querySelector('#mob-sidebar nav'), mine);
+      }
+      writeCache(cacheKey, mine);
     } catch (e) {}
   }
 
@@ -378,18 +442,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })();
 
-// ── Collapsible "Học tập" sidebar section ────────────────────
-(function initLearningNavCollapse() {
-  const STORE_KEY = 'navCollapsed:hoctap';
-  const LABEL_TEXT = 'Học tập';
+// ── Collapsible sidebar sections ("Học tập", "Cẩm nang") ──────
+// Each section collapses/expands independently, with its own remembered
+// state in localStorage (keyed by SECTIONS[].storeKey below).
+(function initCollapsibleNavSections() {
+  const SECTIONS = [
+    { label: 'Học tập', itemClass: 'group-hoctap', storeKey: 'navCollapsed:hoctap' },
+    { label: 'Cẩm nang', itemClass: 'group-camnang', storeKey: 'navCollapsed:camnang' },
+  ];
 
-  function findLabel(navEl) {
+  function findLabel(navEl, text) {
     if (!navEl) return null;
     return Array.from(navEl.querySelectorAll('.nav-section-label'))
-      .find(l => l.textContent.trim() === LABEL_TEXT) || null;
+      .find(l => l.textContent.trim() === text) || null;
   }
 
-  function setupLabel(label) {
+  function applyState(label, collapsed) {
+    label.classList.toggle('collapsed', collapsed);
+    label.setAttribute('aria-expanded', String(!collapsed));
+  }
+
+  function setState(label, storeKey, collapsed) {
+    try { localStorage.setItem(storeKey, collapsed ? '1' : '0'); } catch (e) {}
+    applyState(label, collapsed);
+  }
+
+  function setupLabel(label, storeKey) {
     if (!label || label.dataset.collapsible === '1') return;
     label.dataset.collapsible = '1';
     label.classList.add('nav-section-toggle');
@@ -400,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `<path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
 
     function toggle() {
-      setState(localStorage.getItem(STORE_KEY) !== '1');
+      setState(label, storeKey, localStorage.getItem(storeKey) !== '1');
     }
     label.addEventListener('click', toggle);
     label.addEventListener('keydown', (e) => {
@@ -408,35 +486,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function markItems(navEl, label) {
-    navEl.querySelectorAll('.nav-item.group-hoctap').forEach(el => el.classList.remove('group-hoctap'));
+  function markItems(navEl, label, itemClass) {
+    navEl.querySelectorAll(`.nav-item.${itemClass}`).forEach(el => el.classList.remove(itemClass));
     let sib = label.nextElementSibling;
     while (sib && !sib.classList.contains('nav-section-label')) {
-      if (sib.classList.contains('nav-item')) sib.classList.add('group-hoctap');
+      if (sib.classList.contains('nav-item')) sib.classList.add(itemClass);
       sib = sib.nextElementSibling;
     }
   }
 
-  function applyState(collapsed) {
-    document.querySelectorAll('.nav-section-label.nav-section-toggle').forEach(label => {
-      label.classList.toggle('collapsed', collapsed);
-      label.setAttribute('aria-expanded', String(!collapsed));
-    });
-  }
-
-  function setState(collapsed) {
-    try { localStorage.setItem(STORE_KEY, collapsed ? '1' : '0'); } catch (e) {}
-    applyState(collapsed);
-  }
-
   function refresh() {
     [document.getElementById('sidebar-nav'), document.querySelector('#mob-sidebar nav')].forEach(navEl => {
-      const label = findLabel(navEl);
-      if (!label) return;
-      setupLabel(label);
-      markItems(navEl, label);
+      SECTIONS.forEach(({ label: text, itemClass, storeKey }) => {
+        const label = findLabel(navEl, text);
+        if (!label) return;
+        setupLabel(label, storeKey);
+        markItems(navEl, label, itemClass);
+        applyState(label, localStorage.getItem(storeKey) === '1');
+      });
     });
-    applyState(localStorage.getItem(STORE_KEY) === '1');
   }
 
   function setup() {
@@ -593,6 +661,15 @@ document.addEventListener('DOMContentLoaded', () => {
     await _load();
   };
 
+  function _positionNotifDropdown(bell, dd) {
+    const r = bell.getBoundingClientRect();
+    const width = 340;
+    let left = r.right - width;
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+    dd.style.top = (r.bottom + 8) + 'px';
+    dd.style.left = left + 'px';
+  }
+
   function _setup() {
     const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!user) return;
@@ -601,12 +678,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const dd   = document.getElementById('notifDropdown');
     if (!bell || !dd) return;
 
+    // Move the dropdown to <body> so position:fixed is never clipped by an
+    // ancestor's overflow (e.g. #subnav-bar's overflow-x:auto scroll strip).
+    document.body.appendChild(dd);
+
     _load();
     setInterval(_load, 15000); // poll every 15s for faster notification display
 
     bell.addEventListener('click', (e) => {
       e.preventDefault(); e.stopPropagation();
       _notifOpen = !_notifOpen;
+      if (_notifOpen) _positionNotifDropdown(bell, dd);
       dd.style.display = _notifOpen ? 'block' : 'none';
     });
     document.addEventListener('click', (e) => {
@@ -614,6 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
         _notifOpen = false; dd.style.display = 'none';
       }
     });
+    window.addEventListener('resize', () => { if (_notifOpen) { _notifOpen = false; dd.style.display = 'none'; } });
+    window.addEventListener('scroll', () => { if (_notifOpen) { _notifOpen = false; dd.style.display = 'none'; } }, true);
   }
 
   if (document.readyState === 'loading') {
@@ -621,4 +705,122 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     setTimeout(_setup, 300);
   }
+})();
+
+// ── Cẩm Nang Ngũ Hành nav injector ───────────────────────────
+// Groups the 4 nutrition tools (Quy trình / Thực phẩm / Nhật ký / Công thức)
+// under a single "Cẩm nang" menu: a dropdown in the desktop sub-nav, and a
+// labelled section in the sidebar + mobile menu.
+(function injectNguHanhNav() {
+  const ITEMS = [
+    ['tro-ly.html', 'Trợ lý Ngũ Hành', '<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>'],
+    ['cam-nang-suc-khoe.html', 'Ngũ Hành – Chìa khóa sức khỏe', '<path d="M12 7c0-1.1-.9-2-2-2H4v13h6a2 2 0 012 2M12 7c0-1.1.9-2 2-2h6v13h-6a2 2 0 00-2 2M12 7v14"/>'],
+    ['quy-trinh.html',  'Quy trình 1 ngày', '<path d="M12 8v4l3 3M12 3a9 9 0 100 18 9 9 0 000-18z"/>'],
+    ['thuc-pham.html',  'Tra cứu thực phẩm', '<path d="M3 2v7c0 1.1.9 2 2 2h1v11M8 2v20M13 2c-1 3-1 6 0 8 1 2 3 2 3 0V2m0 8v12"/>'],
+    ['nhat-ky.html',    'Nhật ký ăn uống',  '<path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/>'],
+    ['cong-thuc.html',  'Thư viện công thức', '<path d="M12 3a6 6 0 00-6 6c0 2 1 3.5 2 4.5.7.7 1 1.5 1 2.5v1h6v-1c0-1 .3-1.8 1-2.5 1-1 2-2.5 2-4.5a6 6 0 00-6-6zM9 21h6"/>'],
+    ['tai-lieu.html',   'Tài liệu PDF', '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h6"/>'],
+  ];
+  const HREFS = ITEMS.map(i => i[0]);
+  const here = location.pathname.split('/').pop() || 'index.html';
+  const onCamNang = HREFS.includes(here);
+  const svg = p => `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  const bookIcon = '<path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/>';
+
+  // Desktop sub-nav — single "Cẩm nang ▾" dropdown
+  const sub = document.getElementById('subnav-bar');
+  if (sub && !sub.dataset.nguhanh) {
+    sub.dataset.nguhanh = '1';
+    const right = sub.querySelector('.topbar-right');
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;flex-shrink:0;';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'subnav-item' + (onCamNang ? ' active' : '');
+    btn.style.cssText = 'border:none;background:none;cursor:pointer;font-family:inherit;';
+    btn.innerHTML = svg(bookIcon) + ' Cẩm nang <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" d="M6 9l6 6 6-6"/></svg>';
+
+    // Menu is appended to <body> with position:fixed (not inside wrap/subnav-bar) so it
+    // never gets clipped by the subnav bar's overflow-x:auto scroll container.
+    const menu = document.createElement('div');
+    menu.style.cssText = 'position:fixed;min-width:210px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:6px;z-index:200;display:none;';
+    ITEMS.forEach(([href, label, path]) => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.style.cssText = 'display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);font-size:var(--fs-sm);font-weight:600;text-decoration:none;color:' + (here === href ? 'var(--color-primary)' : 'var(--text)') + ';background:' + (here === href ? 'var(--bg-active)' : 'transparent') + ';';
+      a.innerHTML = svg(path).replace('viewBox="0 0 24 24"', 'viewBox="0 0 24 24" width="16" height="16"') + label;
+      a.onmouseenter = () => { if (here !== href) a.style.background = 'var(--bg-hover)'; };
+      a.onmouseleave = () => { if (here !== href) a.style.background = 'transparent'; };
+      menu.appendChild(a);
+    });
+
+    const position = () => {
+      const r = btn.getBoundingClientRect();
+      menu.style.top = (r.bottom + 6) + 'px';
+      let left = r.left + r.width / 2 - 105; // center under button (menu min-width 210)
+      left = Math.max(8, Math.min(left, window.innerWidth - 210 - 8));
+      menu.style.left = left + 'px';
+    };
+    const toggle = open => {
+      if (open) position();
+      menu.style.display = open ? 'block' : 'none';
+    };
+    btn.addEventListener('click', e => { e.stopPropagation(); toggle(menu.style.display !== 'block'); });
+    document.addEventListener('click', e => { if (!wrap.contains(e.target) && !menu.contains(e.target)) toggle(false); });
+    window.addEventListener('resize', () => toggle(false));
+    window.addEventListener('scroll', () => toggle(false), true);
+
+    wrap.appendChild(btn);
+    document.body.appendChild(menu);
+    sub.insertBefore(wrap, right || null);
+  }
+
+  // "Khác" is always the last static section in the markup — after Cẩm nang
+  // is appended (below) it would sit second-to-last, so move it (label + its
+  // items) to the very end of navEl. Stops at the next .nav-section-label OR
+  // at the Cẩm nang wrapper (which isn't itself a .nav-section-label).
+  function moveKhacToBottom(navEl) {
+    if (!navEl) return;
+    const khacLabel = Array.from(navEl.querySelectorAll('.nav-section-label'))
+      .find(l => l.textContent.trim() === 'Khác');
+    if (!khacLabel) return;
+    const nodes = [khacLabel];
+    let sib = khacLabel.nextElementSibling;
+    while (sib && !sib.classList.contains('nav-section-label') && !sib.classList.contains('camnang-nav-section')) {
+      nodes.push(sib);
+      sib = sib.nextElementSibling;
+    }
+    nodes.forEach(n => navEl.appendChild(n)); // re-appending in order moves the whole block to the end
+  }
+
+  // Left sidebar + mobile drawer — "Cẩm nang" labelled section.
+  // Wrapped in its own container (rather than appended as loose siblings) so
+  // the collapse feature below can reliably find "the items in this section"
+  // without depending on DOM order relative to the other nav injectors
+  // (Spaces, Khoá học) that also mutate this same list.
+  function addSection(navEl, itemClass) {
+    if (!navEl || navEl.dataset.nguhanh) return;
+    navEl.dataset.nguhanh = '1';
+    const section = document.createElement('div');
+    section.className = 'camnang-nav-section';
+    const label = document.createElement('div');
+    label.className = 'nav-section-label';
+    label.style.marginTop = '8px';
+    label.textContent = 'Cẩm nang';
+    section.appendChild(label);
+    ITEMS.forEach(([href, label2, path]) => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.className = itemClass + (here === href ? ' active' : '');
+      a.innerHTML = svg(path) + label2;
+      section.appendChild(a);
+    });
+    navEl.appendChild(section);
+    moveKhacToBottom(navEl);
+  }
+  addSection(document.getElementById('sidebar-nav'), 'nav-item');
+  addSection(document.querySelector('#mob-sidebar nav'), 'nav-item');
+  addSection(document.querySelector('#mob-mainmenu nav'), 'nav-item');
 })();

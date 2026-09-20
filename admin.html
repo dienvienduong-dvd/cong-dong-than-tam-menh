@@ -1996,6 +1996,7 @@
         <div class="mp-tabs">
           <button class="mp-tab-btn active" onclick="showCamnangTab('foods', this)">🍚 Thực phẩm</button>
           <button class="mp-tab-btn" onclick="showCamnangTab('recipes', this)">🍲 Công thức</button>
+          <button class="mp-tab-btn" onclick="showCamnangTab('docs', this)">📄 Tài liệu PDF</button>
         </div>
 
         <div class="cn-tab-panel active" data-tab="foods">
@@ -2044,6 +2045,31 @@
             <div class="table-card-header"><h2>Danh sách công thức (<span id="rcTotal">0</span>)</h2></div>
             <table class="data-table"><thead><tr><th>Tên</th><th>Buổi</th><th>Hành</th><th></th></tr></thead>
               <tbody id="rcTbody"></tbody></table>
+          </div>
+        </div>
+
+        <div class="cn-tab-panel" data-tab="docs">
+          <div class="table-card" style="margin-bottom:16px;">
+            <div class="table-card-header"><h2>Thêm / sửa tài liệu PDF</h2></div>
+            <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+              <input type="hidden" id="dcId">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+                <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Tên tài liệu</label><input class="search-input" style="width:100%" id="dcTitle" placeholder="VD: Truyện tranh Ngũ Hành tập 1"></div>
+                <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Icon (emoji)</label><input class="search-input" style="width:100%" id="dcIcon" placeholder="📄"></div>
+                <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Thứ tự hiển thị</label><input class="search-input" style="width:100%" id="dcOrder" type="number" value="0"></div>
+              </div>
+              <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Đường dẫn / URL file PDF</label>
+                <input class="search-input" style="width:100%" id="dcUrl" placeholder="VD: tai-lieu/ten-file.pdf hoặc https://...">
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;">Upload file PDF vào thư mục <code>tai-lieu/</code> của dự án trước, sau đó dán đường dẫn tương đối (hoặc dán thẳng URL nếu file host ở nơi khác).</div>
+              </div>
+              <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Ghi chú (hiện dưới tên tài liệu)</label><input class="search-input" style="width:100%" id="dcNote"></div>
+              <div style="display:flex;gap:8px;"><button class="btn-sm primary" onclick="saveCamnangDoc()" id="dcSaveBtn">+ Thêm tài liệu</button><button class="btn-sm" onclick="newCamnangDoc()">Làm mới</button></div>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="table-card-header"><h2>Danh sách tài liệu (<span id="dcTotal">0</span>)</h2></div>
+            <table class="data-table"><thead><tr><th>Icon</th><th>Tên</th><th>File</th><th></th></tr></thead>
+              <tbody id="dcTbody"></tbody></table>
           </div>
         </div>
       </section>
@@ -3662,7 +3688,7 @@
       if (name === 'notifications') { loadAdminNotifications(); loadNotifUserDropdown(); }
       if (name === 'crm') loadCRM();
       if (name === 'challenge-progress') loadChallengeProgress();
-      if (name === 'camnang') { loadFoods(); loadRecipes(); }
+      if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
     }
 
@@ -3766,6 +3792,65 @@
       if (!confirm('Xoá công thức này?')) return;
       await api(`/admin/recipes/${id}`, { method: 'DELETE' });
       loadRecipes();
+    }
+
+    // ── Cẩm nang: tài liệu PDF ────────────────────────────────────
+    let _camnangDocCache = [];
+    async function loadCamnangDocs() {
+      const { docs } = await api('/admin/camnang-docs');
+      _camnangDocCache = docs;
+      document.getElementById('dcTotal').textContent = docs.length;
+      document.getElementById('dcTbody').innerHTML = docs.map(d => `
+        <tr>
+          <td>${escHtml(d.icon || '📄')}</td>
+          <td>${escHtml(d.title)}</td>
+          <td style="max-width:280px;font-size:12px;color:var(--muted);word-break:break-all;">${escHtml(d.pdf_url)}</td>
+          <td style="white-space:nowrap">
+            <button class="btn-sm" onclick="editCamnangDoc(${d.id})">Sửa</button>
+            <button class="btn-sm" style="color:#ef4444" onclick="delCamnangDoc(${d.id})">Xoá</button>
+          </td>
+        </tr>`).join('');
+    }
+    function newCamnangDoc() {
+      ['dcId', 'dcTitle', 'dcIcon', 'dcUrl', 'dcNote'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('dcOrder').value = 0;
+      document.getElementById('dcSaveBtn').textContent = '+ Thêm tài liệu';
+    }
+    function editCamnangDoc(id) {
+      const d = _camnangDocCache.find(x => x.id === id);
+      if (!d) return;
+      document.getElementById('dcId').value = d.id;
+      document.getElementById('dcTitle').value = d.title || '';
+      document.getElementById('dcIcon').value = d.icon || '';
+      document.getElementById('dcOrder').value = d.order_num || 0;
+      document.getElementById('dcUrl').value = d.pdf_url || '';
+      document.getElementById('dcNote').value = d.note || '';
+      document.getElementById('dcSaveBtn').textContent = 'Cập nhật tài liệu';
+      document.getElementById('page-camnang').scrollIntoView({ behavior: 'smooth' });
+    }
+    async function saveCamnangDoc() {
+      const id = document.getElementById('dcId').value;
+      const body = {
+        title: document.getElementById('dcTitle').value.trim(),
+        icon: document.getElementById('dcIcon').value.trim(),
+        order_num: document.getElementById('dcOrder').value,
+        pdf_url: document.getElementById('dcUrl').value.trim(),
+        note: document.getElementById('dcNote').value.trim(),
+      };
+      if (!body.title) { showToast('Nhập tên tài liệu.', 'red'); return; }
+      if (!body.pdf_url) { showToast('Nhập đường dẫn file PDF.', 'red'); return; }
+      const res = id
+        ? await api(`/admin/camnang-docs/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
+        : await api('/admin/camnang-docs', { method: 'POST', body: JSON.stringify(body) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(id ? 'Đã cập nhật.' : 'Đã thêm tài liệu.', 'green');
+      newCamnangDoc();
+      loadCamnangDocs();
+    }
+    async function delCamnangDoc(id) {
+      if (!confirm('Xoá tài liệu này?')) return;
+      await api(`/admin/camnang-docs/${id}`, { method: 'DELETE' });
+      loadCamnangDocs();
     }
 
     function refreshCurrent() { showPage(currentPage); }

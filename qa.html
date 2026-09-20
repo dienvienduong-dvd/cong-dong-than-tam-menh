@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hỏi đáp — AI AGENTS CC</title>
+  <title>Hỏi đáp — Ăn Uống Ngũ Hành</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -875,7 +875,7 @@
               stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </div>
-        <div class="sidebar-logo-text">AI AGENTS <span>CC</span></div>
+        <div class="sidebar-logo-text">Ngũ Hành <span>ĂU</span></div>
       </div>
 
       <nav id="sidebar-nav">
@@ -1123,7 +1123,7 @@
           <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#fff" stroke-width="2" stroke-linecap="round" />
         </svg>
       </div>
-      <span class="mob-brand-name">AI AGENTS CC</span>
+      <span class="mob-brand-name">Ăn Uống Ngũ Hành</span>
     </div>
     <nav style="flex:1;overflow-y:auto;padding:8px;">
       <div class="nav-section-label">Cộng đồng</div>
@@ -1266,7 +1266,7 @@
         <div class="ask-field">
           <label>Tiêu đề câu hỏi <span>*</span></label>
           <input type="text" class="ask-input" id="askTitle"
-            placeholder="Ví dụ: Làm thế nào để deploy agent lên production?" maxlength="200">
+            placeholder="Ví dụ: Bữa sáng nên ăn vị gì để tốt cho Gan?" maxlength="200">
         </div>
         <div class="ask-field">
           <label>Mô tả chi tiết</label>
@@ -1286,11 +1286,11 @@
     const API = '/api';
     const AV_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444', '#14b8a6'];
     const LEVELS = [
-      { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Học viên', xpMin: 45, xpMax: 120 },
-      { level: 3, name: 'Thực hành', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Nâng cao', xpMin: 250, xpMax: 450 },
-      { level: 5, name: 'Chuyên gia', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Bậc thầy', xpMin: 700, xpMax: 1000 },
-      { level: 7, name: 'Huyền thoại', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Tiên tri', xpMin: 1500, xpMax: 2200 },
-      { level: 9, name: 'Thần thánh', xpMin: 2200, xpMax: 9999 },
+      { level: 1, name: 'Sơ Cơ', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Nhập Môn', xpMin: 45, xpMax: 120 },
+      { level: 3, name: 'Dưỡng Khí', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Thuận Mộc', xpMin: 250, xpMax: 450 },
+      { level: 5, name: 'Hòa Hỏa', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Vượng Thổ', xpMin: 700, xpMax: 1000 },
+      { level: 7, name: 'Liễm Kim', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Thông Thủy', xpMin: 1500, xpMax: 2200 },
+      { level: 9, name: 'Ngũ Hành Hòa', xpMin: 2200, xpMax: 9999 },
     ];
     function getLevelDef(xp) { for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i].xpMin) return LEVELS[i]; return LEVELS[0]; }
 

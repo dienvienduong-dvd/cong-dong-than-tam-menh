@@ -495,6 +495,15 @@ const SCHEMA = `
     order_num    INTEGER DEFAULT 0,
     created_at   TEXT    DEFAULT (datetime('now','localtime'))
   );
+  CREATE TABLE IF NOT EXISTS camnang_docs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT    NOT NULL,
+    pdf_url    TEXT    NOT NULL,
+    icon       TEXT    DEFAULT '📄',
+    note       TEXT,
+    order_num  INTEGER DEFAULT 0,
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
+  );
   CREATE TABLE IF NOT EXISTS meal_logs (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id    INTEGER NOT NULL REFERENCES users(id),
@@ -3606,6 +3615,42 @@ QUY TẮC BẮT BUỘC:
   });
   app.delete('/api/admin/recipes/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM recipes WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // ── Tài liệu PDF (Cẩm nang) ────────────────────────────────
+  app.get('/api/camnang-docs', (_req, res) => {
+    res.json({ docs: db.all('SELECT id, title, pdf_url, icon, note FROM camnang_docs ORDER BY order_num ASC, id ASC') });
+  });
+  app.get('/api/camnang-docs/:id', (req, res) => {
+    const d = db.get('SELECT * FROM camnang_docs WHERE id = ?', [req.params.id]);
+    if (!d) return res.status(404).json({ error: 'Không tìm thấy tài liệu.' });
+    res.json({ doc: d });
+  });
+  app.get('/api/admin/camnang-docs', requireAdmin, (_req, res) => {
+    res.json({ docs: db.all('SELECT * FROM camnang_docs ORDER BY order_num ASC, id ASC') });
+  });
+  app.post('/api/admin/camnang-docs', requireAdmin, (req, res) => {
+    const { title, pdf_url, icon, note, order_num } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Thiếu tên tài liệu.' });
+    if (!pdf_url?.trim()) return res.status(400).json({ error: 'Thiếu đường dẫn file PDF.' });
+    const r = db.run(
+      'INSERT INTO camnang_docs (title, pdf_url, icon, note, order_num) VALUES (?,?,?,?,?)',
+      [title.trim(), pdf_url.trim(), icon?.trim() || '📄', note || null, Number(order_num) || 0]
+    );
+    res.status(201).json({ success: true, id: r.lastInsertRowid });
+  });
+  app.patch('/api/admin/camnang-docs/:id', requireAdmin, (req, res) => {
+    const d = db.get('SELECT id FROM camnang_docs WHERE id = ?', [req.params.id]);
+    if (!d) return res.status(404).json({ error: 'Không tìm thấy.' });
+    ['title', 'pdf_url', 'icon', 'note', 'order_num'].forEach(k => {
+      if (req.body[k] !== undefined)
+        db.run(`UPDATE camnang_docs SET ${k} = ? WHERE id = ?`, [k === 'order_num' ? (Number(req.body[k]) || 0) : (req.body[k] || null), req.params.id]);
+    });
+    res.json({ success: true });
+  });
+  app.delete('/api/admin/camnang-docs/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM camnang_docs WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   });
 

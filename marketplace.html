@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Marketplace — AI AGENTS CC</title>
+  <title>Marketplace — Ăn Uống Ngũ Hành</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -716,7 +716,7 @@
               stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </div>
-        <div class="sidebar-logo-text">AI AGENTS <span>CC</span></div>
+        <div class="sidebar-logo-text">Ngũ Hành <span>ĂU</span></div>
       </div>
       <nav id="sidebar-nav">
         <div class="nav-section-label">Cộng đồng</div>
@@ -877,11 +877,11 @@
             </div>
             <div class="cat-pills" id="catPills">
               <button class="cat-pill active" data-cat="all">Tất cả</button>
-              <button class="cat-pill" data-cat="prompt">Prompt</button>
-              <button class="cat-pill" data-cat="agent">Tài liệu IELTS</button>
-              <button class="cat-pill" data-cat="ebook">Ebook</button>
-              <button class="cat-pill" data-cat="tool">Công cụ</button>
-              <button class="cat-pill" data-cat="course">Mini Course</button>
+              <button class="cat-pill" data-cat="combo">Combo thực phẩm</button>
+              <button class="cat-pill" data-cat="thao-duoc">Thảo dược</button>
+              <button class="cat-pill" data-cat="ebook">Ebook &amp; Tài liệu</button>
+              <button class="cat-pill" data-cat="cong-thuc">Công thức</button>
+              <button class="cat-pill" data-cat="course">Khóa học</button>
             </div>
             <select class="mp-sort" id="mpSort">
               <option value="newest">Mới nhất</option>
@@ -934,7 +934,7 @@
       <div style="width:28px;height:28px;background:var(--color-primary);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="16" height="16" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3" fill="#fff"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
-      <span class="mob-brand-name">AI AGENTS CC</span>
+      <span class="mob-brand-name">Ăn Uống Ngũ Hành</span>
     </div>
     <nav style="flex:1;overflow-y:auto;padding:8px;">
       <div class="nav-section-label">Cộng đồng</div>
@@ -1052,6 +1052,10 @@
         </div>
         <div class="mp-modal-desc" id="detailDesc"></div>
         <div class="mp-modal-long" id="detailLong"></div>
+        <a id="detailScheduleLink" href="challenge-detail.html?id=1" style="display:none;align-items:center;gap:8px;margin:0 24px 16px;padding:11px 14px;background:var(--bg-active);border:1px solid var(--color-primary);border-radius:var(--radius-md);color:var(--color-primary);font-size:var(--fs-sm);font-weight:600;text-decoration:none;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Xem lịch trình mẫu 4 tuần dùng kèm combo — trong Thử thách 28 ngày Dưỡng Hóa
+        </a>
         <div class="mp-modal-footer">
           <div>
             <div class="mp-modal-compare-price" id="detailComparePrice" style="display:none"></div>
@@ -1070,20 +1074,20 @@
     const AV_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
 
     const CAT_META = {
-      prompt: { label: 'Prompt & Template', icon: '📝', bg: '#fef3c7', color: '#92400e' },
-      agent: { label: 'Tài liệu IELTS', icon: '📚', bg: '#ede9fe', color: '#5b21b6' },
-      ebook: { label: 'Ebook & Tài liệu', icon: '📚', bg: '#d1fae5', color: '#065f46' },
-      tool: { label: 'Công cụ & Script', icon: '🔧', bg: '#dbeafe', color: '#1e40af' },
-      course: { label: 'Mini Course', icon: '🎓', bg: '#fce7f3', color: '#9d174d' },
+      combo: { label: 'Combo thực phẩm', icon: '🧺', bg: '#d1fae5', color: '#065f46' },
+      'thao-duoc': { label: 'Thảo dược', icon: '🌿', bg: '#dbeafe', color: '#1e40af' },
+      ebook: { label: 'Ebook & Tài liệu', icon: '📗', bg: '#fef3c7', color: '#92400e' },
+      'cong-thuc': { label: 'Công thức', icon: '🍲', bg: '#fee2e2', color: '#991b1b' },
+      course: { label: 'Khóa học', icon: '🎓', bg: '#fce7f3', color: '#9d174d' },
       other: { label: 'Khác', icon: '📦', bg: '#f1f5f9', color: '#475569' },
     };
 
     const LEVELS = [
-      { level: 1, name: 'Khởi động', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Học viên', xpMin: 45, xpMax: 120 },
-      { level: 3, name: 'Thực hành', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Nâng cao', xpMin: 250, xpMax: 450 },
-      { level: 5, name: 'Chuyên gia', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Bậc thầy', xpMin: 700, xpMax: 1000 },
-      { level: 7, name: 'Huyền thoại', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Tiên tri', xpMin: 1500, xpMax: 2200 },
-      { level: 9, name: 'Thần thánh', xpMin: 2200, xpMax: 9999 },
+      { level: 1, name: 'Sơ Cơ', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Nhập Môn', xpMin: 45, xpMax: 120 },
+      { level: 3, name: 'Dưỡng Khí', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Thuận Mộc', xpMin: 250, xpMax: 450 },
+      { level: 5, name: 'Hòa Hỏa', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Vượng Thổ', xpMin: 700, xpMax: 1000 },
+      { level: 7, name: 'Liễm Kim', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Thông Thủy', xpMin: 1500, xpMax: 2200 },
+      { level: 9, name: 'Ngũ Hành Hòa', xpMin: 2200, xpMax: 9999 },
     ];
     function getLevel(xp) { return [...LEVELS].reverse().find(l => xp >= l.xpMin) || LEVELS[0]; }
     function escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
@@ -1322,6 +1326,7 @@
         document.getElementById('detailSellerXp').textContent = `${p.xp || 0} XP · Level ${p.level || 1}`;
         document.getElementById('detailDesc').textContent = p.description || '';
         document.getElementById('detailLong').textContent = p.long_description || '';
+        document.getElementById('detailScheduleLink').style.display = /Dưỡng Hóa/i.test(p.title) ? 'flex' : 'none';
         const compareEl = document.getElementById('detailComparePrice');
         if (p.compare_price > p.price) {
           compareEl.textContent = fmtPrice(p.compare_price);

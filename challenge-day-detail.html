@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chi tiết ngày thử thách — AI AGENTS CC</title>
+<title>Chi tiết ngày thử thách — Ăn Uống Ngũ Hành</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
@@ -209,7 +209,7 @@
           <path d="M5.5 5.5l1.5 1.5M13 13l1.5 1.5M14.5 5.5L13 7M7 13l-1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
-      <div class="sidebar-logo-text">AI AGENTS <span>CC</span></div>
+      <div class="sidebar-logo-text">Ngũ Hành <span>ĂU</span></div>
     </div>
     <nav id="sidebar-nav">
       <div class="nav-section-label">Cộng đồng</div>
@@ -468,11 +468,11 @@
 const API = '/api';
 const AV_COLORS = ['#0ea5e9','#8b5cf6','#10b981','#f59e0b','#ec4899','#3b82f6','#ef4444','#14b8a6'];
 const LEVELS = [
-  {level:1,name:'Khởi động',xpMin:0,xpMax:45},{level:2,name:'Học viên',xpMin:45,xpMax:120},
-  {level:3,name:'Thực hành',xpMin:120,xpMax:250},{level:4,name:'Nâng cao',xpMin:250,xpMax:450},
-  {level:5,name:'Chuyên gia',xpMin:450,xpMax:700},{level:6,name:'Bậc thầy',xpMin:700,xpMax:1000},
-  {level:7,name:'Huyền thoại',xpMin:1000,xpMax:1500},{level:8,name:'Tiên tri',xpMin:1500,xpMax:2200},
-  {level:9,name:'Thần thánh',xpMin:2200,xpMax:9999},
+  {level:1,name:'Sơ Cơ',xpMin:0,xpMax:45},{level:2,name:'Nhập Môn',xpMin:45,xpMax:120},
+  {level:3,name:'Dưỡng Khí',xpMin:120,xpMax:250},{level:4,name:'Thuận Mộc',xpMin:250,xpMax:450},
+  {level:5,name:'Hòa Hỏa',xpMin:450,xpMax:700},{level:6,name:'Vượng Thổ',xpMin:700,xpMax:1000},
+  {level:7,name:'Liễm Kim',xpMin:1000,xpMax:1500},{level:8,name:'Thông Thủy',xpMin:1500,xpMax:2200},
+  {level:9,name:'Ngũ Hành Hòa',xpMin:2200,xpMax:9999},
 ];
 function getLevel(xp) { for(let i=LEVELS.length-1;i>=0;i--) if(xp>=LEVELS[i].xpMin) return LEVELS[i]; return LEVELS[0]; }
 
@@ -658,7 +658,7 @@ function renderPage(data) {
   const sub = submissions[day.id];
 
   // Document title & topbar
-  document.title = `Ngày ${day.day_number}: ${day.title} — AI AGENTS CC`;
+  document.title = `Ngày ${day.day_number}: ${day.title} — Ăn Uống Ngũ Hành`;
   document.getElementById('topbarTitle').innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>Ngày ${day.day_number} — ${day.title}`;
   document.getElementById('mobTitle').textContent = `Ngày ${day.day_number}`;
 

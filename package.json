@@ -1,7 +1,7 @@
 {
-  "name": "ai-agent-command-center",
+  "name": "cong-dong-an-uong-ngu-hanh",
   "version": "1.0.0",
-  "description": "Community Platform — Vietnamese",
+  "description": "Cộng đồng Ăn Uống Ngũ Hành — Community Platform (Vietnamese)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,9 +11,6 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "mammoth": "^1.12.0",
-    "multer": "^2.2.0",
-    "pdf-parse": "^2.4.5",
     "resend": "^6.12.3",
     "sql.js": "^1.12.0"
   }
