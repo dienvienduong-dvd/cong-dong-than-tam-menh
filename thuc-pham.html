@@ -343,7 +343,10 @@ const API = '/api';
       if (tbAv) { tbAv.textContent = ini; tbAv.style.background = col; tbAv.onclick = () => location.href = `profile.html?id=${currentUser.id}`; }
     })();
 
-    const EL = { kim:{l:'Hành Kim (Trắng · Cay · Phổi)',c:'#94a3b8'}, moc:{l:'Hành Mộc (Xanh · Chua · Gan)',c:'#10b981'}, thuy:{l:'Hành Thủy (Đen · Mặn · Thận)',c:'#1f2937'}, hoa:{l:'Hành Hỏa (Đỏ · Đắng · Tim)',c:'#ef4444'}, tho:{l:'Hành Thổ (Vàng · Ngọt · Tỳ)',c:'#f59e0b'} };
+    const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+    // Kim/Thủy need lighter shades in dark mode (matches base.css's --pillar-kim/-thuy
+    // dark overrides) — their light-mode hex is otherwise unreadable on a dark card.
+    const EL = { kim:{l:'Hành Kim (Trắng · Cay · Phổi)',c: isDarkTheme ? '#cbd5e1' : '#94a3b8'}, moc:{l:'Hành Mộc (Xanh · Chua · Gan)',c:'#10b981'}, thuy:{l:'Hành Thủy (Đen · Mặn · Thận)',c: isDarkTheme ? '#64748b' : '#1f2937'}, hoa:{l:'Hành Hỏa (Đỏ · Đắng · Tim)',c:'#ef4444'}, tho:{l:'Hành Thổ (Vàng · Ngọt · Tỳ)',c:'#f59e0b'} };
     const TASTES = ['chua','cay','đắng','mặn','ngọt','chát'];
     const NATURES = ['hàn','lương','bình','ôn','nhiệt'];
     let fEl='', fTaste='', fNature='', fQ='';

@@ -1535,6 +1535,16 @@
         const { pillars } = await fetch(`${API}/pillars`).then(r => r.json());
         PILLARS_LIST = pillars || [];
         PILLARS = {};
+        // Kim/Thủy's seeded colors (#94a3b8/#1f2937) are unreadable on a dark
+        // card — lighten them in dark mode, matching base.css's --pillar-kim/
+        // -thuy dark overrides.
+        const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDarkTheme) {
+          PILLARS_LIST.forEach(p => {
+            if (p.key === 'kim') p.color = '#cbd5e1';
+            if (p.key === 'thuy') p.color = '#64748b';
+          });
+        }
         PILLARS_LIST.forEach(p => { PILLARS[p.key] = p; });
         const menu = document.getElementById('pillarMenu');
         if (menu) {

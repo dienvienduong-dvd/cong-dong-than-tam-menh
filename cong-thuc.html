@@ -349,7 +349,10 @@ const API = '/api';
       if (tbAv) { tbAv.textContent = ini; tbAv.style.background = col; tbAv.onclick = () => location.href = `profile.html?id=${currentUser.id}`; }
     })();
 
-    const EL = { kim:{l:'Kim',c:'#94a3b8'}, moc:{l:'Mộc',c:'#10b981'}, thuy:{l:'Thủy',c:'#1f2937'}, hoa:{l:'Hỏa',c:'#ef4444'}, tho:{l:'Thổ',c:'#f59e0b'} };
+    const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+    // Kim/Thủy need lighter shades in dark mode (matches base.css's --pillar-kim/-thuy
+    // dark overrides) — their light-mode hex is otherwise unreadable on a dark card.
+    const EL = { kim:{l:'Kim',c: isDarkTheme ? '#cbd5e1' : '#94a3b8'}, moc:{l:'Mộc',c:'#10b981'}, thuy:{l:'Thủy',c: isDarkTheme ? '#64748b' : '#1f2937'}, hoa:{l:'Hỏa',c:'#ef4444'}, tho:{l:'Thổ',c:'#f59e0b'} };
     const BUOI = ['sáng','trưa','tối','cả ngày'];
     let fBuoi='', fEl='';
     function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}

@@ -355,7 +355,10 @@ const API = '/api';
       ['18:30–19:00', 'Ăn tối theo Ngũ Hành + 1 ly rượu vang (20–50ml)', 'Ưu tiên vị CAY màu trắng (Hành Kim) + vị MẶN màu đen (Hành Thủy). VD lẩu Thái, rau muống xào tỏi, mè đen rang muối, canh gà ác, tỏi đen ngâm tương.', [['Kim · cay','kim'],['Thủy · mặn','thuy']]],
       ['19:30', 'Uống trà thải độc', '1 gói + 200ml nước sôi (trời lạnh 100ml). Nếu hôm sau không đi vệ sinh được → tăng 2 gói với 300ml.', []],
     ];
-    const PILL_COLOR = { kim:'#94a3b8', moc:'#10b981', thuy:'#1f2937', hoa:'#ef4444', tho:'#f59e0b' };
+    const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+    // Kim/Thủy need lighter shades in dark mode (matches base.css's --pillar-kim/-thuy
+    // dark overrides) — their light-mode hex is otherwise unreadable on a dark card.
+    const PILL_COLOR = { kim: isDarkTheme ? '#cbd5e1' : '#94a3b8', moc:'#10b981', thuy: isDarkTheme ? '#64748b' : '#1f2937', hoa:'#ef4444', tho:'#f59e0b' };
     function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     document.getElementById('qtSteps').innerHTML = STEPS.map(([t,h,p,tags]) => `
       <div class="qt-step">
