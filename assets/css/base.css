@@ -25,6 +25,10 @@
   --bg-hover:   #f1f5f9;
   --bg-active:  #ccfbf1;
   --bg-input:   #f8fafc;
+  /* Detail popups only — same as --bg-card here (white already contrasts
+     fine against the light backdrop), but lighter than --bg-card in dark
+     mode so the shadow below actually reads against a near-black page. */
+  --bg-elevated: #ffffff;
 
   /* Text */
   --text:       #0f172a;
@@ -105,6 +109,7 @@ html[data-theme="dark"] {
   --bg-hover:   #1e293b;
   --bg-active:  #0f3d3a;
   --bg-input:   #0f172a;
+  --bg-elevated: #1b263d;
 
   --text:       #f1f5f9;
   --text-muted: #94a3b8;
@@ -116,7 +121,10 @@ html[data-theme="dark"] {
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 30px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.3);
-  --shadow-modal: 0 25px 50px -12px rgba(0,0,0,0.7), 0 10px 25px -5px rgba(0,0,0,0.5);
+  /* A subtle light rim (like a tabletop reflection) plus a much heavier drop
+     shadow — a plain black shadow alone barely shows up against the already
+     near-black page, so the rim is what actually reads as "lifted". */
+  --shadow-modal: 0 0 0 1px rgba(255,255,255,0.07), 0 30px 60px -12px rgba(0,0,0,0.85), 0 18px 36px -18px rgba(0,0,0,0.7);
 
   /* Hành Kim (trắng) & Hành Thủy (đen) cần sáng hơn để nhìn rõ trên nền tối */
   --pillar-kim:   #cbd5e1;
