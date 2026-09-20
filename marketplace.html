@@ -472,6 +472,7 @@
 
     .mp-modal {
       background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 600px;
@@ -481,7 +482,7 @@
       flex-direction: column;
       transform: translateY(12px);
       transition: transform .2s;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+      box-shadow: var(--shadow-modal);
     }
 
     .mp-modal-overlay.open .mp-modal {

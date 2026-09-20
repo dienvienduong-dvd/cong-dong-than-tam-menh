@@ -76,6 +76,10 @@
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg: 0 10px 30px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+  /* Detail popups (post/recipe/product) — deliberately heavier than
+     --shadow-lg so the card visibly "lifts" off the dark overlay behind it
+     instead of blending in, like a raised 3D card. */
+  --shadow-modal: 0 25px 50px -12px rgba(15,23,42,0.35), 0 10px 25px -5px rgba(15,23,42,0.15);
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -112,6 +116,7 @@ html[data-theme="dark"] {
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 30px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-modal: 0 25px 50px -12px rgba(0,0,0,0.7), 0 10px 25px -5px rgba(0,0,0,0.5);
 
   /* Hành Kim (trắng) & Hành Thủy (đen) cần sáng hơn để nhìn rõ trên nền tối */
   --pillar-kim:   #cbd5e1;
