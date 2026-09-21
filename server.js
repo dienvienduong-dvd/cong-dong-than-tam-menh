@@ -3711,6 +3711,38 @@ QUY TẮC BẮT BUỘC:
     res.json({ success: true, streak, new_entry: !existing });
   });
 
+  // ── Admin: Nhật ký ăn uống (view/moderate every member's meal logs) ──
+  app.get('/api/admin/meal-logs', requireAdmin, (req, res) => {
+    const { search = '', from = '', to = '', limit = 50, offset = 0 } = req.query;
+    const like = `%${search}%`;
+    let sql = `SELECT m.*, u.first_name, u.last_name, u.email
+               FROM meal_logs m JOIN users u ON u.id = m.user_id
+               WHERE (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)`;
+    const params = [like, like, like];
+    if (from) { sql += ' AND m.log_date >= ?'; params.push(from); }
+    if (to)   { sql += ' AND m.log_date <= ?'; params.push(to); }
+    sql += ' ORDER BY m.log_date DESC, m.id DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+    const logs = db.all(sql, params).map(l => ({
+      ...l,
+      colors: JSON.parse(l.colors || '[]'),
+      tastes: JSON.parse(l.tastes || '[]'),
+    }));
+
+    let cntSql = `SELECT COUNT(*) AS n FROM meal_logs m JOIN users u ON u.id = m.user_id
+                  WHERE (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)`;
+    const cntP = [like, like, like];
+    if (from) { cntSql += ' AND m.log_date >= ?'; cntP.push(from); }
+    if (to)   { cntSql += ' AND m.log_date <= ?'; cntP.push(to); }
+    const total = db.get(cntSql, cntP).n;
+
+    res.json({ logs, total });
+  });
+  app.delete('/api/admin/meal-logs/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM meal_logs WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  });
+
   // ── Admin: space members (approve join requests / invite / remove) ──
   app.get('/api/admin/spaces/:id/members', requireAdmin, (req, res) => {
     const members = db.all(`

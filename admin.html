@@ -1032,6 +1032,8 @@
     .mp-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
     .mp-tab-panel { display: none; }
     .mp-tab-panel.active { display: block; }
+    .cn-tab-panel { display: none; }
+    .cn-tab-panel.active { display: block; }
   </style>
 </head>
 
@@ -1236,6 +1238,12 @@
           <path d="M3 2v7c0 1.1.9 2 2 2h1v11M8 2v20M13 2c-1 3-1 6 0 8 1 2 3 2 3 0V2m0 8v12" />
         </svg>
         Thực phẩm & Công thức
+      </button>
+      <button class="sbar-item" onclick="showPage('meallogs')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z" />
+        </svg>
+        Nhật ký ăn uống
       </button>
 
       <div class="sbar-section">Marketing</div>
@@ -2010,8 +2018,9 @@
 
         <div class="cn-tab-panel active" data-tab="foods">
           <div class="table-card" style="margin-bottom:16px;">
-            <div class="table-card-header"><h2>Thêm thực phẩm</h2></div>
+            <div class="table-card-header"><h2 id="fdFormTitle">Thêm thực phẩm</h2></div>
             <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;">
+              <input type="hidden" id="fdId">
               <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Tên</label><input class="search-input" style="width:100%" id="fdName"></div>
               <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Hành</label>
                 <select class="search-input" style="width:100%" id="fdElement"><option value="">—</option><option value="kim">Kim</option><option value="moc">Mộc</option><option value="thuy">Thủy</option><option value="hoa">Hỏa</option><option value="tho">Thổ</option></select></div>
@@ -2021,7 +2030,7 @@
                 <select class="search-input" style="width:100%" id="fdNature"><option value="">—</option><option>hàn</option><option>lương</option><option>bình</option><option>ôn</option><option>nhiệt</option></select></div>
               <div><label style="font-size:11px;font-weight:600;color:var(--muted)">Tạng phủ</label><input class="search-input" style="width:100%" id="fdOrgan"></div>
               <div style="grid-column:1/-1;"><label style="font-size:11px;font-weight:600;color:var(--muted)">Ghi chú</label><input class="search-input" style="width:100%" id="fdNote"></div>
-              <div><button class="btn-sm primary" onclick="addFood()">+ Thêm</button></div>
+              <div style="display:flex;gap:8px;"><button class="btn-sm primary" onclick="saveFood()" id="fdSaveBtn">+ Thêm</button><button class="btn-sm" onclick="newFood()">Làm mới</button></div>
             </div>
           </div>
           <div class="table-card">
@@ -2079,6 +2088,40 @@
             <div class="table-card-header"><h2>Danh sách tài liệu (<span id="dcTotal">0</span>)</h2></div>
             <table class="data-table"><thead><tr><th>Icon</th><th>Tên</th><th>File</th><th></th></tr></thead>
               <tbody id="dcTbody"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Nhật ký ăn uống (toàn bộ thành viên) ─────── -->
+      <section class="page" id="page-meallogs">
+        <div class="table-card" style="margin-bottom:16px;">
+          <div style="padding:16px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:end;">
+            <div style="flex:1;min-width:180px;">
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Tìm theo tên / email</label>
+              <input class="search-input" style="width:100%" id="mlSearch" placeholder="VD: Tú, tuchinguyen@..." oninput="debounceMealLogs()">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Từ ngày</label>
+              <input class="search-input" type="date" id="mlFrom" onchange="loadMealLogs()">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Đến ngày</label>
+              <input class="search-input" type="date" id="mlTo" onchange="loadMealLogs()">
+            </div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-card-header"><h2>Nhật ký (<span id="mlTotal">0</span>)</h2></div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Ngày</th><th>Thành viên</th><th>Bữa sáng</th><th>Bữa trưa</th><th>Bữa tối</th><th>Màu / Vị</th><th>Cảm nhận</th><th></th></tr></thead>
+              <tbody id="mlTbody"></tbody>
+            </table>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:center;gap:8px;">
+            <button class="btn-sm" id="mlPrevBtn" onclick="mlPage(-1)">← Trước</button>
+            <span id="mlPageInfo" style="font-size:12px;color:var(--muted);align-self:center;"></span>
+            <button class="btn-sm" id="mlNextBtn" onclick="mlPage(1)">Sau →</button>
           </div>
         </div>
       </section>
@@ -3662,6 +3705,7 @@
       topics: ['Topics', 'Chủ đề đăng bài trong từng Space'],
       pillars: ['Trụ cột', 'Phân loại nội dung bài đăng'],
       camnang: ['Thực phẩm & Công thức', 'Dữ liệu cho trang Tra cứu & Thư viện công thức'],
+      meallogs: ['Nhật ký ăn uống', 'Toàn bộ nhật ký ăn uống của thành viên'],
       'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
     };
 
@@ -3693,6 +3737,7 @@
       if (name === 'crm') loadCRM();
       if (name === 'challenge-progress') loadChallengeProgress();
       if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
+      if (name === 'meallogs') loadMealLogs();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
     }
 
@@ -3704,18 +3749,46 @@
       document.querySelector(`#page-camnang .cn-tab-panel[data-tab="${name}"]`)?.classList.add('active');
     }
     const EL_LABEL = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
+    let _foodCache = [];
     async function loadFoods() {
       const { foods } = await api('/admin/foods');
+      _foodCache = foods;
       document.getElementById('fdTotal').textContent = foods.length;
       document.getElementById('fdTbody').innerHTML = foods.map(f => `
         <tr>
           <td>${escHtml(f.name)}</td><td>${EL_LABEL[f.element] || '—'}</td><td>${escHtml(f.color || '—')}</td>
           <td>${escHtml(f.taste || '—')}</td><td>${escHtml(f.nature || '—')}</td>
           <td style="max-width:280px;font-size:12px;color:var(--muted)">${escHtml(f.note || '')}</td>
-          <td><button class="btn-sm" style="color:#ef4444" onclick="delFood(${f.id})">Xoá</button></td>
+          <td style="white-space:nowrap">
+            <button class="btn-sm" onclick="editFood(${f.id})">Sửa</button>
+            <button class="btn-sm" style="color:#ef4444" onclick="delFood(${f.id})">Xoá</button>
+          </td>
         </tr>`).join('');
     }
-    async function addFood() {
+    function newFood() {
+      ['fdId', 'fdName', 'fdColor', 'fdTaste', 'fdOrgan', 'fdNote'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('fdElement').value = '';
+      document.getElementById('fdNature').value = '';
+      document.getElementById('fdFormTitle').textContent = 'Thêm thực phẩm';
+      document.getElementById('fdSaveBtn').textContent = '+ Thêm';
+    }
+    function editFood(id) {
+      const f = _foodCache.find(x => x.id === id);
+      if (!f) return;
+      document.getElementById('fdId').value = f.id;
+      document.getElementById('fdName').value = f.name || '';
+      document.getElementById('fdElement').value = f.element || '';
+      document.getElementById('fdColor').value = f.color || '';
+      document.getElementById('fdTaste').value = f.taste || '';
+      document.getElementById('fdNature').value = f.nature || '';
+      document.getElementById('fdOrgan').value = f.organ || '';
+      document.getElementById('fdNote').value = f.note || '';
+      document.getElementById('fdFormTitle').textContent = 'Sửa thực phẩm';
+      document.getElementById('fdSaveBtn').textContent = 'Cập nhật';
+      document.getElementById('page-camnang').scrollIntoView({ behavior: 'smooth' });
+    }
+    async function saveFood() {
+      const id = document.getElementById('fdId').value;
       const body = {
         name: document.getElementById('fdName').value.trim(),
         element: document.getElementById('fdElement').value,
@@ -3726,10 +3799,12 @@
         note: document.getElementById('fdNote').value.trim(),
       };
       if (!body.name) { showToast('Nhập tên thực phẩm.', 'red'); return; }
-      const res = await api('/admin/foods', { method: 'POST', body: JSON.stringify(body) });
+      const res = id
+        ? await api(`/admin/foods/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
+        : await api('/admin/foods', { method: 'POST', body: JSON.stringify(body) });
       if (res.error) { showToast(res.error, 'red'); return; }
-      ['fdName', 'fdColor', 'fdTaste', 'fdOrgan', 'fdNote'].forEach(id => document.getElementById(id).value = '');
-      showToast('Đã thêm thực phẩm.', 'green');
+      showToast(id ? 'Đã cập nhật.' : 'Đã thêm thực phẩm.', 'green');
+      newFood();
       loadFoods();
     }
     async function delFood(id) {
@@ -3855,6 +3930,56 @@
       if (!confirm('Xoá tài liệu này?')) return;
       await api(`/admin/camnang-docs/${id}`, { method: 'DELETE' });
       loadCamnangDocs();
+    }
+
+    // ── Nhật ký ăn uống (toàn bộ thành viên) ──────────────────────
+    let mlOffset = 0;
+    const mlLimit = 20;
+    let mlDebTimer = null;
+    function debounceMealLogs() {
+      clearTimeout(mlDebTimer);
+      mlDebTimer = setTimeout(() => { mlOffset = 0; loadMealLogs(); }, 300);
+    }
+    function mlPage(dir) {
+      mlOffset = Math.max(0, mlOffset + dir * mlLimit);
+      loadMealLogs();
+    }
+    async function loadMealLogs() {
+      const search = document.getElementById('mlSearch').value.trim();
+      const from = document.getElementById('mlFrom').value;
+      const to = document.getElementById('mlTo').value;
+      const qs = new URLSearchParams({ search, from, to, limit: mlLimit, offset: mlOffset });
+      const { logs, total } = await api(`/admin/meal-logs?${qs}`);
+      document.getElementById('mlTotal').textContent = total;
+      const tbody = document.getElementById('mlTbody');
+      if (!logs.length) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Chưa có nhật ký nào.</div></td></tr>';
+      } else {
+        tbody.innerHTML = logs.map(l => `
+        <tr>
+          <td style="white-space:nowrap">${l.log_date}</td>
+          <td>
+            <div style="font-size:12px;font-weight:600">${escHtml(l.first_name)} ${escHtml(l.last_name)}</div>
+            <div style="font-size:11px;color:var(--muted)">${escHtml(l.email)}</div>
+          </td>
+          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.breakfast || '—')}</td>
+          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.lunch || '—')}</td>
+          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.dinner || '—')}</td>
+          <td style="font-size:11px;color:var(--muted)">${[...l.colors, ...l.tastes].map(escHtml).join(', ') || '—'}</td>
+          <td style="max-width:200px;font-size:12px;color:var(--muted)">${escHtml(l.note || '—')}</td>
+          <td><button class="btn-sm" style="color:#ef4444" onclick="delMealLog(${l.id})">Xoá</button></td>
+        </tr>`).join('');
+      }
+      const page = Math.floor(mlOffset / mlLimit) + 1;
+      const pageCount = Math.max(1, Math.ceil(total / mlLimit));
+      document.getElementById('mlPageInfo').textContent = `Trang ${page}/${pageCount}`;
+      document.getElementById('mlPrevBtn').disabled = mlOffset === 0;
+      document.getElementById('mlNextBtn').disabled = mlOffset + mlLimit >= total;
+    }
+    async function delMealLog(id) {
+      if (!confirm('Xoá nhật ký này?')) return;
+      await api(`/admin/meal-logs/${id}`, { method: 'DELETE' });
+      loadMealLogs();
     }
 
     function refreshCurrent() { showPage(currentPage); }
