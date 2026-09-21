@@ -28,8 +28,15 @@
     .nk-check.on { background: var(--color-primary); border-color: var(--color-primary); color:#fff; }
     .nk-hist-row { display:flex; gap:10px; padding: 10px 0; border-top: 1px solid var(--border); font-size: var(--fs-sm); }
     .nk-hist-date { font-weight: 700; color: var(--color-primary); width: 92px; flex-shrink: 0; }
-    .nk-hist-body { color: var(--text-muted); line-height: 1.5; }
+    .nk-hist-body { color: var(--text-muted); line-height: 1.5; flex: 1; min-width: 0; }
     .nk-msg { font-size: var(--fs-sm); margin-top: 8px; }
+    .nk-ai-feedback { margin-top: 8px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--bg-hover); border-left: 3px solid var(--color-primary); font-size: var(--fs-sm); color: var(--text); }
+    .nk-ai-label { font-weight: 700; font-size: 11px; color: var(--color-primary); margin-bottom: 4px; }
+    .nk-ai-warning { border-left-color: #f59e0b; background: rgba(245,158,11,.08); }
+    .nk-ai-warning .nk-ai-label { color: #f59e0b; }
+    .nk-ai-urgent { border-left-color: #ef4444; background: rgba(239,68,68,.08); }
+    .nk-ai-urgent .nk-ai-label { color: #ef4444; }
+    .nk-ai-pending { font-style: italic; color: var(--text-muted); border-left-color: var(--border); background: transparent; padding-left: 10px; }
   </style>
 </head>
 
@@ -368,6 +375,29 @@ const API = '/api';
       document.getElementById('nkTastes').innerHTML='';
       TASTES.forEach(c=>{ const b=document.createElement('span'); b.className='nk-check'+(sel.tastes.has(c)?' on':''); b.textContent='Vị '+c; b.onclick=()=>{ sel.tastes.has(c)?sel.tastes.delete(c):sel.tastes.add(c); renderChecks(); }; document.getElementById('nkTastes').appendChild(b); });
     }
+    let pollTimer = null, pollAttempts = 0;
+    function stopPolling(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } pollAttempts = 0; }
+    function startPolling(){
+      stopPolling();
+      pollTimer = setInterval(async () => {
+        pollAttempts++;
+        await load();
+        if (pollAttempts >= 8) stopPolling(); // ~32s cap; load() stops early once feedback arrives
+      }, 4000);
+    }
+    function renderHistRow(l, isToday){
+      const d = isToday ? 'Hôm nay' : l.log_date.split('-').reverse().join('/');
+      const meals = [l.breakfast,l.lunch,l.dinner].filter(Boolean).join(' · ');
+      const badge = `${(l.colors||[]).length}/5 màu · ${(l.tastes||[]).length}/5 vị`;
+      let feedbackHtml = '';
+      if (l.ai_feedback) {
+        const flagClass = l.flag_level === 'urgent' ? 'nk-ai-urgent' : l.flag_level === 'warning' ? 'nk-ai-warning' : '';
+        feedbackHtml = `<div class="nk-ai-feedback ${flagClass}"><div class="nk-ai-label">🌻 An Nhiên nhận xét</div><div>${esc(l.ai_feedback).replace(/\n/g,'<br>')}</div></div>`;
+      } else if (isToday) {
+        feedbackHtml = `<div class="nk-ai-feedback nk-ai-pending">🌻 An Nhiên đang xem nhật ký của bạn, chờ chút nhé...</div>`;
+      }
+      return `<div class="nk-hist-row"><div class="nk-hist-date">${d}</div><div class="nk-hist-body">${esc(meals)||'—'}<br><span style="font-size:11px">${badge}</span>${feedbackHtml}</div></div>`;
+    }
     async function load(){
       const { logs, streak } = await fetch(`${API}/meal-logs?user_id=${currentUser.id}`).then(r=>r.json());
       document.getElementById('nkStreak').textContent = streak;
@@ -382,15 +412,11 @@ const API = '/api';
         sel.tastes = new Set(today.tastes||[]);
         document.getElementById('nkFormTitle').textContent = 'Cập nhật nhật ký hôm nay';
         document.getElementById('nkSave').textContent = 'Cập nhật';
+        if (today.ai_feedback) stopPolling();
       }
       renderChecks();
-      const hist = logs.filter(l=>l.log_date!==t);
-      document.getElementById('nkHist').innerHTML = hist.length ? hist.map(l=>{
-        const d = l.log_date.split('-').reverse().join('/');
-        const meals = [l.breakfast,l.lunch,l.dinner].filter(Boolean).join(' · ');
-        const badge = `${(l.colors||[]).length}/5 màu · ${(l.tastes||[]).length}/5 vị`;
-        return `<div class="nk-hist-row"><div class="nk-hist-date">${d}</div><div class="nk-hist-body">${esc(meals)||'—'}<br><span style="font-size:11px">${badge}</span></div></div>`;
-      }).join('') : '<div style="color:var(--text-muted);font-size:13px">Chưa có ghi chép nào.</div>';
+      document.getElementById('nkHist').innerHTML = logs.length ? logs.map(l=>renderHistRow(l, l.log_date===t)).join('')
+        : '<div style="color:var(--text-muted);font-size:13px">Chưa có ghi chép nào.</div>';
     }
     async function saveLog(){
       const btn = document.getElementById('nkSave'); btn.disabled = true;
@@ -411,11 +437,15 @@ const API = '/api';
           msg.textContent = res.new_entry ? `Đã lưu! +3 XP · chuỗi ${res.streak} ngày 🔥` : `Đã cập nhật · chuỗi ${res.streak} ngày`;
           if (res.new_entry && currentUser) { currentUser.xp=(currentUser.xp||0)+3; localStorage.setItem('currentUser',JSON.stringify(currentUser)); }
           await load();
+          startPolling();
         }
       } catch { document.getElementById('nkMsg').textContent='Có lỗi, thử lại.'; }
       btn.disabled = false;
     }
-    load();
+    load().then(() => {
+      const el = document.getElementById('nkHist');
+      if (el && el.innerHTML.includes('đang xem nhật ký')) startPolling();
+    });
   </script>
 </body>
 </html>
