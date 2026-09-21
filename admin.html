@@ -2114,7 +2114,7 @@
           <div class="table-card-header"><h2>Nhật ký (<span id="mlTotal">0</span>)</h2></div>
           <div style="overflow-x:auto;">
             <table class="data-table">
-              <thead><tr><th>Ngày</th><th>Thành viên</th><th>Bữa sáng</th><th>Bữa trưa</th><th>Bữa tối</th><th>Màu / Vị</th><th>Cảm nhận</th><th></th></tr></thead>
+              <thead><tr><th>Ngày</th><th>Thành viên</th><th>Bữa sáng</th><th>Bữa trưa</th><th>Bữa tối</th><th>Màu / Vị</th><th>Cảm nhận</th><th>Nhận xét AI</th><th>Cờ</th><th></th></tr></thead>
               <tbody id="mlTbody"></tbody>
             </table>
           </div>
@@ -3953,8 +3953,14 @@
       document.getElementById('mlTotal').textContent = total;
       const tbody = document.getElementById('mlTbody');
       if (!logs.length) {
-        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Chưa có nhật ký nào.</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">Chưa có nhật ký nào.</div></td></tr>';
       } else {
+        const flagStyle = {
+          urgent:  'background:#fee2e2;color:#991b1b;',
+          warning: 'background:#fef3c7;color:#92400e;',
+          none:    'background:#dcfce7;color:#166534;',
+        };
+        const flagLabel = { urgent: '🚨 Khẩn cấp', warning: '⚠️ Cần theo dõi', none: '✅ Bình thường' };
         tbody.innerHTML = logs.map(l => `
         <tr>
           <td style="white-space:nowrap">${l.log_date}</td>
@@ -3967,6 +3973,8 @@
           <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.dinner || '—')}</td>
           <td style="font-size:11px;color:var(--muted)">${[...l.colors, ...l.tastes].map(escHtml).join(', ') || '—'}</td>
           <td style="max-width:200px;font-size:12px;color:var(--muted)">${escHtml(l.note || '—')}</td>
+          <td style="max-width:220px;font-size:12px;color:var(--muted)">${escHtml(l.ai_feedback || '—')}${l.flagged_reason ? `<div style="font-size:11px;color:#991b1b;margin-top:4px;">Lý do: ${escHtml(l.flagged_reason)}</div>` : ''}</td>
+          <td>${l.flag_level ? `<span class="badge" style="${flagStyle[l.flag_level] || flagStyle.none}">${flagLabel[l.flag_level] || l.flag_level}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
           <td><button class="btn-sm" style="color:#ef4444" onclick="delMealLog(${l.id})">Xoá</button></td>
         </tr>`).join('');
       }

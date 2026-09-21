@@ -1312,6 +1312,9 @@
             <!-- Intake profile (chỉ hiện với chủ trang) -->
             <div id="intakeSectionWrap"></div>
 
+            <!-- Telegram linking (chỉ hiện với chủ trang) -->
+            <div id="telegramSectionWrap"></div>
+
             <!-- Tabs + content -->
             <div class="profile-section-card">
               <div class="profile-tabs-bar">
@@ -1667,6 +1670,41 @@
       }
     }
 
+    async function renderTelegramSection(u, isMe) {
+      const wrap = document.getElementById('telegramSectionWrap');
+      if (!wrap || !isMe) return;
+
+      if (u.telegram_chat_id) {
+        wrap.innerHTML = `
+          <div class="intake-no-profile">
+            <p>✅ Đã kết nối Telegram — bạn sẽ nhận nhắc nhở ăn uống và nhận xét từ trợ lý đồng hành sau mỗi lần ghi nhật ký.</p>
+          </div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <div class="intake-no-profile">
+          <p>Kết nối Telegram để nhận nhắc nhở ăn uống đúng giờ và nhận xét ngay sau khi bạn ghi nhật ký ăn uống.</p>
+          <a href="#" class="intake-redo" id="telegramLinkBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+            Kết nối Telegram
+          </a>
+        </div>`;
+
+      document.getElementById('telegramLinkBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          const r = await fetch(`/api/telegram/link-code/${u.id}`);
+          const data = await r.json();
+          if (data.error) { alert(data.error); return; }
+          if (data.alreadyLinked) { renderTelegramSection({ ...u, telegram_chat_id: '1' }, true); return; }
+          window.open(data.deepLink, '_blank');
+        } catch (err) {
+          alert('Không tạo được link liên kết. Thử lại sau nhé.');
+        }
+      });
+    }
+
     function renderProfile(u, activityMap, intakeData = null, pillars = []) {
       const lv = getLevel(u.xp || 0);
       const pct = Math.min(100, Math.round(((u.xp || 0) - lv.xpMin) / (lv.xpMax - lv.xpMin) * 100));
@@ -1762,6 +1800,7 @@
 
       // Intake section (chỉ hiện với chủ trang)
       renderIntakeSection(intakeData, isMe);
+      renderTelegramSection(u, isMe);
 
       // Tabs count
       const cotPosts = _posts.filter(p => p.post_type === 'cot');

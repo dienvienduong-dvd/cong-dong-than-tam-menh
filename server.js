@@ -525,6 +525,14 @@ const SCHEMA = `
     created_at TEXT    DEFAULT (datetime('now','localtime')),
     UNIQUE(user_id, log_date)
   );
+  CREATE TABLE IF NOT EXISTS meal_log_reminders (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id),
+    reminder_date TEXT    NOT NULL,   -- YYYY-MM-DD
+    sent_count    INTEGER DEFAULT 1,
+    last_sent_at  TEXT    DEFAULT (datetime('now','localtime')),
+    UNIQUE(user_id, reminder_date)
+  );
   CREATE TABLE IF NOT EXISTS assistant_usage (
     user_id    INTEGER NOT NULL REFERENCES users(id),
     usage_date TEXT    NOT NULL,   -- YYYY-MM-DD (localtime)
@@ -910,6 +918,91 @@ const COURSE_SEED = [
     }
   }
 
+  // ── GoClaw Agent 2 ("Đồng hành & Thúc đẩy lối sống") webhook ─
+  // Same shape as callGoclawAgent1 but talks to a separate GoClaw agent/webhook
+  // configured for daily meal-log coaching. Kept as its own const/secret so the
+  // two agents can be rotated/disabled independently.
+  const GOCLAW_AGENT2_WEBHOOK_SECRET = process.env.GOCLAW_AGENT2_WEBHOOK_SECRET || '';
+
+  async function callGoclawAgent2(summaryText) {
+    if (!GOCLAW_AGENT2_WEBHOOK_SECRET) {
+      return { ok: false, error: 'Chưa cấu hình GOCLAW_AGENT2_WEBHOOK_SECRET trong .env' };
+    }
+    try {
+      const body = JSON.stringify({ input: summaryText, mode: 'sync' });
+
+      const resp = await fetch(`${GOCLAW_BASE_URL}/v1/webhooks/llm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GOCLAW_AGENT2_WEBHOOK_SECRET}`,
+        },
+        body,
+        signal: AbortSignal.timeout(35000),
+      });
+
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data) {
+        return { ok: false, error: (data && data.error) || `GoClaw webhook lỗi (HTTP ${resp.status})` };
+      }
+      return { ok: true, text: data.output || '' };
+    } catch (err) {
+      return { ok: false, error: `Không gọi được GoClaw: ${err.message}` };
+    }
+  }
+
+  // Agent 2 is instructed (see its AGENTS.md) to always answer in the form:
+  //   FLAG: none|warning|urgent
+  //   REASON: <short reason, blank if none>
+  //   ---
+  //   <customer-facing comment>
+  // Parsed defensively — if the model drifts from the format, we fall back to
+  // flag_level='none' and use the raw text as the feedback rather than losing it.
+  // Robust on purpose: in practice the model doesn't reliably put FLAG/REASON
+  // at the very start, or use "---" as the separator (seen: feedback text
+  // first, then "FLAG:.../REASON:..." at the end after a "***" line). Rather
+  // than requiring an exact anchored shape, find FLAG/REASON anywhere in the
+  // text and strip them out (plus any --- / *** / ___ separator lines) so
+  // the customer never sees the raw metadata.
+  function parseAgent2Response(raw) {
+    const text = (raw || '').trim();
+    const flagMatch = text.match(/FLAG:\s*(none|warning|urgent)/i);
+    const reasonMatch = text.match(/REASON:\s*([^\n]*)/i);
+    const feedback = text
+      .replace(/^\s*FLAG:.*$/im, '')
+      .replace(/^\s*REASON:.*$/im, '')
+      .replace(/^\s*[-*_]{3,}\s*$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    return {
+      flagLevel: flagMatch ? flagMatch[1].toLowerCase() : 'none',
+      flaggedReason: reasonMatch ? reasonMatch[1].trim() : '',
+      feedback,
+    };
+  }
+
+  // ── Telegram Bot API ──────────────────────────────────────────
+  // Outbound push only (reminders + Agent 2 feedback + admin alerts). The only
+  // inbound handling is the /start <code> account-link command (see the
+  // /api/telegram/webhook route below) — customers don't free-chat with the bot.
+  const TELEGRAM_BOT_TOKEN    = process.env.TELEGRAM_BOT_TOKEN    || '';
+  const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || '';
+
+  async function sendTelegramMessage(chatId, text) {
+    if (!TELEGRAM_BOT_TOKEN || !chatId) return { ok: false };
+    try {
+      const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+        signal: AbortSignal.timeout(15000),
+      });
+      return await resp.json().catch(() => ({ ok: false }));
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
   // Unified chat call across providers. `messages` is OpenAI-style [{role, content}] (role:
   // system/user/assistant) — the shape every caller already builds. Returns a normalized
   // { ok, text, truncated, error } regardless of which provider actually served the request.
@@ -1088,6 +1181,25 @@ const COURSE_SEED = [
   if (!userCols.includes('ttm_intake_done_at')) {
     db.exec('ALTER TABLE users ADD COLUMN ttm_intake_done_at TEXT');
     console.log('  Migrated users: added ttm_intake_done_at.');
+  }
+  // Migrate users: add Telegram link fields (Agent 2 coaching — reminders,
+  // meal-log feedback, admin escalation alerts are pushed via Telegram)
+  if (!userCols.includes('telegram_chat_id')) {
+    db.exec('ALTER TABLE users ADD COLUMN telegram_chat_id TEXT');
+    db.exec('ALTER TABLE users ADD COLUMN telegram_link_code TEXT');
+    db.exec('ALTER TABLE users ADD COLUMN telegram_link_code_expires_at TEXT');
+    console.log('  Migrated users: added telegram_chat_id + link code fields.');
+  }
+
+  // Migrate meal_logs: add Agent 2 AI feedback + warning-flag fields
+  const mealLogCols = db.all('PRAGMA table_info(meal_logs)').map(c => c.name);
+  if (!mealLogCols.includes('ai_feedback')) {
+    db.exec('ALTER TABLE meal_logs ADD COLUMN ai_feedback TEXT');
+    db.exec("ALTER TABLE meal_logs ADD COLUMN flag_level TEXT");
+    db.exec('ALTER TABLE meal_logs ADD COLUMN flagged_reason TEXT');
+    db.exec('ALTER TABLE meal_logs ADD COLUMN agent2_notified_at TEXT');
+    db.exec('ALTER TABLE meal_logs ADD COLUMN admin_notified_at TEXT');
+    console.log('  Migrated meal_logs: added ai_feedback + flag fields.');
   }
 
   // Migrate posts: add space_id
@@ -1933,7 +2045,8 @@ QUY TẮC BẮT BUỘC:
       success: true,
       user: { id: user.id, first_name: user.first_name, last_name: user.last_name,
               email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin,
-              ttm_intake_done_at: user.ttm_intake_done_at || null },
+              ttm_intake_done_at: user.ttm_intake_done_at || null,
+              telegram_chat_id: user.telegram_chat_id || null },
     });
   });
 
@@ -1998,6 +2111,7 @@ QUY TẮC BẮT BUỘC:
         email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin,
         avatar: user.avatar_url || picture,
         ttm_intake_done_at: user.ttm_intake_done_at || null,
+        telegram_chat_id: user.telegram_chat_id || null,
       },
     });
   });
@@ -2886,7 +3000,7 @@ QUY TẮC BẮT BUỘC:
   app.get('/api/users/:id', (req, res) => {
     const isSelf = req.query.requester_id && Number(req.query.requester_id) === Number(req.params.id);
     const fields = 'id, first_name, last_name, level, xp, streak, created_at, bio, location, social_links, is_admin'
-      + (isSelf ? ', email, phone' : '');
+      + (isSelf ? ', email, phone, telegram_chat_id' : '');
     const user = db.get(`SELECT ${fields} FROM users WHERE id = ?`, [req.params.id]);
     if (!user) return res.status(404).json({ error: 'User không tồn tại.' });
     user.is_admin = !!user.is_admin;
@@ -3688,6 +3802,81 @@ QUY TẮC BẮT BUỘC:
     res.json({ logs, streak: user?.streak || 0 });
   });
 
+  // Builds the plain-text summary sent to Agent 2 — today's entry plus up to
+  // 6 prior days for continuity ("bạn duy trì tốt 3 ngày liên tiếp", v.v.)
+  function buildMealLogSummary(todayLog, recentLogs) {
+    const lines = [`Ngày: ${todayLog.log_date}`];
+    if (todayLog.breakfast) lines.push(`Bữa sáng: ${todayLog.breakfast}`);
+    if (todayLog.lunch)     lines.push(`Bữa trưa: ${todayLog.lunch}`);
+    if (todayLog.dinner)    lines.push(`Bữa tối: ${todayLog.dinner}`);
+    lines.push(`Màu sắc đã ăn: ${(JSON.parse(todayLog.colors || '[]')).join(', ') || 'không ghi'}`);
+    lines.push(`Vị đã ăn: ${(JSON.parse(todayLog.tastes || '[]')).join(', ') || 'không ghi'}`);
+    if (todayLog.note) lines.push(`Cảm nhận/ghi chú của khách: ${todayLog.note}`);
+    const prior = (recentLogs || []).filter(r => r.log_date !== todayLog.log_date);
+    if (prior.length) {
+      lines.push('', 'Các ngày gần đây (để tham khảo xu hướng):');
+      prior.forEach(r => {
+        const c = JSON.parse(r.colors || '[]').join('/') || '-';
+        const t = JSON.parse(r.tastes || '[]').join('/') || '-';
+        lines.push(`- ${r.log_date}: màu ${c}, vị ${t}`);
+      });
+    }
+    return lines.join('\n');
+  }
+
+  // Runs after the HTTP response is already sent — asks Agent 2 to comment on
+  // today's entry, saves the result, and pushes it out over Telegram. Never
+  // throws into the caller; any failure here must not affect the meal-log save.
+  async function runAgent2Coaching(userId, logId, logDate) {
+    try {
+      const todayLog = db.get('SELECT * FROM meal_logs WHERE id = ?', [logId]);
+      if (!todayLog) return;
+      const recentLogs = db.all(
+        'SELECT log_date, colors, tastes, breakfast, lunch, dinner FROM meal_logs WHERE user_id = ? ORDER BY log_date DESC LIMIT 7',
+        [userId]
+      );
+      const summary = buildMealLogSummary(todayLog, recentLogs);
+      const result = await callGoclawAgent2(summary);
+      if (!result.ok) {
+        console.error('  [Agent 2] lỗi gọi GoClaw:', result.error);
+        return;
+      }
+      const { flagLevel, flaggedReason, feedback } = parseAgent2Response(result.text);
+      db.run(
+        'UPDATE meal_logs SET ai_feedback=?, flag_level=?, flagged_reason=? WHERE id=?',
+        [feedback, flagLevel, flaggedReason || null, logId]
+      );
+
+      const user = db.get('SELECT first_name, telegram_chat_id FROM users WHERE id = ?', [userId]);
+      if (user && user.telegram_chat_id && feedback) {
+        const sendResult = await sendTelegramMessage(user.telegram_chat_id, feedback);
+        if (sendResult.ok) {
+          db.run("UPDATE meal_logs SET agent2_notified_at = datetime('now','localtime') WHERE id = ?", [logId]);
+        } else {
+          console.error('  [Agent 2] gửi Telegram cho khách thất bại:', sendResult.error || sendResult);
+        }
+      }
+
+      if (flagLevel === 'warning' || flagLevel === 'urgent') {
+        const admins = db.all("SELECT telegram_chat_id FROM users WHERE is_admin = 1 AND telegram_chat_id IS NOT NULL AND telegram_chat_id != ''");
+        const icon = flagLevel === 'urgent' ? '🚨' : '⚠️';
+        const alertText = `${icon} <b>Cảnh báo ${flagLevel.toUpperCase()}</b>\nKhách: ${user ? user.first_name : 'user #' + userId}\nNgày: ${logDate}\nLý do: ${flaggedReason || '(không nêu rõ)'}\n\n${feedback}`;
+        let anySent = false;
+        for (const a of admins) {
+          const r = await sendTelegramMessage(a.telegram_chat_id, alertText);
+          if (r.ok) anySent = true;
+        }
+        if (anySent) {
+          db.run("UPDATE meal_logs SET admin_notified_at = datetime('now','localtime') WHERE id = ?", [logId]);
+        } else if (!admins.length) {
+          console.error('  [Agent 2] có cờ cảnh báo nhưng chưa admin nào liên kết Telegram để báo động.');
+        }
+      }
+    } catch (err) {
+      console.error('  [Agent 2] lỗi xử lý coaching:', err.message);
+    }
+  }
+
   app.post('/api/meal-logs', (req, res) => {
     const { user_id, log_date, breakfast, lunch, dinner, colors, tastes, note } = req.body;
     if (!user_id || !log_date || !/^\d{4}-\d{2}-\d{2}$/.test(log_date))
@@ -3695,20 +3884,26 @@ QUY TẮC BẮT BUỘC:
     const colorsJson = JSON.stringify(Array.isArray(colors) ? colors : []);
     const tastesJson = JSON.stringify(Array.isArray(tastes) ? tastes : []);
     const existing = db.get('SELECT id FROM meal_logs WHERE user_id = ? AND log_date = ?', [user_id, log_date]);
+    let logId;
     if (existing) {
       db.run(
         'UPDATE meal_logs SET breakfast=?, lunch=?, dinner=?, colors=?, tastes=?, note=? WHERE id=?',
         [breakfast || null, lunch || null, dinner || null, colorsJson, tastesJson, note || null, existing.id]
       );
+      logId = existing.id;
     } else {
       db.run(
         'INSERT INTO meal_logs (user_id, log_date, breakfast, lunch, dinner, colors, tastes, note) VALUES (?,?,?,?,?,?,?,?)',
         [user_id, log_date, breakfast || null, lunch || null, dinner || null, colorsJson, tastesJson, note || null]
       );
       addXP(user_id, 3, 'meal_log', `Ghi nhật ký ăn uống ${log_date}`);
+      logId = db.get('SELECT id FROM meal_logs WHERE user_id = ? AND log_date = ?', [user_id, log_date]).id;
     }
     const streak = recomputeStreak(user_id);
     res.json({ success: true, streak, new_entry: !existing });
+
+    // Fire-and-forget: don't make the customer wait on the AI/Telegram round-trip.
+    runAgent2Coaching(user_id, logId, log_date);
   });
 
   // ── Admin: Nhật ký ăn uống (view/moderate every member's meal logs) ──
@@ -3741,6 +3936,57 @@ QUY TẮC BẮT BUỘC:
   app.delete('/api/admin/meal-logs/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM meal_logs WHERE id = ?', [req.params.id]);
     res.json({ success: true });
+  });
+
+  // ── Telegram account linking (Agent 2 coaching) ──────────────
+  // Generates a short-lived code the user sends to the bot as "/start <code>"
+  // to link their web account to a Telegram chat_id (see the webhook below).
+  app.get('/api/telegram/link-code/:userId', (req, res) => {
+    const user = db.get('SELECT id, telegram_chat_id FROM users WHERE id = ?', [req.params.userId]);
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản.' });
+    if (user.telegram_chat_id) return res.json({ alreadyLinked: true });
+    if (!TELEGRAM_BOT_USERNAME) return res.status(500).json({ error: 'Chưa cấu hình TELEGRAM_BOT_USERNAME trong .env' });
+
+    const code = crypto.randomBytes(6).toString('hex'); // 12 hex chars
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    db.run('UPDATE users SET telegram_link_code = ?, telegram_link_code_expires_at = ? WHERE id = ?',
+      [code, expiresAt, user.id]);
+    res.json({ code, deepLink: `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}` });
+  });
+
+  // Inbound Telegram webhook — intentionally minimal: only handles "/start <code>"
+  // for account linking. No free-chat handling (customers report via nhat-ky.html,
+  // not by chatting with the bot — see plan doc for the reasoning).
+  app.post('/api/telegram/webhook', async (req, res) => {
+    res.json({ ok: true }); // ack Telegram immediately regardless of outcome below
+    try {
+      const msg = req.body && req.body.message;
+      const text = msg && msg.text;
+      const chatId = msg && msg.chat && msg.chat.id;
+      if (!text || !chatId) return;
+
+      const m = text.trim().match(/^\/start\s+([a-f0-9]{12})$/i);
+      if (!m) {
+        await sendTelegramMessage(chatId, 'Xin chào 👋 Vui lòng lấy link liên kết từ trang hồ sơ trên website để kết nối tài khoản.');
+        return;
+      }
+      const code = m[1];
+      const user = db.get(
+        "SELECT id, first_name FROM users WHERE telegram_link_code = ? AND telegram_link_code_expires_at > datetime('now','localtime')",
+        [code]
+      );
+      if (!user) {
+        await sendTelegramMessage(chatId, '⚠️ Link đã hết hạn hoặc không hợp lệ. Vào lại trang hồ sơ để lấy link mới nhé.');
+        return;
+      }
+      db.run(
+        "UPDATE users SET telegram_chat_id = ?, telegram_link_code = NULL, telegram_link_code_expires_at = NULL WHERE id = ?",
+        [String(chatId), user.id]
+      );
+      await sendTelegramMessage(chatId, `✅ Đã liên kết tài khoản thành công, ${user.first_name}! Từ giờ mình sẽ nhắc bạn ăn uống đúng giờ và nhận xét sau mỗi lần bạn ghi nhật ký nhé.`);
+    } catch (err) {
+      console.error('  [Telegram webhook] lỗi:', err.message);
+    }
   });
 
   // ── Admin: space members (approve join requests / invite / remove) ──
@@ -4939,6 +5185,37 @@ QUY TẮC BẮT BUỘC:
           );
         }
       }
+    }
+  }, 60 * 60 * 1000); // check every hour
+
+  // ── Agent 2: daily meal-log reminder (Telegram push) ─────────
+  // Nudges users who've linked Telegram but haven't logged today's meals yet,
+  // once the evening cutoff has passed. Mirrors the late_reminders cadence
+  // pattern above but via meal_log_reminders (max 1 send/day/user).
+  const MEAL_REMINDER_MESSAGES = [
+    '🍽️ Hôm nay bạn đã ghi nhật ký ăn uống chưa? Đừng để bụng đói mà quên luôn nha!',
+    '👋 Ghé qua ghi lại bữa ăn hôm nay nhé — vài giây thôi mà mình theo dõi sức khỏe bạn tốt hơn nhiều đó!',
+    '🌿 Nhắc nhẹ: nhật ký ăn uống hôm nay vẫn đang chờ bạn ghi lại nè.',
+  ];
+  setInterval(async () => {
+    if (!TELEGRAM_BOT_TOKEN) return;
+    const now = new Date();
+    if (now.getHours() < 20) return; // only nudge from 20:00 local onward
+    const today = now.toISOString().slice(0, 10);
+
+    const candidates = db.all(
+      `SELECT id, first_name FROM users
+       WHERE telegram_chat_id IS NOT NULL AND telegram_chat_id != ''
+         AND id NOT IN (SELECT user_id FROM meal_logs WHERE log_date = ?)`,
+      [today]
+    );
+    for (const u of candidates) {
+      const already = db.get('SELECT id FROM meal_log_reminders WHERE user_id = ? AND reminder_date = ?', [u.id, today]);
+      if (already) continue;
+      const user = db.get('SELECT telegram_chat_id FROM users WHERE id = ?', [u.id]);
+      const text = MEAL_REMINDER_MESSAGES[Math.floor(Math.random() * MEAL_REMINDER_MESSAGES.length)];
+      await sendTelegramMessage(user.telegram_chat_id, text);
+      db.run('INSERT INTO meal_log_reminders (user_id, reminder_date) VALUES (?,?)', [u.id, today]);
     }
   }, 60 * 60 * 1000); // check every hour
 
