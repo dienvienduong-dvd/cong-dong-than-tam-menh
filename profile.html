@@ -1675,9 +1675,19 @@
       if (!wrap || !isMe) return;
 
       if (u.telegram_chat_id) {
+        let botLink = null;
+        try {
+          const r = await fetch(`/api/telegram/link-code/${u.id}`);
+          const data = await r.json();
+          botLink = data.botLink;
+        } catch {}
         wrap.innerHTML = `
           <div class="intake-no-profile">
-            <p>✅ Đã kết nối Telegram — bạn sẽ nhận nhắc nhở ăn uống và nhận xét từ trợ lý đồng hành sau mỗi lần ghi nhật ký.</p>
+            <p>✅ Kết nối Telegram thành công — bạn sẽ nhận nhắc nhở ăn uống và nhận xét từ trợ lý đồng hành sau mỗi lần ghi nhật ký.</p>
+            ${botLink ? `<a href="${botLink}" target="_blank" class="intake-redo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+              Mở chat với An Nhiên trên Telegram
+            </a>` : ''}
           </div>`;
         return;
       }

@@ -3944,7 +3944,7 @@ QUY TẮC BẮT BUỘC:
   app.get('/api/telegram/link-code/:userId', (req, res) => {
     const user = db.get('SELECT id, telegram_chat_id FROM users WHERE id = ?', [req.params.userId]);
     if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản.' });
-    if (user.telegram_chat_id) return res.json({ alreadyLinked: true });
+    if (user.telegram_chat_id) return res.json({ alreadyLinked: true, botLink: TELEGRAM_BOT_USERNAME ? `https://t.me/${TELEGRAM_BOT_USERNAME}` : null });
     if (!TELEGRAM_BOT_USERNAME) return res.status(500).json({ error: 'Chưa cấu hình TELEGRAM_BOT_USERNAME trong .env' });
 
     const code = crypto.randomBytes(6).toString('hex'); // 12 hex chars
