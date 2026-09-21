@@ -1405,11 +1405,6 @@
               oninput="debouncePosts()">
             <select class="filter-select" id="postPillarFilter" onchange="loadPosts()">
               <option value="">Tất cả Pillar</option>
-              <option value="offer">Offer</option>
-              <option value="traffic">Thu hút</option>
-              <option value="conversion">Chuyển đổi</option>
-              <option value="delivery">Cung ứng</option>
-              <option value="continuity">Continuity</option>
             </select>
             <button class="btn-sm primary" onclick="openNewPostModal()">✏️ Viết bài mới</button>
           </div>
@@ -3527,11 +3522,6 @@
             <select id="npPillar" class="filter-select"
               style="width:100%;padding:8px 10px;border-radius:6px;font-size:13px;">
               <option value="">— Không chọn —</option>
-              <option value="offer">🟡 Offer</option>
-              <option value="traffic">🔵 Thu hút</option>
-              <option value="conversion">🟣 Chuyển đổi</option>
-              <option value="delivery">🟢 Cung ứng</option>
-              <option value="continuity">🩷 Continuity</option>
             </select>
           </div>
           <div>
@@ -3687,7 +3677,7 @@
       document.getElementById('pageSubtitle').textContent = sub ? ' — ' + sub : '';
 
       if (name === 'users') loadUsers();
-      if (name === 'posts') loadPosts();
+      if (name === 'posts') { loadAdminPillars().then(populatePostPillarFilter).then(loadPosts); }
       if (name === 'xplog') loadXPLog();
       if (name === 'challenges') loadChallenges();
       if (name === 'enrollments') loadEnrollments();
@@ -4084,6 +4074,9 @@
           `<option value="${u.id}">${u.first_name} ${u.last_name} (${u.email})</option>`
         ).join('');
       }
+      if (!currentAdminPillars.length) await loadAdminPillars();
+      document.getElementById('npPillar').innerHTML = '<option value="">— Không chọn —</option>' +
+        currentAdminPillars.map(p => `<option value="${p.key}">${escHtml(p.icon || '🔥')} ${escHtml(p.label)}</option>`).join('');
       document.getElementById('npTitle').value = '';
       document.getElementById('npContent').value = '';
       document.getElementById('npPillar').value = '';
@@ -4143,7 +4136,7 @@
         <div style="font-size:12px;font-weight:600">${p.author_name}</div>
         <div style="font-size:11px;color:var(--muted)">${p.author_email}</div>
       </td>
-      <td>${p.pillar ? `<span class="badge badge-pillar pillar-${p.pillar}">${pillarLabel(p.pillar)}</span>` : '—'}</td>
+      <td>${p.pillar ? renderPillarBadge(p.pillar) : '—'}</td>
       <td><span style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600">${p.post_type}</span></td>
       <td>♥ ${p.likes_count}</td>
       <td>💬 ${p.comments_count}</td>
@@ -4199,7 +4192,22 @@
     }
 
     function pillarLabel(p) {
-      return { offer: 'Offer', traffic: 'Thu hút', conversion: 'Chuyển đổi', delivery: 'Cung ứng', continuity: 'Continuity' }[p] || p;
+      const found = currentAdminPillars.find(x => x.key === p);
+      return found ? `${found.icon || ''} ${found.label}`.trim() : p;
+    }
+
+    function populatePostPillarFilter() {
+      const sel = document.getElementById('postPillarFilter');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Tất cả Pillar</option>' +
+        currentAdminPillars.map(p => `<option value="${p.key}">${escHtml(p.icon || '')} ${escHtml(p.label)}</option>`).join('');
+      sel.value = current;
+    }
+
+    function renderPillarBadge(key) {
+      const p = currentAdminPillars.find(x => x.key === key);
+      if (!p) return `<span class="badge badge-pillar">${escHtml(key)}</span>`;
+      return `<span class="badge badge-pillar" style="background:${p.color}22;color:${p.color}">${escHtml(p.icon || '')} ${escHtml(p.label)}</span>`;
     }
 
     function fmtDate(d) {
