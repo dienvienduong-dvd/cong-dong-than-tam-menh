@@ -1074,6 +1074,23 @@
     .mpp-video-slot .mpp-photo-slot-preview { aspect-ratio: auto; height: 480px; }
     .mpp-photo-slot-preview iframe { width: 100%; height: 100%; border: 0; display: block; }
 
+    /* ── Profile thành viên: danh sách Bài viết/Bình luận dạng thẻ giống profile.html ── */
+    .mpp-post-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; }
+    .mpp-post-item:hover { background: #f8fafc; }
+    .mpp-post-item:last-child { border-bottom: none; }
+    .mpp-post-item-pillar { width: 4px; border-radius: 2px; flex-shrink: 0; align-self: stretch; min-height: 40px; }
+    .mpp-post-item-body { flex: 1; min-width: 0; }
+    .mpp-post-item-title { font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+    .mpp-post-item:hover .mpp-post-item-title { color: var(--primary-d); }
+    .mpp-post-item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
+    .mpp-post-item-stats { display: flex; align-items: center; gap: 10px; }
+    .mpp-comment-preview { margin-top: 8px; padding: 8px 10px; background: #f1f5f9; border-radius: 8px; font-size: 12.5px; color: var(--text); }
+
+    #mppPostModal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+    #mppPostModal .mpp-post-modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.2); }
+    .mpp-pm-title { font-family: var(--head); font-size: 17px; font-weight: 800; margin-bottom: 10px; }
+    .mpp-pm-content { font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+
     .mp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
     .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
     .mp-tab-btn:hover { color: var(--text); }
@@ -3417,6 +3434,21 @@
     </div>
   </div>
 
+  <!-- ── Profile thành viên: xem nội dung 1 bài viết (read-only) ─────── -->
+  <div id="mppPostModal">
+    <div class="mpp-post-modal-box">
+      <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <div id="mppPmBadges" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <button onclick="closeMppPostModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <div id="mppPmMeta" style="font-size:12px;color:var(--muted);margin-bottom:12px;"></div>
+        <div class="mpp-pm-title" id="mppPmTitle"></div>
+        <div class="mpp-pm-content" id="mppPmContent"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Lesson exercise detail modal (read-only) ───────────────────── -->
   <div id="exerciseDetailModal"
     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
@@ -5323,6 +5355,7 @@
       showPage('member-profile-detail');
       document.getElementById('mpHeader').innerHTML = `<div class="empty-state">Đang tải...</div>`;
       try {
+        if (!currentAdminPillars.length) await loadAdminPillars();
         const d = await api(`/admin/member-profile/${userId}`);
         renderMpHeader(d.user);
         renderMpIntake(d.ttm.intake);
@@ -5552,37 +5585,79 @@
       }
     }
 
+    function mppFmtRelative(s) {
+      if (!s) return '—';
+      const diff = (Date.now() - new Date(s.replace(' ', 'T'))) / 1000;
+      if (diff < 60) return 'vừa xong';
+      if (diff < 3600) return Math.floor(diff / 60) + ' phút trước';
+      if (diff < 86400) return Math.floor(diff / 3600) + ' giờ trước';
+      if (diff < 86400 * 30) return Math.floor(diff / 86400) + ' ngày trước';
+      return fmtDate(s);
+    }
+
+    let mppPostCache = {};
+
     function renderMpCommunity(posts, comments) {
+      mppPostCache = {};
+      posts.forEach(p => { mppPostCache[p.id] = p; });
+      comments.forEach(c => {
+        if (!mppPostCache[c.post_id]) {
+          mppPostCache[c.post_id] = {
+            id: c.post_id, title: c.post_title, content: c.post_content, pillar: c.post_pillar,
+            post_type: c.post_post_type, likes_count: c.post_likes_count,
+            comments_count: c.post_comments_count, created_at: c.post_created_at,
+          };
+        }
+      });
+
+      const postItem = (p) => `
+    <div class="mpp-post-item" onclick="openMppPost(${p.id})">
+      <div class="mpp-post-item-pillar" style="background:${pillarColor(p.pillar)}"></div>
+      <div class="mpp-post-item-body">
+        <div class="mpp-post-item-title">${escHtml(p.title || (p.content || '').slice(0, 80) || '(không tiêu đề)')}</div>
+        <div class="mpp-post-item-meta">
+          ${p.pillar ? renderPillarBadge(p.pillar) : ''}
+          ${p.post_type === 'cot' ? '<span class="badge" style="background:#fef3c7;color:#b45309;">★ CÔT</span>' : ''}
+          <span>${mppFmtRelative(p.created_at)}</span>
+          <span class="mpp-post-item-stats"><span>❤️ ${p.likes_count || 0}</span><span>💬 ${p.comments_count || 0}</span></span>
+        </div>
+      </div>
+    </div>`;
+
       const postsBox = document.getElementById('mpPostsBox');
-      postsBox.innerHTML = posts.length ? `
-    <table class="data-table">
-      <thead><tr><th>Tiêu đề</th><th>Trụ cột</th><th>Thích</th><th>Bình luận</th><th>Đăng lúc</th></tr></thead>
-      <tbody>
-        ${posts.map(p => `
-        <tr>
-          <td>${escHtml(p.title || '(không tiêu đề)')}</td>
-          <td>${escHtml(p.pillar || '—')}</td>
-          <td>${p.likes_count}</td>
-          <td>${p.comments_count}</td>
-          <td style="color:var(--muted)">${fmtDate(p.created_at)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>` : `<div class="empty-state">Chưa có bài đăng nào.</div>`;
+      postsBox.innerHTML = posts.length ? posts.map(postItem).join('') : `<div class="empty-state">Chưa có bài đăng nào.</div>`;
 
       const commentsBox = document.getElementById('mpCommentsBox');
-      commentsBox.innerHTML = comments.length ? `
-    <table class="data-table">
-      <thead><tr><th>Bình luận</th><th>Trong bài</th><th>Lúc</th></tr></thead>
-      <tbody>
-        ${comments.map(c => `
-        <tr>
-          <td>${escHtml(c.content)}</td>
-          <td style="color:var(--muted)">${escHtml(c.post_title || '(bài đã xoá)')}</td>
-          <td style="color:var(--muted)">${fmtDate(c.created_at)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>` : `<div class="empty-state">Chưa có bình luận nào.</div>`;
+      commentsBox.innerHTML = comments.length ? comments.map(c => `
+    <div class="mpp-post-item" onclick="openMppPost(${c.post_id})">
+      <div class="mpp-post-item-pillar" style="background:${pillarColor(c.post_pillar)}"></div>
+      <div class="mpp-post-item-body">
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:2px;">Bình luận trong bài: <strong>${escHtml(c.post_title || '(bài đã xoá)')}</strong></div>
+        <div class="mpp-comment-preview">💬 ${escHtml(c.content)}</div>
+        <div class="mpp-post-item-meta" style="margin-top:6px;">${mppFmtRelative(c.created_at)}</div>
+      </div>
+    </div>`).join('') : `<div class="empty-state">Chưa có bình luận nào.</div>`;
     }
+
+    function pillarColor(key) {
+      const p = currentAdminPillars.find(x => x.key === key);
+      return p ? p.color : '#94a3b8';
+    }
+
+    function openMppPost(postId) {
+      const p = mppPostCache[postId];
+      if (!p) { showToast('Không tìm thấy bài viết (có thể đã bị xoá).', 'red'); return; }
+      document.getElementById('mppPmBadges').innerHTML =
+        (p.pillar ? renderPillarBadge(p.pillar) : '') +
+        (p.post_type === 'cot' ? '<span class="badge" style="background:#fef3c7;color:#b45309;">★ CÔT</span>' : '');
+      document.getElementById('mppPmMeta').textContent =
+        `${mppFmtRelative(p.created_at)} · ❤️ ${p.likes_count || 0} · 💬 ${p.comments_count || 0}`;
+      document.getElementById('mppPmTitle').textContent = p.title || '';
+      document.getElementById('mppPmTitle').style.display = p.title ? '' : 'none';
+      document.getElementById('mppPmContent').textContent = p.content || '';
+      document.getElementById('mppPostModal').style.display = 'flex';
+    }
+    function closeMppPostModal() { document.getElementById('mppPostModal').style.display = 'none'; }
 
     // ── Lesson exercises (AI-graded, read-only) ─────────────────────
     let exOffset = 0;

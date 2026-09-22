@@ -6196,11 +6196,14 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     });
 
     const posts = db.all(
-      'SELECT id, title, pillar, likes_count, comments_count, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
+      'SELECT id, title, content, pillar, post_type, likes_count, comments_count, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
       [userId]
     );
     const comments = db.all(
-      `SELECT c.id, c.content, c.created_at, c.post_id, p.title AS post_title
+      `SELECT c.id, c.content, c.created_at, c.post_id,
+              p.title AS post_title, p.content AS post_content, p.pillar AS post_pillar,
+              p.post_type AS post_post_type, p.likes_count AS post_likes_count,
+              p.comments_count AS post_comments_count, p.created_at AS post_created_at
        FROM comments c JOIN posts p ON p.id = c.post_id
        WHERE c.user_id = ? ORDER BY c.created_at DESC LIMIT 50`,
       [userId]
