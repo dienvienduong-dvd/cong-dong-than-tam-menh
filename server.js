@@ -4362,7 +4362,14 @@ QUY TẮC BẮT BUỘC:
       ? Math.min(program377DayNumberToday(enrollment.start_date), 377)
       : 0;
     const days = db.all('SELECT id, day_number, topic_key, title, xp_reward FROM program377_days ORDER BY day_number ASC');
-    res.json({ days: days.map(d => ({ ...d, unlocked: d.day_number <= dayNumberToday })), dayNumberToday });
+    res.json({
+      days: days.map(d => {
+        const unlocked = d.day_number <= dayNumberToday;
+        // Ngày chưa mở khóa: không trả tiêu đề/chủ đề thật, tránh lộ nội dung trước khi tới ngày.
+        return unlocked ? { ...d, unlocked } : { id: d.id, day_number: d.day_number, topic_key: null, title: null, xp_reward: d.xp_reward, unlocked };
+      }),
+      dayNumberToday,
+    });
   });
 
   app.get('/api/program377/day/:dayNumber', (req, res) => {

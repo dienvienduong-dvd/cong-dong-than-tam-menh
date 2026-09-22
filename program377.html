@@ -529,8 +529,12 @@ const API = '/api';
       <div class="p377-day-row${day.unlocked ? '' : ' locked'}" ${day.unlocked ? `onclick="openP377DayView(${day.day_number})"` : ''}>
         <div class="p377-day-num">Ngày ${day.day_number}</div>
         <div class="p377-day-info">
+          ${day.unlocked ? `
           <div class="p377-day-title">${esc(day.title)}</div>
           ${day.topic_key ? `<div style="font-size:11.5px;color:var(--text-muted);">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
+          ` : `
+          <div class="p377-day-title" style="color:var(--text-muted);font-style:italic;">Chưa được mở khóa</div>
+          `}
         </div>
         <div style="font-size:16px;">${day.unlocked ? '🔓' : '🔒'}</div>
       </div>`).join('');
