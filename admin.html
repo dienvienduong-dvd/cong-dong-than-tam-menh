@@ -1298,6 +1298,18 @@
         </button>
 
         <div class="sbar-section">Chương trình 377 ngày</div>
+        <button class="sbar-item" onclick="openP377Tab('letter')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+          </svg>
+          Thư ngỏ
+        </button>
+        <button class="sbar-item" onclick="openP377Tab('topics')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+          Tổng quan chủ đề
+        </button>
         <button class="sbar-item" onclick="openP377Tab('enrollments')">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12.5 7a4 4 0 11-8 0 4 4 0 018 0zM20 8v6M23 11h-6" />
@@ -1322,18 +1334,6 @@
             <path d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2zM8 15h.01M12 15h.01M16 15h.01" />
           </svg>
           Lịch Zoom / sự kiện
-        </button>
-        <button class="sbar-item" onclick="openP377Tab('letter')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-          </svg>
-          Thư ngỏ
-        </button>
-        <button class="sbar-item" onclick="openP377Tab('topics')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M4 6h16M4 12h16M4 18h7" />
-          </svg>
-          Tổng quan chủ đề
         </button>
 
         <button class="sbar-item" onclick="showPage('marketplace')">
@@ -1820,15 +1820,15 @@
       <!-- ── Chương trình 377 ngày (6 tab) ── -->
       <section class="page" id="page-program377">
         <div class="mp-tabs">
-          <button id="p377TabBtn-enrollments" class="settings-tab-btn p377-tab-btn active" onclick="mpTab('p377-tab-btn','p377-tab-panel','enrollments',this)">Duyệt đăng ký</button>
+          <button id="p377TabBtn-letter" class="settings-tab-btn p377-tab-btn active" onclick="mpTab('p377-tab-btn','p377-tab-panel','letter',this)">Thư ngỏ</button>
+          <button id="p377TabBtn-topics" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','topics',this)">Tổng quan chủ đề</button>
+          <button id="p377TabBtn-enrollments" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','enrollments',this)">Duyệt đăng ký</button>
           <button id="p377TabBtn-days" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','days',this)">Nội dung từng ngày</button>
           <button id="p377TabBtn-reports" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','reports',this)">Báo cáo hằng ngày</button>
           <button id="p377TabBtn-sessions" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','sessions',this)">Lịch Zoom / sự kiện</button>
-          <button id="p377TabBtn-letter" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','letter',this)">Thư ngỏ</button>
-          <button id="p377TabBtn-topics" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','topics',this)">Tổng quan chủ đề</button>
         </div>
 
-        <div class="p377-tab-panel active" data-tab="enrollments">
+        <div class="p377-tab-panel" data-tab="enrollments">
           <div class="table-card">
             <div class="table-card-header">
               <h2>Duyệt đăng ký 377 ngày</h2>
@@ -1940,7 +1940,7 @@
           </div>
         </div>
 
-        <div class="p377-tab-panel" data-tab="letter">
+        <div class="p377-tab-panel active" data-tab="letter">
           <div class="table-card" style="max-width:760px;">
             <div class="table-card-header">
               <h2>Thư ngỏ — trang 377 ngày trước khi đăng ký</h2>
@@ -4309,7 +4309,7 @@
       if (name === 'meallogs') loadMealLogs();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
       if (name === 'member-profile-list') loadMemberProfileList();
-      if (name === 'program377') loadP377Enrollments();
+      if (name === 'program377') loadP377Letter();
     }
 
     // Sidebar có 4 lối tắt vào cùng 1 trang "Chương trình 377 ngày", mỗi lối tắt tự chọn đúng
@@ -5954,10 +5954,54 @@
     }
 
     // -- Thư ngỏ (nội dung trang khách trước khi đăng ký) --
+    // Nội dung mặc định đang hiển thị thật ở program377.html — dùng để tự điền sẵn vào ô sửa,
+    // tránh admin thấy ô trống lần đầu vào tab này dù trang khách vẫn đang hiển thị đầy đủ.
+    const P377_DEFAULT_LETTER_HTML = `<h3 style="margin-bottom:8px;text-align:center;">Chương trình đồng hành 377 ngày</h3>
+<p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">
+  Mỗi ngày bạn sẽ được hướng dẫn 1 nội dung mới, và báo cáo lại tình trạng cơ thể mỗi ngày để được
+  đồng hành sát sao. Ngày 1 của bạn sẽ bắt đầu ngay khi được duyệt.
+</p>
+
+<div style="font-weight:700;font-size:14px;margin-bottom:8px;">Nội dung trọng tâm Ngô Lâm chia sẻ kiến thức trong 377 ngày:</div>
+<ol style="padding-left:20px;font-size:13.5px;color:var(--text);line-height:1.8;margin-bottom:10px;">
+  <li>Dinh dưỡng ngũ hành – Giải pháp cá nhân hóa chế độ dinh dưỡng cân bằng theo cơ địa HÀN NHIỆT</li>
+  <li>Chuyển hóa sức khỏe gốc: Trở về gốc rễ sinh mệnh, nghệ thuật Dưỡng sinh chăm sóc và phục hồi Lục phủ Ngũ tạng</li>
+  <li>Khai thông kinh lạc – kích hoạt cơ chế tự chữa lành bằng Y học bản địa Việt Nam - Tác động cột sống</li>
+  <li>Thấu hiểu chu kỳ sinh học và chủ động vận hành quá trình tái tạo cơ thể cấp độ tế bào</li>
+  <li>Điều hòa phong thủy nhà ở: Khơi thông sinh khí, chuyển hóa năng lượng không gian sống và nâng cao sức khỏe toàn diện</li>
+  <li>Nghệ thuật quản trị và tối ưu Phong thủy tài chính cá nhân và gia đình</li>
+  <li>Hàn gắn - chuyển hóa mối quan hệ và nâng cao tần số năng lượng qua "Năm vòng tròn lỗi đạo"</li>
+  <li>Làm chủ tư duy và phát triển tâm thức qua "Năm vòng tròn kiểm soát"</li>
+  <li>Lập trình vận mệnh: Khai phóng tiềm năng, kiến tạo bản đồ cuộc đời viên mãn</li>
+  <li>Ứng dụng trí tuệ Kinh Dịch: Nghệ thuật cân bằng Thân – Tâm</li>
+</ol>
+<p style="color:var(--text-muted);font-size:13.5px;margin-bottom:18px;">
+  Đây là hệ thống tri thức toàn diện giúp chủ động chăm sóc, phục hồi và phòng ngừa các bệnh mãn tính, u ung.
+</p>
+
+<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:16px;">
+  <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:#92400e;">Mức đầu tư &amp; đặc quyền tham gia</div>
+  <div style="font-size:13.5px;color:#78350f;line-height:1.7;">
+    Giá niêm yết: <b>37.800.000 VNĐ</b> / Hội viên / Hành trình 377 ngày "Hồi sinh Thân - Tâm - Mệnh".<br><br>
+    <b>Cơ hội duy nhất trong Tháng 10/2026:</b> Nhằm đồng hành cùng Dự án cộng đồng "1.000 Tổ Ấm Việt Thắp Sáng
+    Y Học Bản Địa Việt Nam - Tác Động Cột Sống – Tự Chủ Sức Khỏe Tại Nhà" do Lâm triển khai, Ban dự án quyết
+    định dành tặng mức trợ giá giới hạn — chỉ <b>11.800.000 VNĐ / người</b>.<br><br>
+    Giá trị đầu tư: chi phí thực tế chỉ tương đương hơn 30.000đ/ngày — một khoản tích lũy xứng đáng cho sức
+    khỏe gốc và tương lai trọn đời của chính bạn.<br><br>
+    <b>Đặc quyền chuyển giao thương hiệu:</b> dành riêng cho các Anh/Chị có định hướng kiến tạo hoặc vận hành
+    Trung tâm Chăm sóc Sức khỏe — vui lòng liên hệ trực tiếp với Lâm để nhận lộ trình cố vấn và chuyển giao
+    chuyên sâu.
+  </div>
+</div>
+
+<p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">
+  Số điện thoại liên lạc tham gia: <b style="color:var(--text);">0946.583.966</b>
+</p>`;
+
     async function loadP377Letter() {
       try {
         const s = await fetch(`${API}/settings`).then(r => r.json());
-        document.getElementById('p377LetterHtml').value = s.p377_letter_html || '';
+        document.getElementById('p377LetterHtml').value = s.p377_letter_html || P377_DEFAULT_LETTER_HTML;
       } catch { showToast('Không tải được thư ngỏ.', 'red'); }
     }
     async function saveP377Letter() {
@@ -5973,6 +6017,19 @@
     }
 
     // -- Tổng quan 10 chủ đề (tài liệu tham khảo nội bộ) --
+    // Mô tả mặc định lấy đúng từ danh sách 10 chủ đề trong thư ngỏ, để tự điền sẵn lần đầu.
+    const P377_DEFAULT_TOPICS_OVERVIEW = {
+      dinh_duong_ngu_hanh: 'Dinh dưỡng ngũ hành – Giải pháp cá nhân hóa chế độ dinh dưỡng cân bằng theo cơ địa HÀN NHIỆT',
+      chuyen_hoa_suc_khoe_goc: 'Chuyển hóa sức khỏe gốc: Trở về gốc rễ sinh mệnh, nghệ thuật Dưỡng sinh chăm sóc và phục hồi Lục phủ Ngũ tạng',
+      khai_thong_kinh_lac: 'Khai thông kinh lạc – kích hoạt cơ chế tự chữa lành bằng Y học bản địa Việt Nam - Tác động cột sống',
+      chu_ky_sinh_hoc: 'Thấu hiểu chu kỳ sinh học và chủ động vận hành quá trình tái tạo cơ thể cấp độ tế bào',
+      phong_thuy_nha_o: 'Điều hòa phong thủy nhà ở: Khơi thông sinh khí, chuyển hóa năng lượng không gian sống và nâng cao sức khỏe toàn diện',
+      phong_thuy_tai_chinh: 'Nghệ thuật quản trị và tối ưu Phong thủy tài chính cá nhân và gia đình',
+      chuyen_hoa_moi_quan_he: 'Hàn gắn - chuyển hóa mối quan hệ và nâng cao tần số năng lượng qua "Năm vòng tròn lỗi đạo"',
+      tu_duy_tam_thuc: 'Làm chủ tư duy và phát triển tâm thức qua "Năm vòng tròn kiểm soát"',
+      lap_trinh_van_menh: 'Lập trình vận mệnh: Khai phóng tiềm năng, kiến tạo bản đồ cuộc đời viên mãn',
+      kinh_dich_than_tam: 'Ứng dụng trí tuệ Kinh Dịch: Nghệ thuật cân bằng Thân – Tâm',
+    };
     async function loadP377TopicsOverview() {
       await ensureP377Topics();
       let overview = {};
@@ -5984,7 +6041,7 @@
     <div style="margin-bottom:14px;">
       <label style="font-size:12.5px;font-weight:600;color:var(--text);display:block;margin-bottom:4px;">${escHtml(t.label)}</label>
       <textarea data-topic-key="${t.key}" rows="2"
-        style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;">${escHtml(overview[t.key] || '')}</textarea>
+        style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;">${escHtml(overview[t.key] || P377_DEFAULT_TOPICS_OVERVIEW[t.key] || '')}</textarea>
     </div>`).join('');
     }
     async function saveP377TopicsOverview() {
