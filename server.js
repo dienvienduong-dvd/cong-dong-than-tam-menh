@@ -5013,6 +5013,7 @@ QUY TẮC BẮT BUỘC:
       'home_stat3_value', 'home_stat3_label', 'home_tags',
       'courses_hero_icon', 'courses_hero_title', 'courses_hero_desc',
       'assistant_enabled', 'assistant_daily_limit',
+      'p377_letter_html', 'p377_topics_overview',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });

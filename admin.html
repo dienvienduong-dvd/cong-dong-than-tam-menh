@@ -1323,6 +1323,18 @@
           </svg>
           Lịch Zoom / sự kiện
         </button>
+        <button class="sbar-item" onclick="openP377Tab('letter')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+          </svg>
+          Thư ngỏ
+        </button>
+        <button class="sbar-item" onclick="openP377Tab('topics')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+          Tổng quan chủ đề
+        </button>
 
         <button class="sbar-item" onclick="showPage('marketplace')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -1805,13 +1817,15 @@
         </div>
       </section>
 
-      <!-- ── Chương trình 377 ngày (4 tab: Duyệt đăng ký / Nội dung / Báo cáo / Lịch) ── -->
+      <!-- ── Chương trình 377 ngày (6 tab) ── -->
       <section class="page" id="page-program377">
         <div class="mp-tabs">
           <button id="p377TabBtn-enrollments" class="settings-tab-btn p377-tab-btn active" onclick="mpTab('p377-tab-btn','p377-tab-panel','enrollments',this)">Duyệt đăng ký</button>
           <button id="p377TabBtn-days" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','days',this)">Nội dung từng ngày</button>
           <button id="p377TabBtn-reports" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','reports',this)">Báo cáo hằng ngày</button>
           <button id="p377TabBtn-sessions" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','sessions',this)">Lịch Zoom / sự kiện</button>
+          <button id="p377TabBtn-letter" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','letter',this)">Thư ngỏ</button>
+          <button id="p377TabBtn-topics" class="settings-tab-btn p377-tab-btn" onclick="mpTab('p377-tab-btn','p377-tab-panel','topics',this)">Tổng quan chủ đề</button>
         </div>
 
         <div class="p377-tab-panel active" data-tab="enrollments">
@@ -1922,6 +1936,43 @@
                   <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="p377-tab-panel" data-tab="letter">
+          <div class="table-card" style="max-width:760px;">
+            <div class="table-card-header">
+              <h2>Thư ngỏ — trang 377 ngày trước khi đăng ký</h2>
+            </div>
+            <div style="padding:20px 24px;">
+              <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+                Nội dung HTML hiển thị ở trang khách (program377.html) trước khi khách bấm "Đăng ký tham gia" —
+                bao gồm giới thiệu, danh sách chủ đề, mức đầu tư, số điện thoại liên hệ, v.v. Để trống sẽ dùng
+                nội dung mặc định có sẵn trong trang.
+              </div>
+              <textarea id="p377LetterHtml" rows="18"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12.5px;line-height:1.6;resize:vertical;outline:none;"
+                placeholder="Dán nội dung HTML của thư ngỏ ở đây..."></textarea>
+              <button class="btn-sm primary" style="margin-top:10px;" onclick="saveP377Letter()">Lưu thư ngỏ</button>
+              <div class="p377-msg-admin" id="p377LetterMsg" style="font-size:12.5px;margin-top:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p377-tab-panel" data-tab="topics">
+          <div class="table-card" style="max-width:760px;">
+            <div class="table-card-header">
+              <h2>Tổng quan 10 chủ đề trọng tâm</h2>
+            </div>
+            <div style="padding:20px 24px;">
+              <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+                Tài liệu tham khảo nội bộ — mô tả ngắn định hướng nội dung cho từng chủ đề, giúp admin hình dung
+                trước khi soạn chi tiết từng ngày ở tab "Nội dung từng ngày". Không hiển thị cho khách.
+              </div>
+              <div id="p377TopicsOverviewForm"></div>
+              <button class="btn-sm primary" style="margin-top:10px;" onclick="saveP377TopicsOverview()">Lưu tổng quan</button>
+              <div class="p377-msg-admin" id="p377TopicsMsg" style="font-size:12.5px;margin-top:6px;"></div>
             </div>
           </div>
         </div>
@@ -4273,6 +4324,8 @@
       if (name === 'days') loadP377Days();
       if (name === 'reports') loadP377Reports();
       if (name === 'sessions') loadP377Sessions();
+      if (name === 'letter') loadP377Letter();
+      if (name === 'topics') loadP377TopicsOverview();
     }
 
     // ── Cẩm nang: thực phẩm & công thức ──────────────────────────
@@ -5898,6 +5951,55 @@
         api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: fifteenth, title: 'Zoom rằm', session_type: 'zoom' }) }),
       ]).then(() => { showToast('✅ Đã thêm 2 buổi Zoom tháng tới.', 'green'); loadP377Sessions(); })
         .catch(() => showToast('Lỗi khi thêm.', 'red'));
+    }
+
+    // -- Thư ngỏ (nội dung trang khách trước khi đăng ký) --
+    async function loadP377Letter() {
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        document.getElementById('p377LetterHtml').value = s.p377_letter_html || '';
+      } catch { showToast('Không tải được thư ngỏ.', 'red'); }
+    }
+    async function saveP377Letter() {
+      const html = document.getElementById('p377LetterHtml').value;
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ p377_letter_html: html }) });
+        document.getElementById('p377LetterMsg').textContent = '✅ Đã lưu — kiểm tra lại ở trang khách.';
+        document.getElementById('p377LetterMsg').style.color = '#10b981';
+      } catch (e) {
+        document.getElementById('p377LetterMsg').textContent = 'Lỗi: ' + e.message;
+        document.getElementById('p377LetterMsg').style.color = '#ef4444';
+      }
+    }
+
+    // -- Tổng quan 10 chủ đề (tài liệu tham khảo nội bộ) --
+    async function loadP377TopicsOverview() {
+      await ensureP377Topics();
+      let overview = {};
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        overview = s.p377_topics_overview ? JSON.parse(s.p377_topics_overview) : {};
+      } catch { /* để trống nếu chưa có / lỗi parse */ }
+      document.getElementById('p377TopicsOverviewForm').innerHTML = p377TopicsCache.map(t => `
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12.5px;font-weight:600;color:var(--text);display:block;margin-bottom:4px;">${escHtml(t.label)}</label>
+      <textarea data-topic-key="${t.key}" rows="2"
+        style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;">${escHtml(overview[t.key] || '')}</textarea>
+    </div>`).join('');
+    }
+    async function saveP377TopicsOverview() {
+      const overview = {};
+      document.querySelectorAll('#p377TopicsOverviewForm textarea[data-topic-key]').forEach(ta => {
+        overview[ta.dataset.topicKey] = ta.value.trim();
+      });
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ p377_topics_overview: JSON.stringify(overview) }) });
+        document.getElementById('p377TopicsMsg').textContent = '✅ Đã lưu.';
+        document.getElementById('p377TopicsMsg').style.color = '#10b981';
+      } catch (e) {
+        document.getElementById('p377TopicsMsg').textContent = 'Lỗi: ' + e.message;
+        document.getElementById('p377TopicsMsg').style.color = '#ef4444';
+      }
     }
 
     // ── Profile thành viên (hồ sơ 360° — Lộ trình / Học tập / Nhật ký / Cộng đồng) ──
