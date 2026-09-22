@@ -650,6 +650,64 @@ const SCHEMA = `
     video_url    TEXT,
     updated_at   TEXT DEFAULT (datetime('now','localtime'))
   );
+
+  -- ── Chương trình 377 ngày ─────────────────────────────────────────
+  CREATE TABLE IF NOT EXISTS program377_enrollments (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL UNIQUE REFERENCES users(id),
+    status       TEXT    DEFAULT 'pending',
+    enrolled_at  TEXT    DEFAULT (datetime('now','localtime')),
+    approved_at  TEXT,
+    approved_by  INTEGER REFERENCES users(id),
+    start_date   TEXT,
+    admin_note   TEXT
+  );
+  CREATE TABLE IF NOT EXISTS program377_days (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    day_number      INTEGER UNIQUE NOT NULL,
+    topic_key       TEXT,
+    title           TEXT    NOT NULL,
+    body_html       TEXT,
+    video_url       TEXT,
+    exercise_title  TEXT,
+    exercise_body   TEXT,
+    xp_reward       INTEGER DEFAULT 0,
+    created_at      TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS program377_reports (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id          INTEGER NOT NULL REFERENCES users(id),
+    report_date      TEXT    NOT NULL,
+    day_number       INTEGER,
+    meal_breakfast   TEXT,
+    meal_lunch       TEXT,
+    meal_dinner      TEXT,
+    meal_colors      TEXT,
+    meal_tastes      TEXT,
+    urine_amount     TEXT,
+    urine_color      TEXT,
+    stool_shape      TEXT,
+    stool_color      TEXT,
+    exercise_type    TEXT,
+    exercise_minutes INTEGER,
+    sweat_amount     TEXT,
+    sweat_taste      TEXT,
+    feeling_note     TEXT,
+    is_late          INTEGER DEFAULT 0,
+    created_at       TEXT    DEFAULT (datetime('now','localtime')),
+    updated_at       TEXT,
+    UNIQUE(user_id, report_date)
+  );
+  CREATE TABLE IF NOT EXISTS program377_sessions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_date  TEXT    NOT NULL,
+    title         TEXT    NOT NULL,
+    session_type  TEXT    DEFAULT 'zoom',
+    link_url      TEXT,
+    description   TEXT,
+    created_by    INTEGER REFERENCES users(id),
+    created_at    TEXT    DEFAULT (datetime('now','localtime'))
+  );
 `;
 
 // [day_number, title, description, instructions, xp_reward] — 28 ngày Dưỡng Hóa theo Ngũ Hành
@@ -4146,6 +4204,291 @@ QUY TẮC BẮT BUỘC:
   app.delete('/api/admin/meal-logs/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM meal_logs WHERE id = ?', [req.params.id]);
     res.json({ success: true });
+  });
+
+  // ── Chương trình 377 ngày ──────────────────────────────────────────
+  const PROGRAM377_TOPICS = [
+    { key: 'dinh_duong_ngu_hanh',     label: 'Dinh dưỡng ngũ hành theo cơ địa Hàn/Nhiệt' },
+    { key: 'chuyen_hoa_suc_khoe_goc', label: 'Chuyển hóa sức khỏe gốc — Lục phủ Ngũ tạng' },
+    { key: 'khai_thong_kinh_lac',     label: 'Khai thông kinh lạc — Tác động cột sống' },
+    { key: 'chu_ky_sinh_hoc',         label: 'Chu kỳ sinh học & tái tạo tế bào' },
+    { key: 'phong_thuy_nha_o',        label: 'Điều hòa phong thủy nhà ở' },
+    { key: 'phong_thuy_tai_chinh',    label: 'Phong thủy tài chính cá nhân & gia đình' },
+    { key: 'chuyen_hoa_moi_quan_he',  label: 'Chuyển hóa mối quan hệ — Năm vòng tròn lỗi đạo' },
+    { key: 'tu_duy_tam_thuc',         label: 'Làm chủ tư duy — Năm vòng tròn kiểm soát' },
+    { key: 'lap_trinh_van_menh',      label: 'Lập trình vận mệnh' },
+    { key: 'kinh_dich_than_tam',      label: 'Ứng dụng Kinh Dịch — cân bằng Thân-Tâm' },
+  ];
+
+  // "Ngày thứ mấy" của user tính theo lịch thật (date('now','localtime')) kể từ start_date —
+  // mở khóa đúng lúc qua 0h, không lệch theo giờ họ bấm tham gia (khác cơ chế thử thách 21 ngày).
+  function program377DayNumberToday(startDate) {
+    if (!startDate) return 0;
+    const row = db.get(
+      "SELECT CAST(julianday(date('now','localtime')) - julianday(?) AS INTEGER) + 1 AS n",
+      [startDate]
+    );
+    return row ? Math.max(row.n, 0) : 0;
+  }
+
+  app.get('/api/program377/status', (req, res) => {
+    const userId = req.query.user_id;
+    if (!userId) return res.status(400).json({ error: 'Thiếu user_id' });
+    const enrollment = db.get('SELECT * FROM program377_enrollments WHERE user_id = ?', [userId]);
+    if (!enrollment) return res.json({ enrollment: null });
+    const dayNumberToday = enrollment.status === 'approved'
+      ? Math.min(program377DayNumberToday(enrollment.start_date), 377)
+      : 0;
+    const todayStr = db.get("SELECT date('now','localtime') AS d").d;
+    const todayReport = db.get('SELECT * FROM program377_reports WHERE user_id = ? AND report_date = ?', [userId, todayStr]);
+    res.json({
+      enrollment: { status: enrollment.status, startDate: enrollment.start_date, adminNote: enrollment.admin_note },
+      dayNumberToday,
+      totalDays: 377,
+      todayReport: todayReport
+        ? { ...todayReport, meal_colors: JSON.parse(todayReport.meal_colors || '[]'), meal_tastes: JSON.parse(todayReport.meal_tastes || '[]') }
+        : null,
+    });
+  });
+
+  app.post('/api/program377/enroll', (req, res) => {
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id' });
+    const existing = db.get('SELECT id FROM program377_enrollments WHERE user_id = ?', [user_id]);
+    if (existing) return res.status(409).json({ error: 'Bạn đã đăng ký chương trình này rồi.' });
+    db.run('INSERT INTO program377_enrollments (user_id, status) VALUES (?, ?)', [user_id, 'pending']);
+    res.status(201).json({ ok: true });
+  });
+
+  app.get('/api/program377/days', (req, res) => {
+    const userId = req.query.user_id;
+    const enrollment = userId ? db.get('SELECT * FROM program377_enrollments WHERE user_id = ?', [userId]) : null;
+    const dayNumberToday = enrollment && enrollment.status === 'approved'
+      ? Math.min(program377DayNumberToday(enrollment.start_date), 377)
+      : 0;
+    const days = db.all('SELECT id, day_number, topic_key, title, xp_reward FROM program377_days ORDER BY day_number ASC');
+    res.json({ days: days.map(d => ({ ...d, unlocked: d.day_number <= dayNumberToday })), dayNumberToday });
+  });
+
+  app.get('/api/program377/day/:dayNumber', (req, res) => {
+    const userId = req.query.user_id;
+    const dayNumber = Number(req.params.dayNumber);
+    const enrollment = userId ? db.get('SELECT * FROM program377_enrollments WHERE user_id = ?', [userId]) : null;
+    if (!enrollment || enrollment.status !== 'approved')
+      return res.status(403).json({ error: 'Bạn chưa được duyệt tham gia chương trình.' });
+    const dayNumberToday = Math.min(program377DayNumberToday(enrollment.start_date), 377);
+    if (!dayNumber || dayNumber > dayNumberToday)
+      return res.status(403).json({ error: 'Ngày này chưa được mở khóa.' });
+    const day = db.get('SELECT * FROM program377_days WHERE day_number = ?', [dayNumber]);
+    if (!day) return res.status(404).json({ error: 'Nội dung ngày này chưa được soạn.' });
+    res.json({ day });
+  });
+
+  app.get('/api/program377/reports', (req, res) => {
+    const userId = req.query.user_id;
+    if (!userId) return res.status(400).json({ error: 'Thiếu user_id' });
+    const limit = Number(req.query.limit) || 30;
+    const reports = db.all(
+      'SELECT * FROM program377_reports WHERE user_id = ? ORDER BY report_date DESC LIMIT ?',
+      [userId, limit]
+    ).map(r => ({ ...r, meal_colors: JSON.parse(r.meal_colors || '[]'), meal_tastes: JSON.parse(r.meal_tastes || '[]') }));
+    res.json({ reports });
+  });
+
+  app.post('/api/program377/reports', (req, res) => {
+    const {
+      user_id, report_date,
+      meal_breakfast, meal_lunch, meal_dinner, meal_colors, meal_tastes,
+      urine_amount, urine_color, stool_shape, stool_color,
+      exercise_type, exercise_minutes, sweat_amount, sweat_taste, feeling_note,
+    } = req.body;
+    if (!user_id || !report_date || !/^\d{4}-\d{2}-\d{2}$/.test(report_date))
+      return res.status(400).json({ error: 'Thiếu user_id hoặc ngày không hợp lệ.' });
+
+    const enrollment = db.get('SELECT * FROM program377_enrollments WHERE user_id = ?', [user_id]);
+    if (!enrollment || enrollment.status !== 'approved')
+      return res.status(403).json({ error: 'Bạn chưa được duyệt tham gia chương trình.' });
+
+    const dayToday = program377DayNumberToday(enrollment.start_date);
+    if (dayToday < 1) return res.status(403).json({ error: 'Chương trình của bạn chưa bắt đầu.' });
+
+    const todayStr = db.get("SELECT date('now','localtime') AS d").d;
+    const yesterdayStr = db.get("SELECT date('now','localtime','-1 day') AS d").d;
+    if (report_date !== todayStr && report_date !== yesterdayStr)
+      return res.status(400).json({ error: 'Chỉ được báo cáo cho hôm nay hoặc hôm qua.' });
+
+    const nowHour = Number(db.get("SELECT strftime('%H','now','localtime') AS h").h);
+    const isLate = (report_date < todayStr) || (report_date === todayStr && nowHour >= 23) ? 1 : 0;
+    const dayNumber = report_date === todayStr ? dayToday : dayToday - 1;
+
+    const colorsJson = JSON.stringify(Array.isArray(meal_colors) ? meal_colors : []);
+    const tastesJson = JSON.stringify(Array.isArray(meal_tastes) ? meal_tastes : []);
+
+    const existing = db.get('SELECT id FROM program377_reports WHERE user_id = ? AND report_date = ?', [user_id, report_date]);
+    const fields = [
+      meal_breakfast || null, meal_lunch || null, meal_dinner || null, colorsJson, tastesJson,
+      urine_amount || null, urine_color || null, stool_shape || null, stool_color || null,
+      exercise_type || null, exercise_minutes ? Number(exercise_minutes) : null,
+      sweat_amount || null, sweat_taste || null, feeling_note || null, isLate, dayNumber,
+    ];
+    let reportId;
+    if (existing) {
+      db.run(
+        `UPDATE program377_reports SET
+           meal_breakfast=?, meal_lunch=?, meal_dinner=?, meal_colors=?, meal_tastes=?,
+           urine_amount=?, urine_color=?, stool_shape=?, stool_color=?,
+           exercise_type=?, exercise_minutes=?, sweat_amount=?, sweat_taste=?, feeling_note=?,
+           is_late=?, day_number=?, updated_at = datetime('now','localtime')
+         WHERE id = ?`,
+        [...fields, existing.id]
+      );
+      reportId = existing.id;
+    } else {
+      db.run(
+        `INSERT INTO program377_reports (
+           user_id, report_date, meal_breakfast, meal_lunch, meal_dinner, meal_colors, meal_tastes,
+           urine_amount, urine_color, stool_shape, stool_color,
+           exercise_type, exercise_minutes, sweat_amount, sweat_taste, feeling_note, is_late, day_number
+         ) VALUES (?, ?, ?,?,?,?,?, ?,?,?,?, ?,?,?,?,?, ?,?)`,
+        [user_id, report_date, ...fields]
+      );
+      reportId = db.get('SELECT id FROM program377_reports WHERE user_id = ? AND report_date = ?', [user_id, report_date]).id;
+    }
+
+    // Ghi đè trực tiếp sang meal_logs để dùng chung streak/XP/leaderboard — gọi thẳng DB, không
+    // qua route /api/meal-logs (tránh gọi AI/Telegram của meal_logs 2 lần cho cùng 1 lần báo cáo).
+    const mealExisting = db.get('SELECT id FROM meal_logs WHERE user_id = ? AND log_date = ?', [user_id, report_date]);
+    if (mealExisting) {
+      db.run(
+        'UPDATE meal_logs SET breakfast=?, lunch=?, dinner=?, colors=?, tastes=? WHERE id=?',
+        [meal_breakfast || null, meal_lunch || null, meal_dinner || null, colorsJson, tastesJson, mealExisting.id]
+      );
+    } else {
+      db.run(
+        'INSERT INTO meal_logs (user_id, log_date, breakfast, lunch, dinner, colors, tastes) VALUES (?,?,?,?,?,?,?)',
+        [user_id, report_date, meal_breakfast || null, meal_lunch || null, meal_dinner || null, colorsJson, tastesJson]
+      );
+      addXP(user_id, 3, 'meal_log', `Ghi nhật ký ăn uống ${report_date}`);
+    }
+    recomputeStreak(user_id);
+
+    res.json({ ok: true, reportId, isLate: !!isLate });
+  });
+
+  app.get('/api/program377/sessions', (req, res) => {
+    let sql = 'SELECT * FROM program377_sessions';
+    if (req.query.upcoming) sql += " WHERE session_date >= date('now','localtime')";
+    sql += ' ORDER BY session_date ASC';
+    res.json({ sessions: db.all(sql) });
+  });
+
+  // ── Admin: Chương trình 377 ngày ────────────────────────────────
+  app.get('/api/admin/program377/topics', requireAdmin, (_req, res) => {
+    res.json({ topics: PROGRAM377_TOPICS });
+  });
+
+  app.get('/api/admin/program377/days', requireAdmin, (_req, res) => {
+    res.json({ days: db.all('SELECT * FROM program377_days ORDER BY day_number ASC') });
+  });
+
+  app.post('/api/admin/program377/days', requireAdmin, (req, res) => {
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward } = req.body;
+    if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
+    const existing = db.get('SELECT id FROM program377_days WHERE day_number = ?', [day_number]);
+    if (existing) return res.status(409).json({ error: `Ngày ${day_number} đã có nội dung — vui lòng sửa thay vì thêm mới.` });
+    const r = db.run(
+      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward) VALUES (?,?,?,?,?,?,?,?)',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', video_url || null, exercise_title || null, exercise_body || null, Number(xp_reward) || 0]
+    );
+    res.status(201).json({ ok: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/program377/days/:id', requireAdmin, (req, res) => {
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward } = req.body;
+    if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
+    db.run(
+      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=? WHERE id=?',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', video_url || null, exercise_title || null, exercise_body || null, Number(xp_reward) || 0, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.delete('/api/admin/program377/days/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM program377_days WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/program377/enrollments', requireAdmin, (req, res) => {
+    const status = req.query.status || 'pending';
+    const rows = db.all(
+      `SELECT e.*, u.first_name, u.last_name, u.email
+       FROM program377_enrollments e JOIN users u ON u.id = e.user_id
+       WHERE e.status = ? ORDER BY e.enrolled_at DESC`,
+      [status]
+    );
+    res.json({ enrollments: rows });
+  });
+
+  app.post('/api/admin/program377/enrollments/:id/approve', requireAdmin, (req, res) => {
+    const enrollment = db.get('SELECT id FROM program377_enrollments WHERE id = ?', [req.params.id]);
+    if (!enrollment) return res.status(404).json({ error: 'Không tìm thấy đăng ký.' });
+    const todayStr = db.get("SELECT date('now','localtime') AS d").d;
+    const startDate = req.body.start_date && /^\d{4}-\d{2}-\d{2}$/.test(req.body.start_date) ? req.body.start_date : todayStr;
+    db.run(
+      "UPDATE program377_enrollments SET status = 'approved', start_date = ?, approved_at = datetime('now','localtime'), approved_by = ? WHERE id = ?",
+      [startDate, req.adminUserId || null, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.post('/api/admin/program377/enrollments/:id/reject', requireAdmin, (req, res) => {
+    db.run(
+      "UPDATE program377_enrollments SET status = 'rejected', admin_note = ? WHERE id = ?",
+      [req.body.admin_note || null, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/program377/reports', requireAdmin, (req, res) => {
+    const { user_id = '', from = '', to = '', limit = 50, offset = 0 } = req.query;
+    let sql = `SELECT r.*, u.first_name, u.last_name, u.email
+               FROM program377_reports r JOIN users u ON u.id = r.user_id WHERE 1=1`;
+    const params = [];
+    if (user_id) { sql += ' AND r.user_id = ?'; params.push(user_id); }
+    if (from) { sql += ' AND r.report_date >= ?'; params.push(from); }
+    if (to)   { sql += ' AND r.report_date <= ?'; params.push(to); }
+    sql += ' ORDER BY r.report_date DESC, r.id DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+    const reports = db.all(sql, params).map(r => ({ ...r, meal_colors: JSON.parse(r.meal_colors || '[]'), meal_tastes: JSON.parse(r.meal_tastes || '[]') }));
+    res.json({ reports });
+  });
+
+  app.get('/api/admin/program377/sessions', requireAdmin, (_req, res) => {
+    res.json({ sessions: db.all('SELECT * FROM program377_sessions ORDER BY session_date ASC') });
+  });
+
+  app.post('/api/admin/program377/sessions', requireAdmin, (req, res) => {
+    const { session_date, title, session_type, link_url, description } = req.body;
+    if (!session_date || !title?.trim()) return res.status(400).json({ error: 'Thiếu ngày hoặc tiêu đề.' });
+    const r = db.run(
+      'INSERT INTO program377_sessions (session_date, title, session_type, link_url, description, created_by) VALUES (?,?,?,?,?,?)',
+      [session_date, title.trim(), session_type || 'zoom', link_url || null, description || null, req.adminUserId || null]
+    );
+    res.status(201).json({ ok: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/program377/sessions/:id', requireAdmin, (req, res) => {
+    const { session_date, title, session_type, link_url, description } = req.body;
+    db.run(
+      'UPDATE program377_sessions SET session_date=?, title=?, session_type=?, link_url=?, description=? WHERE id=?',
+      [session_date, title?.trim(), session_type || 'zoom', link_url || null, description || null, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.delete('/api/admin/program377/sessions/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM program377_sessions WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
   });
 
   // ── Telegram account linking (Agent 2 coaching) ──────────────

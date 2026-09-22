@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chương trình 377 ngày — Ăn Uống Ngũ Hành</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <style>
+    .p377-wrap { max-width: 760px; margin: 0 auto; }
+    .p377-hero { background: linear-gradient(135deg,#10b981,#0ea5e9); color:#fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 16px; }
+    .p377-hero-day { font-size: 30px; font-weight: 800; font-family: var(--font-heading); }
+    .p377-bar { background: rgba(255,255,255,.3); border-radius: 99px; height: 8px; margin-top: 10px; overflow: hidden; }
+    .p377-bar-fill { background: #fff; height: 100%; border-radius: 99px; }
+    .p377-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 16px; }
+    .p377-card h3 { font-size: var(--fs-md); margin-bottom: 12px; }
+    .p377-topic { display:inline-block; font-size: 11px; font-weight: 700; color: #0ea5e9; background: rgba(14,165,233,.1); padding: 3px 10px; border-radius: 99px; margin-bottom: 8px; }
+    .p377-video { width:100%; aspect-ratio:16/9; border:0; border-radius: var(--radius-md); margin: 10px 0; }
+    .p377-field { margin-bottom: 12px; }
+    .p377-field label { display:block; font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+    .p377-field input, .p377-field select, .p377-field textarea { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-input); color: var(--text); font-family: inherit; font-size: var(--fs-sm); resize: vertical; }
+    .p377-row2 { display:flex; gap:10px; }
+    .p377-row2 > * { flex:1; min-width:0; }
+    .p377-checks { display: flex; flex-wrap: wrap; gap: 6px; }
+    .p377-check { padding: 5px 11px; border: 1px solid var(--border); border-radius: 999px; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; user-select: none; background: var(--bg-card); color: var(--text-muted); }
+    .p377-check.on { background: var(--color-primary); border-color: var(--color-primary); color:#fff; }
+    .p377-msg { font-size: var(--fs-sm); margin-top: 8px; }
+    .p377-session { display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--border); font-size: var(--fs-sm); }
+    .p377-session-date { font-weight:700; color: var(--color-primary); width: 92px; flex-shrink:0; }
+    .p377-empty { color: var(--text-muted); font-size: 13px; }
+    .p377-pending-box, .p377-cta-box { text-align:center; padding: 30px 20px; }
+  </style>
+</head>
+
+<body>
+
+  <div id="app">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div id="sidebar-logo">
+        <div class="sidebar-logo-mark">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="3" fill="currentColor" />
+            <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M5.5 5.5l1.5 1.5M13 13l1.5 1.5M14.5 5.5L13 7M7 13l-1.5 1.5" stroke="currentColor"
+              stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="sidebar-logo-text">Ngũ Hành <span>ĂU</span></div>
+      </div>
+
+      <nav id="sidebar-nav">
+        <div class="nav-section-label">Cộng đồng</div>
+
+        <a href="feed.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+          </svg>
+          Feed
+        </a>
+
+        <div class="nav-section-label" style="margin-top:8px;">Sức khỏe</div>
+
+        <a href="lo-trinh.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+          Lộ trình của tôi
+        </a>
+
+        <a href="nhat-ky.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Nhật ký ăn uống
+        </a>
+
+        <a href="program377.html" class="nav-item active">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          377 ngày
+        </a>
+
+        <div class="nav-section-label" style="margin-top:8px;">Học tập</div>
+
+        <a href="challenge.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path
+              d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+          </svg>
+          Challenge
+        </a>
+
+        <div class="nav-section-label" style="margin-top:8px;">Khác</div>
+
+        <a href="marketplace.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+          Marketplace
+        </a>
+      </nav>
+
+      <!-- Sidebar user -->
+      <div id="sidebar-user">
+        <div class="user-avatar-wrap">
+          <div class="avatar-placeholder avatar-md" id="sbAvatar" style="background:#7c3aed;">?</div>
+          <div class="user-status-dot"></div>
+        </div>
+        <div class="user-info">
+          <div class="user-name" id="sbName">—</div>
+          <div class="user-level" id="sbLevel">—</div>
+        </div>
+        <a href="index.html" class="icon-btn" title="Đăng xuất" style="margin-left:auto;" onclick="doLogout()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div id="main">
+      <header id="topbar">
+        <button class="topbar-hamburger" id="hamburger" onclick="openSidebar()" aria-label="Mở menu">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <div class="topbar-title">🗓️ Chương trình 377 ngày</div>
+      </header>
+
+      <div id="content-row">
+        <main id="feed" style="max-width:100%;">
+          <div class="p377-wrap">
+
+            <!-- Chưa đăng ký -->
+            <div class="p377-card p377-cta-box" id="p377NotEnrolled" style="display:none;">
+              <h3 style="margin-bottom:8px;">Chương trình đồng hành 377 ngày</h3>
+              <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;max-width:480px;margin-left:auto;margin-right:auto;">
+                Mỗi ngày bạn sẽ được hướng dẫn 1 nội dung mới trong 10 chủ đề dưỡng sinh của Ngô Lâm, và báo cáo
+                lại tình trạng cơ thể mỗi ngày để được đồng hành sát sao. Ngày 1 của bạn sẽ bắt đầu ngay khi được duyệt.
+              </p>
+              <button class="btn btn-primary" onclick="enrollP377()">Đăng ký tham gia</button>
+              <div class="p377-msg" id="p377EnrollMsg"></div>
+            </div>
+
+            <!-- Đang chờ duyệt -->
+            <div class="p377-card p377-pending-box" id="p377Pending" style="display:none;">
+              <h3>⏳ Đang chờ duyệt</h3>
+              <p style="color:var(--text-muted);font-size:14px;">Đăng ký của bạn đã được gửi, Ngô Lâm sẽ duyệt và gán ngày bắt đầu riêng cho bạn sớm nhất.</p>
+            </div>
+
+            <!-- Đã duyệt: nội dung chương trình -->
+            <div id="p377Active" style="display:none;">
+              <div class="p377-hero">
+                <div class="p377-hero-day" id="p377DayLabel">Ngày 1/377</div>
+                <div class="p377-bar"><div class="p377-bar-fill" id="p377BarFill" style="width:0%;"></div></div>
+              </div>
+
+              <div class="p377-card">
+                <div id="p377TodayContent"></div>
+              </div>
+
+              <div class="p377-card">
+                <h3 id="p377FormTitle">Báo cáo hôm nay</h3>
+                <div class="p377-field"><label>Bữa sáng</label><input id="p377B" placeholder="VD: cháo yến mạch..."></div>
+                <div class="p377-field"><label>Bữa trưa</label><input id="p377L" placeholder="VD: cơm gạo lứt, canh rau..."></div>
+                <div class="p377-field"><label>Bữa tối</label><input id="p377D" placeholder="VD: rau muống xào tỏi..."></div>
+                <div class="p377-field"><label>Hôm nay ăn đủ những MÀU nào?</label><div class="p377-checks" id="p377Colors"></div></div>
+                <div class="p377-field"><label>Hôm nay ăn đủ những VỊ nào?</label><div class="p377-checks" id="p377Tastes"></div></div>
+                <div class="p377-row2">
+                  <div class="p377-field"><label>Nước tiểu — lượng</label>
+                    <select id="p377UrineAmount"><option value="">— chọn —</option><option>nhiều</option><option>ít</option></select>
+                  </div>
+                  <div class="p377-field"><label>Nước tiểu — màu sắc</label><input id="p377UrineColor" placeholder="VD: vàng nhạt"></div>
+                </div>
+                <div class="p377-row2">
+                  <div class="p377-field"><label>Phân — hình dạng</label><input id="p377StoolShape" placeholder="VD: bình thường, lỏng, táo..."></div>
+                  <div class="p377-field"><label>Phân — màu sắc</label><input id="p377StoolColor" placeholder="VD: nâu"></div>
+                </div>
+                <div class="p377-row2">
+                  <div class="p377-field"><label>Tập luyện — môn gì</label><input id="p377ExType" placeholder="VD: đi bộ, yoga..."></div>
+                  <div class="p377-field"><label>Tập luyện — thời gian (phút)</label><input id="p377ExMinutes" type="number" min="0"></div>
+                </div>
+                <div class="p377-row2">
+                  <div class="p377-field"><label>Mồ hôi — lượng</label>
+                    <select id="p377SweatAmount"><option value="">— chọn —</option><option>nhiều</option><option>ít</option></select>
+                  </div>
+                  <div class="p377-field"><label>Mồ hôi — vị</label>
+                    <select id="p377SweatTaste"><option value="">— chọn —</option><option>không vị</option><option>chua</option><option>hơi mặn</option><option>mặn</option></select>
+                  </div>
+                </div>
+                <div class="p377-field"><label>Biểu hiện cơ thể / cảm nhận sức khỏe tổng quát</label><textarea id="p377Feeling" rows="2"></textarea></div>
+                <button class="btn btn-primary" id="p377Save" onclick="saveP377Report()">Lưu báo cáo hôm nay</button>
+                <div class="p377-msg" id="p377Msg"></div>
+              </div>
+
+              <div class="p377-card">
+                <h3>📅 Lịch Zoom / sự kiện sắp tới</h3>
+                <div id="p377Sessions"><div class="p377-empty">Chưa có buổi nào sắp tới.</div></div>
+              </div>
+            </div>
+
+          </div>
+        </main>
+      </div>
+
+    </div><!-- /main -->
+
+  </div><!-- /app -->
+
+  <!-- Mobile sidebar overlay -->
+  <div id="mob-overlay" onclick="closeSidebar()"></div>
+  <div id="mob-sidebar">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:var(--fs-md);font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;background:var(--color-primary);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="16" height="16" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3" fill="#fff"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <span class="mob-brand-name">Ăn Uống Ngũ Hành</span>
+    </div>
+    <nav style="flex:1;overflow-y:auto;padding:8px;">
+      <div class="nav-section-label">Cộng đồng</div>
+      <a href="feed.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Feed
+      </a>
+      <div class="nav-section-label">Sức khỏe</div>
+      <a href="lo-trinh.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+        Lộ trình của tôi
+      </a>
+      <a href="nhat-ky.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Nhật ký ăn uống
+      </a>
+      <a href="program377.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+        377 ngày
+      </a>
+      <div class="nav-section-label">Học tập</div>
+      <a href="challenge.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+        Challenge
+      </a>
+      <div class="nav-section-label">Khác</div>
+      <a href="marketplace.html" class="nav-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        Marketplace
+      </a>
+    </nav>
+  </div>
+
+  <nav id="mobile-nav">
+    <a href="feed.html" class="mob-nav-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Feed
+    </a>
+    <a href="program377.html" class="mob-nav-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+      </svg>
+      377 ngày
+    </a>
+    <a href="challenge.html" class="mob-nav-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
+      </svg>
+      Challenge
+    </a>
+    <a href="members.html" class="mob-nav-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      Members
+    </a>
+    <button class="mob-nav-btn" onclick="openMainMenu()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      Menu
+    </button>
+  </nav>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+const API = '/api';
+    const AV_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444', '#14b8a6'];
+    function initials(u) { return ((u.first_name || '?')[0] + ((u.last_name || '')[0] || '')).toUpperCase(); }
+    function avColor(id) { return AV_COLORS[(id || 0) % AV_COLORS.length]; }
+    function doLogout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
+    const LEVELS = [
+      { level: 1, name: 'Sơ Cơ', xpMin: 0, xpMax: 45 }, { level: 2, name: 'Nhập Môn', xpMin: 45, xpMax: 120 },
+      { level: 3, name: 'Dưỡng Khí', xpMin: 120, xpMax: 250 }, { level: 4, name: 'Thuận Mộc', xpMin: 250, xpMax: 450 },
+      { level: 5, name: 'Hòa Hỏa', xpMin: 450, xpMax: 700 }, { level: 6, name: 'Vượng Thổ', xpMin: 700, xpMax: 1000 },
+      { level: 7, name: 'Liễm Kim', xpMin: 1000, xpMax: 1500 }, { level: 8, name: 'Thông Thủy', xpMin: 1500, xpMax: 2200 },
+      { level: 9, name: 'Ngũ Hành Hòa', xpMin: 2200, xpMax: 9999 },
+    ];
+    function getLevel(xp) { for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i].xpMin) return LEVELS[i]; return LEVELS[0]; }
+
+    let currentUser = null;
+    (function () {
+      const raw = localStorage.getItem('currentUser');
+      if (!raw) { window.location.href = 'index.html'; return; }
+      currentUser = JSON.parse(raw);
+      const ini = initials(currentUser);
+      const col = avColor(currentUser.id);
+      document.getElementById('sbAvatar').textContent = ini;
+      document.getElementById('sbAvatar').style.background = col;
+      document.getElementById('sbName').textContent = currentUser.first_name + ' ' + currentUser.last_name;
+      const lv = getLevel(currentUser.xp || 0);
+      document.getElementById('sbLevel').textContent = lv.name + ' · Lv.' + lv.level;
+    })();
+
+    const P377_TOPICS = {
+      dinh_duong_ngu_hanh: 'Dinh dưỡng ngũ hành theo cơ địa Hàn/Nhiệt',
+      chuyen_hoa_suc_khoe_goc: 'Chuyển hóa sức khỏe gốc — Lục phủ Ngũ tạng',
+      khai_thong_kinh_lac: 'Khai thông kinh lạc — Tác động cột sống',
+      chu_ky_sinh_hoc: 'Chu kỳ sinh học & tái tạo tế bào',
+      phong_thuy_nha_o: 'Điều hòa phong thủy nhà ở',
+      phong_thuy_tai_chinh: 'Phong thủy tài chính cá nhân & gia đình',
+      chuyen_hoa_moi_quan_he: 'Chuyển hóa mối quan hệ — Năm vòng tròn lỗi đạo',
+      tu_duy_tam_thuc: 'Làm chủ tư duy — Năm vòng tròn kiểm soát',
+      lap_trinh_van_menh: 'Lập trình vận mệnh',
+      kinh_dich_than_tam: 'Ứng dụng Kinh Dịch — cân bằng Thân-Tâm',
+    };
+    const COLORS = ['xanh','đỏ','vàng','trắng','đen'];
+    const TASTES = ['chua','cay','đắng','mặn','ngọt'];
+    const sel = { colors: new Set(), tastes: new Set() };
+    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function fmtDate(s){ if(!s) return ''; return String(s).slice(0,10).split('-').reverse().join('/'); }
+    function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+    function renderChecks(){
+      document.getElementById('p377Colors').innerHTML='';
+      COLORS.forEach(c=>{ const b=document.createElement('span'); b.className='p377-check'+(sel.colors.has(c)?' on':''); b.textContent='Màu '+c; b.onclick=()=>{ sel.colors.has(c)?sel.colors.delete(c):sel.colors.add(c); renderChecks(); }; document.getElementById('p377Colors').appendChild(b); });
+      document.getElementById('p377Tastes').innerHTML='';
+      TASTES.forEach(c=>{ const b=document.createElement('span'); b.className='p377-check'+(sel.tastes.has(c)?' on':''); b.textContent='Vị '+c; b.onclick=()=>{ sel.tastes.has(c)?sel.tastes.delete(c):sel.tastes.add(c); renderChecks(); }; document.getElementById('p377Tastes').appendChild(b); });
+    }
+
+    function fillReportForm(r) {
+      document.getElementById('p377B').value = r?.meal_breakfast || '';
+      document.getElementById('p377L').value = r?.meal_lunch || '';
+      document.getElementById('p377D').value = r?.meal_dinner || '';
+      sel.colors = new Set(r?.meal_colors || []);
+      sel.tastes = new Set(r?.meal_tastes || []);
+      renderChecks();
+      document.getElementById('p377UrineAmount').value = r?.urine_amount || '';
+      document.getElementById('p377UrineColor').value = r?.urine_color || '';
+      document.getElementById('p377StoolShape').value = r?.stool_shape || '';
+      document.getElementById('p377StoolColor').value = r?.stool_color || '';
+      document.getElementById('p377ExType').value = r?.exercise_type || '';
+      document.getElementById('p377ExMinutes').value = r?.exercise_minutes || '';
+      document.getElementById('p377SweatAmount').value = r?.sweat_amount || '';
+      document.getElementById('p377SweatTaste').value = r?.sweat_taste || '';
+      document.getElementById('p377Feeling').value = r?.feeling_note || '';
+      document.getElementById('p377FormTitle').textContent = r ? 'Cập nhật báo cáo hôm nay' : 'Báo cáo hôm nay';
+      document.getElementById('p377Save').textContent = r ? 'Cập nhật' : 'Lưu báo cáo hôm nay';
+    }
+
+    async function enrollP377() {
+      try {
+        const res = await fetch(`${API}/program377/enroll`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ user_id: currentUser.id }) }).then(r=>r.json());
+        if (res.error) { document.getElementById('p377EnrollMsg').textContent = res.error; return; }
+        load();
+      } catch { document.getElementById('p377EnrollMsg').textContent = 'Có lỗi, thử lại.'; }
+    }
+
+    async function renderTodayContent(dayNumberToday) {
+      const box = document.getElementById('p377TodayContent');
+      if (dayNumberToday < 1) { box.innerHTML = `<div class="p377-empty">Chương trình của bạn sẽ bắt đầu sớm.</div>`; return; }
+      try {
+        const d = await fetch(`${API}/program377/day/${dayNumberToday}?user_id=${currentUser.id}`).then(r=>r.json());
+        if (d.error || !d.day) { box.innerHTML = `<div class="p377-empty">Nội dung ngày hôm nay chưa được soạn — Ngô Lâm sẽ cập nhật sớm.</div>`; return; }
+        const day = d.day;
+        box.innerHTML = `
+      ${day.topic_key ? `<div class="p377-topic">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
+      <h3 style="margin-bottom:8px;">${esc(day.title)}</h3>
+      ${day.video_url ? `<iframe class="p377-video" src="${day.video_url}" allowfullscreen></iframe>` : ''}
+      <div style="font-size:14px;line-height:1.7;">${day.body_html || ''}</div>
+      ${day.exercise_title ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><b>📝 ${esc(day.exercise_title)}</b><div style="margin-top:6px;font-size:14px;color:var(--text-muted);">${esc(day.exercise_body || '')}</div></div>` : ''}
+    `;
+      } catch { box.innerHTML = `<div class="p377-empty">Không tải được nội dung hôm nay.</div>`; }
+    }
+
+    async function renderSessions() {
+      const box = document.getElementById('p377Sessions');
+      try {
+        const d = await fetch(`${API}/program377/sessions?upcoming=1`).then(r=>r.json());
+        if (!d.sessions.length) { box.innerHTML = `<div class="p377-empty">Chưa có buổi nào sắp tới.</div>`; return; }
+        box.innerHTML = d.sessions.map(s => `
+      <div class="p377-session">
+        <div class="p377-session-date">${fmtDate(s.session_date)}</div>
+        <div>${esc(s.title)}${s.link_url ? ` — <a href="${s.link_url}" target="_blank" rel="noopener">Tham gia</a>` : ''}${s.description ? `<div style="color:var(--text-muted);font-size:12.5px;">${esc(s.description)}</div>` : ''}</div>
+      </div>`).join('');
+      } catch { box.innerHTML = `<div class="p377-empty">Không tải được lịch.</div>`; }
+    }
+
+    async function load() {
+      const d = await fetch(`${API}/program377/status?user_id=${currentUser.id}`).then(r=>r.json());
+      document.getElementById('p377NotEnrolled').style.display = 'none';
+      document.getElementById('p377Pending').style.display = 'none';
+      document.getElementById('p377Active').style.display = 'none';
+
+      if (!d.enrollment) { document.getElementById('p377NotEnrolled').style.display = 'block'; return; }
+      if (d.enrollment.status === 'pending') { document.getElementById('p377Pending').style.display = 'block'; return; }
+      if (d.enrollment.status === 'rejected') {
+        document.getElementById('p377NotEnrolled').style.display = 'block';
+        document.getElementById('p377EnrollMsg').textContent = d.enrollment.adminNote ? `Đăng ký trước chưa được duyệt: ${d.enrollment.adminNote}` : '';
+        return;
+      }
+
+      document.getElementById('p377Active').style.display = 'block';
+      const dayN = Math.max(d.dayNumberToday, 1);
+      document.getElementById('p377DayLabel').textContent = `Ngày ${dayN}/${d.totalDays}`;
+      document.getElementById('p377BarFill').style.width = `${Math.min((dayN / d.totalDays) * 100, 100)}%`;
+
+      fillReportForm(d.todayReport);
+      renderTodayContent(d.dayNumberToday);
+      renderSessions();
+    }
+
+    async function saveP377Report() {
+      const btn = document.getElementById('p377Save'); btn.disabled = true;
+      const body = {
+        user_id: currentUser.id, report_date: todayStr(),
+        meal_breakfast: document.getElementById('p377B').value.trim(),
+        meal_lunch: document.getElementById('p377L').value.trim(),
+        meal_dinner: document.getElementById('p377D').value.trim(),
+        meal_colors: [...sel.colors], meal_tastes: [...sel.tastes],
+        urine_amount: document.getElementById('p377UrineAmount').value,
+        urine_color: document.getElementById('p377UrineColor').value.trim(),
+        stool_shape: document.getElementById('p377StoolShape').value.trim(),
+        stool_color: document.getElementById('p377StoolColor').value.trim(),
+        exercise_type: document.getElementById('p377ExType').value.trim(),
+        exercise_minutes: document.getElementById('p377ExMinutes').value,
+        sweat_amount: document.getElementById('p377SweatAmount').value,
+        sweat_taste: document.getElementById('p377SweatTaste').value,
+        feeling_note: document.getElementById('p377Feeling').value.trim(),
+      };
+      try {
+        const res = await fetch(`${API}/program377/reports`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) }).then(r=>r.json());
+        const msg = document.getElementById('p377Msg');
+        if (res.error) { msg.style.color = '#ef4444'; msg.textContent = res.error; }
+        else {
+          msg.style.color = res.isLate ? '#f59e0b' : '#10b981';
+          msg.textContent = res.isLate ? 'Đã lưu (báo cáo trễ hạn).' : 'Đã lưu báo cáo hôm nay!';
+          document.getElementById('p377FormTitle').textContent = 'Cập nhật báo cáo hôm nay';
+          document.getElementById('p377Save').textContent = 'Cập nhật';
+        }
+      } catch { document.getElementById('p377Msg').textContent = 'Có lỗi, thử lại.'; }
+      btn.disabled = false;
+    }
+
+    load();
+  </script>
+</body>
+</html>

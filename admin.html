@@ -1295,6 +1295,33 @@
           <span class="sbar-count" id="sbTtmPendingCount" style="background:#ef4444;color:#fff;display:none">0</span>
         </button>
 
+        <div class="sbar-section">Chương trình 377 ngày</div>
+        <button class="sbar-item" onclick="showPage('program377-enrollments')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12.5 7a4 4 0 11-8 0 4 4 0 018 0zM20 8v6M23 11h-6" />
+          </svg>
+          Duyệt đăng ký
+          <span class="sbar-count" id="sbP377PendingCount" style="background:#ef4444;color:#fff;display:none">0</span>
+        </button>
+        <button class="sbar-item" onclick="showPage('program377-days')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+          </svg>
+          Nội dung từng ngày
+        </button>
+        <button class="sbar-item" onclick="showPage('program377-reports')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-5 9l2 2 4-4" />
+          </svg>
+          Báo cáo hằng ngày
+        </button>
+        <button class="sbar-item" onclick="showPage('program377-sessions')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2zM8 15h.01M12 15h.01M16 15h.01" />
+          </svg>
+          Lịch Zoom / sự kiện
+        </button>
+
         <button class="sbar-item" onclick="showPage('marketplace')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path
@@ -1770,6 +1797,122 @@
                     <div class="empty-state">Đang tải...</div>
                   </td>
                 </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Chương trình 377 ngày — Duyệt đăng ký ── -->
+      <section class="page" id="page-program377-enrollments">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Duyệt đăng ký 377 ngày</h2>
+            <select class="filter-select" id="p377EnrollStatusFilter" onchange="loadP377Enrollments()">
+              <option value="pending">Chờ duyệt</option>
+              <option value="approved">Đã duyệt</option>
+              <option value="rejected">Từ chối</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Thành viên</th>
+                  <th>Trạng thái</th>
+                  <th>Ngày bắt đầu (riêng)</th>
+                  <th>Đăng ký lúc</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="p377EnrollTbody">
+                <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Chương trình 377 ngày — Nội dung từng ngày ── -->
+      <section class="page" id="page-program377-days">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Nội dung từng ngày</h2>
+            <button class="btn-sm primary" onclick="openP377DayModal()">+ Thêm ngày</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th>Chủ đề</th>
+                  <th>Tiêu đề</th>
+                  <th>Video</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="p377DaysTbody">
+                <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Chương trình 377 ngày — Báo cáo hằng ngày ── -->
+      <section class="page" id="page-program377-reports">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Báo cáo hằng ngày</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input type="date" class="filter-select" id="p377ReportFrom" onchange="loadP377Reports()">
+              <input type="date" class="filter-select" id="p377ReportTo" onchange="loadP377Reports()">
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ngày báo cáo</th>
+                  <th>Thành viên</th>
+                  <th>Ngày thứ</th>
+                  <th>Bữa ăn</th>
+                  <th>Trễ hạn?</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="p377ReportsTbody">
+                <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Chương trình 377 ngày — Lịch Zoom / sự kiện ── -->
+      <section class="page" id="page-program377-sessions">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Lịch Zoom / sự kiện</h2>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-sm" onclick="quickAddP377MonthlySessions()">📅 Thêm nhanh mùng 1 &amp; rằm tháng tới</button>
+              <button class="btn-sm primary" onclick="openP377SessionModal()">+ Thêm buổi</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th>Tiêu đề</th>
+                  <th>Loại</th>
+                  <th>Link</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="p377SessionsTbody">
+                <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3451,6 +3594,133 @@
     </div>
   </div>
 
+  <!-- ── Chương trình 377 ngày — modal thêm/sửa nội dung 1 ngày ───────── -->
+  <div id="p377DayModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 id="p377DayModalTitle" style="font-size:16px;font-weight:700;">Thêm nội dung ngày</h3>
+        <button onclick="closeP377DayModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <input type="hidden" id="p377DayId">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Ngày thứ (1–377)</label>
+            <input type="number" id="p377DayNumber" min="1" max="377" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+          </div>
+          <div style="flex:2;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Chủ đề</label>
+            <select id="p377DayTopic" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;"></select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Tiêu đề</label>
+          <input type="text" id="p377DayTitle" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Nội dung bài học (HTML)</label>
+          <textarea id="p377DayBody" rows="6" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Link video (YouTube/Vimeo...)</label>
+          <input type="text" id="p377DayVideo" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Tiêu đề bài tập (không bắt buộc)</label>
+          <input type="text" id="p377DayExTitle" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Nội dung bài tập</label>
+          <textarea id="p377DayExBody" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">XP thưởng</label>
+          <input type="number" id="p377DayXp" value="0" style="width:120px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeP377DayModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="saveP377Day()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Chương trình 377 ngày — modal duyệt đăng ký ──────────────────── -->
+  <div id="p377EnrollModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);">
+        <h3 style="font-size:16px;font-weight:700;">Duyệt tham gia 377 ngày</h3>
+      </div>
+      <div style="padding:20px 24px;">
+        <input type="hidden" id="p377EnrollId">
+        <div id="p377EnrollInfo" style="font-size:13px;margin-bottom:12px;"></div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted);">Ngày 1 (bắt đầu riêng cho người này)</label>
+        <input type="date" id="p377EnrollStartDate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:4px;">
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeP377EnrollModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="approveP377Enrollment()">✅ Duyệt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Chương trình 377 ngày — modal thêm/sửa lịch Zoom/sự kiện ─────── -->
+  <div id="p377SessionModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:460px;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 id="p377SessionModalTitle" style="font-size:16px;font-weight:700;">Thêm buổi</h3>
+        <button onclick="closeP377SessionModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <input type="hidden" id="p377SessionId">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Ngày</label>
+          <input type="date" id="p377SessionDate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Tiêu đề</label>
+          <input type="text" id="p377SessionTitle" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Loại</label>
+          <select id="p377SessionType" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+            <option value="zoom">Zoom</option>
+            <option value="video">Video</option>
+            <option value="exercise">Bài tập</option>
+            <option value="other">Khác</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Link</label>
+          <input type="text" id="p377SessionLink" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Mô tả</label>
+          <textarea id="p377SessionDesc" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeP377SessionModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="saveP377Session()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Chương trình 377 ngày — xem chi tiết 1 báo cáo (read-only) ───── -->
+  <div id="p377ReportModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:16px;font-weight:700;">Chi tiết báo cáo</h3>
+        <button onclick="closeP377ReportModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div id="p377ReportModalBody" style="padding:20px 24px;font-size:13px;line-height:1.7;"></div>
+    </div>
+  </div>
+
   <!-- ── Profile thành viên: xem nội dung 1 bài viết (read-only) ─────── -->
   <div id="mppPostModal">
     <div class="mpp-post-modal-box">
@@ -3946,6 +4216,10 @@
       'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
       'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
       'member-profile-detail': ['Hồ sơ thành viên', ''],
+      'program377-enrollments': ['Duyệt đăng ký 377 ngày', 'Duyệt thành viên tham gia chương trình, gán ngày bắt đầu riêng từng người'],
+      'program377-days': ['Nội dung từng ngày (377 ngày)', 'Soạn bài học/video/bài tập cho từng ngày trong chương trình'],
+      'program377-reports': ['Báo cáo hằng ngày (377 ngày)', 'Xem báo cáo ăn uống, bài tiết, tập luyện, cảm nhận của thành viên'],
+      'program377-sessions': ['Lịch Zoom / sự kiện (377 ngày)', 'Quản lý lịch Zoom mùng 1, rằm và các buổi phát sinh'],
     };
 
     function showPage(name) {
@@ -3979,6 +4253,10 @@
       if (name === 'meallogs') loadMealLogs();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
       if (name === 'member-profile-list') loadMemberProfileList();
+      if (name === 'program377-enrollments') loadP377Enrollments();
+      if (name === 'program377-days') loadP377Days();
+      if (name === 'program377-reports') loadP377Reports();
+      if (name === 'program377-sessions') loadP377Sessions();
     }
 
     // ── Cẩm nang: thực phẩm & công thức ──────────────────────────
@@ -5312,6 +5590,298 @@
         await loadTtmRoadmaps();
         openTtmRoadmap(reviewingTtmId);
       } catch (e) { showToast('Lỗi gọi Agent 1: ' + e.message, 'red'); }
+    }
+
+    // ── Chương trình 377 ngày ─────────────────────────────────────────
+    let p377TopicsCache = [];
+    let p377DaysCache = [];
+    let p377EnrollCache = [];
+    let p377SessionsCache = [];
+    let p377ReportsCache = [];
+
+    async function ensureP377Topics() {
+      if (p377TopicsCache.length) return;
+      const d = await api('/admin/program377/topics');
+      p377TopicsCache = d.topics;
+    }
+
+    // -- Duyệt đăng ký --
+    async function loadP377Enrollments() {
+      const status = document.getElementById('p377EnrollStatusFilter').value;
+      const d = await api(`/admin/program377/enrollments?status=${status}`);
+      p377EnrollCache = d.enrollments;
+      const badge = document.getElementById('sbP377PendingCount');
+      if (status === 'pending') {
+        badge.textContent = d.enrollments.length;
+        badge.style.display = d.enrollments.length > 0 ? 'inline' : 'none';
+      }
+      const tbody = document.getElementById('p377EnrollTbody');
+      if (!d.enrollments.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Không có đăng ký nào.</div></td></tr>`;
+        return;
+      }
+      const statusLabel = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
+      const statusStyle = {
+        pending: 'background:#fef3c7;color:#92400e;', approved: 'background:#dcfce7;color:#166534;',
+        rejected: 'background:#fee2e2;color:#991b1b;',
+      };
+      tbody.innerHTML = d.enrollments.map((e, i) => `
+    <tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td><span style="font-weight:600;">${escHtml(`${e.first_name} ${e.last_name || ''}`.trim())}</span>
+        <div style="font-size:11px;color:var(--muted)">${escHtml(e.email)}</div></td>
+      <td><span class="badge" style="${statusStyle[e.status] || ''}">${statusLabel[e.status] || e.status}</span></td>
+      <td>${e.start_date ? fmtDate(e.start_date) : '—'}</td>
+      <td style="color:var(--muted)">${fmtDate(e.enrolled_at)}</td>
+      <td>${e.status === 'pending' ? `
+        <button class="act-btn" onclick="openP377EnrollModal(${e.id})">Duyệt</button>
+        <button class="act-btn" style="color:#dc2626;" onclick="rejectP377Enrollment(${e.id})">Từ chối</button>
+      ` : ''}</td>
+    </tr>`).join('');
+    }
+
+    function openP377EnrollModal(id) {
+      const e = p377EnrollCache.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById('p377EnrollId').value = id;
+      document.getElementById('p377EnrollInfo').innerHTML = `<b>${escHtml(`${e.first_name} ${e.last_name || ''}`.trim())}</b> — ${escHtml(e.email)}`;
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('p377EnrollStartDate').value = today;
+      document.getElementById('p377EnrollModal').style.display = 'flex';
+    }
+    function closeP377EnrollModal() { document.getElementById('p377EnrollModal').style.display = 'none'; }
+
+    async function approveP377Enrollment() {
+      const id = document.getElementById('p377EnrollId').value;
+      const startDate = document.getElementById('p377EnrollStartDate').value;
+      try {
+        await api(`/admin/program377/enrollments/${id}/approve`, { method: 'POST', body: JSON.stringify({ start_date: startDate }) });
+        showToast('✅ Đã duyệt tham gia.', 'green');
+        closeP377EnrollModal();
+        loadP377Enrollments();
+      } catch (e) { showToast('Lỗi kết nối.', 'red'); }
+    }
+
+    async function rejectP377Enrollment(id) {
+      if (!confirm('Từ chối đăng ký này?')) return;
+      try {
+        await api(`/admin/program377/enrollments/${id}/reject`, { method: 'POST', body: JSON.stringify({}) });
+        showToast('Đã từ chối.', '');
+        loadP377Enrollments();
+      } catch (e) { showToast('Lỗi kết nối.', 'red'); }
+    }
+
+    // -- Nội dung từng ngày --
+    async function loadP377Days() {
+      await ensureP377Topics();
+      const d = await api('/admin/program377/days');
+      p377DaysCache = d.days;
+      const topicLabel = k => (p377TopicsCache.find(t => t.key === k) || {}).label || (k || '—');
+      const tbody = document.getElementById('p377DaysTbody');
+      if (!d.days.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Chưa soạn ngày nào.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = d.days.map(day => `
+    <tr>
+      <td style="font-weight:600;">Ngày ${day.day_number}</td>
+      <td style="color:var(--muted);font-size:12.5px;">${escHtml(topicLabel(day.topic_key))}</td>
+      <td>${escHtml(day.title)}</td>
+      <td>${day.video_url ? '🎬' : '—'}</td>
+      <td>
+        <button class="act-btn" onclick="openP377DayModal(${day.id})">Sửa</button>
+        <button class="act-btn" style="color:#dc2626;" onclick="deleteP377Day(${day.id})">Xóa</button>
+      </td>
+    </tr>`).join('');
+    }
+
+    async function openP377DayModal(id) {
+      await ensureP377Topics();
+      const topicSelect = document.getElementById('p377DayTopic');
+      topicSelect.innerHTML = p377TopicsCache.map(t => `<option value="${t.key}">${escHtml(t.label)}</option>`).join('');
+      document.getElementById('p377DayModalTitle').textContent = id ? 'Sửa nội dung ngày' : 'Thêm nội dung ngày';
+      document.getElementById('p377DayId').value = id || '';
+      if (id) {
+        const day = p377DaysCache.find(x => x.id === id);
+        document.getElementById('p377DayNumber').value = day.day_number;
+        topicSelect.value = day.topic_key || '';
+        document.getElementById('p377DayTitle').value = day.title || '';
+        document.getElementById('p377DayBody').value = day.body_html || '';
+        document.getElementById('p377DayVideo').value = day.video_url || '';
+        document.getElementById('p377DayExTitle').value = day.exercise_title || '';
+        document.getElementById('p377DayExBody').value = day.exercise_body || '';
+        document.getElementById('p377DayXp').value = day.xp_reward || 0;
+      } else {
+        document.getElementById('p377DayNumber').value = '';
+        document.getElementById('p377DayTitle').value = '';
+        document.getElementById('p377DayBody').value = '';
+        document.getElementById('p377DayVideo').value = '';
+        document.getElementById('p377DayExTitle').value = '';
+        document.getElementById('p377DayExBody').value = '';
+        document.getElementById('p377DayXp').value = 0;
+      }
+      document.getElementById('p377DayModal').style.display = 'flex';
+    }
+    function closeP377DayModal() { document.getElementById('p377DayModal').style.display = 'none'; }
+
+    async function saveP377Day() {
+      const id = document.getElementById('p377DayId').value;
+      const payload = {
+        day_number: Number(document.getElementById('p377DayNumber').value),
+        topic_key: document.getElementById('p377DayTopic').value,
+        title: document.getElementById('p377DayTitle').value.trim(),
+        body_html: document.getElementById('p377DayBody').value,
+        video_url: document.getElementById('p377DayVideo').value.trim(),
+        exercise_title: document.getElementById('p377DayExTitle').value.trim(),
+        exercise_body: document.getElementById('p377DayExBody').value,
+        xp_reward: Number(document.getElementById('p377DayXp').value) || 0,
+      };
+      if (!payload.day_number || !payload.title) { showToast('Vui lòng nhập ngày và tiêu đề.', 'red'); return; }
+      try {
+        if (id) {
+          await api(`/admin/program377/days/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        } else {
+          await api('/admin/program377/days', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        showToast('✅ Đã lưu.', 'green');
+        closeP377DayModal();
+        loadP377Days();
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
+    }
+
+    async function deleteP377Day(id) {
+      if (!confirm('Xóa nội dung ngày này?')) return;
+      await api(`/admin/program377/days/${id}`, { method: 'DELETE' });
+      loadP377Days();
+    }
+
+    // -- Báo cáo hằng ngày --
+    async function loadP377Reports() {
+      const from = document.getElementById('p377ReportFrom').value;
+      const to = document.getElementById('p377ReportTo').value;
+      const q = new URLSearchParams();
+      if (from) q.set('from', from);
+      if (to) q.set('to', to);
+      const d = await api(`/admin/program377/reports?${q.toString()}`);
+      p377ReportsCache = d.reports;
+      const tbody = document.getElementById('p377ReportsTbody');
+      if (!d.reports.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Chưa có báo cáo nào.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = d.reports.map(r => `
+    <tr>
+      <td>${fmtDate(r.report_date)}</td>
+      <td><span style="font-weight:600;">${escHtml(`${r.first_name} ${r.last_name || ''}`.trim())}</span></td>
+      <td style="color:var(--muted)">${r.day_number || '—'}</td>
+      <td style="color:var(--muted);font-size:12.5px;">${escHtml(r.meal_breakfast || '—')}</td>
+      <td>${r.is_late ? '<span class="badge" style="background:#fee2e2;color:#991b1b;">Trễ</span>' : '<span class="badge" style="background:#dcfce7;color:#166534;">Đúng hạn</span>'}</td>
+      <td><button class="act-btn" onclick="openP377ReportModal(${r.id})">Xem</button></td>
+    </tr>`).join('');
+    }
+
+    function openP377ReportModal(id) {
+      const r = p377ReportsCache.find(x => x.id === id);
+      if (!r) return;
+      const row = (label, val) => val ? `<div style="margin-bottom:8px;"><b>${label}:</b> ${escHtml(String(val))}</div>` : '';
+      document.getElementById('p377ReportModalBody').innerHTML = `
+    <div style="margin-bottom:12px;font-weight:600;">${escHtml(`${r.first_name} ${r.last_name || ''}`.trim())} — Ngày ${r.day_number || '?'} — ${fmtDate(r.report_date)}</div>
+    ${row('Bữa sáng', r.meal_breakfast)}${row('Bữa trưa', r.meal_lunch)}${row('Bữa tối', r.meal_dinner)}
+    ${r.meal_colors?.length ? row('Màu đã ăn', r.meal_colors.join(', ')) : ''}
+    ${r.meal_tastes?.length ? row('Vị đã ăn', r.meal_tastes.join(', ')) : ''}
+    ${row('Nước tiểu', [r.urine_amount, r.urine_color].filter(Boolean).join(' — '))}
+    ${row('Phân', [r.stool_shape, r.stool_color].filter(Boolean).join(' — '))}
+    ${row('Tập luyện', [r.exercise_type, r.exercise_minutes ? r.exercise_minutes + ' phút' : ''].filter(Boolean).join(' — '))}
+    ${row('Mồ hôi', [r.sweat_amount, r.sweat_taste].filter(Boolean).join(' — '))}
+    ${row('Cảm nhận', r.feeling_note)}
+    ${r.is_late ? '<div style="color:#dc2626;font-size:12px;margin-top:8px;">⚠️ Báo cáo trễ hạn</div>' : ''}`;
+      document.getElementById('p377ReportModal').style.display = 'flex';
+    }
+    function closeP377ReportModal() { document.getElementById('p377ReportModal').style.display = 'none'; }
+
+    // -- Lịch Zoom / sự kiện --
+    async function loadP377Sessions() {
+      const d = await api('/admin/program377/sessions');
+      p377SessionsCache = d.sessions;
+      const typeLabel = { zoom: 'Zoom', video: 'Video', exercise: 'Bài tập', other: 'Khác' };
+      const tbody = document.getElementById('p377SessionsTbody');
+      if (!d.sessions.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Chưa có buổi nào.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = d.sessions.map(s => `
+    <tr>
+      <td>${fmtDate(s.session_date)}</td>
+      <td>${escHtml(s.title)}</td>
+      <td style="color:var(--muted)">${typeLabel[s.session_type] || s.session_type}</td>
+      <td>${s.link_url ? `<a href="${s.link_url}" target="_blank" rel="noopener">Link</a>` : '—'}</td>
+      <td>
+        <button class="act-btn" onclick="openP377SessionModal(${s.id})">Sửa</button>
+        <button class="act-btn" style="color:#dc2626;" onclick="deleteP377Session(${s.id})">Xóa</button>
+      </td>
+    </tr>`).join('');
+    }
+
+    function openP377SessionModal(id) {
+      document.getElementById('p377SessionModalTitle').textContent = id ? 'Sửa buổi' : 'Thêm buổi';
+      document.getElementById('p377SessionId').value = id || '';
+      if (id) {
+        const s = p377SessionsCache.find(x => x.id === id);
+        document.getElementById('p377SessionDate').value = s.session_date;
+        document.getElementById('p377SessionTitle').value = s.title;
+        document.getElementById('p377SessionType').value = s.session_type;
+        document.getElementById('p377SessionLink').value = s.link_url || '';
+        document.getElementById('p377SessionDesc').value = s.description || '';
+      } else {
+        document.getElementById('p377SessionDate').value = '';
+        document.getElementById('p377SessionTitle').value = '';
+        document.getElementById('p377SessionType').value = 'zoom';
+        document.getElementById('p377SessionLink').value = '';
+        document.getElementById('p377SessionDesc').value = '';
+      }
+      document.getElementById('p377SessionModal').style.display = 'flex';
+    }
+    function closeP377SessionModal() { document.getElementById('p377SessionModal').style.display = 'none'; }
+
+    async function saveP377Session() {
+      const id = document.getElementById('p377SessionId').value;
+      const payload = {
+        session_date: document.getElementById('p377SessionDate').value,
+        title: document.getElementById('p377SessionTitle').value.trim(),
+        session_type: document.getElementById('p377SessionType').value,
+        link_url: document.getElementById('p377SessionLink').value.trim(),
+        description: document.getElementById('p377SessionDesc').value.trim(),
+      };
+      if (!payload.session_date || !payload.title) { showToast('Vui lòng nhập ngày và tiêu đề.', 'red'); return; }
+      try {
+        if (id) {
+          await api(`/admin/program377/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        } else {
+          await api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        showToast('✅ Đã lưu.', 'green');
+        closeP377SessionModal();
+        loadP377Sessions();
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
+    }
+
+    async function deleteP377Session(id) {
+      if (!confirm('Xóa buổi này?')) return;
+      await api(`/admin/program377/sessions/${id}`, { method: 'DELETE' });
+      loadP377Sessions();
+    }
+
+    function quickAddP377MonthlySessions() {
+      const now = new Date();
+      const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const y = next.getFullYear(), m = String(next.getMonth() + 1).padStart(2, '0');
+      const first = `${y}-${m}-01`;
+      const fifteenth = `${y}-${m}-15`;
+      Promise.all([
+        api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: first, title: 'Zoom mùng 1', session_type: 'zoom' }) }),
+        api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: fifteenth, title: 'Zoom rằm', session_type: 'zoom' }) }),
+      ]).then(() => { showToast('✅ Đã thêm 2 buổi Zoom tháng tới.', 'green'); loadP377Sessions(); })
+        .catch(() => showToast('Lỗi khi thêm.', 'red'));
     }
 
     // ── Profile thành viên (hồ sơ 360° — Lộ trình / Học tập / Nhật ký / Cộng đồng) ──
