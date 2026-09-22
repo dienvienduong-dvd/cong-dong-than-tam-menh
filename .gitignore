@@ -4,3 +4,4 @@ node_modules/
 *.log
 *.err
 thong-tin-vps
+uploads/

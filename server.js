@@ -13,6 +13,7 @@ const bcrypt    = require('bcryptjs');
 const cors      = require('cors');
 const path      = require('path');
 const fs        = require('fs');
+const multer    = require('multer');
 const initSqlJs = require('sql.js');
 
 const https    = require('https');
@@ -109,6 +110,27 @@ function parseCSVRow(line) {
   return cells;
 }
 const DB_PATH  = path.join(__dirname, 'brain.db');
+
+// ── Ttm body photos/video upload (Hồ sơ ảnh) ─────────────────
+const TTM_PHOTOS_DIR = path.join(__dirname, 'uploads', 'ttm-photos');
+fs.mkdirSync(TTM_PHOTOS_DIR, { recursive: true });
+
+const ttmPhotoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, TTM_PHOTOS_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase().replace(/[^a-z0-9.]/g, '');
+    cb(null, `u${req.params.userId}-${file.fieldname}-${Date.now()}${ext}`);
+  },
+});
+const ttmPhotoUpload = multer({
+  storage: ttmPhotoStorage,
+  limits: { fileSize: 60 * 1024 * 1024 }, // 60MB — đủ cho ảnh + 1 video ngắn
+  fileFilter: (req, file, cb) => {
+    const isImage = ['front', 'back', 'side'].includes(file.fieldname) && file.mimetype.startsWith('image/');
+    const isVideo = file.fieldname === 'video' && file.mimetype.startsWith('video/');
+    cb(isImage || isVideo ? null : new Error('Định dạng file không hợp lệ.'), isImage || isVideo);
+  },
+});
 
 app.use(cors());
 app.use(express.json());
@@ -563,6 +585,15 @@ const SCHEMA = `
     final_content TEXT,
     reviewed_at   TEXT,
     created_at    TEXT    DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS ttm_body_photos (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL UNIQUE REFERENCES users(id),
+    front_url    TEXT,
+    back_url     TEXT,
+    side_url     TEXT,
+    video_url    TEXT,
+    updated_at   TEXT DEFAULT (datetime('now','localtime'))
   );
 `;
 
@@ -5863,6 +5894,84 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     const user = db.get('SELECT ttm_intake_done_at FROM users WHERE id = ?', [req.params.userId]);
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ done: !!user.ttm_intake_done_at, doneAt: user.ttm_intake_done_at || null });
+  });
+
+  // Khách xem hồ sơ ảnh (3 ảnh dáng người + video kiểm tra ngồi-đứng) của chính mình
+  app.get('/api/ttm/photos/:userId', (req, res) => {
+    const row = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [req.params.userId]);
+    if (!row) return res.json({ photos: null });
+    res.json({
+      photos: {
+        front: row.front_url, back: row.back_url, side: row.side_url, video: row.video_url,
+        updatedAt: row.updated_at,
+      }
+    });
+  });
+
+  // Khách upload/thay hồ sơ ảnh — multipart/form-data, field: front/back/side/video (mỗi field optional,
+  // chỉ field nào gửi lên mới được cập nhật, các field khác giữ nguyên giá trị cũ).
+  app.post('/api/ttm/photos/:userId', (req, res) => {
+    ttmPhotoUpload.fields([
+      { name: 'front', maxCount: 1 }, { name: 'back', maxCount: 1 },
+      { name: 'side', maxCount: 1 }, { name: 'video', maxCount: 1 },
+    ])(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.message || 'Upload thất bại.' });
+
+      const userId = req.params.userId;
+      const user = db.get('SELECT id FROM users WHERE id = ?', [userId]);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const existing = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [userId]);
+      const urlOf = (field) => req.files?.[field]?.[0]
+        ? `/uploads/ttm-photos/${req.files[field][0].filename}` : null;
+
+      const oldFileFor = (field) => {
+        const old = existing?.[`${field}_url`];
+        if (old && old.startsWith('/uploads/ttm-photos/')) return path.join(__dirname, old);
+        return null;
+      };
+
+      const next = {
+        front: urlOf('front') || existing?.front_url || null,
+        back:  urlOf('back')  || existing?.back_url  || null,
+        side:  urlOf('side')  || existing?.side_url  || null,
+        video: urlOf('video') || existing?.video_url || null,
+      };
+
+      if (existing) {
+        db.run(
+          `UPDATE ttm_body_photos SET front_url=?, back_url=?, side_url=?, video_url=?, updated_at=datetime('now','localtime') WHERE user_id=?`,
+          [next.front, next.back, next.side, next.video, userId]
+        );
+      } else {
+        db.run(
+          'INSERT INTO ttm_body_photos (user_id, front_url, back_url, side_url, video_url) VALUES (?,?,?,?,?)',
+          [userId, next.front, next.back, next.side, next.video]
+        );
+      }
+
+      // Xoá file cũ trên đĩa nếu vừa được thay bằng file mới
+      ['front', 'back', 'side', 'video'].forEach((field) => {
+        if (urlOf(field)) {
+          const oldPath = oldFileFor(field);
+          if (oldPath) fs.unlink(oldPath, () => {});
+        }
+      });
+
+      res.json({ ok: true, photos: next });
+    });
+  });
+
+  // Admin: xem hồ sơ ảnh của 1 học viên (dùng trong modal duyệt lộ trình)
+  app.get('/api/admin/ttm/photos/:userId', requireAdmin, (req, res) => {
+    const row = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [req.params.userId]);
+    if (!row) return res.json({ photos: null });
+    res.json({
+      photos: {
+        front: row.front_url, back: row.back_url, side: row.side_url, video: row.video_url,
+        updatedAt: row.updated_at,
+      }
+    });
   });
 
   // Admin: danh sách lộ trình theo trạng thái (mặc định pending_approval)
