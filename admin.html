@@ -6660,6 +6660,10 @@
         const u = new URL(url);
         if (u.pathname.startsWith('/embed/')) return u.toString();
         if (u.hostname === 'youtu.be') return `https://www.youtube-nocookie.com/embed${u.pathname}`;
+        const pathMatch = u.pathname.match(/^\/(live|shorts)\/([^/]+)/);
+        if ((u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') && pathMatch) {
+          return `https://www.youtube-nocookie.com/embed/${pathMatch[2]}`;
+        }
         const v = u.searchParams.get('v');
         if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
         return url;

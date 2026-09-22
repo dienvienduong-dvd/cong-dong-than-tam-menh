@@ -1604,6 +1604,16 @@ ${summaryText}`;
     if (rows.length) console.log(`  Migrated ttm_body_photos.${col}: ${rows.length} link(s) đổi sang thumbnail endpoint.`);
   });
 
+  // Migrate program377_days: video_url admin dán dạng watch/live/shorts (bị YouTube chặn nhúng
+  // iframe) -> đổi sang dạng embed. normalizeEmbedVideoUrl được định nghĩa ở dưới (hoisted).
+  {
+    const badVideoRows = db.all("SELECT id, video_url FROM program377_days WHERE video_url IS NOT NULL AND video_url NOT LIKE '%/embed/%'");
+    badVideoRows.forEach((r) => {
+      db.run('UPDATE program377_days SET video_url = ? WHERE id = ?', [normalizeEmbedVideoUrl(r.video_url), r.id]);
+    });
+    if (badVideoRows.length) console.log(`  Migrated program377_days.video_url: ${badVideoRows.length} link(s) đổi sang dạng embed.`);
+  }
+
   // Lấy Drive client đã xác thực bằng OAuth refresh token (kết nối 1 lần qua Admin > Cài đặt >
   // Google Drive). Refresh token được lưu trong admin_secrets, googleapis tự làm mới access token.
   function getDriveClient() {
@@ -4479,6 +4489,28 @@ QUY TẮC BẮT BUỘC:
     res.json({ days: db.all('SELECT * FROM program377_days ORDER BY day_number ASC') });
   });
 
+  // Trang khách nhúng video_url thẳng vào <iframe>, nên URL phải là dạng embed được — chuẩn hóa
+  // các dạng YouTube phổ biến (watch?v=, youtu.be/, /live/, /shorts/) admin hay dán nhầm, tránh
+  // bị chặn nhúng (X-Frame-Options) như link watch/live gốc.
+  function normalizeEmbedVideoUrl(raw) {
+    if (!raw) return null;
+    const srcMatch = String(raw).match(/\bsrc=["']([^"']+)["']/i);
+    const url = (srcMatch ? srcMatch[1] : String(raw).trim());
+    if (!url) return null;
+    try {
+      const u = new URL(url);
+      if (u.pathname.startsWith('/embed/')) return u.toString();
+      if (u.hostname === 'youtu.be') return `https://www.youtube-nocookie.com/embed${u.pathname}`;
+      const pathMatch = u.pathname.match(/^\/(live|shorts)\/([^/]+)/);
+      if ((u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') && pathMatch) {
+        return `https://www.youtube-nocookie.com/embed/${pathMatch[2]}`;
+      }
+      const v = u.searchParams.get('v');
+      if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+      return url;
+    } catch { return url; }
+  }
+
   app.post('/api/admin/program377/days', requireAdmin, (req, res) => {
     const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
@@ -4486,7 +4518,7 @@ QUY TẮC BẮT BUỘC:
     if (existing) return res.status(409).json({ error: `Ngày ${day_number} đã có nội dung — vui lòng sửa thay vì thêm mới.` });
     const r = db.run(
       'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward) VALUES (?,?,?,?,?,?,?,?)',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', video_url || null, exercise_title || null, exercise_body || null, Number(xp_reward) || 0]
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0]
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });
@@ -4496,7 +4528,7 @@ QUY TẮC BẮT BUỘC:
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     db.run(
       'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=? WHERE id=?',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', video_url || null, exercise_title || null, exercise_body || null, Number(xp_reward) || 0, req.params.id]
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, req.params.id]
     );
     res.json({ ok: true });
   });
