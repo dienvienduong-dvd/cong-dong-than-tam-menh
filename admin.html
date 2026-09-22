@@ -1028,6 +1028,52 @@
     .mpp-top-tab-panel, .mpp-ttm-tab-panel, .mpp-comm-tab-panel, .mpp-learn-tab-panel { display: none; }
     .mpp-top-tab-panel.active, .mpp-ttm-tab-panel.active, .mpp-comm-tab-panel.active, .mpp-learn-tab-panel.active { display: block; }
 
+    /* ── Profile thành viên: hiển thị Khảo sát/Ảnh/Lộ trình giống hệt trang lo-trinh.html của khách ── */
+    .mpp-doc-body h2, .mpp-doc-body h3, .mpp-doc-body h4 { font-family: var(--head); font-weight: 800; color: var(--text); margin: 20px 0 10px; }
+    .mpp-doc-body h2 { font-size: 18px; }
+    .mpp-doc-body h3 { font-size: 16.5px; color: var(--primary-d); }
+    .mpp-doc-body h4 { font-size: 15px; }
+    .mpp-doc-body p { font-size: 14.5px; line-height: 1.85; margin-bottom: 12px; }
+    .mpp-doc-body ul, .mpp-doc-body ol { padding-left: 22px; margin-bottom: 12px; }
+    .mpp-doc-body li { font-size: 14.5px; line-height: 1.8; margin-bottom: 4px; }
+    .mpp-doc-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .mpp-doc-body strong { color: var(--text); }
+    .mpp-doc-body > *:first-child { margin-top: 0; }
+
+    .mpp-table-wrap { overflow-x: auto; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
+    .mpp-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .mpp-table-wrap th, .mpp-table-wrap td { padding: 9px 12px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+    .mpp-table-wrap th { background: #e0f2fe; color: var(--primary-d); font-weight: 700; white-space: nowrap; }
+    .mpp-table-wrap tr:nth-child(even) td { background: #fafcfe; }
+
+    .mpp-intake-section { margin-bottom: 22px; }
+    .mpp-intake-section:last-child { margin-bottom: 0; }
+    .mpp-intake-section h3 {
+      font-family: var(--head); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+      color: var(--primary-d); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .mpp-contact-grid { display: grid; gap: 8px; }
+    .mpp-contact-row { display: flex; gap: 10px; font-size: 14px; }
+    .mpp-contact-k { color: var(--muted); min-width: 110px; flex-shrink: 0; }
+    .mpp-contact-v { font-weight: 600; }
+    .mpp-qa-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--border); }
+    .mpp-qa-row:last-child { border-bottom: none; }
+    .mpp-qa-num {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: #e0f2fe; color: var(--primary-d);
+      font-size: 11.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .mpp-qa-q { font-size: 13.5px; color: var(--muted); margin-bottom: 4px; line-height: 1.5; }
+    .mpp-qa-a { font-size: 14.5px; font-weight: 500; line-height: 1.6; }
+
+    .mpp-photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .mpp-photo-slot { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+    .mpp-photo-slot-preview { aspect-ratio: 3/4; background: #f1f5f9; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .mpp-photo-slot-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mpp-photo-slot-caption { padding: 8px 10px; font-size: 11.5px; font-weight: 600; text-align: center; color: var(--primary-d); border-top: 1px solid var(--border); }
+    .mpp-video-slot { grid-column: 1 / -1; }
+    .mpp-video-slot .mpp-photo-slot-preview { aspect-ratio: auto; height: 480px; }
+    .mpp-photo-slot-preview iframe { width: 100%; height: 100%; border: 0; display: block; }
+
     .mp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
     .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
     .mp-tab-btn:hover { color: var(--text); }
@@ -5309,12 +5355,94 @@
     </div>`;
     }
 
+    /* ── Markdown → HTML + parser bản tổng kết intake, y hệt lo-trinh.html (trang khách) ── */
+    function mppMdToHtml(md) {
+      const lines = escHtml(md).split('\n');
+      let html = '', inList = false, listType = null, para = [];
+      const inlineFmt = s => s
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+      const flushPara = () => { if (para.length) { html += `<p>${para.join(' ')}</p>`; para = []; } };
+      const closeList = () => { if (inList) { html += listType === 'ol' ? '</ol>' : '</ul>'; inList = false; listType = null; } };
+      const isTableRow = l => /^\|.+\|$/.test(l);
+      const isSepRow = l => isTableRow(l) && /^\|[\s:|-]+\|$/.test(l) && l.includes('-');
+      const splitRow = l => l.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i].trim();
+        if (!line) { flushPara(); closeList(); i++; continue; }
+        if (isTableRow(line) && i + 1 < lines.length && isSepRow(lines[i + 1].trim())) {
+          flushPara(); closeList();
+          const headers = splitRow(line);
+          html += '<div class="mpp-table-wrap"><table><thead><tr>' +
+            headers.map(h => `<th>${inlineFmt(h)}</th>`).join('') + '</tr></thead><tbody>';
+          i += 2;
+          while (i < lines.length && isTableRow(lines[i].trim())) {
+            const cells = splitRow(lines[i].trim());
+            html += '<tr>' + cells.map(c => `<td>${inlineFmt(c)}</td>`).join('') + '</tr>';
+            i++;
+          }
+          html += '</tbody></table></div>';
+          continue;
+        }
+        if (/^-{3,}$/.test(line)) { flushPara(); closeList(); html += '<hr>'; i++; continue; }
+        let m = line.match(/^(#{1,4})\s+(.*)$/);
+        if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; i++; continue; }
+        m = line.match(/^[-*]\s+(.*)$/);
+        if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
+        m = line.match(/^\d+[.)]\s+(.*)$/);
+        if (m) { flushPara(); if (listType !== 'ol') { closeList(); html += '<ol>'; inList = true; listType = 'ol'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
+        closeList();
+        para.push(inlineFmt(line));
+        i++;
+      }
+      flushPara(); closeList();
+      return html;
+    }
+
+    function mppRenderIntakeSummary(summaryText) {
+      let html = '';
+      const re = /===\s*(.+?)\s*===\n([\s\S]*?)(?=\n===|\s*$)/g;
+      let m;
+      while ((m = re.exec(summaryText))) {
+        const title = m[1].trim();
+        const body = m[2].trim();
+        if (!body) continue;
+        if (title === 'THÔNG TIN LIÊN HỆ') {
+          html += `<div class="mpp-intake-section"><h3>${escHtml(title)}</h3><div class="mpp-contact-grid">`;
+          body.split('\n').map(l => l.trim()).filter(Boolean).forEach(row => {
+            const idx = row.indexOf(':');
+            const k = idx >= 0 ? row.slice(0, idx) : row;
+            const v = idx >= 0 ? row.slice(idx + 1).trim() : '';
+            html += `<div class="mpp-contact-row"><span class="mpp-contact-k">${escHtml(k)}</span><span class="mpp-contact-v">${escHtml(v)}</span></div>`;
+          });
+          html += `</div></div>`;
+          continue;
+        }
+        html += `<div class="mpp-intake-section"><h3>${escHtml(title)}</h3>`;
+        let cur = null;
+        body.split('\n').forEach(l => {
+          const qm = l.match(/^(\d+)\.\s+(.*)$/);
+          const am = l.match(/^\s*→\s*(.*)$/);
+          if (qm) { if (cur) html += renderQA(cur); cur = { num: qm[1], q: qm[2], a: '' }; }
+          else if (am && cur) { cur.a = am[1]; }
+        });
+        if (cur) html += renderQA(cur);
+        html += `</div>`;
+      }
+      return html || `<p style="color:var(--muted);font-size:14px;">${escHtml(summaryText)}</p>`;
+      function renderQA(item) {
+        return `<div class="mpp-qa-row"><div class="mpp-qa-num">${item.num}</div><div><div class="mpp-qa-q">${escHtml(item.q)}</div><div class="mpp-qa-a">${escHtml(item.a)}</div></div></div>`;
+      }
+    }
+
     function renderMpIntake(intake) {
       const box = document.getElementById('mpIntakeBox');
       if (!intake) { box.innerHTML = `<div class="empty-state">Thành viên chưa làm khảo sát Thân-Tâm-Mệnh.</div>`; return; }
       box.innerHTML = `
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Nộp lúc ${fmtDate(intake.submittedAt)}</div>
-    <div style="background:#f1f5f9;border-radius:8px;padding:14px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:#1e293b;">${escHtml(intake.summaryText)}</div>`;
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Nộp lúc ${fmtDate(intake.submittedAt)}</div>
+    ${mppRenderIntakeSummary(intake.summaryText)}`;
     }
 
     function renderMpPhotos(p) {
@@ -5324,25 +5452,30 @@
         return;
       }
       const shot = (url, label) => url
-        ? `<div style="text-align:center;"><a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${escHtml(label)}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></a><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">${escHtml(label)}</div></div>`
-        : '';
+        ? `<div class="mpp-photo-slot"><a href="${url}" target="_blank" rel="noopener"><div class="mpp-photo-slot-preview"><img src="${url}" alt="${escHtml(label)}"></div></a><div class="mpp-photo-slot-caption">${escHtml(label)}</div></div>`
+        : `<div class="mpp-photo-slot"><div class="mpp-photo-slot-preview" style="color:var(--muted);font-size:12px;">Chưa có ảnh</div><div class="mpp-photo-slot-caption">${escHtml(label)}</div></div>`;
       const vid = p.video
-        ? `<div style="grid-column:1/-1;text-align:center;"><iframe src="${p.video}" allow="autoplay" style="width:100%;height:480px;border:1px solid var(--border);border-radius:8px;"></iframe><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Video ngồi xuống — đứng lên</div></div>`
-        : '';
-      box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">${shot(p.front, 'Phía trước') + shot(p.back, 'Phía sau') + shot(p.side, 'Bên hông') + vid}</div>
-    ${p.updatedAt ? `<div style="font-size:11px;color:var(--muted);margin-top:10px;">Cập nhật lần cuối: ${fmtDate(p.updatedAt)}</div>` : ''}`;
+        ? `<div class="mpp-photo-slot mpp-video-slot"><div class="mpp-photo-slot-preview"><iframe src="${p.video}" allow="autoplay"></iframe></div><div class="mpp-photo-slot-caption">Video ngồi xuống — đứng lên</div></div>`
+        : `<div class="mpp-photo-slot mpp-video-slot"><div class="mpp-photo-slot-preview" style="color:var(--muted);font-size:12px;">Chưa có video</div><div class="mpp-photo-slot-caption">Video ngồi xuống — đứng lên</div></div>`;
+      box.innerHTML = `<div class="mpp-photo-grid">${shot(p.front, 'Toàn thân — Phía trước') + shot(p.back, 'Toàn thân — Phía sau') + shot(p.side, 'Toàn thân — Bên hông') + vid}</div>
+    ${p.updatedAt ? `<div style="font-size:11px;color:var(--muted);margin-top:12px;">Cập nhật lần cuối: ${fmtDate(p.updatedAt)}</div>` : ''}`;
     }
 
     function renderMpRoadmap(r) {
       const box = document.getElementById('mpRoadmapBox');
       if (!r) { box.innerHTML = `<div class="empty-state">Chưa có lộ trình nào.</div>`; return; }
+      const statusStyle = {
+        pending_approval: 'background:#fef3c7;color:#92400e;', approved: 'background:#dcfce7;color:#166534;',
+        rejected: 'background:#fee2e2;color:#991b1b;',
+      };
       const statusLabelMap = { pending_approval: '⏳ Chờ duyệt', approved: '✅ Đã duyệt', rejected: '✖ Đã từ chối' };
       box.innerHTML = `
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
-      ${statusLabelMap[r.status] || r.status} — tạo lúc ${fmtDate(r.createdAt)}${r.reviewedAt ? ', duyệt lúc ' + fmtDate(r.reviewedAt) : ''}
+    <div style="margin-bottom:16px;">
+      <span class="badge" style="${statusStyle[r.status] || ''}">${statusLabelMap[r.status] || r.status}</span>
+      <span style="font-size:12px;color:var(--muted);margin-left:8px;">Tạo lúc ${fmtDate(r.createdAt)}${r.reviewedAt ? ', duyệt lúc ' + fmtDate(r.reviewedAt) : ''}</span>
     </div>
-    ${r.adminNote ? `<div style="font-size:12.5px;color:#991b1b;margin-bottom:10px;">Ghi chú: ${escHtml(r.adminNote)}</div>` : ''}
-    <div style="background:#f1f5f9;border-radius:8px;padding:14px;font-size:12.5px;line-height:1.7;white-space:pre-wrap;color:#1e293b;">${escHtml(r.content || '(trống)')}</div>`;
+    ${r.adminNote ? `<div style="font-size:12.5px;color:#991b1b;margin-bottom:16px;">Ghi chú nội bộ: ${escHtml(r.adminNote)}</div>` : ''}
+    <div class="mpp-doc-body">${mppMdToHtml(r.content || '(trống)')}</div>`;
     }
 
     function renderMpLearning(groups) {
