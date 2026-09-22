@@ -50,17 +50,22 @@
     .p377-day-info { flex:1; min-width:0; }
     .p377-day-title { font-size:13.5px; font-weight:600; }
     .p377-day-expand { padding:4px 8px 18px 72px; font-size:14px; line-height:1.7; }
-    .p377-result-item { padding:12px 0; border-top:1px solid var(--border); }
+    .p377-result-item { display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--border); font-size:var(--fs-sm); }
     .p377-result-item:first-child { border-top:none; }
-    .p377-result-date { font-weight:700; color:var(--color-primary); font-size:13px; }
+    .p377-result-date { font-weight:700; color:var(--color-primary); width:92px; flex-shrink:0; }
+    .p377-result-body-wrap { flex:1; min-width:0; }
+    .p377-result-summary-line { color:var(--text-muted); line-height:1.5; }
+    .p377-result-badge-line { font-size:11.5px; color:var(--text-muted); margin-top:2px; }
     .p377-result-flag { display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:99px; margin-left:8px; }
     .p377-result-flag.warning { background:rgba(245,158,11,.15); color:#f59e0b; }
     .p377-result-flag.urgent { background:rgba(239,68,68,.15); color:#ef4444; }
-    .p377-result-body { font-size:13.5px; color:var(--text); margin-top:6px; line-height:1.6; }
-    .p377-result-pending { font-size:12.5px; font-style:italic; color:var(--text-muted); margin-top:6px; }
-    .p377-result-summary { margin-top:8px; padding:10px 12px; background:var(--bg-hover); border-radius:var(--radius-md); font-size:13px; color:var(--text-muted); line-height:1.7; }
-    .p377-result-summary b { color:var(--text); font-weight:600; }
-    .p377-result-ai-label { font-weight:700; font-size:11px; color:var(--color-primary); margin-top:10px; margin-bottom:4px; }
+    .p377-ai-feedback { margin-top:8px; padding:10px 12px; border-radius:var(--radius-md); background:var(--bg-hover); border-left:3px solid var(--color-primary); font-size:var(--fs-sm); color:var(--text); line-height:1.6; }
+    .p377-ai-label { font-weight:700; font-size:11px; color:var(--color-primary); margin-bottom:4px; }
+    .p377-ai-warning { border-left-color:#f59e0b; background:rgba(245,158,11,.08); }
+    .p377-ai-warning .p377-ai-label { color:#f59e0b; }
+    .p377-ai-urgent { border-left-color:#ef4444; background:rgba(239,68,68,.08); }
+    .p377-ai-urgent .p377-ai-label { color:#ef4444; }
+    .p377-ai-pending { font-style:italic; color:var(--text-muted); border-left-color:var(--border); background:transparent; padding-left:10px; margin-top:8px; }
   </style>
 </head>
 
@@ -572,35 +577,43 @@ const API = '/api';
     }
 
     function p377ReportSummaryHtml(r) {
-      const rows = [];
-      if (r.meal_breakfast) rows.push(`<div><b>Sáng:</b> ${esc(r.meal_breakfast)}</div>`);
-      if (r.meal_lunch)     rows.push(`<div><b>Trưa:</b> ${esc(r.meal_lunch)}</div>`);
-      if (r.meal_dinner)    rows.push(`<div><b>Tối:</b> ${esc(r.meal_dinner)}</div>`);
+      const meals = [r.meal_breakfast, r.meal_lunch, r.meal_dinner].filter(Boolean).join(' · ');
       const tags = [...(r.meal_colors || []), ...(r.meal_tastes || [])];
-      if (tags.length) rows.push(`<div><b>Màu / Vị:</b> ${esc(tags.join(', '))}</div>`);
-      if (r.urine_amount || r.urine_color) rows.push(`<div><b>Nước tiểu:</b> ${esc([r.urine_amount, r.urine_color].filter(Boolean).join(' — '))}</div>`);
-      if (r.stool_shape || r.stool_color) rows.push(`<div><b>Phân:</b> ${esc([r.stool_shape, r.stool_color].filter(Boolean).join(' — '))}</div>`);
-      if (r.exercise_type) rows.push(`<div><b>Tập luyện:</b> ${esc(r.exercise_type)}${r.exercise_minutes ? ` (${r.exercise_minutes} phút)` : ''}</div>`);
-      if (r.sweat_amount || r.sweat_taste) rows.push(`<div><b>Mồ hôi:</b> ${esc([r.sweat_amount, r.sweat_taste].filter(Boolean).join(' — '))}</div>`);
-      if (r.feeling_note) rows.push(`<div><b>Cảm nhận:</b> ${esc(r.feeling_note)}</div>`);
-      return rows.length ? `<div class="p377-result-summary">${rows.join('')}</div>` : '';
+      const badgeParts = [];
+      if (r.meal_colors?.length || r.meal_tastes?.length) badgeParts.push(`${(r.meal_colors || []).length}/5 màu · ${(r.meal_tastes || []).length}/5 vị`);
+      const extra = [];
+      if (r.urine_amount || r.urine_color) extra.push(`Nước tiểu: ${[r.urine_amount, r.urine_color].filter(Boolean).join(' — ')}`);
+      if (r.stool_shape || r.stool_color) extra.push(`Phân: ${[r.stool_shape, r.stool_color].filter(Boolean).join(' — ')}`);
+      if (r.exercise_type) extra.push(`Tập luyện: ${r.exercise_type}${r.exercise_minutes ? ` (${r.exercise_minutes} phút)` : ''}`);
+      if (r.sweat_amount || r.sweat_taste) extra.push(`Mồ hôi: ${[r.sweat_amount, r.sweat_taste].filter(Boolean).join(' — ')}`);
+      return `
+    <div class="p377-result-summary-line">${esc(meals) || '—'}</div>
+    ${badgeParts.length ? `<div class="p377-result-badge-line">${esc(badgeParts.join(' · '))}</div>` : ''}
+    ${extra.length ? `<div class="p377-result-badge-line">${esc(extra.join(' · '))}</div>` : ''}
+    ${r.feeling_note ? `<div class="p377-result-badge-line">Cảm nhận: ${esc(r.feeling_note)}</div>` : ''}`;
     }
 
     async function renderP377Results() {
       const box = document.getElementById('p377Results');
+      const today = todayStr();
       try {
         const d = await fetch(`${API}/program377/reports?user_id=${currentUser.id}&limit=60`).then(r=>r.json());
         if (!d.reports.length) { box.innerHTML = `<div class="p377-empty">Chưa có báo cáo nào để ghi nhận kết quả.</div>`; return; }
         box.innerHTML = d.reports.map(r => {
           const flagBadge = r.flag_level === 'warning' ? '<span class="p377-result-flag warning">Cần theo dõi</span>'
             : r.flag_level === 'urgent' ? '<span class="p377-result-flag urgent">Khẩn cấp</span>' : '';
+          const aiClass = r.flag_level === 'warning' ? 'p377-ai-warning' : r.flag_level === 'urgent' ? 'p377-ai-urgent' : '';
           const body = r.ai_feedback
-            ? `<div class="p377-result-ai-label">🌻 An Nhiên nhận xét</div><div class="p377-result-body">${esc(r.ai_feedback).replace(/\n/g,'<br>')}</div>`
-            : `<div class="p377-result-pending">🌻 An Nhiên đang xem báo cáo của bạn, chờ chút nhé...</div>`;
+            ? `<div class="p377-ai-feedback ${aiClass}"><div class="p377-ai-label">🌻 An Nhiên nhận xét</div><div>${esc(r.ai_feedback).replace(/\n/g,'<br>')}</div></div>`
+            : `<div class="p377-ai-feedback p377-ai-pending">🌻 An Nhiên đang xem báo cáo của bạn, chờ chút nhé...</div>`;
+          const dateLabel = r.report_date === today ? 'Hôm nay' : fmtDate(r.report_date);
           return `<div class="p377-result-item">
-        <span class="p377-result-date">${fmtDate(r.report_date)} — Ngày ${r.day_number || '?'}</span>${flagBadge}
-        ${p377ReportSummaryHtml(r)}
-        ${body}
+        <div class="p377-result-date">${esc(dateLabel)}</div>
+        <div class="p377-result-body-wrap">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Ngày ${r.day_number || '?'}/377${flagBadge}</div>
+          ${p377ReportSummaryHtml(r)}
+          ${body}
+        </div>
       </div>`;
         }).join('');
       } catch { box.innerHTML = `<div class="p377-empty">Không tải được kết quả.</div>`; }
