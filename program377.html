@@ -58,6 +58,9 @@
     .p377-result-flag.urgent { background:rgba(239,68,68,.15); color:#ef4444; }
     .p377-result-body { font-size:13.5px; color:var(--text); margin-top:6px; line-height:1.6; }
     .p377-result-pending { font-size:12.5px; font-style:italic; color:var(--text-muted); margin-top:6px; }
+    .p377-result-summary { margin-top:8px; padding:10px 12px; background:var(--bg-hover); border-radius:var(--radius-md); font-size:13px; color:var(--text-muted); line-height:1.7; }
+    .p377-result-summary b { color:var(--text); font-weight:600; }
+    .p377-result-ai-label { font-weight:700; font-size:11px; color:var(--color-primary); margin-top:10px; margin-bottom:4px; }
   </style>
 </head>
 
@@ -568,6 +571,21 @@ const API = '/api';
       expandEl.innerHTML = p377DayContentCache[dayNumber];
     }
 
+    function p377ReportSummaryHtml(r) {
+      const rows = [];
+      if (r.meal_breakfast) rows.push(`<div><b>Sáng:</b> ${esc(r.meal_breakfast)}</div>`);
+      if (r.meal_lunch)     rows.push(`<div><b>Trưa:</b> ${esc(r.meal_lunch)}</div>`);
+      if (r.meal_dinner)    rows.push(`<div><b>Tối:</b> ${esc(r.meal_dinner)}</div>`);
+      const tags = [...(r.meal_colors || []), ...(r.meal_tastes || [])];
+      if (tags.length) rows.push(`<div><b>Màu / Vị:</b> ${esc(tags.join(', '))}</div>`);
+      if (r.urine_amount || r.urine_color) rows.push(`<div><b>Nước tiểu:</b> ${esc([r.urine_amount, r.urine_color].filter(Boolean).join(' — '))}</div>`);
+      if (r.stool_shape || r.stool_color) rows.push(`<div><b>Phân:</b> ${esc([r.stool_shape, r.stool_color].filter(Boolean).join(' — '))}</div>`);
+      if (r.exercise_type) rows.push(`<div><b>Tập luyện:</b> ${esc(r.exercise_type)}${r.exercise_minutes ? ` (${r.exercise_minutes} phút)` : ''}</div>`);
+      if (r.sweat_amount || r.sweat_taste) rows.push(`<div><b>Mồ hôi:</b> ${esc([r.sweat_amount, r.sweat_taste].filter(Boolean).join(' — '))}</div>`);
+      if (r.feeling_note) rows.push(`<div><b>Cảm nhận:</b> ${esc(r.feeling_note)}</div>`);
+      return rows.length ? `<div class="p377-result-summary">${rows.join('')}</div>` : '';
+    }
+
     async function renderP377Results() {
       const box = document.getElementById('p377Results');
       try {
@@ -577,10 +595,11 @@ const API = '/api';
           const flagBadge = r.flag_level === 'warning' ? '<span class="p377-result-flag warning">Cần theo dõi</span>'
             : r.flag_level === 'urgent' ? '<span class="p377-result-flag urgent">Khẩn cấp</span>' : '';
           const body = r.ai_feedback
-            ? `<div class="p377-result-body">${esc(r.ai_feedback).replace(/\n/g,'<br>')}</div>`
+            ? `<div class="p377-result-ai-label">🌻 An Nhiên nhận xét</div><div class="p377-result-body">${esc(r.ai_feedback).replace(/\n/g,'<br>')}</div>`
             : `<div class="p377-result-pending">🌻 An Nhiên đang xem báo cáo của bạn, chờ chút nhé...</div>`;
           return `<div class="p377-result-item">
         <span class="p377-result-date">${fmtDate(r.report_date)} — Ngày ${r.day_number || '?'}</span>${flagBadge}
+        ${p377ReportSummaryHtml(r)}
         ${body}
       </div>`;
         }).join('');
