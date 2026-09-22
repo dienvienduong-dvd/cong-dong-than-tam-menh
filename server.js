@@ -168,9 +168,12 @@ async function uploadToUserDrive(drive, localFilePath, filename, mimeType, folde
     requestBody: { role: 'reader', type: 'anyone' },
   });
 
+  // `uc?export=view` đôi khi trả về trang HTML xác nhận thay vì ảnh thật khi nhúng trực tiếp trong
+  // trình duyệt (tuỳ session/cookie của người xem) — dùng endpoint thumbnail chính thức của Drive,
+  // ổn định hơn cho việc nhúng <img>.
   const displayUrl = isVideo
     ? `https://drive.google.com/file/d/${fileId}/preview`
-    : `https://drive.google.com/uc?export=view&id=${fileId}`;
+    : `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
   return { fileId, displayUrl };
 }
 
@@ -1482,6 +1485,17 @@ const COURSE_SEED = [
     db.exec('ALTER TABLE ttm_body_photos ADD COLUMN drive_folder_id TEXT');
     console.log('  Migrated ttm_body_photos: added drive_folder_id.');
   }
+
+  // Migrate ttm_body_photos: link ảnh cũ dùng dạng "uc?export=view" (đôi khi trả HTML thay vì ảnh
+  // thật khi nhúng trên trình duyệt) — đổi sang endpoint thumbnail chính thức của Drive, ổn định hơn.
+  ['front_url', 'back_url', 'side_url'].forEach((col) => {
+    const rows = db.all(`SELECT user_id, ${col} AS url FROM ttm_body_photos WHERE ${col} LIKE '%uc?export=view%'`);
+    rows.forEach((r) => {
+      const fixed = r.url.replace(/https:\/\/drive\.google\.com\/uc\?export=view&id=([^&]+)/, 'https://drive.google.com/thumbnail?id=$1&sz=w1000');
+      db.run(`UPDATE ttm_body_photos SET ${col} = ? WHERE user_id = ?`, [fixed, r.user_id]);
+    });
+    if (rows.length) console.log(`  Migrated ttm_body_photos.${col}: ${rows.length} link(s) đổi sang thumbnail endpoint.`);
+  });
 
   // Lấy Drive client đã xác thực bằng OAuth refresh token (kết nối 1 lần qua Admin > Cài đặt >
   // Google Drive). Refresh token được lưu trong admin_secrets, googleapis tự làm mới access token.
