@@ -37,6 +37,26 @@
     .p377-session-date { font-weight:700; color: var(--color-primary); width: 92px; flex-shrink:0; }
     .p377-empty { color: var(--text-muted); font-size: 13px; }
     .p377-pending-box, .p377-cta-box { text-align:center; padding: 30px 20px; }
+    .p377-tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:16px; overflow-x:auto; }
+    .p377-tab-btn { padding:10px 16px; font-size:14px; font-weight:600; color:var(--text-muted); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap; font-family:inherit; }
+    .p377-tab-btn:hover { color:var(--text); }
+    .p377-tab-btn.active { color:var(--color-primary); border-bottom-color:var(--color-primary); }
+    .p377-tab-panel { display:none; }
+    .p377-tab-panel.active { display:block; }
+    .p377-day-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--border); cursor:pointer; }
+    .p377-day-row:first-child { border-top:none; }
+    .p377-day-row.locked { opacity:.5; cursor:not-allowed; }
+    .p377-day-num { font-weight:800; color:var(--color-primary); width:60px; flex-shrink:0; font-size:13px; }
+    .p377-day-info { flex:1; min-width:0; }
+    .p377-day-title { font-size:13.5px; font-weight:600; }
+    .p377-result-item { padding:12px 0; border-top:1px solid var(--border); }
+    .p377-result-item:first-child { border-top:none; }
+    .p377-result-date { font-weight:700; color:var(--color-primary); font-size:13px; }
+    .p377-result-flag { display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:99px; margin-left:8px; }
+    .p377-result-flag.warning { background:rgba(245,158,11,.15); color:#f59e0b; }
+    .p377-result-flag.urgent { background:rgba(239,68,68,.15); color:#ef4444; }
+    .p377-result-body { font-size:13.5px; color:var(--text); margin-top:6px; line-height:1.6; }
+    .p377-result-pending { font-size:12.5px; font-style:italic; color:var(--text-muted); margin-top:6px; }
   </style>
 </head>
 
@@ -205,47 +225,75 @@
                 <div class="p377-bar"><div class="p377-bar-fill" id="p377BarFill" style="width:0%;"></div></div>
               </div>
 
-              <div class="p377-card">
-                <div id="p377TodayContent"></div>
+              <div class="p377-tabs">
+                <button class="p377-tab-btn active" onclick="p377Tab('content', this)">📚 Nội dung 377 ngày</button>
+                <button class="p377-tab-btn" onclick="p377Tab('today', this)">📝 Ngày 1-377</button>
+                <button class="p377-tab-btn" onclick="p377Tab('results', this)">📈 Kết quả</button>
               </div>
 
-              <div class="p377-card">
-                <h3 id="p377FormTitle">Báo cáo hôm nay</h3>
-                <div class="p377-field"><label>Bữa sáng</label><input id="p377B" placeholder="VD: cháo yến mạch..."></div>
-                <div class="p377-field"><label>Bữa trưa</label><input id="p377L" placeholder="VD: cơm gạo lứt, canh rau..."></div>
-                <div class="p377-field"><label>Bữa tối</label><input id="p377D" placeholder="VD: rau muống xào tỏi..."></div>
-                <div class="p377-field"><label>Hôm nay ăn đủ những MÀU nào?</label><div class="p377-checks" id="p377Colors"></div></div>
-                <div class="p377-field"><label>Hôm nay ăn đủ những VỊ nào?</label><div class="p377-checks" id="p377Tastes"></div></div>
-                <div class="p377-row2">
-                  <div class="p377-field"><label>Nước tiểu — lượng</label>
-                    <select id="p377UrineAmount"><option value="">— chọn —</option><option>nhiều</option><option>ít</option></select>
-                  </div>
-                  <div class="p377-field"><label>Nước tiểu — màu sắc</label><input id="p377UrineColor" placeholder="VD: vàng nhạt"></div>
+              <!-- Tab: Nội dung 377 ngày (danh sách nội dung admin soạn) -->
+              <div class="p377-tab-panel active" data-tab="content">
+                <div class="p377-card">
+                  <h3>Nội dung 377 ngày</h3>
+                  <div id="p377DaysList"><div class="p377-empty">Đang tải...</div></div>
                 </div>
-                <div class="p377-row2">
-                  <div class="p377-field"><label>Phân — hình dạng</label><input id="p377StoolShape" placeholder="VD: bình thường, lỏng, táo..."></div>
-                  <div class="p377-field"><label>Phân — màu sắc</label><input id="p377StoolColor" placeholder="VD: nâu"></div>
-                </div>
-                <div class="p377-row2">
-                  <div class="p377-field"><label>Tập luyện — môn gì</label><input id="p377ExType" placeholder="VD: đi bộ, yoga..."></div>
-                  <div class="p377-field"><label>Tập luyện — thời gian (phút)</label><input id="p377ExMinutes" type="number" min="0"></div>
-                </div>
-                <div class="p377-row2">
-                  <div class="p377-field"><label>Mồ hôi — lượng</label>
-                    <select id="p377SweatAmount"><option value="">— chọn —</option><option>nhiều</option><option>ít</option></select>
-                  </div>
-                  <div class="p377-field"><label>Mồ hôi — vị</label>
-                    <select id="p377SweatTaste"><option value="">— chọn —</option><option>không vị</option><option>chua</option><option>hơi mặn</option><option>mặn</option></select>
-                  </div>
-                </div>
-                <div class="p377-field"><label>Biểu hiện cơ thể / cảm nhận sức khỏe tổng quát</label><textarea id="p377Feeling" rows="2"></textarea></div>
-                <button class="btn btn-primary" id="p377Save" onclick="saveP377Report()">Lưu báo cáo hôm nay</button>
-                <div class="p377-msg" id="p377Msg"></div>
               </div>
 
-              <div class="p377-card">
-                <h3>📅 Lịch Zoom / sự kiện sắp tới</h3>
-                <div id="p377Sessions"><div class="p377-empty">Chưa có buổi nào sắp tới.</div></div>
+              <!-- Tab: Ngày 1-377 (nội dung hôm nay + báo cáo) -->
+              <div class="p377-tab-panel" data-tab="today">
+                <div class="p377-card">
+                  <div id="p377TodayContent"></div>
+                </div>
+
+                <div class="p377-card">
+                  <h3 id="p377FormTitle">Báo cáo hôm nay</h3>
+                  <div class="p377-field"><label>Bữa sáng</label><input id="p377B" placeholder="VD: cháo yến mạch..."></div>
+                  <div class="p377-field"><label>Bữa trưa</label><input id="p377L" placeholder="VD: cơm gạo lứt, canh rau..."></div>
+                  <div class="p377-field"><label>Bữa tối</label><input id="p377D" placeholder="VD: rau muống xào tỏi..."></div>
+                  <div class="p377-field"><label>Hôm nay ăn đủ những MÀU nào?</label><div class="p377-checks" id="p377Colors"></div></div>
+                  <div class="p377-field"><label>Hôm nay ăn đủ những VỊ nào?</label><div class="p377-checks" id="p377Tastes"></div></div>
+                  <div class="p377-row2">
+                    <div class="p377-field"><label>Nước tiểu — lượng</label>
+                      <select id="p377UrineAmount"><option value="">— chọn —</option><option>nhiều</option><option>ít</option></select>
+                    </div>
+                    <div class="p377-field"><label>Nước tiểu — màu sắc</label><input id="p377UrineColor" placeholder="VD: vàng nhạt"></div>
+                  </div>
+                  <div class="p377-row2">
+                    <div class="p377-field"><label>Phân — hình dạng</label><input id="p377StoolShape" placeholder="VD: bình thường, lỏng, táo..."></div>
+                    <div class="p377-field"><label>Phân — màu sắc</label><input id="p377StoolColor" placeholder="VD: nâu"></div>
+                  </div>
+                  <div class="p377-row2">
+                    <div class="p377-field"><label>Tập luyện — môn gì</label><input id="p377ExType" placeholder="VD: đi bộ, yoga..."></div>
+                    <div class="p377-field"><label>Tập luyện — thời gian (phút)</label><input id="p377ExMinutes" type="number" min="0"></div>
+                  </div>
+                  <div class="p377-row2">
+                    <div class="p377-field"><label>Mồ hôi — lượng</label>
+                      <select id="p377SweatAmount"><option value="">— chọn —</option><option>nhiều</option><option>ít</option></select>
+                    </div>
+                    <div class="p377-field"><label>Mồ hôi — vị</label>
+                      <select id="p377SweatTaste"><option value="">— chọn —</option><option>không vị</option><option>chua</option><option>hơi mặn</option><option>mặn</option></select>
+                    </div>
+                  </div>
+                  <div class="p377-field"><label>Biểu hiện cơ thể / cảm nhận sức khỏe tổng quát</label><textarea id="p377Feeling" rows="2"></textarea></div>
+                  <button class="btn btn-primary" id="p377Save" onclick="saveP377Report()">Lưu báo cáo hôm nay</button>
+                  <div class="p377-msg" id="p377Msg"></div>
+                </div>
+
+                <div class="p377-card">
+                  <h3>📅 Lịch Zoom / sự kiện sắp tới</h3>
+                  <div id="p377Sessions"><div class="p377-empty">Chưa có buổi nào sắp tới.</div></div>
+                </div>
+              </div>
+
+              <!-- Tab: Kết quả (An Nhiên ghi nhận thay đổi sức khỏe từng ngày) -->
+              <div class="p377-tab-panel" data-tab="results">
+                <div class="p377-card">
+                  <h3>Kết quả — thay đổi sức khỏe qua từng ngày</h3>
+                  <p style="color:var(--text-muted);font-size:12.5px;margin-top:-6px;margin-bottom:10px;">
+                    Dựa vào hồ sơ, lộ trình và báo cáo mỗi ngày của bạn, An Nhiên sẽ ghi lại nhận xét ở đây.
+                  </p>
+                  <div id="p377Results"><div class="p377-empty">Đang tải...</div></div>
+                </div>
               </div>
             </div>
 
@@ -256,6 +304,17 @@
     </div><!-- /main -->
 
   </div><!-- /app -->
+
+  <!-- Xem nội dung 1 ngày bất kỳ đã mở khóa (từ tab "Nội dung 377 ngày") -->
+  <div id="p377DayViewModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--bg-card);border-radius:12px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.3);">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg-card);">
+        <div id="p377DayViewTitle" style="font-weight:700;font-size:15px;"></div>
+        <button onclick="closeP377DayView()" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--text-muted);">×</button>
+      </div>
+      <div id="p377DayViewBody" style="padding:16px 20px;"></div>
+    </div>
+  </div>
 
   <!-- Mobile sidebar overlay -->
   <div id="mob-overlay" onclick="closeSidebar()"></div>
@@ -415,21 +474,82 @@ const API = '/api';
       } catch { document.getElementById('p377EnrollMsg').textContent = 'Có lỗi, thử lại.'; }
     }
 
-    async function renderTodayContent(dayNumberToday) {
-      const box = document.getElementById('p377TodayContent');
-      if (dayNumberToday < 1) { box.innerHTML = `<div class="p377-empty">Chương trình của bạn sẽ bắt đầu sớm.</div>`; return; }
-      try {
-        const d = await fetch(`${API}/program377/day/${dayNumberToday}?user_id=${currentUser.id}`).then(r=>r.json());
-        if (d.error || !d.day) { box.innerHTML = `<div class="p377-empty">Nội dung ngày hôm nay chưa được soạn — Ngô Lâm sẽ cập nhật sớm.</div>`; return; }
-        const day = d.day;
-        box.innerHTML = `
+    function p377Tab(name, btn) {
+      document.querySelectorAll('.p377-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.p377-tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector(`.p377-tab-panel[data-tab="${name}"]`)?.classList.add('active');
+    }
+
+    function renderDayContentHtml(day) {
+      return `
       ${day.topic_key ? `<div class="p377-topic">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
       <h3 style="margin-bottom:8px;">${esc(day.title)}</h3>
       ${day.video_url ? `<iframe class="p377-video" src="${day.video_url}" allowfullscreen></iframe>` : ''}
       <div style="font-size:14px;line-height:1.7;">${day.body_html || ''}</div>
       ${day.exercise_title ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><b>📝 ${esc(day.exercise_title)}</b><div style="margin-top:6px;font-size:14px;color:var(--text-muted);">${esc(day.exercise_body || '')}</div></div>` : ''}
     `;
+    }
+
+    async function renderTodayContent(dayNumberToday) {
+      const box = document.getElementById('p377TodayContent');
+      if (dayNumberToday < 1) { box.innerHTML = `<div class="p377-empty">Chương trình của bạn sẽ bắt đầu sớm.</div>`; return; }
+      try {
+        const d = await fetch(`${API}/program377/day/${dayNumberToday}?user_id=${currentUser.id}`).then(r=>r.json());
+        if (d.error || !d.day) { box.innerHTML = `<div class="p377-empty">Nội dung ngày hôm nay chưa được soạn — Ngô Lâm sẽ cập nhật sớm.</div>`; return; }
+        box.innerHTML = renderDayContentHtml(d.day);
       } catch { box.innerHTML = `<div class="p377-empty">Không tải được nội dung hôm nay.</div>`; }
+    }
+
+    async function renderP377DaysList(dayNumberToday) {
+      const box = document.getElementById('p377DaysList');
+      try {
+        const d = await fetch(`${API}/program377/days?user_id=${currentUser.id}`).then(r=>r.json());
+        if (!d.days.length) { box.innerHTML = `<div class="p377-empty">Nội dung chương trình đang được Ngô Lâm soạn, sẽ sớm cập nhật.</div>`; return; }
+        box.innerHTML = d.days.map(day => `
+      <div class="p377-day-row${day.unlocked ? '' : ' locked'}" ${day.unlocked ? `onclick="openP377DayView(${day.day_number})"` : ''}>
+        <div class="p377-day-num">Ngày ${day.day_number}</div>
+        <div class="p377-day-info">
+          <div class="p377-day-title">${esc(day.title)}</div>
+          ${day.topic_key ? `<div style="font-size:11.5px;color:var(--text-muted);">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
+        </div>
+        <div style="font-size:16px;">${day.unlocked ? '🔓' : '🔒'}</div>
+      </div>`).join('');
+      } catch { box.innerHTML = `<div class="p377-empty">Không tải được danh sách nội dung.</div>`; }
+    }
+
+    async function openP377DayView(dayNumber) {
+      const modal = document.getElementById('p377DayViewModal');
+      const title = document.getElementById('p377DayViewTitle');
+      const body = document.getElementById('p377DayViewBody');
+      title.textContent = `Ngày ${dayNumber}/377`;
+      body.innerHTML = `<div class="p377-empty">Đang tải...</div>`;
+      modal.style.display = 'flex';
+      try {
+        const d = await fetch(`${API}/program377/day/${dayNumber}?user_id=${currentUser.id}`).then(r=>r.json());
+        if (d.error || !d.day) { body.innerHTML = `<div class="p377-empty">${esc(d.error || 'Không tìm thấy nội dung.')}</div>`; return; }
+        body.innerHTML = renderDayContentHtml(d.day);
+      } catch { body.innerHTML = `<div class="p377-empty">Không tải được nội dung.</div>`; }
+    }
+    function closeP377DayView() { document.getElementById('p377DayViewModal').style.display = 'none'; }
+
+    async function renderP377Results() {
+      const box = document.getElementById('p377Results');
+      try {
+        const d = await fetch(`${API}/program377/reports?user_id=${currentUser.id}&limit=60`).then(r=>r.json());
+        if (!d.reports.length) { box.innerHTML = `<div class="p377-empty">Chưa có báo cáo nào để ghi nhận kết quả.</div>`; return; }
+        box.innerHTML = d.reports.map(r => {
+          const flagBadge = r.flag_level === 'warning' ? '<span class="p377-result-flag warning">Cần theo dõi</span>'
+            : r.flag_level === 'urgent' ? '<span class="p377-result-flag urgent">Khẩn cấp</span>' : '';
+          const body = r.ai_feedback
+            ? `<div class="p377-result-body">${esc(r.ai_feedback).replace(/\n/g,'<br>')}</div>`
+            : `<div class="p377-result-pending">🌻 An Nhiên đang xem báo cáo của bạn, chờ chút nhé...</div>`;
+          return `<div class="p377-result-item">
+        <span class="p377-result-date">${fmtDate(r.report_date)} — Ngày ${r.day_number || '?'}</span>${flagBadge}
+        ${body}
+      </div>`;
+        }).join('');
+      } catch { box.innerHTML = `<div class="p377-empty">Không tải được kết quả.</div>`; }
     }
 
     async function renderSessions() {
@@ -467,6 +587,8 @@ const API = '/api';
       fillReportForm(d.todayReport);
       renderTodayContent(d.dayNumberToday);
       renderSessions();
+      renderP377DaysList(d.dayNumberToday);
+      renderP377Results();
     }
 
     async function saveP377Report() {
@@ -496,6 +618,7 @@ const API = '/api';
           msg.textContent = res.isLate ? 'Đã lưu (báo cáo trễ hạn).' : 'Đã lưu báo cáo hôm nay!';
           document.getElementById('p377FormTitle').textContent = 'Cập nhật báo cáo hôm nay';
           document.getElementById('p377Save').textContent = 'Cập nhật';
+          renderP377Results();
         }
       } catch { document.getElementById('p377Msg').textContent = 'Có lỗi, thử lại.'; }
       btn.disabled = false;

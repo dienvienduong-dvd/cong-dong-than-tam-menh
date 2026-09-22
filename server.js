@@ -1576,6 +1576,16 @@ ${summaryText}`;
     console.log('  Migrated ttm_roadmaps: added the_trang.');
   }
 
+  // Migrate program377_reports: thêm cột AI feedback (An Nhiên nhận xét thay đổi sức khỏe
+  // dựa trên hồ sơ/lộ trình + báo cáo hằng ngày — tab "Kết quả" ở trang khách).
+  const p377ReportCols = db.all('PRAGMA table_info(program377_reports)').map(c => c.name);
+  ['ai_feedback', 'flag_level', 'flagged_reason', 'agent2_notified_at'].forEach((col) => {
+    if (!p377ReportCols.includes(col)) {
+      db.exec(`ALTER TABLE program377_reports ADD COLUMN ${col} TEXT`);
+      console.log(`  Migrated program377_reports: added ${col}.`);
+    }
+  });
+
   // Migrate ttm_body_photos: add drive_folder_id (mỗi user 1 thư mục Drive riêng, tái dùng lần sau)
   const ttmPhotoCols = db.all('PRAGMA table_info(ttm_body_photos)').map(c => c.name);
   if (!ttmPhotoCols.includes('drive_folder_id')) {
@@ -4143,6 +4153,81 @@ QUY TẮC BẮT BUỘC:
     }
   }
 
+  // Bản tổng kết báo cáo 377 ngày gửi Agent 2 — đầy đủ hơn nhật ký ăn uống (thêm nước tiểu,
+  // phân, tập luyện, mồ hôi, cảm nhận) để An Nhiên ghi nhận đúng thay đổi sức khỏe từng ngày.
+  function buildProgram377ReportSummary(todayReport, recentReports) {
+    const lines = [`Ngày báo cáo: ${todayReport.report_date} (ngày thứ ${todayReport.day_number || '?'}/377)`];
+    if (todayReport.meal_breakfast) lines.push(`Bữa sáng: ${todayReport.meal_breakfast}`);
+    if (todayReport.meal_lunch)     lines.push(`Bữa trưa: ${todayReport.meal_lunch}`);
+    if (todayReport.meal_dinner)    lines.push(`Bữa tối: ${todayReport.meal_dinner}`);
+    lines.push(`Màu sắc đã ăn: ${(JSON.parse(todayReport.meal_colors || '[]')).join(', ') || 'không ghi'}`);
+    lines.push(`Vị đã ăn: ${(JSON.parse(todayReport.meal_tastes || '[]')).join(', ') || 'không ghi'}`);
+    if (todayReport.urine_amount || todayReport.urine_color)
+      lines.push(`Nước tiểu: ${[todayReport.urine_amount, todayReport.urine_color].filter(Boolean).join(' — ')}`);
+    if (todayReport.stool_shape || todayReport.stool_color)
+      lines.push(`Phân: ${[todayReport.stool_shape, todayReport.stool_color].filter(Boolean).join(' — ')}`);
+    if (todayReport.exercise_type)
+      lines.push(`Tập luyện: ${todayReport.exercise_type}${todayReport.exercise_minutes ? ` (${todayReport.exercise_minutes} phút)` : ''}`);
+    if (todayReport.sweat_amount || todayReport.sweat_taste)
+      lines.push(`Mồ hôi: ${[todayReport.sweat_amount, todayReport.sweat_taste].filter(Boolean).join(' — ')}`);
+    if (todayReport.feeling_note) lines.push(`Cảm nhận/biểu hiện cơ thể: ${todayReport.feeling_note}`);
+    const prior = (recentReports || []).filter(r => r.report_date !== todayReport.report_date);
+    if (prior.length) {
+      lines.push('', 'Các ngày gần đây (để tham khảo xu hướng):');
+      prior.forEach(r => {
+        const c = JSON.parse(r.meal_colors || '[]').join('/') || '-';
+        const t = JSON.parse(r.meal_tastes || '[]').join('/') || '-';
+        lines.push(`- ${r.report_date}: màu ${c}, vị ${t}, nước tiểu ${r.urine_amount || '-'}/${r.urine_color || '-'}, tập luyện ${r.exercise_type || '-'}`);
+      });
+    }
+    return lines.join('\n');
+  }
+
+  // Giống hệt runAgent2Coaching (meal_logs) nhưng ghi vào program377_reports — dùng làm nội
+  // dung tab "Kết quả" (thay đổi sức khỏe qua từng ngày, do An Nhiên ghi nhận tự động).
+  async function runProgram377Coaching(userId, reportId, reportDate) {
+    try {
+      const todayReport = db.get('SELECT * FROM program377_reports WHERE id = ?', [reportId]);
+      if (!todayReport) return;
+      const recentReports = db.all(
+        'SELECT report_date, meal_colors, meal_tastes, urine_amount, urine_color, exercise_type FROM program377_reports WHERE user_id = ? ORDER BY report_date DESC LIMIT 7',
+        [userId]
+      );
+      const summary = buildProgram377ReportSummary(todayReport, recentReports);
+      const context = buildCustomerContext(userId);
+      const input = context ? `${context}\n[BÁO CÁO NGÀY THỨ ${todayReport.day_number || '?'}/377]\n${summary}` : summary;
+      const result = await callGoclawAgent2(input);
+      if (!result.ok) {
+        console.error('  [Agent 2 · 377 ngày] lỗi gọi GoClaw:', result.error);
+        return;
+      }
+      const { flagLevel, flaggedReason, feedback } = parseAgent2Response(result.text);
+      db.run(
+        'UPDATE program377_reports SET ai_feedback=?, flag_level=?, flagged_reason=? WHERE id=?',
+        [feedback, flagLevel, flaggedReason || null, reportId]
+      );
+
+      const user = db.get('SELECT first_name, telegram_chat_id FROM users WHERE id = ?', [userId]);
+      if (user && user.telegram_chat_id && feedback) {
+        const sendResult = await sendTelegramMessage(user.telegram_chat_id, feedback);
+        if (sendResult.ok) {
+          db.run("UPDATE program377_reports SET agent2_notified_at = datetime('now','localtime') WHERE id = ?", [reportId]);
+        } else {
+          console.error('  [Agent 2 · 377 ngày] gửi Telegram cho khách thất bại:', sendResult.error || sendResult);
+        }
+      }
+
+      if (flagLevel === 'warning' || flagLevel === 'urgent') {
+        const admins = db.all("SELECT telegram_chat_id FROM users WHERE is_admin = 1 AND telegram_chat_id IS NOT NULL AND telegram_chat_id != ''");
+        const icon = flagLevel === 'urgent' ? '🚨' : '⚠️';
+        const alertText = `${icon} <b>Cảnh báo ${flagLevel.toUpperCase()} — 377 ngày</b>\nKhách: ${user ? user.first_name : 'user #' + userId}\nNgày: ${reportDate}\nLý do: ${flaggedReason || '(không nêu rõ)'}\n\n${feedback}`;
+        for (const a of admins) await sendTelegramMessage(a.telegram_chat_id, alertText);
+      }
+    } catch (err) {
+      console.error('  [Agent 2 · 377 ngày] lỗi xử lý coaching:', err.message);
+    }
+  }
+
   app.post('/api/meal-logs', (req, res) => {
     const { user_id, log_date, breakfast, lunch, dinner, colors, tastes, note } = req.body;
     if (!user_id || !log_date || !/^\d{4}-\d{2}-\d{2}$/.test(log_date))
@@ -4373,6 +4458,9 @@ QUY TẮC BẮT BUỘC:
     recomputeStreak(user_id);
 
     res.json({ ok: true, reportId, isLate: !!isLate });
+
+    // Fire-and-forget: không bắt khách chờ vòng gọi AI/Telegram.
+    runProgram377Coaching(user_id, reportId, report_date);
   });
 
   app.get('/api/program377/sessions', (req, res) => {
