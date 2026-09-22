@@ -510,11 +510,16 @@
     }
 
     function toEmbedUrl(url) {
-      const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+      const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]+)/);
       if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
       const vm = url.match(/vimeo\.com\/(\d+)/);
       if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
       return url;
+    }
+
+    function youtubeThumbUrl(url) {
+      const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]+)/);
+      return yt ? `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg` : null;
     }
 
     function openLightbox(m) {
@@ -544,10 +549,13 @@
         const mediaRow = document.getElementById('aboutMediaRow');
         if (data.media && data.media.length) {
           mediaRow.innerHTML = data.media.map((m, i) => {
+            const ytThumb = m.type === 'video' ? youtubeThumbUrl(m.url) : null;
             const inner = m.type === 'video'
-              ? (/youtube\.com|youtu\.be|vimeo\.com/i.test(m.url)
-                  ? `<div style="width:220px;height:124px;background:#111;"></div>`
-                  : `<video src="${esc(m.url)}" muted></video>`)
+              ? (ytThumb
+                  ? `<img src="${esc(ytThumb)}" alt="" loading="lazy">`
+                  : /vimeo\.com/i.test(m.url)
+                    ? `<div style="width:220px;height:124px;background:#111;"></div>`
+                    : `<video src="${esc(m.url)}" muted></video>`)
               : `<img src="${esc(m.url)}" alt="" loading="lazy">`;
             const playIcon = m.type === 'video' ? '<div class="about-media-play">▶</div>' : '';
             return `<div class="about-media-item" onclick='openLightbox(${JSON.stringify(m).replace(/'/g, "&#39;")})'>${inner}${playIcon}</div>`;
