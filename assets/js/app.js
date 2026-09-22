@@ -27,6 +27,14 @@ function closeMainMenu() {
   document.body.style.overflow = '';
 }
 
+function toggleSidebar() {
+  document.getElementById('mob-sidebar')?.classList.contains('open') ? closeSidebar() : openSidebar();
+}
+
+function toggleMainMenu() {
+  document.getElementById('mob-mainmenu')?.classList.contains('open') ? closeMainMenu() : openMainMenu();
+}
+
 // ── Dynamic community branding ─────────────────────────────
 (function applyCommunityBranding() {
   const DEFAULT_NAME = 'Ăn Uống Ngũ Hành';
