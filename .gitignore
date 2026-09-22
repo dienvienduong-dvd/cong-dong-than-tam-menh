@@ -5,3 +5,4 @@ node_modules/
 *.err
 thong-tin-vps
 uploads/
+google-service-account.json

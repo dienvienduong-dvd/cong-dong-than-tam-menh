@@ -2357,6 +2357,7 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('courses', this)">🎓 Khóa học</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('email', this)">⚙️ Email</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('ai', this)">🤖 AI</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('drive', this); loadDriveStatus();">🗂️ Google Drive</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('assistant', this); loadAssistantLogs();">🌿 Trợ lý</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('calendar', this)">📅 Lịch</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
@@ -2688,6 +2689,27 @@
                 <button class="btn-sm primary" onclick="saveAiProvider()">💾 Lưu</button>
                 <button class="btn-sm" onclick="hideAiProviderForm()">Huỷ</button>
               </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- Google Drive — kho lưu Hồ sơ ảnh (3 ảnh dáng người + video) -->
+        <div class="settings-tab-panel" data-tab="drive">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>🗂️ Google Drive — Hồ sơ ảnh khách hàng</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+              Ảnh 3 dáng người + video ngồi-đứng khách hàng upload trong tab "Hồ sơ ảnh" sẽ được tự động lưu vào
+              tài khoản Google Drive <strong>dienvienduong@gmail.com</strong> (mỗi khách 1 thư mục riêng trong thư mục
+              "377hsttm - Hồ sơ Khách hàng"). Cần kết nối 1 lần để server được phép tự upload thay bạn.
+            </div>
+            <div id="driveStatusBox" style="padding:12px 14px;border-radius:8px;background:#f8fafc;font-size:13px;">Đang kiểm tra...</div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="connectGoogleDrive()">🔗 Kết nối / Kết nối lại Google Drive</button>
+              <button class="btn-sm" onclick="loadDriveStatus()">↺ Kiểm tra lại</button>
             </div>
           </div>
         </div>
@@ -5029,7 +5051,7 @@
           ? `<div style="text-align:center;"><a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${escHtml(label)}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></a><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">${escHtml(label)}</div></div>`
           : '';
         const vid = p.video
-          ? `<div style="grid-column:1/-1;text-align:center;"><video src="${p.video}" controls style="width:100%;max-height:260px;border-radius:8px;border:1px solid var(--border);"></video><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Video ngồi xuống — đứng lên</div></div>`
+          ? `<div style="grid-column:1/-1;text-align:center;"><iframe src="${p.video}" allow="autoplay" style="width:100%;height:260px;border:1px solid var(--border);border-radius:8px;"></iframe><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Video ngồi xuống — đứng lên</div></div>`
           : '';
         box.innerHTML = shot(p.front, 'Phía trước') + shot(p.back, 'Phía sau') + shot(p.side, 'Bên hông') + vid;
       } catch (e) {
@@ -5384,6 +5406,25 @@
       btn.classList.add('active');
       document.querySelectorAll('.settings-tab-panel').forEach(p => p.classList.remove('active'));
       document.querySelector(`.settings-tab-panel[data-tab="${name}"]`)?.classList.add('active');
+    }
+
+    // ── Google Drive (Hồ sơ ảnh) ─────────────────────────────────────
+    async function loadDriveStatus() {
+      const box = document.getElementById('driveStatusBox');
+      box.textContent = 'Đang kiểm tra...';
+      try {
+        const d = await api('/admin/drive-oauth/status');
+        box.innerHTML = d.connected
+          ? `✅ Đã kết nối — tài khoản <strong>${escHtml(d.email || '')}</strong>${d.connectedAt ? `, lúc ${fmtDate(d.connectedAt)}` : ''}`
+          : `⚠️ Chưa kết nối Google Drive. Bấm "Kết nối" bên dưới.`;
+        box.style.color = d.connected ? 'var(--muted)' : '#b45309';
+      } catch (e) {
+        box.textContent = 'Không kiểm tra được trạng thái.';
+      }
+    }
+
+    function connectGoogleDrive() {
+      window.open(`${API}/admin/drive-oauth/start?key=${encodeURIComponent(adminKey)}`, '_blank');
     }
 
     let aboutMedia = [];

@@ -111,12 +111,12 @@ function parseCSVRow(line) {
 }
 const DB_PATH  = path.join(__dirname, 'brain.db');
 
-// ── Ttm body photos/video upload (Hồ sơ ảnh) ─────────────────
-const TTM_PHOTOS_DIR = path.join(__dirname, 'uploads', 'ttm-photos');
-fs.mkdirSync(TTM_PHOTOS_DIR, { recursive: true });
+// ── Ttm body photos/video upload (Hồ sơ ảnh) — lưu tạm rồi đẩy lên Google Drive ──
+const TTM_PHOTOS_TMP_DIR = path.join(__dirname, 'uploads', 'ttm-photos-tmp');
+fs.mkdirSync(TTM_PHOTOS_TMP_DIR, { recursive: true });
 
 const ttmPhotoStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, TTM_PHOTOS_DIR),
+  destination: (req, file, cb) => cb(null, TTM_PHOTOS_TMP_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname || '').toLowerCase().replace(/[^a-z0-9.]/g, '');
     cb(null, `u${req.params.userId}-${file.fieldname}-${Date.now()}${ext}`);
@@ -131,6 +131,58 @@ const ttmPhotoUpload = multer({
     cb(isImage || isVideo ? null : new Error('Định dạng file không hợp lệ.'), isImage || isVideo);
   },
 });
+
+// ── Google Drive (OAuth với tài khoản dienvienduong@gmail.com — kho lưu ảnh/video Hồ sơ ảnh) ──
+// Service Account trần không có storage quota nên không upload được file thật (chỉ tạo được
+// thư mục 0-byte) — phải dùng OAuth với 1 tài khoản Google thật để file dùng đúng quota của
+// tài khoản đó, khớp với cách dữ liệu cũ (thư mục "377hsttm - Hồ sơ Khách hàng") đang được lưu.
+const { google }                    = require('googleapis');
+const GOOGLE_DRIVE_OAUTH_CLIENT_ID     = process.env.GOOGLE_DRIVE_OAUTH_CLIENT_ID || '';
+const GOOGLE_DRIVE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_DRIVE_OAUTH_CLIENT_SECRET || '';
+const GOOGLE_DRIVE_REDIRECT_URI        = `${SITE_URL}/api/admin/drive-oauth/callback`;
+const GOOGLE_DRIVE_PARENT_FOLDER_ID    = process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID || '';
+const GOOGLE_DRIVE_SCOPES = [
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/userinfo.email',
+];
+
+function newDriveOAuthClient() {
+  if (!GOOGLE_DRIVE_OAUTH_CLIENT_ID || !GOOGLE_DRIVE_OAUTH_CLIENT_SECRET) {
+    throw new Error('Chưa cấu hình GOOGLE_DRIVE_OAUTH_CLIENT_ID / GOOGLE_DRIVE_OAUTH_CLIENT_SECRET.');
+  }
+  return new google.auth.OAuth2(GOOGLE_DRIVE_OAUTH_CLIENT_ID, GOOGLE_DRIVE_OAUTH_CLIENT_SECRET, GOOGLE_DRIVE_REDIRECT_URI);
+}
+
+// Upload 1 file local lên 1 thư mục Drive, set quyền "anyone with link" để nhúng lại được,
+// trả về { fileId, displayUrl } — ảnh dùng link xem trực tiếp, video dùng link nhúng iframe.
+async function uploadToUserDrive(drive, localFilePath, filename, mimeType, folderId, isVideo) {
+  const created = await drive.files.create({
+    requestBody: { name: filename, parents: [folderId] },
+    media: { mimeType, body: fs.createReadStream(localFilePath) },
+    fields: 'id',
+  });
+  const fileId = created.data.id;
+
+  await drive.permissions.create({
+    fileId,
+    requestBody: { role: 'reader', type: 'anyone' },
+  });
+
+  const displayUrl = isVideo
+    ? `https://drive.google.com/file/d/${fileId}/preview`
+    : `https://drive.google.com/uc?export=view&id=${fileId}`;
+  return { fileId, displayUrl };
+}
+
+// Xoá 1 file Drive cũ khi bị thay thế (best-effort, không throw nếu lỗi).
+async function deleteDriveFileByUrl(drive, url) {
+  if (!url) return;
+  const m = url.match(/[?&]id=([^&]+)/) || url.match(/\/file\/d\/([^/]+)/);
+  if (!m) return;
+  try {
+    await drive.files.delete({ fileId: m[1] });
+  } catch (e) { /* file đã bị xoá tay trên Drive hoặc lỗi mạng — bỏ qua */ }
+}
 
 app.use(cors());
 app.use(express.json());
@@ -1422,6 +1474,57 @@ const COURSE_SEED = [
   if (!spaceCols.includes('allow_join_requests')) {
     db.exec('ALTER TABLE spaces ADD COLUMN allow_join_requests INTEGER DEFAULT 1');
     console.log('  Migrated spaces: added allow_join_requests.');
+  }
+
+  // Migrate ttm_body_photos: add drive_folder_id (mỗi user 1 thư mục Drive riêng, tái dùng lần sau)
+  const ttmPhotoCols = db.all('PRAGMA table_info(ttm_body_photos)').map(c => c.name);
+  if (!ttmPhotoCols.includes('drive_folder_id')) {
+    db.exec('ALTER TABLE ttm_body_photos ADD COLUMN drive_folder_id TEXT');
+    console.log('  Migrated ttm_body_photos: added drive_folder_id.');
+  }
+
+  // Lấy Drive client đã xác thực bằng OAuth refresh token (kết nối 1 lần qua Admin > Cài đặt >
+  // Google Drive). Refresh token được lưu trong admin_secrets, googleapis tự làm mới access token.
+  function getDriveClient() {
+    if (!GOOGLE_DRIVE_PARENT_FOLDER_ID) {
+      throw new Error('Chưa cấu hình GOOGLE_DRIVE_PARENT_FOLDER_ID.');
+    }
+    const refreshToken = db.get("SELECT value FROM admin_secrets WHERE key = 'google_drive_refresh_token'")?.value;
+    if (!refreshToken) {
+      throw new Error('Chưa kết nối Google Drive — vào Admin > Cài đặt > Google Drive để kết nối.');
+    }
+    const oauth2Client = newDriveOAuthClient();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    return google.drive({ version: 'v3', auth: oauth2Client });
+  }
+
+  // Mỗi user có 1 thư mục con riêng trong thư mục cha trên Drive — tạo 1 lần, tái dùng cho các lần
+  // upload sau. Đặt tên theo đúng quy ước thư mục cũ: "Tên - SĐT - Ngày tạo".
+  async function ensureUserDriveFolder(drive, userId) {
+    const existing = db.get('SELECT drive_folder_id FROM ttm_body_photos WHERE user_id = ?', [userId]);
+    if (existing?.drive_folder_id) return existing.drive_folder_id;
+
+    const user = db.get('SELECT first_name, last_name, phone FROM users WHERE id = ?', [userId]);
+    const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || `User #${userId}`;
+    const today = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+    const folderName = `${fullName} - ${user?.phone || 'N/A'} - ${today}`;
+
+    const folder = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [GOOGLE_DRIVE_PARENT_FOLDER_ID],
+      },
+      fields: 'id',
+    });
+    const folderId = folder.data.id;
+
+    if (existing) {
+      db.run('UPDATE ttm_body_photos SET drive_folder_id = ? WHERE user_id = ?', [folderId, userId]);
+    } else {
+      db.run('INSERT INTO ttm_body_photos (user_id, drive_folder_id) VALUES (?, ?)', [userId, folderId]);
+    }
+    return folderId;
   }
 
   const seedChallengeDays = () => {
@@ -5910,56 +6013,108 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
 
   // Khách upload/thay hồ sơ ảnh — multipart/form-data, field: front/back/side/video (mỗi field optional,
   // chỉ field nào gửi lên mới được cập nhật, các field khác giữ nguyên giá trị cũ).
+  // File được lưu tạm trên đĩa, đẩy lên thư mục Drive riêng của user, rồi xoá bản tạm — không giữ file
+  // lâu dài trên VPS.
   app.post('/api/ttm/photos/:userId', (req, res) => {
     ttmPhotoUpload.fields([
       { name: 'front', maxCount: 1 }, { name: 'back', maxCount: 1 },
       { name: 'side', maxCount: 1 }, { name: 'video', maxCount: 1 },
-    ])(req, res, (err) => {
+    ])(req, res, async (err) => {
       if (err) return res.status(400).json({ error: err.message || 'Upload thất bại.' });
 
       const userId = req.params.userId;
-      const user = db.get('SELECT id FROM users WHERE id = ?', [userId]);
-      if (!user) return res.status(404).json({ error: 'User not found' });
+      const tmpFiles = ['front', 'back', 'side', 'video']
+        .map(f => req.files?.[f]?.[0]).filter(Boolean);
+      const cleanupTmp = () => tmpFiles.forEach(f => fs.unlink(f.path, () => {}));
+      const DRIVE_FILE_NAME = { front: 'Anh-mat-truoc', back: 'Anh-mat-sau', side: 'Anh-chup-ngang', video: 'Video-ngoi-dung' };
 
-      const existing = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [userId]);
-      const urlOf = (field) => req.files?.[field]?.[0]
-        ? `/uploads/ttm-photos/${req.files[field][0].filename}` : null;
+      try {
+        const user = db.get('SELECT id FROM users WHERE id = ?', [userId]);
+        if (!user) { cleanupTmp(); return res.status(404).json({ error: 'User not found' }); }
 
-      const oldFileFor = (field) => {
-        const old = existing?.[`${field}_url`];
-        if (old && old.startsWith('/uploads/ttm-photos/')) return path.join(__dirname, old);
-        return null;
-      };
+        const existing = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [userId]);
+        if (tmpFiles.length) {
+          const drive = getDriveClient();
+          const folderId = await ensureUserDriveFolder(drive, userId);
 
-      const next = {
-        front: urlOf('front') || existing?.front_url || null,
-        back:  urlOf('back')  || existing?.back_url  || null,
-        side:  urlOf('side')  || existing?.side_url  || null,
-        video: urlOf('video') || existing?.video_url || null,
-      };
-
-      if (existing) {
-        db.run(
-          `UPDATE ttm_body_photos SET front_url=?, back_url=?, side_url=?, video_url=?, updated_at=datetime('now','localtime') WHERE user_id=?`,
-          [next.front, next.back, next.side, next.video, userId]
-        );
-      } else {
-        db.run(
-          'INSERT INTO ttm_body_photos (user_id, front_url, back_url, side_url, video_url) VALUES (?,?,?,?,?)',
-          [userId, next.front, next.back, next.side, next.video]
-        );
-      }
-
-      // Xoá file cũ trên đĩa nếu vừa được thay bằng file mới
-      ['front', 'back', 'side', 'video'].forEach((field) => {
-        if (urlOf(field)) {
-          const oldPath = oldFileFor(field);
-          if (oldPath) fs.unlink(oldPath, () => {});
+          for (const field of ['front', 'back', 'side', 'video']) {
+            const file = req.files?.[field]?.[0];
+            if (!file) continue;
+            const ext = path.extname(file.originalname || '') || (field === 'video' ? '.mp4' : '.jpg');
+            const { displayUrl } = await uploadToUserDrive(
+              drive, file.path, `${DRIVE_FILE_NAME[field]}${ext}`, file.mimetype, folderId, field === 'video'
+            );
+            const oldUrl = existing?.[`${field}_url`];
+            if (oldUrl) deleteDriveFileByUrl(drive, oldUrl).catch(() => {});
+            db.run(
+              `INSERT INTO ttm_body_photos (user_id, ${field}_url) VALUES (?, ?)
+               ON CONFLICT(user_id) DO UPDATE SET ${field}_url = excluded.${field}_url, updated_at = datetime('now','localtime')`,
+              [userId, displayUrl]
+            );
+          }
         }
-      });
 
-      res.json({ ok: true, photos: next });
+        cleanupTmp();
+        const row = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [userId]);
+        res.json({
+          ok: true,
+          photos: { front: row.front_url, back: row.back_url, side: row.side_url, video: row.video_url },
+        });
+      } catch (e) {
+        cleanupTmp();
+        console.error('[TTM] Drive upload failed:', e.message);
+        res.status(502).json({ error: 'Tải lên Google Drive thất bại: ' + e.message });
+      }
     });
+  });
+
+  // ── Google Drive OAuth (kết nối 1 lần qua Admin > Cài đặt > Google Drive) ──
+  app.get('/api/admin/drive-oauth/status', requireAdmin, (req, res) => {
+    const refreshToken = db.get("SELECT value FROM admin_secrets WHERE key = 'google_drive_refresh_token'")?.value;
+    const email = db.get("SELECT value FROM admin_secrets WHERE key = 'google_drive_email'")?.value;
+    const connectedAt = db.get("SELECT value FROM admin_secrets WHERE key = 'google_drive_connected_at'")?.value;
+    res.json({ connected: !!refreshToken, email: email || null, connectedAt: connectedAt || null });
+  });
+
+  app.get('/api/admin/drive-oauth/start', (req, res) => {
+    if (req.query.key !== ADMIN_KEY) return res.status(401).send('Unauthorized');
+    try {
+      const oauth2Client = newDriveOAuthClient();
+      const url = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        prompt: 'consent', // luôn hỏi lại để chắc chắn nhận được refresh_token (lần sau Google có thể không trả lại)
+        scope: GOOGLE_DRIVE_SCOPES,
+      });
+      res.redirect(url);
+    } catch (e) {
+      res.status(500).send('Lỗi cấu hình OAuth: ' + e.message);
+    }
+  });
+
+  app.get('/api/admin/drive-oauth/callback', async (req, res) => {
+    try {
+      if (req.query.error) throw new Error(req.query.error);
+      const oauth2Client = newDriveOAuthClient();
+      const { tokens } = await oauth2Client.getToken(req.query.code);
+      if (!tokens.refresh_token) {
+        throw new Error('Không nhận được refresh_token. Vào myaccount.google.com/permissions gỡ quyền truy cập cũ của app này rồi thử kết nối lại.');
+      }
+      oauth2Client.setCredentials(tokens);
+      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const me = await oauth2.userinfo.get();
+
+      const upsertSecret = (key, value) => db.run(
+        `INSERT INTO admin_secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [key, value]
+      );
+      upsertSecret('google_drive_refresh_token', tokens.refresh_token);
+      upsertSecret('google_drive_email', me.data.email || '');
+      upsertSecret('google_drive_connected_at', new Date().toISOString());
+
+      res.send('<h2>✅ Đã kết nối Google Drive thành công!</h2><p>Tài khoản: ' + (me.data.email || '') + '</p><p>Bạn có thể đóng tab này.</p>');
+    } catch (e) {
+      res.status(500).send('<h3>❌ Lỗi kết nối Google Drive</h3><p>' + (e.message || 'Unknown error') + '</p>');
+    }
   });
 
   // Admin: xem hồ sơ ảnh của 1 học viên (dùng trong modal duyệt lộ trình)
