@@ -1025,6 +1025,8 @@
     .settings-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
     .settings-tab-panel { display: none; }
     .settings-tab-panel.active { display: block; }
+    .mpp-top-tab-panel, .mpp-ttm-tab-panel, .mpp-comm-tab-panel, .mpp-learn-tab-panel { display: none; }
+    .mpp-top-tab-panel.active, .mpp-ttm-tab-panel.active, .mpp-comm-tab-panel.active, .mpp-learn-tab-panel.active { display: block; }
 
     .mp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
     .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
@@ -1204,6 +1206,12 @@
         </div>
 
         <div class="sbar-section">Thân Tâm Mệnh</div>
+        <button class="sbar-item" onclick="showPage('member-profile-list')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+          </svg>
+          Profile thành viên
+        </button>
         <button class="sbar-item" onclick="showPage('ttm-roadmaps')">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z" />
@@ -2122,6 +2130,104 @@
             <button class="btn-sm" id="mlPrevBtn" onclick="mlPage(-1)">← Trước</button>
             <span id="mlPageInfo" style="font-size:12px;color:var(--muted);align-self:center;"></span>
             <button class="btn-sm" id="mlNextBtn" onclick="mlPage(1)">Sau →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Profile thành viên — danh sách ─────────────────────────── -->
+      <section class="page" id="page-member-profile-list">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Danh sách thành viên</h2>
+            <input class="search-input" type="text" placeholder="Tìm tên, email..." id="mpListSearch"
+              oninput="debounceMpList()">
+          </div>
+          <div style="overflow-x:auto">
+            <table id="mpListTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Thành viên</th>
+                  <th>Email</th>
+                  <th>Level / XP</th>
+                  <th>Streak</th>
+                  <th>Trạng thái</th>
+                  <th>Tham gia</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="mpListTbody">
+                <tr><td colspan="8"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager" id="mpListPager"></div>
+        </div>
+      </section>
+
+      <!-- ── Profile thành viên — chi tiết 1 thành viên ─────────────── -->
+      <section class="page" id="page-member-profile-detail">
+        <button class="btn-sm" onclick="showPage('member-profile-list')">← Quay lại danh sách</button>
+
+        <div class="table-card" style="margin-top:12px;">
+          <div id="mpHeader" style="padding:20px 24px;"></div>
+        </div>
+
+        <div class="settings-tabs" style="margin-top:16px;">
+          <button class="settings-tab-btn mpp-top-tab-btn active" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','roadmap',this)">🌿 Lộ trình</button>
+          <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','learning',this)">🎓 Học tập</button>
+          <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','meallogs',this)">🍽️ Nhật ký ăn uống</button>
+          <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','community',this)">💬 Cộng đồng</button>
+        </div>
+
+        <!-- Lộ trình -->
+        <div class="mpp-top-tab-panel active" data-tab="roadmap">
+          <div class="settings-tabs">
+            <button class="settings-tab-btn mpp-ttm-tab-btn active" onclick="mpTab('mpp-ttm-tab-btn','mpp-ttm-tab-panel','intake',this)">📋 Khảo sát</button>
+            <button class="settings-tab-btn mpp-ttm-tab-btn" onclick="mpTab('mpp-ttm-tab-btn','mpp-ttm-tab-panel','photos',this)">🧍 Ảnh hồ sơ</button>
+            <button class="settings-tab-btn mpp-ttm-tab-btn" onclick="mpTab('mpp-ttm-tab-btn','mpp-ttm-tab-panel','roadmap-content',this)">🌿 Lộ trình</button>
+          </div>
+          <div class="mpp-ttm-tab-panel active" data-tab="intake">
+            <div class="table-card"><div id="mpIntakeBox" style="padding:20px 24px;"></div></div>
+          </div>
+          <div class="mpp-ttm-tab-panel" data-tab="photos">
+            <div class="table-card"><div id="mpPhotosBox" style="padding:20px 24px;"></div></div>
+          </div>
+          <div class="mpp-ttm-tab-panel" data-tab="roadmap-content">
+            <div class="table-card"><div id="mpRoadmapBox" style="padding:20px 24px;"></div></div>
+          </div>
+        </div>
+
+        <!-- Học tập -->
+        <div class="mpp-top-tab-panel" data-tab="learning">
+          <div class="settings-tabs" id="mpLearningTabs"></div>
+          <div id="mpLearningPanels"></div>
+        </div>
+
+        <!-- Nhật ký ăn uống -->
+        <div class="mpp-top-tab-panel" data-tab="meallogs">
+          <div class="table-card">
+            <div class="table-card-header"><h2>Nhật ký ăn uống (<span id="mpMlTotal">0</span>)</h2></div>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead><tr><th>Ngày</th><th>Bữa sáng</th><th>Bữa trưa</th><th>Bữa tối</th><th>Màu / Vị</th><th>Nhận xét AI</th><th>Cờ</th></tr></thead>
+                <tbody id="mpMlTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cộng đồng -->
+        <div class="mpp-top-tab-panel" data-tab="community">
+          <div class="settings-tabs">
+            <button class="settings-tab-btn mpp-comm-tab-btn active" onclick="mpTab('mpp-comm-tab-btn','mpp-comm-tab-panel','cposts',this)">✏️ Bài viết</button>
+            <button class="settings-tab-btn mpp-comm-tab-btn" onclick="mpTab('mpp-comm-tab-btn','mpp-comm-tab-panel','ccomments',this)">💬 Bình luận</button>
+          </div>
+          <div class="mpp-comm-tab-panel active" data-tab="cposts">
+            <div class="table-card"><div id="mpPostsBox" style="padding:12px 0;"></div></div>
+          </div>
+          <div class="mpp-comm-tab-panel" data-tab="ccomments">
+            <div class="table-card"><div id="mpCommentsBox" style="padding:12px 0;"></div></div>
           </div>
         </div>
       </section>
@@ -3732,6 +3838,8 @@
       camnang: ['Thực phẩm & Công thức', 'Dữ liệu cho trang Tra cứu & Thư viện công thức'],
       meallogs: ['Nhật ký ăn uống', 'Toàn bộ nhật ký ăn uống của thành viên'],
       'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
+      'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
+      'member-profile-detail': ['Hồ sơ thành viên', ''],
     };
 
     function showPage(name) {
@@ -3764,6 +3872,7 @@
       if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
       if (name === 'meallogs') loadMealLogs();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
+      if (name === 'member-profile-list') loadMemberProfileList();
     }
 
     // ── Cẩm nang: thực phẩm & công thức ──────────────────────────
@@ -5093,6 +5202,253 @@
         await loadTtmRoadmaps();
         openTtmRoadmap(reviewingTtmId);
       } catch (e) { showToast('Lỗi gọi Agent 1: ' + e.message, 'red'); }
+    }
+
+    // ── Profile thành viên (hồ sơ 360° — Lộ trình / Học tập / Nhật ký / Cộng đồng) ──
+    let mpListOffset = 0;
+    const MPLIST_LIMIT = 20;
+    let mpListTotal = 0;
+    let mpListDebTimer = null;
+    let mpCurrentUserId = null;
+
+    function debounceMpList() {
+      clearTimeout(mpListDebTimer);
+      mpListDebTimer = setTimeout(() => { mpListOffset = 0; loadMemberProfileList(); }, 300);
+    }
+    function mpListPage(dir) {
+      mpListOffset = Math.max(0, mpListOffset + dir * MPLIST_LIMIT);
+      loadMemberProfileList();
+    }
+
+    async function loadMemberProfileList() {
+      const search = document.getElementById('mpListSearch').value.trim();
+      const d = await api(`/admin/users?search=${encodeURIComponent(search)}&status=&limit=${MPLIST_LIMIT}&offset=${mpListOffset}`);
+      mpListTotal = d.total;
+      const tbody = document.getElementById('mpListTbody');
+      if (!d.users.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">Không tìm thấy thành viên nào.</div></td></tr>`;
+        document.getElementById('mpListPager').innerHTML = '';
+        return;
+      }
+      tbody.innerHTML = d.users.map((u, i) => `
+    <tr>
+      <td style="color:var(--muted)">${mpListOffset + i + 1}</td>
+      <td>
+        <div style="display:flex;align-items:center">
+          <div class="av" style="background:${avatarColor(u.id)}">${u.first_name[0]}</div>
+          <div>
+            <div style="font-weight:600">${escHtml(u.first_name)} ${escHtml(u.last_name)}</div>
+            <div style="font-size:11px;color:var(--muted)">ID #${u.id}</div>
+          </div>
+        </div>
+      </td>
+      <td>${escHtml(u.email)}</td>
+      <td>
+        <span class="badge badge-level">Lv${u.level}</span>
+        <span style="font-size:12px;color:var(--green);font-weight:700;margin-left:4px">${u.xp} XP</span>
+      </td>
+      <td>${u.streak > 0 ? `🔥 ${u.streak}` : '—'}</td>
+      <td><span class="badge badge-${u.status}">${statusLabel(u.status)}</span></td>
+      <td style="color:var(--muted)">${fmtDate(u.created_at)}</td>
+      <td><button class="act-btn" onclick="openMemberProfile(${u.id})">Xem hồ sơ</button></td>
+    </tr>`).join('');
+
+      const page = Math.floor(mpListOffset / MPLIST_LIMIT) + 1;
+      const pages = Math.max(1, Math.ceil(mpListTotal / MPLIST_LIMIT));
+      document.getElementById('mpListPager').innerHTML = `
+    <span>Tổng: <strong>${mpListTotal}</strong> thành viên</span>
+    <span style="flex:1"></span>
+    <button onclick="mpListPage(-1)" ${page <= 1 ? 'disabled' : ''}>← Trước</button>
+    <span>Trang ${page}/${pages}</span>
+    <button onclick="mpListPage(1)" ${page >= pages ? 'disabled' : ''}>Tiếp →</button>`;
+    }
+
+    // Scoped tab switcher dùng chung cho mọi nhóm tab trong trang Profile thành viên
+    // (mỗi nhóm có class riêng để không đụng các nhóm settings-tab-btn khác trên cùng trang).
+    function mpTab(btnClass, panelClass, name, btn) {
+      document.querySelectorAll('.' + btnClass).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.' + panelClass).forEach(p => p.classList.remove('active'));
+      document.querySelector(`.${panelClass}[data-tab="${name}"]`)?.classList.add('active');
+    }
+
+    async function openMemberProfile(userId) {
+      mpCurrentUserId = userId;
+      showPage('member-profile-detail');
+      document.getElementById('mpHeader').innerHTML = `<div class="empty-state">Đang tải...</div>`;
+      try {
+        const d = await api(`/admin/member-profile/${userId}`);
+        renderMpHeader(d.user);
+        renderMpIntake(d.ttm.intake);
+        renderMpPhotos(d.ttm.photos);
+        renderMpRoadmap(d.ttm.roadmap);
+        renderMpLearning(d.learning.groups);
+        renderMpCommunity(d.community.posts, d.community.comments);
+        loadMpMealLogs();
+      } catch (e) {
+        document.getElementById('mpHeader').innerHTML = `<div class="empty-state">Lỗi tải hồ sơ: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    function renderMpHeader(u) {
+      document.getElementById('mpHeader').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div class="av" style="background:${avatarColor(u.id)};width:52px;height:52px;font-size:20px;">${escHtml(u.firstName)[0] || '?'}</div>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:17px;font-weight:700;">${escHtml(u.firstName)} ${escHtml(u.lastName)} <span style="font-size:12px;color:var(--muted);font-weight:400;">ID #${u.id}</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px;">${escHtml(u.email)}${u.phone ? ' · ' + escHtml(u.phone) : ''}</div>
+      </div>
+      <span class="badge badge-level">Lv${u.level}</span>
+      <span style="font-size:13px;color:var(--green);font-weight:700;">${u.xp} XP</span>
+      <span style="font-size:13px;">${u.streak > 0 ? `🔥 ${u.streak} ngày` : '—'}</span>
+      <span class="badge badge-${u.status}">${statusLabel(u.status)}</span>
+      ${u.isAdmin ? '<span class="badge" style="background:#ede9fe;color:#6d28d9;">👑 Admin</span>' : ''}
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:10px;">
+      Tham gia ${fmtDate(u.createdAt)}${u.lastActiveAt ? ' · Hoạt động gần nhất ' + fmtDate(u.lastActiveAt) : ''}${u.ttmIntakeDoneAt ? ' · Đã làm khảo sát Thân-Tâm-Mệnh ' + fmtDate(u.ttmIntakeDoneAt) : ' · Chưa làm khảo sát Thân-Tâm-Mệnh'}
+    </div>`;
+    }
+
+    function renderMpIntake(intake) {
+      const box = document.getElementById('mpIntakeBox');
+      if (!intake) { box.innerHTML = `<div class="empty-state">Thành viên chưa làm khảo sát Thân-Tâm-Mệnh.</div>`; return; }
+      box.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Nộp lúc ${fmtDate(intake.submittedAt)}</div>
+    <div style="background:#f1f5f9;border-radius:8px;padding:14px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:#1e293b;">${escHtml(intake.summaryText)}</div>`;
+    }
+
+    function renderMpPhotos(p) {
+      const box = document.getElementById('mpPhotosBox');
+      if (!p || (!p.front && !p.back && !p.side && !p.video)) {
+        box.innerHTML = `<div class="empty-state">Thành viên chưa nộp hồ sơ ảnh.</div>`;
+        return;
+      }
+      const shot = (url, label) => url
+        ? `<div style="text-align:center;"><a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${escHtml(label)}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></a><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">${escHtml(label)}</div></div>`
+        : '';
+      const vid = p.video
+        ? `<div style="grid-column:1/-1;text-align:center;"><iframe src="${p.video}" allow="autoplay" style="width:100%;height:480px;border:1px solid var(--border);border-radius:8px;"></iframe><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Video ngồi xuống — đứng lên</div></div>`
+        : '';
+      box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">${shot(p.front, 'Phía trước') + shot(p.back, 'Phía sau') + shot(p.side, 'Bên hông') + vid}</div>
+    ${p.updatedAt ? `<div style="font-size:11px;color:var(--muted);margin-top:10px;">Cập nhật lần cuối: ${fmtDate(p.updatedAt)}</div>` : ''}`;
+    }
+
+    function renderMpRoadmap(r) {
+      const box = document.getElementById('mpRoadmapBox');
+      if (!r) { box.innerHTML = `<div class="empty-state">Chưa có lộ trình nào.</div>`; return; }
+      const statusLabelMap = { pending_approval: '⏳ Chờ duyệt', approved: '✅ Đã duyệt', rejected: '✖ Đã từ chối' };
+      box.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+      ${statusLabelMap[r.status] || r.status} — tạo lúc ${fmtDate(r.createdAt)}${r.reviewedAt ? ', duyệt lúc ' + fmtDate(r.reviewedAt) : ''}
+    </div>
+    ${r.adminNote ? `<div style="font-size:12.5px;color:#991b1b;margin-bottom:10px;">Ghi chú: ${escHtml(r.adminNote)}</div>` : ''}
+    <div style="background:#f1f5f9;border-radius:8px;padding:14px;font-size:12.5px;line-height:1.7;white-space:pre-wrap;color:#1e293b;">${escHtml(r.content || '(trống)')}</div>`;
+    }
+
+    function renderMpLearning(groups) {
+      const tabsBox = document.getElementById('mpLearningTabs');
+      const panelsBox = document.getElementById('mpLearningPanels');
+      if (!groups.length) {
+        tabsBox.innerHTML = '';
+        panelsBox.innerHTML = `<div class="table-card"><div class="empty-state" style="padding:20px 24px;">Chưa có nhóm chương trình nào (Cài đặt → Spaces).</div></div>`;
+        return;
+      }
+      tabsBox.innerHTML = groups.map((g, i) => `
+    <button class="settings-tab-btn mpp-learn-tab-btn ${i === 0 ? 'active' : ''}" onclick="mpTab('mpp-learn-tab-btn','mpp-learn-tab-panel','g${g.id}',this)">${escHtml(g.name)}</button>`).join('');
+
+      panelsBox.innerHTML = groups.map((g, i) => {
+        const spacesHtml = g.spaces.length ? g.spaces.map(s => {
+          const memberBadge = s.memberStatus
+            ? `<span class="badge badge-active" style="margin-left:8px;">${s.memberStatus === 'approved' ? '✅ Thành viên' : s.memberStatus}</span>`
+            : `<span class="badge" style="margin-left:8px;background:#f1f5f9;color:var(--muted);">Chưa tham gia</span>`;
+          const coursesHtml = s.courses.length ? `
+        <table class="data-table" style="margin-top:8px;">
+          <thead><tr><th>Khóa học</th><th>Ghi danh</th><th>Tiến độ bài học</th></tr></thead>
+          <tbody>
+            ${s.courses.map(c => `
+            <tr>
+              <td>${escHtml(c.title)}</td>
+              <td>${c.enrollStatus ? escHtml(c.enrollStatus) : '<span style="color:var(--muted)">—</span>'}</td>
+              <td>${c.totalLessons ? `${c.passedLessons}/${c.totalLessons} bài đã hoàn thành` : '<span style="color:var(--muted)">Chưa có bài học</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : `<div style="font-size:12px;color:var(--muted);margin-top:6px;">Không gian này chưa gán khóa học nào.</div>`;
+          return `
+        <div style="padding:14px 0;border-bottom:1px dashed var(--border);">
+          <div style="font-weight:600;font-size:13.5px;">${escHtml(s.name)}${memberBadge}</div>
+          ${coursesHtml}
+        </div>`;
+        }).join('') : `<div class="empty-state">Nhóm này chưa có Space nào.</div>`;
+
+        return `<div class="mpp-learn-tab-panel ${i === 0 ? 'active' : ''}" data-tab="g${g.id}">
+      <div class="table-card"><div style="padding:8px 24px 20px;">${spacesHtml}</div></div>
+    </div>`;
+      }).join('');
+    }
+
+    async function loadMpMealLogs() {
+      if (!mpCurrentUserId) return;
+      const tbody = document.getElementById('mpMlTbody');
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Đang tải...</div></td></tr>`;
+      try {
+        const qs = new URLSearchParams({ user_id: mpCurrentUserId, limit: 100, offset: 0 });
+        const { logs, total } = await api(`/admin/meal-logs?${qs}`);
+        document.getElementById('mpMlTotal').textContent = total;
+        if (!logs.length) {
+          tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Chưa có nhật ký nào.</div></td></tr>`;
+          return;
+        }
+        const flagStyle = {
+          urgent:  'background:#fee2e2;color:#991b1b;',
+          warning: 'background:#fef3c7;color:#92400e;',
+          none:    'background:#dcfce7;color:#166534;',
+        };
+        const flagLabel = { urgent: '🚨 Khẩn cấp', warning: '⚠️ Cần theo dõi', none: '✅ Bình thường' };
+        tbody.innerHTML = logs.map(l => `
+        <tr>
+          <td style="white-space:nowrap">${l.log_date}</td>
+          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.breakfast || '—')}</td>
+          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.lunch || '—')}</td>
+          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.dinner || '—')}</td>
+          <td style="font-size:11px;color:var(--muted)">${[...l.colors, ...l.tastes].map(escHtml).join(', ') || '—'}</td>
+          <td style="max-width:220px;font-size:12px;color:var(--muted)">${escHtml(l.ai_feedback || '—')}</td>
+          <td>${l.flag_level ? `<span class="badge" style="${flagStyle[l.flag_level] || flagStyle.none}">${flagLabel[l.flag_level] || l.flag_level}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+        </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Lỗi tải nhật ký.</div></td></tr>`;
+      }
+    }
+
+    function renderMpCommunity(posts, comments) {
+      const postsBox = document.getElementById('mpPostsBox');
+      postsBox.innerHTML = posts.length ? `
+    <table class="data-table">
+      <thead><tr><th>Tiêu đề</th><th>Trụ cột</th><th>Thích</th><th>Bình luận</th><th>Đăng lúc</th></tr></thead>
+      <tbody>
+        ${posts.map(p => `
+        <tr>
+          <td>${escHtml(p.title || '(không tiêu đề)')}</td>
+          <td>${escHtml(p.pillar || '—')}</td>
+          <td>${p.likes_count}</td>
+          <td>${p.comments_count}</td>
+          <td style="color:var(--muted)">${fmtDate(p.created_at)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : `<div class="empty-state">Chưa có bài đăng nào.</div>`;
+
+      const commentsBox = document.getElementById('mpCommentsBox');
+      commentsBox.innerHTML = comments.length ? `
+    <table class="data-table">
+      <thead><tr><th>Bình luận</th><th>Trong bài</th><th>Lúc</th></tr></thead>
+      <tbody>
+        ${comments.map(c => `
+        <tr>
+          <td>${escHtml(c.content)}</td>
+          <td style="color:var(--muted)">${escHtml(c.post_title || '(bài đã xoá)')}</td>
+          <td style="color:var(--muted)">${fmtDate(c.created_at)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : `<div class="empty-state">Chưa có bình luận nào.</div>`;
     }
 
     // ── Lesson exercises (AI-graded, read-only) ─────────────────────

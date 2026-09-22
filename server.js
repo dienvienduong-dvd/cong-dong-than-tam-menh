@@ -4056,12 +4056,13 @@ QUY TẮC BẮT BUỘC:
 
   // ── Admin: Nhật ký ăn uống (view/moderate every member's meal logs) ──
   app.get('/api/admin/meal-logs', requireAdmin, (req, res) => {
-    const { search = '', from = '', to = '', limit = 50, offset = 0 } = req.query;
+    const { search = '', from = '', to = '', user_id = '', limit = 50, offset = 0 } = req.query;
     const like = `%${search}%`;
     let sql = `SELECT m.*, u.first_name, u.last_name, u.email
                FROM meal_logs m JOIN users u ON u.id = m.user_id
                WHERE (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)`;
     const params = [like, like, like];
+    if (user_id) { sql += ' AND m.user_id = ?'; params.push(user_id); }
     if (from) { sql += ' AND m.log_date >= ?'; params.push(from); }
     if (to)   { sql += ' AND m.log_date <= ?'; params.push(to); }
     sql += ' ORDER BY m.log_date DESC, m.id DESC LIMIT ? OFFSET ?';
@@ -4075,6 +4076,7 @@ QUY TẮC BẮT BUỘC:
     let cntSql = `SELECT COUNT(*) AS n FROM meal_logs m JOIN users u ON u.id = m.user_id
                   WHERE (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)`;
     const cntP = [like, like, like];
+    if (user_id) { cntSql += ' AND m.user_id = ?'; cntP.push(user_id); }
     if (from) { cntSql += ' AND m.log_date >= ?'; cntP.push(from); }
     if (to)   { cntSql += ' AND m.log_date <= ?'; cntP.push(to); }
     const total = db.get(cntSql, cntP).n;
@@ -6140,6 +6142,79 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
         front: row.front_url, back: row.back_url, side: row.side_url, video: row.video_url,
         updatedAt: row.updated_at,
       }
+    });
+  });
+
+  // Admin: hồ sơ 360° của 1 thành viên — dùng cho trang "Profile thành viên"
+  // (Lộ trình: khảo sát/ảnh/lộ trình · Học tập: theo space group · Nhật ký ăn uống · Cộng đồng: bài viết/bình luận)
+  app.get('/api/admin/member-profile/:userId', requireAdmin, (req, res) => {
+    const userId = req.params.userId;
+    const user = db.get(
+      `SELECT id, first_name, last_name, email, phone, avatar_url, level, xp, streak, status,
+              is_admin, created_at, last_active_at, ttm_intake_done_at
+       FROM users WHERE id = ?`, [userId]
+    );
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy thành viên.' });
+
+    const intake = db.get(
+      'SELECT summary_text, submitted_at FROM ttm_intake_responses WHERE user_id = ? ORDER BY submitted_at DESC LIMIT 1',
+      [userId]
+    );
+    const photoRow = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [userId]);
+    const roadmapRow = db.get(
+      'SELECT * FROM ttm_roadmaps WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [userId]
+    );
+
+    const groups = db.all('SELECT id, name FROM space_groups ORDER BY order_num ASC, id ASC').map(g => {
+      const spaces = db.all('SELECT id, name FROM spaces WHERE group_id = ? ORDER BY id ASC', [g.id]).map(s => {
+        const membership = db.get('SELECT status FROM space_members WHERE space_id = ? AND user_id = ?', [s.id, userId]);
+        const courses = db.all('SELECT id, title FROM courses WHERE space_id = ? ORDER BY order_num ASC, id ASC', [s.id]).map(c => {
+          const totalLessons = db.get("SELECT COUNT(*) AS n FROM course_lessons WHERE course_id = ? AND status = 'published'", [c.id]).n;
+          const passedLessons = db.get(
+            'SELECT COUNT(*) AS n FROM lesson_exercise_submissions WHERE course_id = ? AND user_id = ? AND passed = 1',
+            [c.id, userId]
+          ).n;
+          const enroll = db.get('SELECT status FROM course_enrollments WHERE course_id = ? AND user_id = ?', [c.id, userId]);
+          return { id: c.id, title: c.title, enrollStatus: enroll?.status || null, totalLessons, passedLessons };
+        });
+        return { id: s.id, name: s.name, memberStatus: membership?.status || null, courses };
+      });
+      return { id: g.id, name: g.name, spaces };
+    });
+
+    const posts = db.all(
+      'SELECT id, title, pillar, likes_count, comments_count, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
+      [userId]
+    );
+    const comments = db.all(
+      `SELECT c.id, c.content, c.created_at, c.post_id, p.title AS post_title
+       FROM comments c JOIN posts p ON p.id = c.post_id
+       WHERE c.user_id = ? ORDER BY c.created_at DESC LIMIT 50`,
+      [userId]
+    );
+
+    res.json({
+      user: {
+        id: user.id, firstName: user.first_name, lastName: user.last_name, email: user.email,
+        phone: user.phone, avatarUrl: user.avatar_url, level: user.level, xp: user.xp, streak: user.streak,
+        status: user.status, isAdmin: !!user.is_admin, createdAt: user.created_at,
+        lastActiveAt: user.last_active_at, ttmIntakeDoneAt: user.ttm_intake_done_at,
+      },
+      ttm: {
+        intake: intake ? { summaryText: intake.summary_text, submittedAt: intake.submitted_at } : null,
+        photos: photoRow ? {
+          front: photoRow.front_url, back: photoRow.back_url, side: photoRow.side_url, video: photoRow.video_url,
+          updatedAt: photoRow.updated_at,
+        } : null,
+        roadmap: roadmapRow ? {
+          content: stripDraftBanner(roadmapRow.final_content || roadmapRow.draft_content),
+          status: roadmapRow.status, adminNote: roadmapRow.admin_note,
+          reviewedAt: roadmapRow.reviewed_at, createdAt: roadmapRow.created_at,
+        } : null,
+      },
+      learning: { groups },
+      community: { posts, comments },
     });
   });
 
