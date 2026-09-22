@@ -49,6 +49,7 @@
     .p377-day-num { font-weight:800; color:var(--color-primary); width:60px; flex-shrink:0; font-size:13px; }
     .p377-day-info { flex:1; min-width:0; }
     .p377-day-title { font-size:13.5px; font-weight:600; }
+    .p377-day-expand { padding:4px 8px 18px 72px; font-size:14px; line-height:1.7; }
     .p377-result-item { padding:12px 0; border-top:1px solid var(--border); }
     .p377-result-item:first-child { border-top:none; }
     .p377-result-date { font-weight:700; color:var(--color-primary); font-size:13px; }
@@ -239,8 +240,13 @@
                   <h3>Tổng quan chương trình</h3>
                   <div id="p377TopicsOverviewBox" style="font-size:14px;line-height:1.7;"></div>
                 </div>
+                <div class="p377-card" style="border-color:var(--color-primary);">
+                  <h3>📍 Nội dung hôm nay</h3>
+                  <div id="p377TodayHighlight"><div class="p377-empty">Đang tải...</div></div>
+                </div>
                 <div class="p377-card">
                   <h3>Nội dung từng ngày</h3>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:-8px;margin-bottom:10px;">Bấm vào 1 ngày để xem nội dung, bấm ngày khác sẽ tự thu gọn.</div>
                   <div id="p377DaysList"><div class="p377-empty">Đang tải...</div></div>
                 </div>
               </div>
@@ -310,17 +316,6 @@
     </div><!-- /main -->
 
   </div><!-- /app -->
-
-  <!-- Xem nội dung 1 ngày bất kỳ đã mở khóa (từ tab "Nội dung 377 ngày") -->
-  <div id="p377DayViewModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
-    <div style="background:var(--bg-card);border-radius:12px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.3);">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg-card);">
-        <div id="p377DayViewTitle" style="font-weight:700;font-size:15px;"></div>
-        <button onclick="closeP377DayView()" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--text-muted);">×</button>
-      </div>
-      <div id="p377DayViewBody" style="padding:16px 20px;"></div>
-    </div>
-  </div>
 
   <!-- Mobile sidebar overlay -->
   <div id="mob-overlay" onclick="closeSidebar()"></div>
@@ -497,8 +492,8 @@ const API = '/api';
     `;
     }
 
-    async function renderTodayContent(dayNumberToday) {
-      const box = document.getElementById('p377TodayContent');
+    async function renderTodayContent(dayNumberToday, targetId = 'p377TodayContent') {
+      const box = document.getElementById(targetId);
       if (dayNumberToday < 1) { box.innerHTML = `<div class="p377-empty">Chương trình của bạn sẽ bắt đầu sớm.</div>`; return; }
       try {
         const d = await fetch(`${API}/program377/day/${dayNumberToday}?user_id=${currentUser.id}`).then(r=>r.json());
@@ -522,39 +517,56 @@ const API = '/api';
 
     async function renderP377DaysList(dayNumberToday) {
       const box = document.getElementById('p377DaysList');
+      p377OpenDay = null;
+      p377DayContentCache = {};
       try {
         const d = await fetch(`${API}/program377/days?user_id=${currentUser.id}`).then(r=>r.json());
         if (!d.days.length) { box.innerHTML = `<div class="p377-empty">Nội dung chương trình đang được Ngô Lâm soạn, sẽ sớm cập nhật.</div>`; return; }
         box.innerHTML = d.days.map(day => `
-      <div class="p377-day-row${day.unlocked ? '' : ' locked'}" ${day.unlocked ? `onclick="openP377DayView(${day.day_number})"` : ''}>
-        <div class="p377-day-num">Ngày ${day.day_number}</div>
-        <div class="p377-day-info">
-          ${day.unlocked ? `
-          <div class="p377-day-title">${esc(day.title)}</div>
-          ${day.topic_key ? `<div style="font-size:11.5px;color:var(--text-muted);">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
-          ` : `
-          <div class="p377-day-title" style="color:var(--text-muted);font-style:italic;">Chưa được mở khóa</div>
-          `}
+      <div>
+        <div class="p377-day-row${day.unlocked ? '' : ' locked'}" ${day.unlocked ? `onclick="toggleP377DayRow(${day.day_number})"` : ''}>
+          <div class="p377-day-num">Ngày ${day.day_number}</div>
+          <div class="p377-day-info">
+            ${day.unlocked ? `
+            <div class="p377-day-title">${esc(day.title)}</div>
+            ${day.topic_key ? `<div style="font-size:11.5px;color:var(--text-muted);">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
+            ` : `
+            <div class="p377-day-title" style="color:var(--text-muted);font-style:italic;">Chưa được mở khóa</div>
+            `}
+          </div>
+          <div style="font-size:16px;">${day.unlocked ? '🔓' : '🔒'}</div>
         </div>
-        <div style="font-size:16px;">${day.unlocked ? '🔓' : '🔒'}</div>
+        ${day.unlocked ? `<div class="p377-day-expand" id="p377DayExpand-${day.day_number}" style="display:none;"></div>` : ''}
       </div>`).join('');
       } catch { box.innerHTML = `<div class="p377-empty">Không tải được danh sách nội dung.</div>`; }
     }
 
-    async function openP377DayView(dayNumber) {
-      const modal = document.getElementById('p377DayViewModal');
-      const title = document.getElementById('p377DayViewTitle');
-      const body = document.getElementById('p377DayViewBody');
-      title.textContent = `Ngày ${dayNumber}/377`;
-      body.innerHTML = `<div class="p377-empty">Đang tải...</div>`;
-      modal.style.display = 'flex';
-      try {
-        const d = await fetch(`${API}/program377/day/${dayNumber}?user_id=${currentUser.id}`).then(r=>r.json());
-        if (d.error || !d.day) { body.innerHTML = `<div class="p377-empty">${esc(d.error || 'Không tìm thấy nội dung.')}</div>`; return; }
-        body.innerHTML = renderDayContentHtml(d.day);
-      } catch { body.innerHTML = `<div class="p377-empty">Không tải được nội dung.</div>`; }
+    // Dạng mở rộng tại chỗ (accordion) — bấm 1 ngày để xem, bấm ngày khác tự thu gọn ngày cũ,
+    // không dùng popup vì danh sách dài tới 377 ngày, mở popup liên tục sẽ bất tiện hơn.
+    let p377OpenDay = null;
+    let p377DayContentCache = {};
+    async function toggleP377DayRow(dayNumber) {
+      const expandEl = document.getElementById(`p377DayExpand-${dayNumber}`);
+      if (!expandEl) return;
+      const wasOpen = expandEl.style.display !== 'none';
+      if (p377OpenDay !== null) {
+        const prevEl = document.getElementById(`p377DayExpand-${p377OpenDay}`);
+        if (prevEl) prevEl.style.display = 'none';
+      }
+      if (wasOpen) { p377OpenDay = null; return; }
+      p377OpenDay = dayNumber;
+      expandEl.style.display = 'block';
+      if (!p377DayContentCache[dayNumber]) {
+        expandEl.innerHTML = `<div class="p377-empty">Đang tải...</div>`;
+        try {
+          const d = await fetch(`${API}/program377/day/${dayNumber}?user_id=${currentUser.id}`).then(r=>r.json());
+          p377DayContentCache[dayNumber] = (d.error || !d.day)
+            ? `<div class="p377-empty">${esc(d.error || 'Không tìm thấy nội dung.')}</div>`
+            : renderDayContentHtml(d.day);
+        } catch { p377DayContentCache[dayNumber] = `<div class="p377-empty">Không tải được nội dung.</div>`; }
+      }
+      expandEl.innerHTML = p377DayContentCache[dayNumber];
     }
-    function closeP377DayView() { document.getElementById('p377DayViewModal').style.display = 'none'; }
 
     async function renderP377Results() {
       const box = document.getElementById('p377Results');
@@ -620,6 +632,7 @@ const API = '/api';
 
       fillReportForm(d.todayReport);
       renderTodayContent(d.dayNumberToday);
+      renderTodayContent(d.dayNumberToday, 'p377TodayHighlight');
       renderSessions();
       renderP377TopicsOverview();
       renderP377DaysList(d.dayNumberToday);
