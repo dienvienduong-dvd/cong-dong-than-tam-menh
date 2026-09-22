@@ -1586,6 +1586,23 @@ ${summaryText}`;
     }
   });
 
+  // Vá dữ liệu cũ từ trước khi runProgram377Coaching biết đồng bộ sang meal_logs: những báo cáo
+  // 377 ngày đã có nhận xét AI nhưng dòng meal_logs cùng ngày vẫn trống ai_feedback.
+  {
+    const staleRows = db.all(
+      `SELECT r.user_id, r.report_date, r.ai_feedback, r.flag_level, r.flagged_reason
+       FROM program377_reports r JOIN meal_logs m ON m.user_id = r.user_id AND m.log_date = r.report_date
+       WHERE r.ai_feedback IS NOT NULL AND m.ai_feedback IS NULL`
+    );
+    staleRows.forEach((r) => {
+      db.run(
+        'UPDATE meal_logs SET ai_feedback=?, flag_level=?, flagged_reason=? WHERE user_id=? AND log_date=?',
+        [r.ai_feedback, r.flag_level, r.flagged_reason, r.user_id, r.report_date]
+      );
+    });
+    if (staleRows.length) console.log(`  Migrated meal_logs: đồng bộ ${staleRows.length} nhận xét AI từ program377_reports (dữ liệu cũ trước khi có đồng bộ tự động).`);
+  }
+
   // Migrate ttm_body_photos: add drive_folder_id (mỗi user 1 thư mục Drive riêng, tái dùng lần sau)
   const ttmPhotoCols = db.all('PRAGMA table_info(ttm_body_photos)').map(c => c.name);
   if (!ttmPhotoCols.includes('drive_folder_id')) {
