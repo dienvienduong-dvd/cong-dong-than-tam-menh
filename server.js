@@ -3989,6 +3989,25 @@ QUY TẮC BẮT BUỘC:
     res.json({ logs, streak: user?.streak || 0 });
   });
 
+  // Hồ sơ cá nhân hoá của khách (thể trạng + lộ trình đã duyệt) — dùng để Agent 2
+  // ("An Nhiên") nhận xét đúng theo từng người thay vì lời khuyên chung chung.
+  // Dùng chung cho mọi nơi gọi callGoclawAgent2 (nhật ký ăn uống, và sau này là
+  // báo cáo hằng ngày trong 377 ngày). Trả về '' nếu khách chưa có lộ trình được duyệt.
+  function buildCustomerContext(userId) {
+    const roadmap = db.get(
+      `SELECT final_content, draft_content, the_trang FROM ttm_roadmaps
+       WHERE user_id = ? AND status = 'approved' ORDER BY reviewed_at DESC LIMIT 1`,
+      [userId]
+    );
+    if (!roadmap) return '';
+    const content = stripDraftBanner(roadmap.final_content || roadmap.draft_content || '');
+    const parts = [];
+    if (roadmap.the_trang) parts.push(`Thể trạng: ${roadmap.the_trang}`);
+    if (content) parts.push(`Lộ trình thuận tự nhiên đã duyệt cho khách hàng này:\n${content}`);
+    if (!parts.length) return '';
+    return `[HỒ SƠ CÁ NHÂN HOÁ CỦA KHÁCH HÀNG — dùng để nhận xét/tư vấn đúng theo thể trạng và lộ trình riêng của người này, không đưa lời khuyên chung chung, không lặp lại nguyên văn lộ trình]\n${parts.join('\n\n')}\n`;
+  }
+
   // Builds the plain-text summary sent to Agent 2 — today's entry plus up to
   // 6 prior days for continuity ("bạn duy trì tốt 3 ngày liên tiếp", v.v.)
   function buildMealLogSummary(todayLog, recentLogs) {
@@ -4023,7 +4042,9 @@ QUY TẮC BẮT BUỘC:
         [userId]
       );
       const summary = buildMealLogSummary(todayLog, recentLogs);
-      const result = await callGoclawAgent2(summary);
+      const context = buildCustomerContext(userId);
+      const input = context ? `${context}\n[BÁO CÁO HÔM NAY]\n${summary}` : summary;
+      const result = await callGoclawAgent2(input);
       if (!result.ok) {
         console.error('  [Agent 2] lỗi gọi GoClaw:', result.error);
         return;
