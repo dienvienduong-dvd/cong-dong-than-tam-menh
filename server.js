@@ -6740,6 +6740,12 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
       [userId]
     );
 
+    const p377Enrollment = db.get('SELECT * FROM program377_enrollments WHERE user_id = ?', [userId]);
+    const p377Reports = db.all(
+      'SELECT * FROM program377_reports WHERE user_id = ? ORDER BY report_date DESC LIMIT 100',
+      [userId]
+    ).map(r => ({ ...r, meal_colors: JSON.parse(r.meal_colors || '[]'), meal_tastes: JSON.parse(r.meal_tastes || '[]') }));
+
     res.json({
       user: {
         id: user.id, firstName: user.first_name, lastName: user.last_name, email: user.email,
@@ -6763,6 +6769,17 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
       },
       learning: { groups },
       community: { posts, comments },
+      program377: {
+        enrollment: p377Enrollment ? {
+          status: p377Enrollment.status,
+          startDate: p377Enrollment.start_date,
+          adminNote: p377Enrollment.admin_note,
+          dayNumberToday: p377Enrollment.status === 'approved'
+            ? Math.min(program377DayNumberToday(p377Enrollment.start_date), 377)
+            : 0,
+        } : null,
+        reports: p377Reports,
+      },
     });
   });
 

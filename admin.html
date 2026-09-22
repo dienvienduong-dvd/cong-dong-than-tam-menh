@@ -1086,8 +1086,8 @@
     .mpp-post-item-stats { display: flex; align-items: center; gap: 10px; }
     .mpp-comment-preview { margin-top: 8px; padding: 8px 10px; background: #f1f5f9; border-radius: 8px; font-size: 12.5px; color: var(--text); }
 
-    #mppPostModal, #mppMealLogModal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
-    #mppPostModal .mpp-post-modal-box, #mppMealLogModal .mpp-post-modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.2); }
+    #mppPostModal, #mppMealLogModal, #mppP377ReportModal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+    #mppPostModal .mpp-post-modal-box, #mppMealLogModal .mpp-post-modal-box, #mppP377ReportModal .mpp-post-modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.2); }
     .mpp-pm-title { font-family: var(--head); font-size: 17px; font-weight: 800; margin-bottom: 10px; }
     .mpp-pm-content { font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
 
@@ -2452,6 +2452,7 @@
           <button class="settings-tab-btn mpp-top-tab-btn active" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','roadmap',this)">🌿 Lộ trình</button>
           <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','learning',this)">🎓 Học tập</button>
           <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','meallogs',this)">🍽️ Nhật ký ăn uống</button>
+          <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','p377',this)">🗓️ 377 ngày thực hành</button>
           <button class="settings-tab-btn mpp-top-tab-btn" onclick="mpTab('mpp-top-tab-btn','mpp-top-tab-panel','community',this)">💬 Cộng đồng</button>
         </div>
 
@@ -2484,6 +2485,17 @@
           <div class="table-card">
             <div class="table-card-header"><h2>Nhật ký ăn uống (<span id="mpMlTotal">0</span>)</h2></div>
             <div id="mpMlGrid" class="mpp-ml-grid" style="padding:16px 24px;"></div>
+          </div>
+        </div>
+
+        <!-- 377 ngày thực hành -->
+        <div class="mpp-top-tab-panel" data-tab="p377">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>377 ngày thực hành</h2>
+            </div>
+            <div id="mpP377Status" style="padding:16px 24px 0;font-size:13px;"></div>
+            <div id="mpP377Grid" class="mpp-ml-grid" style="padding:16px 24px;"></div>
           </div>
         </div>
 
@@ -3801,6 +3813,17 @@
         <button onclick="closeMppMealLogModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
       </div>
       <div style="padding:20px 24px;" id="mppMlModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ── Profile thành viên: xem chi tiết 1 báo cáo 377 ngày (read-only) ─── -->
+  <div id="mppP377ReportModal">
+    <div class="mpp-post-modal-box">
+      <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <h3 id="mppP377ModalDate" style="font-size:16px;font-weight:700;"></h3>
+        <button onclick="closeMppP377ReportModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;" id="mppP377ModalBody"></div>
     </div>
   </div>
 
@@ -6133,6 +6156,7 @@
         renderMpLearning(d.learning.groups);
         renderMpCommunity(d.community.posts, d.community.comments);
         loadMpMealLogs();
+        renderMpP377(d.program377.enrollment, d.program377.reports);
       } catch (e) {
         document.getElementById('mpHeader').innerHTML = `<div class="empty-state">Lỗi tải hồ sơ: ${escHtml(e.message)}</div>`;
       }
@@ -6378,6 +6402,66 @@
       document.getElementById('mppMealLogModal').style.display = 'flex';
     }
     function closeMppMealLogModal() { document.getElementById('mppMealLogModal').style.display = 'none'; }
+
+    // -- 377 ngày thực hành (tab riêng trong Profile thành viên) --
+    let mppP377Cache = {};
+    function renderMpP377(enrollment, reports) {
+      const statusBox = document.getElementById('mpP377Status');
+      const grid = document.getElementById('mpP377Grid');
+      if (!enrollment) {
+        statusBox.innerHTML = `<span style="color:var(--muted);">Chưa đăng ký tham gia chương trình 377 ngày.</span>`;
+        grid.innerHTML = '';
+        return;
+      }
+      const statusLabelMap = { pending: '⏳ Chờ duyệt', approved: '✅ Đã duyệt', rejected: '✖ Từ chối' };
+      statusBox.innerHTML = `
+    <span class="badge" style="${enrollment.status === 'approved' ? 'background:#dcfce7;color:#166534;' : enrollment.status === 'pending' ? 'background:#fef3c7;color:#92400e;' : 'background:#fee2e2;color:#991b1b;'}">${statusLabelMap[enrollment.status] || enrollment.status}</span>
+    ${enrollment.startDate ? `<span style="margin-left:8px;color:var(--muted);">Ngày 1: ${fmtDate(enrollment.startDate)}${enrollment.status === 'approved' ? ` — hiện đang ở ngày ${enrollment.dayNumberToday}/377` : ''}</span>` : ''}
+    ${enrollment.adminNote ? `<div style="margin-top:6px;color:#991b1b;">Ghi chú: ${escHtml(enrollment.adminNote)}</div>` : ''}`;
+
+      if (!reports.length) {
+        grid.innerHTML = `<div class="empty-state">Chưa có báo cáo nào.</div>`;
+        return;
+      }
+      mppP377Cache = {};
+      reports.forEach(r => { mppP377Cache[r.id] = r; });
+      grid.innerHTML = reports.map(r => `
+    <div class="mpp-ml-card" onclick="openMppP377Report(${r.id})">
+      <div class="mpp-ml-date">${r.report_date} — Ngày ${r.day_number || '?'}</div>
+      <div class="mpp-ml-row"><strong>Sáng:</strong> ${escHtml(r.meal_breakfast || '—')}</div>
+      <div class="mpp-ml-row"><strong>Trưa:</strong> ${escHtml(r.meal_lunch || '—')}</div>
+      <div class="mpp-ml-row"><strong>Tối:</strong> ${escHtml(r.meal_dinner || '—')}</div>
+      ${r.is_late ? `<span class="badge mpp-ml-flag" style="background:#fef3c7;color:#92400e;">⏰ Trễ hạn</span>` : ''}
+      ${r.flag_level && r.flag_level !== 'none' ? `<span class="badge mpp-ml-flag" style="${MPP_ML_FLAG_STYLE[r.flag_level] || MPP_ML_FLAG_STYLE.none}">${MPP_ML_FLAG_LABEL[r.flag_level] || r.flag_level}</span>` : ''}
+    </div>`).join('');
+    }
+
+    function openMppP377Report(id) {
+      const r = mppP377Cache[id];
+      if (!r) return;
+      document.getElementById('mppP377ModalDate').textContent = `${r.report_date} — Ngày ${r.day_number || '?'}/377`;
+      const row = (label, value) => value
+        ? `<div class="mpp-ml-detail-row"><div class="mpp-ml-detail-label">${label}</div><div class="mpp-ml-detail-value">${escHtml(String(value))}</div></div>` : '';
+      const tags = [...(r.meal_colors || []), ...(r.meal_tastes || [])];
+      document.getElementById('mppP377ModalBody').innerHTML = `
+    ${r.is_late ? `<span class="badge" style="background:#fef3c7;color:#92400e;">⏰ Trễ hạn</span>` : ''}
+    ${r.flag_level && r.flag_level !== 'none' ? `<span class="badge" style="${MPP_ML_FLAG_STYLE[r.flag_level] || MPP_ML_FLAG_STYLE.none}">${MPP_ML_FLAG_LABEL[r.flag_level] || r.flag_level}</span>` : ''}
+    ${r.flagged_reason ? `<div style="font-size:12.5px;color:#991b1b;margin-top:8px;">Lý do: ${escHtml(r.flagged_reason)}</div>` : ''}
+    <div style="margin-top:16px;">
+      ${row('Bữa sáng', r.meal_breakfast)}
+      ${row('Bữa trưa', r.meal_lunch)}
+      ${row('Bữa tối', r.meal_dinner)}
+      ${tags.length ? row('Màu / Vị', tags.join(', ')) : ''}
+      ${row('Nước tiểu', [r.urine_amount, r.urine_color].filter(Boolean).join(' — '))}
+      ${row('Phân', [r.stool_shape, r.stool_color].filter(Boolean).join(' — '))}
+      ${row('Tập luyện', [r.exercise_type, r.exercise_minutes ? r.exercise_minutes + ' phút' : ''].filter(Boolean).join(' — '))}
+      ${row('Mồ hôi', [r.sweat_amount, r.sweat_taste].filter(Boolean).join(' — '))}
+      ${row('Cảm nhận', r.feeling_note)}
+      ${row('Nhận xét AI (Agent 2 — An Nhiên)', r.ai_feedback)}
+    </div>`;
+      document.getElementById('mppP377ReportModal').style.display = 'flex';
+    }
+    function closeMppP377ReportModal() { document.getElementById('mppP377ReportModal').style.display = 'none'; }
 
     function mppFmtRelative(s) {
       if (!s) return '—';
