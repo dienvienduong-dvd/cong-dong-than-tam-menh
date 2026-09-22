@@ -1479,6 +1479,13 @@ const COURSE_SEED = [
     console.log('  Migrated spaces: added allow_join_requests.');
   }
 
+  // Migrate ttm_roadmaps: add reviewed_by (ai đã duyệt/từ chối lộ trình)
+  const ttmRoadmapCols = db.all('PRAGMA table_info(ttm_roadmaps)').map(c => c.name);
+  if (!ttmRoadmapCols.includes('reviewed_by')) {
+    db.exec('ALTER TABLE ttm_roadmaps ADD COLUMN reviewed_by INTEGER REFERENCES users(id)');
+    console.log('  Migrated ttm_roadmaps: added reviewed_by.');
+  }
+
   // Migrate ttm_body_photos: add drive_folder_id (mỗi user 1 thư mục Drive riêng, tái dùng lần sau)
   const ttmPhotoCols = db.all('PRAGMA table_info(ttm_body_photos)').map(c => c.name);
   if (!ttmPhotoCols.includes('drive_folder_id')) {
@@ -1844,15 +1851,15 @@ QUY TẮC BẮT BUỘC:
   function requireAdmin(req, res, next) {
     const key = req.headers['x-admin-key'];
     if (!key) return res.status(401).json({ error: 'Unauthorized' });
-    if (key === ADMIN_KEY) return next();
+    if (key === ADMIN_KEY) { req.adminUserId = null; return next(); } // master key — không gắn với 1 người cụ thể
 
     const session = db.get(
-      `SELECT u.is_admin, u.status FROM admin_sessions s
+      `SELECT u.id, u.is_admin, u.status FROM admin_sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now','localtime')`,
       [key]
     );
-    if (session && session.is_admin && session.status === 'active') return next();
+    if (session && session.is_admin && session.status === 'active') { req.adminUserId = session.id; return next(); }
 
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -5974,9 +5981,11 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
   // Khách xem lộ trình đã được Ngô Lâm duyệt (mới nhất)
   app.get('/api/ttm/roadmap/:userId', (req, res) => {
     const roadmap = db.get(
-      `SELECT id, draft_content, final_content, status, reviewed_at, created_at
-       FROM ttm_roadmaps WHERE user_id = ? AND status = 'approved'
-       ORDER BY reviewed_at DESC LIMIT 1`,
+      `SELECT r.id, r.draft_content, r.final_content, r.status, r.reviewed_at, r.created_at,
+              u.first_name AS reviewer_first_name, u.last_name AS reviewer_last_name
+       FROM ttm_roadmaps r LEFT JOIN users u ON u.id = r.reviewed_by
+       WHERE r.user_id = ? AND r.status = 'approved'
+       ORDER BY r.reviewed_at DESC LIMIT 1`,
       [req.params.userId]
     );
     if (!roadmap) return res.json({ roadmap: null });
@@ -5986,6 +5995,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
         content: stripDraftBanner(roadmap.final_content || roadmap.draft_content),
         reviewedAt: roadmap.reviewed_at,
         createdAt: roadmap.created_at,
+        reviewedByName: roadmap.reviewer_first_name ? `${roadmap.reviewer_first_name} ${roadmap.reviewer_last_name || ''}`.trim() : null,
       }
     });
   });
@@ -6162,7 +6172,9 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     );
     const photoRow = db.get('SELECT * FROM ttm_body_photos WHERE user_id = ?', [userId]);
     const roadmapRow = db.get(
-      'SELECT * FROM ttm_roadmaps WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      `SELECT r.*, u.first_name AS reviewer_first_name, u.last_name AS reviewer_last_name
+       FROM ttm_roadmaps r LEFT JOIN users u ON u.id = r.reviewed_by
+       WHERE r.user_id = ? ORDER BY r.created_at DESC LIMIT 1`,
       [userId]
     );
 
@@ -6211,6 +6223,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
           content: stripDraftBanner(roadmapRow.final_content || roadmapRow.draft_content),
           status: roadmapRow.status, adminNote: roadmapRow.admin_note,
           reviewedAt: roadmapRow.reviewed_at, createdAt: roadmapRow.created_at,
+          reviewedByName: roadmapRow.reviewer_first_name ? `${roadmapRow.reviewer_first_name} ${roadmapRow.reviewer_last_name || ''}`.trim() : null,
         } : null,
       },
       learning: { groups },
@@ -6267,13 +6280,13 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     if (action === 'approve') {
       const cleaned = stripDraftBanner((final_content || '').trim());
       db.run(
-        "UPDATE ttm_roadmaps SET status = 'approved', final_content = ?, admin_note = ?, reviewed_at = datetime('now','localtime') WHERE id = ?",
-        [cleaned || null, admin_note || null, req.params.id]
+        "UPDATE ttm_roadmaps SET status = 'approved', final_content = ?, admin_note = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?",
+        [cleaned || null, admin_note || null, req.adminUserId || null, req.params.id]
       );
     } else {
       db.run(
-        "UPDATE ttm_roadmaps SET status = 'rejected', admin_note = ?, reviewed_at = datetime('now','localtime') WHERE id = ?",
-        [admin_note || null, req.params.id]
+        "UPDATE ttm_roadmaps SET status = 'rejected', admin_note = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?",
+        [admin_note || null, req.adminUserId || null, req.params.id]
       );
     }
     res.json({ ok: true });

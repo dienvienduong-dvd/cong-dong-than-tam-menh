@@ -615,7 +615,7 @@
             <div class="doc-head">
               <div class="doc-eyebrow">Lộ trình thuận tự nhiên</div>
               <div class="doc-title">Dành cho ${escHtml(currentUser.first_name)} ${escHtml(currentUser.last_name || '')}</div>
-              <div class="doc-meta">Được duyệt ngày ${fmtDate(r.reviewedAt || r.createdAt)}</div>
+              <div class="doc-meta">Được duyệt ngày ${fmtDate(r.reviewedAt || r.createdAt)}${r.reviewedByName ? ' bởi ' + escHtml(r.reviewedByName) : ''}</div>
             </div>
             <div class="doc-body">${mdToHtml(r.content)}</div>
           </div>
