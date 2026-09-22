@@ -5051,7 +5051,7 @@
           ? `<div style="text-align:center;"><a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${escHtml(label)}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></a><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">${escHtml(label)}</div></div>`
           : '';
         const vid = p.video
-          ? `<div style="grid-column:1/-1;text-align:center;"><iframe src="${p.video}" allow="autoplay" style="width:100%;height:260px;border:1px solid var(--border);border-radius:8px;"></iframe><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Video ngồi xuống — đứng lên</div></div>`
+          ? `<div style="grid-column:1/-1;text-align:center;"><iframe src="${p.video}" allow="autoplay" style="width:100%;height:480px;border:1px solid var(--border);border-radius:8px;"></iframe><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Video ngồi xuống — đứng lên</div></div>`
           : '';
         box.innerHTML = shot(p.front, 'Phía trước') + shot(p.back, 'Phía sau') + shot(p.side, 'Bên hông') + vid;
       } catch (e) {
