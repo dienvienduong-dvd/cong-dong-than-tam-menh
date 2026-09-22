@@ -233,10 +233,14 @@
                 <button class="p377-tab-btn" onclick="p377Tab('results', this)">📈 Kết quả</button>
               </div>
 
-              <!-- Tab: Nội dung 377 ngày (danh sách nội dung admin soạn) -->
+              <!-- Tab: Nội dung 377 ngày (tổng quan chương trình + danh sách nội dung admin soạn) -->
               <div class="p377-tab-panel active" data-tab="content">
+                <div class="p377-card" id="p377TopicsOverviewCard" style="display:none;">
+                  <h3>Tổng quan chương trình</h3>
+                  <div id="p377TopicsOverviewBox" style="font-size:14px;line-height:1.7;"></div>
+                </div>
                 <div class="p377-card">
-                  <h3>Nội dung 377 ngày</h3>
+                  <h3>Nội dung từng ngày</h3>
                   <div id="p377DaysList"><div class="p377-empty">Đang tải...</div></div>
                 </div>
               </div>
@@ -503,6 +507,19 @@ const API = '/api';
       } catch { box.innerHTML = `<div class="p377-empty">Không tải được nội dung hôm nay.</div>`; }
     }
 
+    async function renderP377TopicsOverview() {
+      try {
+        const s = await fetch(`${API}/settings`).then(r=>r.json());
+        const box = document.getElementById('p377TopicsOverviewCard');
+        if (s.p377_topics_overview) {
+          document.getElementById('p377TopicsOverviewBox').innerHTML = s.p377_topics_overview;
+          box.style.display = 'block';
+        } else {
+          box.style.display = 'none';
+        }
+      } catch { /* ẩn khối tổng quan nếu không tải được, không chặn phần còn lại của trang */ }
+    }
+
     async function renderP377DaysList(dayNumberToday) {
       const box = document.getElementById('p377DaysList');
       try {
@@ -600,6 +617,7 @@ const API = '/api';
       fillReportForm(d.todayReport);
       renderTodayContent(d.dayNumberToday);
       renderSessions();
+      renderP377TopicsOverview();
       renderP377DaysList(d.dayNumberToday);
       renderP377Results();
     }
