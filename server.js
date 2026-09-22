@@ -4216,6 +4216,13 @@ QUY TẮC BẮT BUỘC:
         'UPDATE program377_reports SET ai_feedback=?, flag_level=?, flagged_reason=? WHERE id=?',
         [feedback, flagLevel, flaggedReason || null, reportId]
       );
+      // Ngày báo cáo qua 377 ngày cũng được ghi đè sang meal_logs (cùng ngày) để dùng chung
+      // streak/XP — đồng bộ luôn nhận xét AI vào đó, tránh trang Nhật ký ăn uống hiển thị mãi
+      // "đang xem nhật ký..." vì meal_logs.ai_feedback không bao giờ được điền.
+      db.run(
+        'UPDATE meal_logs SET ai_feedback=?, flag_level=?, flagged_reason=? WHERE user_id=? AND log_date=?',
+        [feedback, flagLevel, flaggedReason || null, userId, reportDate]
+      );
 
       const user = db.get('SELECT first_name, telegram_chat_id FROM users WHERE id = ?', [userId]);
       if (user && user.telegram_chat_id && feedback) {
