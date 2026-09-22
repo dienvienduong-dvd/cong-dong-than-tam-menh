@@ -1086,10 +1086,22 @@
     .mpp-post-item-stats { display: flex; align-items: center; gap: 10px; }
     .mpp-comment-preview { margin-top: 8px; padding: 8px 10px; background: #f1f5f9; border-radius: 8px; font-size: 12.5px; color: var(--text); }
 
-    #mppPostModal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
-    #mppPostModal .mpp-post-modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.2); }
+    #mppPostModal, #mppMealLogModal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+    #mppPostModal .mpp-post-modal-box, #mppMealLogModal .mpp-post-modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.2); }
     .mpp-pm-title { font-family: var(--head); font-size: 17px; font-weight: 800; margin-bottom: 10px; }
     .mpp-pm-content { font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+
+    /* ── Nhật ký ăn uống: lưới thẻ theo ngày ── */
+    .mpp-ml-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .mpp-ml-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: box-shadow .12s, border-color .12s; }
+    .mpp-ml-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .mpp-ml-date { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+    .mpp-ml-row { font-size: 11.5px; color: var(--muted); margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mpp-ml-row strong { color: var(--text); font-weight: 600; }
+    .mpp-ml-flag { display: inline-block; margin-top: 8px; }
+    .mpp-ml-detail-row { margin-bottom: 14px; }
+    .mpp-ml-detail-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .mpp-ml-detail-value { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
 
     .mp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
     .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
@@ -2271,12 +2283,7 @@
         <div class="mpp-top-tab-panel" data-tab="meallogs">
           <div class="table-card">
             <div class="table-card-header"><h2>Nhật ký ăn uống (<span id="mpMlTotal">0</span>)</h2></div>
-            <div style="overflow-x:auto;">
-              <table class="data-table">
-                <thead><tr><th>Ngày</th><th>Bữa sáng</th><th>Bữa trưa</th><th>Bữa tối</th><th>Màu / Vị</th><th>Nhận xét AI</th><th>Cờ</th></tr></thead>
-                <tbody id="mpMlTbody"></tbody>
-              </table>
-            </div>
+            <div id="mpMlGrid" class="mpp-ml-grid" style="padding:16px 24px;"></div>
           </div>
         </div>
 
@@ -3446,6 +3453,17 @@
         <div class="mpp-pm-title" id="mppPmTitle"></div>
         <div class="mpp-pm-content" id="mppPmContent"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Profile thành viên: xem chi tiết 1 ngày nhật ký ăn uống (read-only) ─── -->
+  <div id="mppMealLogModal">
+    <div class="mpp-post-modal-box">
+      <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
+        <h3 id="mppMlModalDate" style="font-size:16px;font-weight:700;"></h3>
+        <button onclick="closeMppMealLogModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;" id="mppMlModalBody"></div>
     </div>
   </div>
 
@@ -5552,38 +5570,62 @@
       }).join('');
     }
 
+    const MPP_ML_FLAG_STYLE = {
+      urgent:  'background:#fee2e2;color:#991b1b;',
+      warning: 'background:#fef3c7;color:#92400e;',
+      none:    'background:#dcfce7;color:#166534;',
+    };
+    const MPP_ML_FLAG_LABEL = { urgent: '🚨 Khẩn cấp', warning: '⚠️ Cần theo dõi', none: '✅ Bình thường' };
+    let mppMlCache = {};
+
     async function loadMpMealLogs() {
       if (!mpCurrentUserId) return;
-      const tbody = document.getElementById('mpMlTbody');
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Đang tải...</div></td></tr>`;
+      const grid = document.getElementById('mpMlGrid');
+      grid.innerHTML = `<div class="empty-state">Đang tải...</div>`;
       try {
         const qs = new URLSearchParams({ user_id: mpCurrentUserId, limit: 100, offset: 0 });
         const { logs, total } = await api(`/admin/meal-logs?${qs}`);
         document.getElementById('mpMlTotal').textContent = total;
         if (!logs.length) {
-          tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Chưa có nhật ký nào.</div></td></tr>`;
+          grid.innerHTML = `<div class="empty-state">Chưa có nhật ký nào.</div>`;
           return;
         }
-        const flagStyle = {
-          urgent:  'background:#fee2e2;color:#991b1b;',
-          warning: 'background:#fef3c7;color:#92400e;',
-          none:    'background:#dcfce7;color:#166534;',
-        };
-        const flagLabel = { urgent: '🚨 Khẩn cấp', warning: '⚠️ Cần theo dõi', none: '✅ Bình thường' };
-        tbody.innerHTML = logs.map(l => `
-        <tr>
-          <td style="white-space:nowrap">${l.log_date}</td>
-          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.breakfast || '—')}</td>
-          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.lunch || '—')}</td>
-          <td style="max-width:160px;font-size:12px;color:var(--muted)">${escHtml(l.dinner || '—')}</td>
-          <td style="font-size:11px;color:var(--muted)">${[...l.colors, ...l.tastes].map(escHtml).join(', ') || '—'}</td>
-          <td style="max-width:220px;font-size:12px;color:var(--muted)">${escHtml(l.ai_feedback || '—')}</td>
-          <td>${l.flag_level ? `<span class="badge" style="${flagStyle[l.flag_level] || flagStyle.none}">${flagLabel[l.flag_level] || l.flag_level}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-        </tr>`).join('');
+        mppMlCache = {};
+        logs.forEach(l => { mppMlCache[l.id] = l; });
+        grid.innerHTML = logs.map(l => `
+      <div class="mpp-ml-card" onclick="openMppMealLog(${l.id})">
+        <div class="mpp-ml-date">${l.log_date}</div>
+        <div class="mpp-ml-row"><strong>Sáng:</strong> ${escHtml(l.breakfast || '—')}</div>
+        <div class="mpp-ml-row"><strong>Trưa:</strong> ${escHtml(l.lunch || '—')}</div>
+        <div class="mpp-ml-row"><strong>Tối:</strong> ${escHtml(l.dinner || '—')}</div>
+        ${l.flag_level ? `<span class="badge mpp-ml-flag" style="${MPP_ML_FLAG_STYLE[l.flag_level] || MPP_ML_FLAG_STYLE.none}">${MPP_ML_FLAG_LABEL[l.flag_level] || l.flag_level}</span>` : ''}
+      </div>`).join('');
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Lỗi tải nhật ký.</div></td></tr>`;
+        grid.innerHTML = `<div class="empty-state">Lỗi tải nhật ký.</div>`;
       }
     }
+
+    function openMppMealLog(id) {
+      const l = mppMlCache[id];
+      if (!l) return;
+      document.getElementById('mppMlModalDate').textContent = l.log_date;
+      const row = (label, value) => value
+        ? `<div class="mpp-ml-detail-row"><div class="mpp-ml-detail-label">${label}</div><div class="mpp-ml-detail-value">${escHtml(value)}</div></div>` : '';
+      const tags = [...(l.colors || []), ...(l.tastes || [])];
+      document.getElementById('mppMlModalBody').innerHTML = `
+    ${l.flag_level ? `<span class="badge" style="${MPP_ML_FLAG_STYLE[l.flag_level] || MPP_ML_FLAG_STYLE.none}">${MPP_ML_FLAG_LABEL[l.flag_level] || l.flag_level}</span>` : ''}
+    ${l.flagged_reason ? `<div style="font-size:12.5px;color:#991b1b;margin-top:8px;">Lý do: ${escHtml(l.flagged_reason)}</div>` : ''}
+    <div style="margin-top:16px;">
+      ${row('Bữa sáng', l.breakfast)}
+      ${row('Bữa trưa', l.lunch)}
+      ${row('Bữa tối', l.dinner)}
+      ${tags.length ? row('Màu / Vị', tags.join(', ')) : ''}
+      ${row('Ghi chú', l.note)}
+      ${row('Nhận xét AI (Agent 2 — An Nhiên)', l.ai_feedback)}
+    </div>`;
+      document.getElementById('mppMealLogModal').style.display = 'flex';
+    }
+    function closeMppMealLogModal() { document.getElementById('mppMealLogModal').style.display = 'none'; }
 
     function mppFmtRelative(s) {
       if (!s) return '—';
