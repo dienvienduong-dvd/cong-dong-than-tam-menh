@@ -977,12 +977,20 @@ const COURSE_SEED = [
   const GOCLAW_BASE_URL = process.env.GOCLAW_BASE_URL || 'https://agent.dienvienduong.com';
   const GOCLAW_WEBHOOK_SECRET = process.env.GOCLAW_WEBHOOK_SECRET || '';
 
+  const THE_TRANG_VALUES = ['Nhiệt', 'Hàn', 'Hàn giả nhiệt', 'Nhiệt giả hàn'];
+
   async function callGoclawAgent1(summaryText) {
     if (!GOCLAW_WEBHOOK_SECRET) {
       return { ok: false, error: 'Chưa cấu hình GOCLAW_WEBHOOK_SECRET trong .env' };
     }
     try {
-      const body = JSON.stringify({ input: summaryText, mode: 'sync' });
+      const wrappedInput = `[YÊU CẦU BỔ SUNG] Trước khi viết lộ trình, hãy xác định thể trạng của khách hàng dựa trên các dấu hiệu Hàn/Nhiệt trong bảng trả lời dưới đây (tay chân lạnh/ấm, sợ lạnh/sợ nóng, ra mồ hôi, màu nước tiểu, rêu lưỡi, nhiệt miệng, v.v.). Xác định là MỘT trong 4 loại: Nhiệt, Hàn, Hàn giả nhiệt, hoặc Nhiệt giả hàn.
+Dòng ĐẦU TIÊN của câu trả lời PHẢI là: THE_TRANG: <một trong 4 loại trên>
+Sau đó xuống dòng và viết lộ trình như bình thường, có điều chỉnh dinh dưỡng/sinh hoạt phù hợp với thể trạng đã xác định.
+
+[BẢN TỔNG KẾT KHẢO SÁT]
+${summaryText}`;
+      const body = JSON.stringify({ input: wrappedInput, mode: 'sync' });
 
       const resp = await fetch(`${GOCLAW_BASE_URL}/v1/webhooks/llm`, {
         method: 'POST',
@@ -1050,6 +1058,26 @@ const COURSE_SEED = [
   // than requiring an exact anchored shape, find FLAG/REASON anywhere in the
   // text and strip them out (plus any --- / *** / ___ separator lines) so
   // the customer never sees the raw metadata.
+  // Agent 1 ("An Lộ") được yêu cầu (trong wrappedInput ở callGoclawAgent1, và lý tưởng là cả trong
+  // prompt cấu hình bên GoClaw) trả về dòng đầu THE_TRANG: <loại>. Parse robust như Agent 2: tìm marker
+  // ở bất kỳ đâu trong text, không yêu cầu đúng vị trí — nếu agent không tuân thủ format thì trả về
+  // theTrang=null thay vì làm hỏng nội dung lộ trình.
+  function parseAgent1Response(raw) {
+    const text = (raw || '').trim();
+    const match = text.match(/THE_TRANG:\s*([^\n]+)/i);
+    let theTrang = null;
+    if (match) {
+      const val = match[1].trim();
+      theTrang = THE_TRANG_VALUES.find(v => v.toLowerCase() === val.toLowerCase()) || null;
+    }
+    const content = text
+      .replace(/^\s*THE_TRANG:.*$/im, '')
+      .replace(/^\s*[-*_]{3,}\s*$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    return { theTrang, content };
+  }
+
   function parseAgent2Response(raw) {
     const text = (raw || '').trim();
     const flagMatch = text.match(/FLAG:\s*(none|warning|urgent)/i);
@@ -1484,6 +1512,10 @@ const COURSE_SEED = [
   if (!ttmRoadmapCols.includes('reviewed_by')) {
     db.exec('ALTER TABLE ttm_roadmaps ADD COLUMN reviewed_by INTEGER REFERENCES users(id)');
     console.log('  Migrated ttm_roadmaps: added reviewed_by.');
+  }
+  if (!ttmRoadmapCols.includes('the_trang')) {
+    db.exec('ALTER TABLE ttm_roadmaps ADD COLUMN the_trang TEXT');
+    console.log('  Migrated ttm_roadmaps: added the_trang.');
   }
 
   // Migrate ttm_body_photos: add drive_folder_id (mỗi user 1 thư mục Drive riêng, tái dùng lần sau)
@@ -5951,13 +5983,18 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     db.run("UPDATE users SET ttm_intake_done_at = datetime('now','localtime') WHERE id = ?", [userId]);
 
     const agentResult = await callGoclawAgent1(summaryText);
-    const draftContent = agentResult.ok
-      ? agentResult.text
-      : `[Lỗi tạo bản nháp tự động: ${agentResult.error}]\n\nVui lòng bấm "Tạo lại bản nháp" trong Admin, hoặc soạn thủ công dựa trên bản tổng kết bên dưới.`;
+    let draftContent, theTrang = null;
+    if (agentResult.ok) {
+      const parsed = parseAgent1Response(agentResult.text);
+      draftContent = parsed.content;
+      theTrang = parsed.theTrang;
+    } else {
+      draftContent = `[Lỗi tạo bản nháp tự động: ${agentResult.error}]\n\nVui lòng bấm "Tạo lại bản nháp" trong Admin, hoặc soạn thủ công dựa trên bản tổng kết bên dưới.`;
+    }
 
     const roadmapId = db.run(
-      'INSERT INTO ttm_roadmaps (user_id, intake_id, draft_content, status) VALUES (?, ?, ?, ?)',
-      [userId, intakeId, draftContent, 'pending_approval']
+      'INSERT INTO ttm_roadmaps (user_id, intake_id, draft_content, status, the_trang) VALUES (?, ?, ?, ?, ?)',
+      [userId, intakeId, draftContent, 'pending_approval', theTrang]
     ).lastInsertRowid;
 
     if (!agentResult.ok) console.error(`[TTM] Agent 1 call failed for user ${userId}:`, agentResult.error);
@@ -5974,14 +6011,15 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     const agentResult = await callGoclawAgent1(roadmap.summary_text);
     if (!agentResult.ok) return res.status(502).json({ error: agentResult.error });
 
-    db.run('UPDATE ttm_roadmaps SET draft_content = ? WHERE id = ?', [agentResult.text, req.params.id]);
-    res.json({ ok: true });
+    const parsed = parseAgent1Response(agentResult.text);
+    db.run('UPDATE ttm_roadmaps SET draft_content = ?, the_trang = ? WHERE id = ?', [parsed.content, parsed.theTrang, req.params.id]);
+    res.json({ ok: true, theTrang: parsed.theTrang });
   });
 
   // Khách xem lộ trình đã được Ngô Lâm duyệt (mới nhất)
   app.get('/api/ttm/roadmap/:userId', (req, res) => {
     const roadmap = db.get(
-      `SELECT r.id, r.draft_content, r.final_content, r.status, r.reviewed_at, r.created_at,
+      `SELECT r.id, r.draft_content, r.final_content, r.status, r.reviewed_at, r.created_at, r.the_trang,
               u.first_name AS reviewer_first_name, u.last_name AS reviewer_last_name
        FROM ttm_roadmaps r LEFT JOIN users u ON u.id = r.reviewed_by
        WHERE r.user_id = ? AND r.status = 'approved'
@@ -5996,6 +6034,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
         reviewedAt: roadmap.reviewed_at,
         createdAt: roadmap.created_at,
         reviewedByName: roadmap.reviewer_first_name ? `${roadmap.reviewer_first_name} ${roadmap.reviewer_last_name || ''}`.trim() : null,
+        theTrang: roadmap.the_trang || null,
       }
     });
   });
@@ -6227,6 +6266,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
           status: roadmapRow.status, adminNote: roadmapRow.admin_note,
           reviewedAt: roadmapRow.reviewed_at, createdAt: roadmapRow.created_at,
           reviewedByName: roadmapRow.reviewer_first_name ? `${roadmapRow.reviewer_first_name} ${roadmapRow.reviewer_last_name || ''}`.trim() : null,
+          theTrang: roadmapRow.the_trang || null,
         } : null,
       },
       learning: { groups },
@@ -6239,7 +6279,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     const status = req.query.status || 'pending_approval';
     const rows = db.all(
       `SELECT r.id, r.user_id, r.intake_id, r.draft_content, r.status, r.admin_note,
-              r.final_content, r.reviewed_at, r.created_at,
+              r.final_content, r.reviewed_at, r.created_at, r.the_trang,
               u.first_name, u.last_name, u.email,
               i.summary_text, i.submitted_at
        FROM ttm_roadmaps r
@@ -6263,6 +6303,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
         submittedAt: r.submitted_at,
         reviewedAt: r.reviewed_at,
         createdAt: r.created_at,
+        theTrang: r.the_trang || null,
       })),
       pending_count: db.get(
         `SELECT COUNT(*) AS n FROM ttm_roadmaps r JOIN users u ON u.id = r.user_id
@@ -6273,23 +6314,24 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
 
   // Admin: duyệt / từ chối 1 lộ trình
   app.patch('/api/admin/ttm/roadmaps/:id', requireAdmin, (req, res) => {
-    const { action, final_content, admin_note } = req.body;
+    const { action, final_content, admin_note, the_trang } = req.body;
     if (!['approve', 'reject'].includes(action)) {
       return res.status(400).json({ error: 'action phải là approve hoặc reject' });
     }
     const roadmap = db.get('SELECT id FROM ttm_roadmaps WHERE id = ?', [req.params.id]);
     if (!roadmap) return res.status(404).json({ error: 'Roadmap not found' });
+    const theTrang = THE_TRANG_VALUES.includes(the_trang) ? the_trang : null;
 
     if (action === 'approve') {
       const cleaned = stripDraftBanner((final_content || '').trim());
       db.run(
-        "UPDATE ttm_roadmaps SET status = 'approved', final_content = ?, admin_note = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?",
-        [cleaned || null, admin_note || null, req.adminUserId || null, req.params.id]
+        "UPDATE ttm_roadmaps SET status = 'approved', final_content = ?, admin_note = ?, the_trang = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?",
+        [cleaned || null, admin_note || null, theTrang, req.adminUserId || null, req.params.id]
       );
     } else {
       db.run(
-        "UPDATE ttm_roadmaps SET status = 'rejected', admin_note = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?",
-        [admin_note || null, req.adminUserId || null, req.params.id]
+        "UPDATE ttm_roadmaps SET status = 'rejected', admin_note = ?, the_trang = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?",
+        [admin_note || null, theTrang, req.adminUserId || null, req.params.id]
       );
     }
     res.json({ ok: true });

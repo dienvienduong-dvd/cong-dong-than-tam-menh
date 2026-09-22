@@ -3417,6 +3417,16 @@
         <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Hồ sơ ảnh (dáng người + video vận động)</div>
         <div id="ttmPhotos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:16px;"></div>
 
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Thể trạng (Agent xác định — admin có thể sửa)</div>
+        <select id="ttmTheTrang"
+          style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;outline:none;margin-bottom:16px;">
+          <option value="">— Chưa xác định —</option>
+          <option value="Nhiệt">Nhiệt</option>
+          <option value="Hàn">Hàn</option>
+          <option value="Hàn giả nhiệt">Hàn giả nhiệt</option>
+          <option value="Nhiệt giả hàn">Nhiệt giả hàn</option>
+        </select>
+
         <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Bản nháp lộ trình (Agent 1 — An Lộ)</div>
         <textarea id="ttmDraftContent" rows="10"
           style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;line-height:1.6;resize:vertical;outline:none;"
@@ -5220,7 +5230,9 @@
         <span style="font-weight:600;">${escHtml(r.userName)}</span>
         <div style="font-size:11px;color:var(--muted)">${escHtml(r.userEmail)}</div>
       </td>
-      <td><span class="badge" style="${statusStyle[r.status] || ''}">${statusLabel[r.status] || r.status}</span></td>
+      <td><span class="badge" style="${statusStyle[r.status] || ''}">${statusLabel[r.status] || r.status}</span>
+        <span class="badge" style="background:#ede9fe;color:#5b21b6;margin-left:4px;">${escHtml(r.theTrang || '—')}</span>
+      </td>
       <td style="color:var(--muted)">${fmtDate(r.submittedAt)}</td>
       <td><button class="act-btn" onclick="openTtmRoadmap(${r.id})">Xem & Duyệt</button></td>
     </tr>`).join('');
@@ -5237,6 +5249,7 @@
     ${r.adminNote ? `<div style="color:#dc2626;margin-top:4px;">Ghi chú trước: ${escHtml(r.adminNote)}</div>` : ''}`;
       document.getElementById('ttmSummary').textContent = r.summaryText;
       document.getElementById('ttmDraftContent').value = r.finalContent || r.draftContent;
+      document.getElementById('ttmTheTrang').value = r.theTrang || '';
       document.getElementById('ttmAdminNote').value = '';
       document.getElementById('ttmRoadmapModal').style.display = 'flex';
       loadTtmPhotos(r.userId);
@@ -5274,6 +5287,7 @@
       if (!reviewingTtmId) return;
       const finalContent = document.getElementById('ttmDraftContent').value.trim();
       const adminNote = document.getElementById('ttmAdminNote').value.trim();
+      const theTrang = document.getElementById('ttmTheTrang').value || null;
       if (action === 'approve' && !finalContent) {
         showToast('Nội dung lộ trình đang trống.', 'red');
         return;
@@ -5281,7 +5295,7 @@
       try {
         await api(`/admin/ttm/roadmaps/${reviewingTtmId}`, {
           method: 'PATCH',
-          body: JSON.stringify({ action, final_content: finalContent, admin_note: adminNote }),
+          body: JSON.stringify({ action, final_content: finalContent, admin_note: adminNote, the_trang: theTrang }),
         });
         showToast(action === 'approve' ? '✅ Đã duyệt lộ trình!' : '✖ Đã từ chối.', action === 'approve' ? 'green' : '');
         closeTtmRoadmapModal();
@@ -5523,6 +5537,7 @@
       box.innerHTML = `
     <div style="margin-bottom:16px;">
       <span class="badge" style="${statusStyle[r.status] || ''}">${statusLabelMap[r.status] || r.status}</span>
+      ${r.theTrang ? `<span class="badge" style="background:#ede9fe;color:#5b21b6;margin-left:6px;">Thể trạng: ${escHtml(r.theTrang)}</span>` : ''}
       <span style="font-size:12px;color:var(--muted);margin-left:8px;">Tạo lúc ${fmtDate(r.createdAt)}${r.reviewedAt ? ', duyệt lúc ' + fmtDate(r.reviewedAt) : ''}${r.reviewedByName ? ' bởi ' + escHtml(r.reviewedByName) : ''}</span>
     </div>
     ${r.adminNote ? `<div style="font-size:12.5px;color:#991b1b;margin-bottom:16px;">Ghi chú nội bộ: ${escHtml(r.adminNote)}</div>` : ''}
