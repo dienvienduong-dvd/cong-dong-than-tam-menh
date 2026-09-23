@@ -1132,15 +1132,47 @@
       .my-rank-hero {
         flex-wrap: wrap;
         padding: 20px;
-        gap: 16px;
+        gap: 14px 16px;
+      }
+
+      .my-rank-avatar,
+      .my-rank-avatar-placeholder {
+        width: 72px;
+        height: 72px;
+        font-size: 26px;
+      }
+
+      .my-rank-badge {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+      }
+
+      /* Keep avatar + name/title on the same row (min-width stops the name
+         from being squeezed down to a one-word-per-line column); the XP
+         block always gets its own full-width row below via flex-basis:100%
+         instead of half-fitting into whatever space is left over. */
+      .my-rank-info {
+        min-width: 180px;
       }
 
       .my-rank-xp-section {
+        flex: 1 1 100%;
+        order: 3;
         text-align: left;
       }
 
       .my-rank-xp-bar {
+        width: 100%;
         margin-left: 0;
+      }
+
+      .my-rank-xp-next {
+        text-align: left;
+      }
+
+      .my-rank-meta {
+        gap: 14px;
       }
 
       .profile-pheader {
