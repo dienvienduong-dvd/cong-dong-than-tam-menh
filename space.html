@@ -133,6 +133,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
       gap: 10px;
       padding-top: 10px;
       border-top: 1px solid var(--border);
@@ -146,6 +147,8 @@
       color: var(--text-muted);
       outline: none;
       cursor: pointer;
+      max-width: 100%;
+      min-width: 0;
     }
 
     /* Composer toolbar (attach image/video/doc/gif/poll + emoji) */
@@ -231,6 +234,7 @@
     @media (max-width: 768px) {
       .feed-filters { gap: 4px; }
       .tab-item { padding: 8px 10px; font-size: 12px; }
+      .composer-pillar-select { max-width: calc(100vw - 64px); }
     }
 
     /* ── Post Detail Modal ──────────────────────────────── */
@@ -515,7 +519,7 @@
             </div>
           </div>
           <div class="composer-actions">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;max-width:100%;">
               <select id="composerTopic" class="composer-pillar-select">
                 <option value="">Chọn Topic *</option>
               </select>
