@@ -1071,6 +1071,16 @@ const COURSE_SEED = [
 - Văn phong: dễ hiểu, thân thiện, không hù dọa, không phán xét, không thuật ngữ y khoa khó hiểu, cá nhân hóa theo đúng câu trả lời của khách, ưu tiên hành động cụ thể.
 - Chỉ dùng văn bản thuần (plain text) và ký tự Unicode thường (VD mũi tên →). KHÔNG dùng ký hiệu LaTeX/toán học (VD \\rightarrow, $...$) vì nội dung được hiển thị dạng text thô, không render được công thức.
 
+[QUY TẮC ĂN UỐNG THEO NGŨ HÀNH — ưu tiên số 1 trong lộ trình, vận động là thứ yếu]
+"Bệnh từ miệng mà vào" — ăn uống đúng cách theo Ngũ Hành là nền tảng để thải độc lục phủ ngũ tạng, LUÔN là phần quan trọng và cụ thể nhất trong lộ trình (mục 7 bên dưới), đứng trước phần vận động/tập luyện.
+- Khung vị theo giờ trong ngày (áp dụng chung, chọn món cụ thể theo thể trạng Hàn/Nhiệt của khách):
+  • Sáng: vị CHUA (ưu tiên thực phẩm màu xanh) + vị ĐẮNG (ưu tiên thực phẩm màu đỏ) + vị NGỌT (dùng đường/mật mía, KHÔNG dùng mật ong).
+  • Trưa: ăn bình thường, ưu tiên vị CHUA + ĐẮNG.
+  • Chiều: vị CAY (ưu tiên thực phẩm màu trắng) + vị MẶN (ưu tiên thực phẩm màu đen).
+  • Vị CHÁT và chất béo: có thể bổ sung xen kẽ trong ngày.
+- Mỗi vị thải độc cho một tạng riêng — LUÔN nêu rõ tạng được hỗ trợ khi gợi ý món ăn: Chua → Gan; Ngọt (đường/mật mía) → Dạ dày, Lá lách; Chát → Ruột; Cay → Phổi; Mặn → Thận; Đắng → Tim.
+- Mỗi loại thực phẩm trong từng vị còn có tính Hàn hoặc Nhiệt riêng. Dựa vào THE_TRANG đã xác định: khách thuộc nhóm Nhiệt → ưu tiên thực phẩm tính Hàn/mát trong mỗi vị; khách thuộc nhóm Hàn → ưu tiên thực phẩm tính Nhiệt/ấm; Hàn giả nhiệt/Nhiệt giả hàn → ưu tiên món trung tính, cân bằng nhẹ nhàng. Vận dụng kiến thức Ngũ Hành ẩm thực đã có (theo từng hành Kim/Mộc/Thủy/Hỏa/Thổ, cẩm nang dinh dưỡng Ngũ Hành) để chọn đúng món ăn theo vị, màu sắc và tính hàn/nhiệt phù hợp — không chỉ liệt kê tên vị chung chung.
+
 [ĐỊNH DẠNG TRẢ LỜI BẮT BUỘC — theo đúng thứ tự sau]
 
 1. Dòng ĐẦU TIÊN PHẢI là: THE_TRANG: <một trong 4 loại: Nhiệt, Hàn, Hàn giả nhiệt, Nhiệt giả hàn> — xác định dựa trên các dấu hiệu Hàn/Nhiệt trong bảng trả lời (tay chân lạnh/ấm, sợ lạnh/sợ nóng, ra mồ hôi, màu nước tiểu, rêu lưỡi, nhiệt miệng, v.v.).
@@ -1089,7 +1099,10 @@ ${TTM_PRIORITY_AREAS.map((a, i) => `${i + 1}. ${a}`).join('\n')}
 ## 4. PHÂN TÍCH NGUYÊN NHÂN CÓ THỂ LIÊN QUAN (chia theo 5 nhóm: Ăn uống / Vận động / Ngủ nghỉ / Tâm lý-áp lực / Lối sống)
 ## 5. PHẦN TÂM (đánh giá công việc, gia đình, quan hệ xã hội, tài chính, khả năng tự cân bằng; kết luận 2-4 câu)
 ## 6. VẤN ĐỀ CẦN ƯU TIÊN (tối đa 3 ưu tiên)
-## 7. LỘ TRÌNH CẢI THIỆN CÁ NHÂN (theo 4 giai đoạn ở trên, chỉ nhấn mạnh giai đoạn phù hợp)
+## 7. LỘ TRÌNH CẢI THIỆN CÁ NHÂN — đây là phần quan trọng nhất, PHẢI cụ thể, không viết chung chung:
+   a) 1-2 câu nêu giai đoạn nào (trong 4 giai đoạn ở trên) phù hợp nhất với khách, theo đúng tính chất Ngũ Hành ăn uống ở trên.
+   b) Bắt buộc có một bảng thực đơn cụ thể theo khung giờ, viết đúng cú pháp bảng markdown (dòng tiêu đề, dòng "|---|---|---|---|", rồi các dòng dữ liệu) với 4 cột: "Bữa ăn" | "Gợi ý món ăn cụ thể" | "Vị & màu ưu tiên" | "Tạng được hỗ trợ". Liệt kê đủ: Sáng sớm, Bữa sáng, Bữa trưa, Bữa phụ, Bữa tối — món ăn phải cụ thể (tên món/thực phẩm thật), đã điều chỉnh tính hàn/nhiệt theo đúng THE_TRANG của khách, không chỉ ghi tên vị.
+   c) Sau bảng thực đơn, thêm 1 đoạn ngắn về vận động/tập luyện bổ sung (thứ yếu, hỗ trợ thêm — không thay thế phần ăn uống ở trên).
 ## 8. 3 VIỆC NÊN BẮT ĐẦU NGAY (đúng 3 hành động cụ thể, đơn giản, thực hiện được ngay)
 ## 9. ĐIỀU CẦN THEO DÕI (các biểu hiện nên theo dõi trong quá trình thay đổi)
 ## 10. KHUYẾN NGHỊ AN TOÀN (câu cảnh báo y tế phù hợp theo mức độ ở trên; nếu không có dấu hiệu đáng chú ý vẫn ghi: "Bản khảo sát nhằm giúp bạn nhìn lại thói quen và biểu hiện sức khỏe hiện tại, không thay thế cho thăm khám y khoa.")
@@ -1212,6 +1225,12 @@ ${summaryText}`;
     const content = withoutMap
       .replace(/^\s*THE_TRANG:.*$/im, '')
       .replace(/^\s*[-*_]{3,}\s*$/gm, '')
+      // Model đôi khi phớt lờ yêu cầu "không dùng LaTeX" trong prompt và vẫn
+      // chèn $\rightarrow$ / \rightarrow — chặn ở tầng parse cho chắc, không
+      // phụ thuộc hoàn toàn vào việc model tuân thủ đúng mỗi lần.
+      .replace(/\$?\\rightarrow\$?/g, '→')
+      .replace(/\$?\\leftarrow\$?/g, '←')
+      .replace(/\$?\\Rightarrow\$?/g, '⇒')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
     return { theTrang, content, priorityMap };
