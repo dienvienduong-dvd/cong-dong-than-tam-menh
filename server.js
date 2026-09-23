@@ -1057,7 +1057,11 @@ ${summaryText}`;
           'Authorization': `Bearer ${GOCLAW_WEBHOOK_SECRET}`,
         },
         body,
-        signal: AbortSignal.timeout(35000), // webhook sync mode itself times out at 30s
+        // Callers no longer block a customer-facing request on this (see
+        // /api/ttm/intake/save), so it's safe to give GoClaw generous room —
+        // a full 29-question roadmap draft has been observed to genuinely
+        // take longer than the old 35s budget while still completing fine.
+        signal: AbortSignal.timeout(120000),
       });
 
       const data = await resp.json().catch(() => null);
@@ -6498,25 +6502,35 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
 
     db.run("UPDATE users SET ttm_intake_done_at = datetime('now','localtime') WHERE id = ?", [userId]);
 
-    const agentResult = await callGoclawAgent1(summaryText);
-    let draftContent, theTrang = null;
-    if (agentResult.ok) {
-      const parsed = parseAgent1Response(agentResult.text);
-      draftContent = parsed.content;
-      theTrang = parsed.theTrang;
-    } else {
-      draftContent = `[Lỗi tạo bản nháp tự động: ${agentResult.error}]\n\nVui lòng bấm "Tạo lại bản nháp" trong Admin, hoặc soạn thủ công dựa trên bản tổng kết bên dưới.`;
-    }
-
+    // GoClaw's own sync-webhook cutoff has been observed to run well past our
+    // client-side timeout on long surveys (large input, comprehensive roadmap
+    // output) — the agent still finishes and shows up fine in the GoClaw
+    // dashboard, but our request had already aborted, so the draft was saved
+    // as a permanent error placeholder instead of the real content. Respond
+    // to the customer immediately (don't make them sit on the intake-submit
+    // screen for 30-90s) and fill in the real draft asynchronously once
+    // GoClaw actually replies, same fire-and-forget pattern as
+    // runAgent2Coaching/runProgram377Coaching.
     const roadmapId = db.run(
       'INSERT INTO ttm_roadmaps (user_id, intake_id, draft_content, status, the_trang) VALUES (?, ?, ?, ?, ?)',
-      [userId, intakeId, draftContent, 'pending_approval', theTrang]
+      [userId, intakeId, '⏳ Đang tạo bản nháp tự động, vui lòng đợi khoảng 1 phút rồi bấm "Làm mới" hoặc "Tạo lại bản nháp".', 'pending_approval', null]
     ).lastInsertRowid;
 
-    if (!agentResult.ok) console.error(`[TTM] Agent 1 call failed for user ${userId}:`, agentResult.error);
-    console.log(`[TTM] Intake saved for user ${userId}, roadmap #${roadmapId} pending_approval`);
+    console.log(`[TTM] Intake saved for user ${userId}, roadmap #${roadmapId} pending_approval — generating draft in background`);
+    res.json({ ok: true, intakeId, roadmapId });
 
-    res.json({ ok: true, intakeId, roadmapId, agentOk: agentResult.ok });
+    callGoclawAgent1(summaryText).then((agentResult) => {
+      let draftContent, theTrang = null;
+      if (agentResult.ok) {
+        const parsed = parseAgent1Response(agentResult.text);
+        draftContent = parsed.content;
+        theTrang = parsed.theTrang;
+      } else {
+        draftContent = `[Lỗi tạo bản nháp tự động: ${agentResult.error}]\n\nVui lòng bấm "Tạo lại bản nháp" trong Admin, hoặc soạn thủ công dựa trên bản tổng kết bên dưới.`;
+        console.error(`[TTM] Agent 1 call failed for user ${userId}:`, agentResult.error);
+      }
+      db.run('UPDATE ttm_roadmaps SET draft_content = ?, the_trang = ? WHERE id = ?', [draftContent, theTrang, roadmapId]);
+    });
   });
 
   // Admin: regenerate a draft (e.g. after fixing GOCLAW_WEBHOOK_* config)
