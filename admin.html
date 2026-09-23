@@ -3677,8 +3677,12 @@
         <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Bản đồ ưu tiên (Agent 1 xác định)</div>
         <div id="ttmPriorityMap" style="margin-bottom:16px;"></div>
 
-        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Bản nháp lộ trình (Agent 1 — An Lộ)</div>
-        <textarea id="ttmDraftContent" rows="10"
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Xem trước (đã render)</div>
+        <div id="ttmDraftPreview" class="mpp-doc-body"
+          style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;max-height:320px;overflow-y:auto;"></div>
+
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Bản nháp lộ trình (Agent 1 — An Lộ) — mã nguồn markdown, chỉnh sửa tại đây</div>
+        <textarea id="ttmDraftContent" rows="10" oninput="renderTtmDraftPreview()"
           style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;line-height:1.6;resize:vertical;outline:none;"
           placeholder="Nội dung bản nháp..."></textarea>
         <div style="font-size:11px;color:var(--muted);margin-top:4px;">Có thể chỉnh sửa trực tiếp trước khi duyệt — nội dung này sẽ trở thành lộ trình chính thức gửi khách.</div>
@@ -5658,8 +5662,14 @@
       document.getElementById('ttmTheTrang').value = r.theTrang || '';
       document.getElementById('ttmAdminNote').value = '';
       renderTtmPriorityMap(r.priorityMap);
+      renderTtmDraftPreview();
       document.getElementById('ttmRoadmapModal').style.display = 'flex';
       loadTtmPhotos(r.userId);
+    }
+
+    function renderTtmDraftPreview() {
+      const md = document.getElementById('ttmDraftContent').value;
+      document.getElementById('ttmDraftPreview').innerHTML = mppMdToHtml(md || '(trống)');
     }
 
     function renderTtmPriorityMap(items) {
