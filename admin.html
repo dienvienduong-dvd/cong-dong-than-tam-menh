@@ -3674,6 +3674,9 @@
           <option value="Nhiệt giả hàn">Nhiệt giả hàn</option>
         </select>
 
+        <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Bản đồ ưu tiên (Agent 1 xác định)</div>
+        <div id="ttmPriorityMap" style="margin-bottom:16px;"></div>
+
         <div style="margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Bản nháp lộ trình (Agent 1 — An Lộ)</div>
         <textarea id="ttmDraftContent" rows="10"
           style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;line-height:1.6;resize:vertical;outline:none;"
@@ -5654,8 +5657,40 @@
       document.getElementById('ttmDraftContent').value = r.finalContent || r.draftContent;
       document.getElementById('ttmTheTrang').value = r.theTrang || '';
       document.getElementById('ttmAdminNote').value = '';
+      renderTtmPriorityMap(r.priorityMap);
       document.getElementById('ttmRoadmapModal').style.display = 'flex';
       loadTtmPhotos(r.userId);
+    }
+
+    function renderTtmPriorityMap(items) {
+      const box = document.getElementById('ttmPriorityMap');
+      if (!items || !items.length) {
+        box.innerHTML = '<div style="font-size:12px;color:var(--muted);">Chưa có bản đồ ưu tiên (agent chưa trả về hoặc bản nháp bị lỗi).</div>';
+        return;
+      }
+      const style = {
+        'Cao':        'background:#fee2e2;color:#991b1b;',
+        'Trung bình': 'background:#fef3c7;color:#92400e;',
+        'Thấp':       'background:#dcfce7;color:#166534;',
+      };
+      box.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+          <thead>
+            <tr style="text-align:left;color:var(--muted);text-transform:uppercase;font-size:10.5px;">
+              <th style="padding:5px 8px;border-bottom:1px solid var(--border);">Khu vực</th>
+              <th style="padding:5px 8px;border-bottom:1px solid var(--border);">Trạng thái</th>
+              <th style="padding:5px 8px;border-bottom:1px solid var(--border);">Ưu tiên</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(it => `
+              <tr>
+                <td style="padding:6px 8px;border-bottom:1px solid var(--border);font-weight:600;">${escHtml(it.area || '')}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid var(--border);color:var(--muted);">${escHtml(it.status || '')}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid var(--border);"><span class="badge" style="${style[it.priority] || style['Thấp']}">${escHtml(it.priority || '')}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
     }
 
     async function loadTtmPhotos(userId) {

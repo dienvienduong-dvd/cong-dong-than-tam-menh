@@ -1110,7 +1110,12 @@
       lines.push(`Email: ${state.contact.email || CURRENT_USER.email}`);
       [['than', 'PHẦN THÂN'], ['tam', 'PHẦN TÂM']].forEach(([sec, label]) => {
         lines.push(`=== ${label} ===`);
+        let lastGroup = null;
         QUESTIONS.filter(q => q.section === sec).forEach(q => {
+          if (q.group !== lastGroup) {
+            lines.push(`--- ${q.group} ---`);
+            lastGroup = q.group;
+          }
           const qNum = questionIndexOf(q.id) + 1;
           lines.push(`${qNum}. ${q.text}`);
           lines.push(`   → ${formatAnswerPreview(q)}`);

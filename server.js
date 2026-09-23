@@ -1037,17 +1037,73 @@ const COURSE_SEED = [
 
   const THE_TRANG_VALUES = ['Nhiệt', 'Hàn', 'Hàn giả nhiệt', 'Nhiệt giả hàn'];
 
+  // Cố định 11 "khu vực" cho bản đồ ưu tiên — khớp 1:1 với 11 nhãn `group` trên
+  // các câu hỏi khảo sát (intake-than-tam-menh.html), để agent không tự đặt tên
+  // tùy hứng mỗi lần chạy (không so sánh được giữa các khách hàng nếu tên đổi).
+  const TTM_PRIORITY_AREAS = [
+    'Hệ thần kinh & cơ xương khớp',
+    'Giác quan & vùng đầu mặt',
+    'Hệ tiêu hóa & bài tiết',
+    'Thân nhiệt & mồ hôi',
+    'Sinh hoạt, vận động & thói quen',
+    'Hơi thở & sự lưu thông khí',
+    'Áp lực công việc & sự nghiệp',
+    'Tình cảm gia đình & không gian sống',
+    'Bạn bè & các mối quan hệ xã hội',
+    'Đầu tư, tài chính & nỗi lo tiền bạc',
+    'Khả năng tự cân bằng',
+  ];
+
+  // Hướng dẫn phân tích + cấu trúc output cho Agent 1 ("An Lộ"). Gửi kèm mỗi lần
+  // gọi (không cấu hình trong GoClaw dashboard) để version-controlled và deploy
+  // được qua quy trình chuẩn. Không được chẩn đoán bệnh — chỉ phân tích biểu
+  // hiện khách tự khai báo trong khảo sát.
+  function buildTtmAgentInstructions(summaryText) {
+    return `[VAI TRÒ] Bạn là trợ lý phân tích khảo sát THÂN - TÂM - MỆNH. Bạn KHÔNG phải bác sĩ và KHÔNG được chẩn đoán bệnh. Bạn chỉ được: phân tích các biểu hiện khách tự khai báo, nhận diện mẫu hình lặp lại giữa nhiều câu trả lời, đánh giá mức độ ưu tiên cải thiện, đề xuất lộ trình chăm sóc sức khỏe tự nhiên, và khuyến nghị gặp chuyên gia y tế khi biểu hiện kéo dài/nghiêm trọng.
+
+[NGUYÊN TẮC PHÂN TÍCH]
+- Không phân tích từng câu rời rạc — tìm MẪU HÌNH xuyên suốt nhiều câu trả lời liên quan (ví dụ: cổ vai gáy + đau đầu + hơi thở nông + ít vận động → mô tả là "nhóm biểu hiện liên quan đến căng thẳng cơ thể và thói quen vận động", KHÔNG viết "bạn bị thoái hóa đốt sống cổ").
+- Mỗi nhận định phải xếp vào 1 trong 3 mức: TÍN HIỆU TÍCH CỰC (không có biểu hiện khó chịu đáng kể — ghi nhận rõ, không cố tìm vấn đề), CẦN QUAN TÂM (biểu hiện lặp lại, thói quen chưa tối ưu — ưu tiên điều chỉnh lối sống), CẦN QUAN TÂM SỚM (biểu hiện thường xuyên/kéo dài, ảnh hưởng sinh hoạt rõ rệt — phải kèm câu: "Khảo sát này không thay thế thăm khám y tế. Nếu biểu hiện kéo dài, tăng dần hoặc ảnh hưởng sinh hoạt, bạn nên trao đổi trực tiếp với bác sĩ/chuyên gia y tế.").
+- Nếu khách hàng phần lớn tích cực: KHÔNG bịa vấn đề để bán chương trình. Chuyển trọng tâm sang DUY TRÌ → CỦNG CỐ → PHÒNG NGỪA thay vì "sửa chữa".
+- Khi tìm nguyên nhân, xét theo 5 nhóm: ăn uống, vận động, giấc ngủ & sinh hoạt, căng thẳng & tâm lý, môi trường sống. Không khẳng định một nguyên nhân duy nhất nếu dữ liệu không đủ — dùng "một số yếu tố có thể đang cùng góp phần...".
+- Lộ trình cải thiện cá nhân hóa theo 4 giai đoạn: (1) Ổn định nền tảng (ăn uống, nước, ngủ, đại tiện, vận động nhẹ), (2) Thanh lọc & điều chỉnh (ăn uống theo chương trình, hỗ trợ bài tiết, theo dõi phản ứng cơ thể), (3) Khơi thông vận động (cơ xương khớp, cổ vai gáy, thắt lưng, hơi thở), (4) Duy trì lối sống (biến thành thói quen lâu dài). Không phải khách nào cũng cần cả 4 giai đoạn ở cùng mức độ — chỉ nhấn mạnh giai đoạn phù hợp nhất với vấn đề nổi bật của khách.
+- Không dùng câu chẩn đoán ("bạn bị bệnh X", "bạn đang mắc X", "cơ quan X đang có vấn đề"). Dùng "bạn đang có biểu hiện...", "các câu trả lời gợi ý...", "đây là nhóm cần được quan tâm...".
+- Văn phong: dễ hiểu, thân thiện, không hù dọa, không phán xét, không thuật ngữ y khoa khó hiểu, cá nhân hóa theo đúng câu trả lời của khách, ưu tiên hành động cụ thể.
+- Chỉ dùng văn bản thuần (plain text) và ký tự Unicode thường (VD mũi tên →). KHÔNG dùng ký hiệu LaTeX/toán học (VD \\rightarrow, $...$) vì nội dung được hiển thị dạng text thô, không render được công thức.
+
+[ĐỊNH DẠNG TRẢ LỜI BẮT BUỘC — theo đúng thứ tự sau]
+
+1. Dòng ĐẦU TIÊN PHẢI là: THE_TRANG: <một trong 4 loại: Nhiệt, Hàn, Hàn giả nhiệt, Nhiệt giả hàn> — xác định dựa trên các dấu hiệu Hàn/Nhiệt trong bảng trả lời (tay chân lạnh/ấm, sợ lạnh/sợ nóng, ra mồ hôi, màu nước tiểu, rêu lưỡi, nhiệt miệng, v.v.).
+
+2. Ngay sau đó, xuất ĐÚNG khối sau (không thêm chữ nào trước/sau 2 dòng delimiter):
+===BAN_DO_UU_TIEN_JSON===
+[{"area": "<đúng 1 trong 11 khu vực bên dưới>", "status": "<mô tả ngắn 1 câu>", "priority": "Cao" | "Trung bình" | "Thấp"}, ...]
+===HET_BAN_DO===
+Phải liệt kê ĐỦ cả 11 khu vực sau (kể cả khu vực ổn định thì vẫn ghi, priority "Thấp"), không tự đặt tên khác, không bỏ sót, không thêm khu vực ngoài danh sách:
+${TTM_PRIORITY_AREAS.map((a, i) => `${i + 1}. ${a}`).join('\n')}
+
+3. Sau đó viết bản tổng hợp đầy đủ theo đúng cấu trúc sau (dùng đúng các tiêu đề số thứ tự này):
+## 1. TỔNG QUAN SỨC KHỎE HIỆN TẠI (1-3 đoạn ngắn)
+## 2. NHỮNG ĐIỂM ĐANG TỐT (3-5 điểm; nếu không đủ dữ liệu tích cực, ghi rõ khách có thể bắt đầu từ thay đổi nhỏ)
+## 3. NHỮNG BIỂU HIỆN CẦN QUAN TÂM (tối đa 5 vấn đề, mỗi vấn đề nêu: biểu hiện, câu hỏi liên quan, mức độ, yếu tố có thể liên quan)
+## 4. PHÂN TÍCH NGUYÊN NHÂN CÓ THỂ LIÊN QUAN (chia theo 5 nhóm: Ăn uống / Vận động / Ngủ nghỉ / Tâm lý-áp lực / Lối sống)
+## 5. PHẦN TÂM (đánh giá công việc, gia đình, quan hệ xã hội, tài chính, khả năng tự cân bằng; kết luận 2-4 câu)
+## 6. VẤN ĐỀ CẦN ƯU TIÊN (tối đa 3 ưu tiên)
+## 7. LỘ TRÌNH CẢI THIỆN CÁ NHÂN (theo 4 giai đoạn ở trên, chỉ nhấn mạnh giai đoạn phù hợp)
+## 8. 3 VIỆC NÊN BẮT ĐẦU NGAY (đúng 3 hành động cụ thể, đơn giản, thực hiện được ngay)
+## 9. ĐIỀU CẦN THEO DÕI (các biểu hiện nên theo dõi trong quá trình thay đổi)
+## 10. KHUYẾN NGHỊ AN TOÀN (câu cảnh báo y tế phù hợp theo mức độ ở trên; nếu không có dấu hiệu đáng chú ý vẫn ghi: "Bản khảo sát nhằm giúp bạn nhìn lại thói quen và biểu hiện sức khỏe hiện tại, không thay thế cho thăm khám y khoa.")
+
+[BẢN TỔNG KẾT KHẢO SÁT]
+${summaryText}`;
+  }
+
   async function callGoclawAgent1(summaryText) {
     if (!GOCLAW_WEBHOOK_SECRET) {
       return { ok: false, error: 'Chưa cấu hình GOCLAW_WEBHOOK_SECRET trong .env' };
     }
     try {
-      const wrappedInput = `[YÊU CẦU BỔ SUNG] Trước khi viết lộ trình, hãy xác định thể trạng của khách hàng dựa trên các dấu hiệu Hàn/Nhiệt trong bảng trả lời dưới đây (tay chân lạnh/ấm, sợ lạnh/sợ nóng, ra mồ hôi, màu nước tiểu, rêu lưỡi, nhiệt miệng, v.v.). Xác định là MỘT trong 4 loại: Nhiệt, Hàn, Hàn giả nhiệt, hoặc Nhiệt giả hàn.
-Dòng ĐẦU TIÊN của câu trả lời PHẢI là: THE_TRANG: <một trong 4 loại trên>
-Sau đó xuống dòng và viết lộ trình như bình thường, có điều chỉnh dinh dưỡng/sinh hoạt phù hợp với thể trạng đã xác định.
-
-[BẢN TỔNG KẾT KHẢO SÁT]
-${summaryText}`;
+      const wrappedInput = buildTtmAgentInstructions(summaryText);
       const body = JSON.stringify({ input: wrappedInput, mode: 'sync' });
 
       const resp = await fetch(`${GOCLAW_BASE_URL}/v1/webhooks/llm`, {
@@ -1124,6 +1180,11 @@ ${summaryText}`;
   // prompt cấu hình bên GoClaw) trả về dòng đầu THE_TRANG: <loại>. Parse robust như Agent 2: tìm marker
   // ở bất kỳ đâu trong text, không yêu cầu đúng vị trí — nếu agent không tuân thủ format thì trả về
   // theTrang=null thay vì làm hỏng nội dung lộ trình.
+  // Bản đồ ưu tiên (Khu vực | Trạng thái | Ưu tiên) — agent xuất dưới dạng khối
+  // JSON có delimiter cố định (yêu cầu trong buildTtmAgentInstructions), tách
+  // riêng khỏi phần THE_TRANG và nội dung tự do. Parse robust: nếu agent trả
+  // sai định dạng, priorityMap = null (không có bảng) thay vì làm hỏng cả
+  // draft_content — không chặn luồng.
   function parseAgent1Response(raw) {
     const text = (raw || '').trim();
     const match = text.match(/THE_TRANG:\s*([^\n]+)/i);
@@ -1132,12 +1193,28 @@ ${summaryText}`;
       const val = match[1].trim();
       theTrang = THE_TRANG_VALUES.find(v => v.toLowerCase() === val.toLowerCase()) || null;
     }
-    const content = text
+
+    let priorityMap = null;
+    const mapMatch = text.match(/===BAN_DO_UU_TIEN_JSON===([\s\S]*?)===HET_BAN_DO===/);
+    let withoutMap = text;
+    if (mapMatch) {
+      withoutMap = text.replace(mapMatch[0], '');
+      try {
+        const parsed = JSON.parse(mapMatch[1].trim());
+        if (Array.isArray(parsed)) {
+          const items = parsed.filter(it => it && typeof it.area === 'string' &&
+            typeof it.status === 'string' && ['Cao', 'Trung bình', 'Thấp'].includes(it.priority));
+          if (items.length) priorityMap = items;
+        }
+      } catch (e) { /* agent trả sai định dạng JSON — bỏ qua, không có bảng */ }
+    }
+
+    const content = withoutMap
       .replace(/^\s*THE_TRANG:.*$/im, '')
       .replace(/^\s*[-*_]{3,}\s*$/gm, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
-    return { theTrang, content };
+    return { theTrang, content, priorityMap };
   }
 
   function parseAgent2Response(raw) {
@@ -1578,6 +1655,10 @@ ${summaryText}`;
   if (!ttmRoadmapCols.includes('the_trang')) {
     db.exec('ALTER TABLE ttm_roadmaps ADD COLUMN the_trang TEXT');
     console.log('  Migrated ttm_roadmaps: added the_trang.');
+  }
+  if (!ttmRoadmapCols.includes('priority_map_json')) {
+    db.exec('ALTER TABLE ttm_roadmaps ADD COLUMN priority_map_json TEXT');
+    console.log('  Migrated ttm_roadmaps: added priority_map_json.');
   }
 
   // Migrate program377_reports: thêm cột AI feedback (An Nhiên nhận xét thay đổi sức khỏe
@@ -6520,16 +6601,17 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     res.json({ ok: true, intakeId, roadmapId });
 
     callGoclawAgent1(summaryText).then((agentResult) => {
-      let draftContent, theTrang = null;
+      let draftContent, theTrang = null, priorityMapJson = null;
       if (agentResult.ok) {
         const parsed = parseAgent1Response(agentResult.text);
         draftContent = parsed.content;
         theTrang = parsed.theTrang;
+        priorityMapJson = parsed.priorityMap ? JSON.stringify(parsed.priorityMap) : null;
       } else {
         draftContent = `[Lỗi tạo bản nháp tự động: ${agentResult.error}]\n\nVui lòng bấm "Tạo lại bản nháp" trong Admin, hoặc soạn thủ công dựa trên bản tổng kết bên dưới.`;
         console.error(`[TTM] Agent 1 call failed for user ${userId}:`, agentResult.error);
       }
-      db.run('UPDATE ttm_roadmaps SET draft_content = ?, the_trang = ? WHERE id = ?', [draftContent, theTrang, roadmapId]);
+      db.run('UPDATE ttm_roadmaps SET draft_content = ?, the_trang = ?, priority_map_json = ? WHERE id = ?', [draftContent, theTrang, priorityMapJson, roadmapId]);
     });
   });
 
@@ -6542,8 +6624,9 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     if (!agentResult.ok) return res.status(502).json({ error: agentResult.error });
 
     const parsed = parseAgent1Response(agentResult.text);
-    db.run('UPDATE ttm_roadmaps SET draft_content = ?, the_trang = ? WHERE id = ?', [parsed.content, parsed.theTrang, req.params.id]);
-    res.json({ ok: true, theTrang: parsed.theTrang });
+    const priorityMapJson = parsed.priorityMap ? JSON.stringify(parsed.priorityMap) : null;
+    db.run('UPDATE ttm_roadmaps SET draft_content = ?, the_trang = ?, priority_map_json = ? WHERE id = ?', [parsed.content, parsed.theTrang, priorityMapJson, req.params.id]);
+    res.json({ ok: true, theTrang: parsed.theTrang, priorityMap: parsed.priorityMap });
   });
 
   // Khách xem lộ trình đã được Ngô Lâm duyệt (mới nhất)
@@ -6826,7 +6909,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     const status = req.query.status || 'pending_approval';
     const rows = db.all(
       `SELECT r.id, r.user_id, r.intake_id, r.draft_content, r.status, r.admin_note,
-              r.final_content, r.reviewed_at, r.created_at, r.the_trang,
+              r.final_content, r.reviewed_at, r.created_at, r.the_trang, r.priority_map_json,
               u.first_name, u.last_name, u.email,
               i.summary_text, i.submitted_at
        FROM ttm_roadmaps r
@@ -6851,6 +6934,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
         reviewedAt: r.reviewed_at,
         createdAt: r.created_at,
         theTrang: r.the_trang || null,
+        priorityMap: (() => { try { return JSON.parse(r.priority_map_json || 'null'); } catch (e) { return null; } })(),
       })),
       pending_count: db.get(
         `SELECT COUNT(*) AS n FROM ttm_roadmaps r JOIN users u ON u.id = r.user_id
