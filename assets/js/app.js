@@ -266,17 +266,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     try { localStorage.setItem('theme', theme); } catch (e) {}
-    const btn = document.getElementById('themeToggle');
-    if (btn) applyIcon(btn, theme === 'dark');
+    document.querySelectorAll('#themeToggle, #themeToggleMob').forEach(btn => applyIcon(btn, theme === 'dark'));
   }
 
   function setup() {
-    const btn = document.getElementById('themeToggle');
-    if (!btn) return;
-    applyIcon(btn, document.documentElement.getAttribute('data-theme') === 'dark');
-    btn.addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      setTheme(next);
+    const btns = document.querySelectorAll('#themeToggle, #themeToggleMob');
+    if (!btns.length) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btns.forEach(btn => {
+      applyIcon(btn, isDark);
+      btn.addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+      });
     });
   }
 
@@ -606,16 +608,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function _renderBadge(unread) {
-    const el = document.getElementById('notifBadge');
-    if (!el) return;
-    if (unread > 0) {
-      el.textContent = unread > 99 ? '99+' : unread;
-      el.style.display = 'inline-flex';
-      el.style.alignItems = 'center';
-      el.style.justifyContent = 'center';
-    } else {
-      el.style.display = 'none';
-    }
+    document.querySelectorAll('#notifBadge, #notifBadgeMob').forEach(el => {
+      if (unread > 0) {
+        el.textContent = unread > 99 ? '99+' : unread;
+        el.style.display = 'inline-flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+      } else {
+        el.style.display = 'none';
+      }
+    });
   }
 
   function _renderDropdown(notifs) {
@@ -682,9 +684,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!user) return;
     _notifUserId = user.id;
-    const bell = document.getElementById('notifBell');
-    const dd   = document.getElementById('notifDropdown');
-    if (!bell || !dd) return;
+    const bells = Array.from(document.querySelectorAll('#notifBell, #notifBellMob'));
+    const dd    = document.getElementById('notifDropdown');
+    if (!bells.length || !dd) return;
 
     // Move the dropdown to <body> so position:fixed is never clipped by an
     // ancestor's overflow (e.g. #subnav-bar's overflow-x:auto scroll strip).
@@ -693,14 +695,16 @@ document.addEventListener('DOMContentLoaded', () => {
     _load();
     setInterval(_load, 15000); // poll every 15s for faster notification display
 
-    bell.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      _notifOpen = !_notifOpen;
-      if (_notifOpen) _positionNotifDropdown(bell, dd);
-      dd.style.display = _notifOpen ? 'block' : 'none';
+    bells.forEach(bell => {
+      bell.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        _notifOpen = !_notifOpen;
+        if (_notifOpen) _positionNotifDropdown(bell, dd);
+        dd.style.display = _notifOpen ? 'block' : 'none';
+      });
     });
     document.addEventListener('click', (e) => {
-      if (_notifOpen && !bell.contains(e.target) && !dd.contains(e.target)) {
+      if (_notifOpen && !bells.some(b => b.contains(e.target)) && !dd.contains(e.target)) {
         _notifOpen = false; dd.style.display = 'none';
       }
     });
@@ -712,6 +716,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('DOMContentLoaded', _setup);
   } else {
     setTimeout(_setup, 300);
+  }
+})();
+
+// ── Mobile topbar avatar (mirrors each page's own #topbarAvatar) ──
+(function initMobTopbarAvatar() {
+  const AV_COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444', '#14b8a6'];
+
+  function setup() {
+    const el = document.getElementById('topbarAvatarMob');
+    if (!el) return;
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!user) return;
+    const initials = (user.first_name?.[0] || '?') + (user.last_name?.[0] || '');
+    el.textContent = initials.toUpperCase();
+    el.style.background = AV_COLORS[(user.id || 0) % AV_COLORS.length];
+    el.style.cursor = 'pointer';
+    el.onclick = () => { window.location.href = `profile.html?id=${user.id}`; };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
   }
 })();
 

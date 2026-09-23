@@ -433,6 +433,13 @@ html, body { height: 100%; overflow: hidden; }
   color: var(--text-muted);
   flex-shrink: 0;
 }
+
+.mob-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
 .mob-menu-btn svg { width: 17px; height: 17px; }
 
 /* ── Mobile Nav ── */

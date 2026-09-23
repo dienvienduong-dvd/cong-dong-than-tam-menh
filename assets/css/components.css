@@ -509,7 +509,7 @@
   /* position:fixed + top/left set in JS (app.js _positionNotifDropdown) so it's never
      clipped by an ancestor's overflow (e.g. #subnav-bar's overflow-x:auto scroll strip). */
   display: none; position: fixed;
-  width: 340px; background: var(--bg-card); color: var(--text);
+  width: 340px; max-width: calc(100vw - 16px); background: var(--bg-card); color: var(--text);
   border: 1px solid var(--border); border-radius: 12px;
   box-shadow: var(--shadow-lg); z-index: 600; overflow: hidden;
 }
