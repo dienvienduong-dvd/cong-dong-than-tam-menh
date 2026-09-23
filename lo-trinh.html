@@ -97,6 +97,71 @@
       margin-top: 1px;
     }
 
+    .lt-menu-btn {
+      position: relative;
+      z-index: 1;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    /* ── Menu drawer ── */
+    .lt-menu-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 400;
+    }
+    .lt-menu-overlay.open { display: block; }
+
+    .lt-menu-drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 260px;
+      max-width: 80vw;
+      background: linear-gradient(180deg, #0f172a 0%, #0c2540 100%);
+      z-index: 450;
+      transform: translateX(100%);
+      transition: transform .25s ease;
+      overflow-y: auto;
+      padding: 18px 14px;
+    }
+    .lt-menu-drawer.open { transform: translateX(0); }
+
+    .lt-menu-title {
+      color: #7dd3fc;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 6px 10px 10px;
+    }
+
+    .lt-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 10px;
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+    .lt-menu-item svg { width: 18px; height: 18px; flex-shrink: 0; color: #7dd3fc; }
+    .lt-menu-item:hover { background: rgba(255,255,255,.08); }
+    .lt-menu-item.active { background: rgba(14,165,233,.18); color: #fff; }
+    .lt-menu-item.active svg { color: #38bdf8; }
+
     /* ── Tabs ── */
     .tabs {
       display: flex;
@@ -379,7 +444,62 @@
       <div class="header-name">Lộ trình của tôi</div>
       <div class="header-sub">Ăn uống thuận tự nhiên — cá nhân hóa</div>
     </div>
+    <button class="lt-menu-btn" onclick="toggleLtMenu()" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </header>
+
+  <div class="lt-menu-overlay" id="ltMenuOverlay" onclick="closeLtMenu()"></div>
+  <div class="lt-menu-drawer" id="ltMenuDrawer">
+    <div class="lt-menu-title">Cộng đồng</div>
+    <a href="feed.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Feed
+    </a>
+    <a href="spaces.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+      Spaces
+    </a>
+    <a href="courses.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+      Courses
+    </a>
+    <a href="members.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Members
+    </a>
+    <div class="lt-menu-title">Sức khỏe</div>
+    <a href="lo-trinh.html" class="lt-menu-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z"/></svg>
+      Lộ trình của tôi
+    </a>
+    <a href="program377.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      377 ngày
+    </a>
+    <div class="lt-menu-title">Học tập</div>
+    <a href="challenge.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+      Challenge
+    </a>
+    <div class="lt-menu-title">Khác</div>
+    <a href="leaderboard.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+      Leaderboard
+    </a>
+    <a href="calendar.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendar
+    </a>
+    <a href="marketplace.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+      Marketplace
+    </a>
+    <a href="about.html" class="lt-menu-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      About
+    </a>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="intake" onclick="switchTab('intake')">📋 Hồ sơ khảo sát</button>
@@ -457,6 +577,15 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById(`panel-${name}`).classList.add('active');
+    }
+
+    function toggleLtMenu() {
+      document.getElementById('ltMenuDrawer').classList.toggle('open');
+      document.getElementById('ltMenuOverlay').classList.toggle('open');
+    }
+    function closeLtMenu() {
+      document.getElementById('ltMenuDrawer').classList.remove('open');
+      document.getElementById('ltMenuOverlay').classList.remove('open');
     }
 
     function escHtml(s) {

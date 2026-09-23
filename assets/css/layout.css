@@ -156,7 +156,7 @@ html, body { height: 100%; overflow: hidden; }
   flex-shrink: 0;
 }
 
-#sidebar-user {
+#sidebar-user, #mob-sidebar-user {
   padding: 10px 12px;
   border-top: 1px solid var(--border);
   display: flex;

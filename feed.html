@@ -1209,15 +1209,15 @@
         Marketplace
       </a>
     </nav>
-    <div id="sidebar-user" style="background:var(--bg-app);">
+    <div id="mob-sidebar-user" style="background:var(--bg-app);">
       <div class="user-avatar-wrap">
-        <div class="avatar-placeholder avatar-md"
+        <div class="avatar-placeholder avatar-md" id="sbAvatarMob"
           style="background:#7c3aed;width:32px;height:32px;font-size:12px;font-weight:700;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          TC</div>
+          ?</div>
       </div>
       <div class="user-info">
-        <div class="user-name">Từ Chí Nguyễn</div>
-        <div class="user-level">Beginner · Lv.2</div>
+        <div class="user-name" id="sbNameMob">—</div>
+        <div class="user-level" id="sbLevelMob">—</div>
       </div>
     </div>
   </div>
@@ -1351,22 +1351,26 @@
       document.getElementById('sbName').textContent = currentUser.first_name + ' ' + currentUser.last_name;
       const sbLv = getLevelDef(currentUser.xp || 0);
       document.getElementById('sbLevel').textContent = sbLv.name + ' · Lv.' + sbLv.level;
+      const sbAvatarMob = document.getElementById('sbAvatarMob');
+      if (sbAvatarMob) { sbAvatarMob.textContent = initials; sbAvatarMob.style.background = color; }
+      const sbNameMob = document.getElementById('sbNameMob');
+      if (sbNameMob) sbNameMob.textContent = currentUser.first_name + ' ' + currentUser.last_name;
+      const sbLevelMob = document.getElementById('sbLevelMob');
+      if (sbLevelMob) sbLevelMob.textContent = sbLv.name + ' · Lv.' + sbLv.level;
       const tbAv = document.getElementById('topbarAvatar');
       if (tbAv) {
         tbAv.textContent = initials;
         tbAv.style.background = color;
         tbAv.onclick = () => window.location.href = `profile.html?id=${currentUser.id}`;
       }
-      const sbUserWrap = document.querySelector('#sidebar-user .user-avatar-wrap');
-      if (sbUserWrap) {
-        sbUserWrap.style.cursor = 'pointer';
-        sbUserWrap.onclick = () => window.location.href = `profile.html?id=${currentUser.id}`;
-      }
-      const sbUserInfo = document.querySelector('#sidebar-user .user-info');
-      if (sbUserInfo) {
-        sbUserInfo.style.cursor = 'pointer';
-        sbUserInfo.onclick = () => window.location.href = `profile.html?id=${currentUser.id}`;
-      }
+      document.querySelectorAll('#sidebar-user .user-avatar-wrap, #mob-sidebar-user .user-avatar-wrap').forEach(el => {
+        el.style.cursor = 'pointer';
+        el.onclick = () => window.location.href = `profile.html?id=${currentUser.id}`;
+      });
+      document.querySelectorAll('#sidebar-user .user-info, #mob-sidebar-user .user-info').forEach(el => {
+        el.style.cursor = 'pointer';
+        el.onclick = () => window.location.href = `profile.html?id=${currentUser.id}`;
+      });
 
       const cAvatar = document.getElementById('composerAvatar');
       if (cAvatar) { cAvatar.textContent = initials; cAvatar.style.background = color; }
