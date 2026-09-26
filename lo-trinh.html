@@ -648,7 +648,7 @@
         let m = line.match(/^(#{1,4})\s+(.*)$/);
         if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; i++; continue; }
 
-        m = line.match(/^[-*]\s+(.*)$/);
+        m = line.match(/^[-*+]\s+(.*)$/);
         if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
 
         m = line.match(/^\d+[.)]\s+(.*)$/);
