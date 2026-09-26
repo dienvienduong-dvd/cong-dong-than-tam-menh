@@ -30,6 +30,14 @@
     .p377-card h3 { font-size: var(--fs-md); margin-bottom: 12px; }
     .p377-topic { display:inline-block; font-size: 11px; font-weight: 700; color: #0ea5e9; background: rgba(14,165,233,.1); padding: 3px 10px; border-radius: 99px; margin-bottom: 8px; }
     .p377-video { width:100%; aspect-ratio:16/9; border:0; border-radius: var(--radius-md); margin: 10px 0; }
+    .p377-personal-note { font-size: 13.5px; font-weight: 600; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 14px; }
+    .p377-block { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .p377-block:first-of-type { margin-top: 10px; }
+    .p377-block-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .p377-block-body { font-size: 14px; line-height: 1.7; }
+    .p377-linked-lesson { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .p377-linked-lesson a { font-size: 13.5px; font-weight: 700; color: var(--color-primary); text-decoration: none; }
+    .p377-linked-lesson a:hover { text-decoration: underline; }
     .p377-field { margin-bottom: 12px; }
     .p377-field label { display:block; font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
     .p377-field input, .p377-field select, .p377-field textarea { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-input); color: var(--text); font-family: inherit; font-size: var(--fs-sm); resize: vertical; }
@@ -492,14 +500,44 @@ const API = '/api';
       document.querySelector(`.p377-tab-panel[data-tab="${name}"]`)?.classList.add('active');
     }
 
+    // 6 mục cố định mỗi ngày — nội dung đến từ khối tái sử dụng theo mùa/thể
+    // trạng (server đã lắp ghép sẵn theo ngày thực tế + hồ sơ của người này).
+    const P377_BLOCK_ICONS = { an_uong: '🥗', tap_luyen: '🏃', bat_ta_bat_phong_bat_hu: '🛡️', quan_sat_co_the: '👁️', phong_thuy: '🏠', biet_on: '🙏' };
+    const P377_BLOCK_LABELS = {
+      an_uong: 'Ăn uống theo Ngũ Hành', tap_luyen: 'Duy trì tập luyện / vận động',
+      bat_ta_bat_phong_bat_hu: 'Bài trừ bát tà, bát phong, bát hư', quan_sat_co_the: 'Quan sát biểu hiện cơ thể',
+      phong_thuy: 'Phong thuỷ nhà ở & tài chính', biet_on: '3 điều biết ơn mỗi ngày',
+    };
+
     function renderDayContentHtml(day) {
+      const blocksHtml = (day.blocks || []).filter(b => b.bodyHtml).map(b => `
+      <div class="p377-block">
+        <div class="p377-block-title">${P377_BLOCK_ICONS[b.category] || ''} ${esc(b.title || P377_BLOCK_LABELS[b.category] || b.category)}</div>
+        <div class="p377-block-body">${b.bodyHtml}</div>
+      </div>`).join('');
       return `
       ${day.topic_key ? `<div class="p377-topic">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
       <h3 style="margin-bottom:8px;">${esc(day.title)}</h3>
+      ${day.personalizedNote ? `<div class="p377-personal-note">✨ ${esc(day.personalizedNote)}</div>` : ''}
       ${day.video_url ? `<iframe class="p377-video" src="${day.video_url}" allowfullscreen></iframe>` : ''}
-      <div style="font-size:14px;line-height:1.7;">${day.body_html || ''}</div>
+      ${day.body_html ? `<div style="font-size:14px;line-height:1.7;">${day.body_html}</div>` : ''}
+      ${blocksHtml}
       ${day.exercise_title ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><b>📝 ${esc(day.exercise_title)}</b><div style="margin-top:6px;font-size:14px;color:var(--text-muted);">${esc(day.exercise_body || '')}</div></div>` : ''}
+      ${day.linkedLesson ? `<div class="p377-linked-lesson"><a href="course-view.html?id=${day.linkedLesson.course_id}">📚 Bài học hôm nay: ${esc(day.linkedLesson.title)}</a></div>` : ''}
+      ${day.session ? `<div class="p377-linked-lesson">🗓️ <a href="${esc(day.session.link_url || '#')}" target="_blank" rel="noopener">${esc(day.session.title)} — ${esc(day.session.session_date)}</a></div>` : ''}
     `;
+    }
+
+    // Lịch Zoom/sự kiện trùng đúng ngày thực của 1 ngày trong chương trình —
+    // tải 1 lần, tra theo ngày thay vì gọi API riêng cho mỗi lần mở 1 ngày.
+    let p377SessionsAllCache = null;
+    async function getP377SessionForDate(dateStr) {
+      if (!dateStr) return null;
+      if (!p377SessionsAllCache) {
+        try { p377SessionsAllCache = (await fetch(`${API}/program377/sessions`).then(r => r.json())).sessions || []; }
+        catch { p377SessionsAllCache = []; }
+      }
+      return p377SessionsAllCache.find(s => s.session_date === dateStr) || null;
     }
 
     async function renderTodayContent(dayNumberToday, targetId = 'p377TodayContent') {
@@ -508,6 +546,7 @@ const API = '/api';
       try {
         const d = await fetch(`${API}/program377/day/${dayNumberToday}?user_id=${currentUser.id}`).then(r=>r.json());
         if (d.error || !d.day) { box.innerHTML = `<div class="p377-empty">Nội dung ngày hôm nay chưa được soạn — Ngô Lâm sẽ cập nhật sớm.</div>`; return; }
+        d.day.session = await getP377SessionForDate(d.day.calendarDate);
         box.innerHTML = renderDayContentHtml(d.day);
       } catch { box.innerHTML = `<div class="p377-empty">Không tải được nội dung hôm nay.</div>`; }
     }
@@ -570,6 +609,7 @@ const API = '/api';
         expandEl.innerHTML = `<div class="p377-empty">Đang tải...</div>`;
         try {
           const d = await fetch(`${API}/program377/day/${dayNumber}?user_id=${currentUser.id}`).then(r=>r.json());
+          if (!d.error && d.day) d.day.session = await getP377SessionForDate(d.day.calendarDate);
           p377DayContentCache[dayNumber] = (d.error || !d.day)
             ? `<div class="p377-empty">${esc(d.error || 'Không tìm thấy nội dung.')}</div>`
             : renderDayContentHtml(d.day);

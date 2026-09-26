@@ -711,6 +711,19 @@ const SCHEMA = `
     created_by    INTEGER REFERENCES users(id),
     created_at    TEXT    DEFAULT (datetime('now','localtime'))
   );
+  CREATE TABLE IF NOT EXISTS program377_content_blocks (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    category      TEXT    NOT NULL,
+    season        TEXT    NOT NULL DEFAULT 'all',
+    the_trang     TEXT    NOT NULL DEFAULT 'all',
+    title         TEXT,
+    body_html     TEXT    NOT NULL,
+    status        TEXT    DEFAULT 'draft',
+    ai_generated  INTEGER DEFAULT 0,
+    created_by    INTEGER REFERENCES users(id),
+    created_at    TEXT    DEFAULT (datetime('now','localtime')),
+    updated_at    TEXT
+  );
 `;
 
 // [day_number, title, description, instructions, xp_reward] — 28 ngày Dưỡng Hóa theo Ngũ Hành
@@ -1057,6 +1070,34 @@ const COURSE_SEED = [
     'Khả năng tự cân bằng',
   ];
 
+  // ── Chương trình 377 ngày: khối nội dung tái sử dụng theo mùa/thể trạng ──
+  // 6 mục cố định mỗi ngày (ăn uống, tập luyện, bát tà/bát phong/bát hư, quan
+  // sát cơ thể, phong thủy, biết ơn). Ngày bắt đầu của mỗi người khác nhau nên
+  // "ngày thứ N" rơi vào mùa khác nhau tùy người — nội dung được lắp ghép động
+  // theo mùa thực tế + thể trạng, không gán cứng theo day_number.
+  const PROGRAM377_BLOCK_CATEGORIES = [
+    'an_uong',
+    'tap_luyen',
+    'bat_ta_bat_phong_bat_hu',
+    'quan_sat_co_the',
+    'phong_thuy',
+    'biet_on',
+  ];
+  const PROGRAM377_SEASONS = ['xuan', 'ha', 'thu', 'dong'];
+
+  // Ranh giới mùa theo quý dương lịch — mặc định tạm thời, có thể chỉnh lại 1
+  // chỗ duy nhất nếu user muốn tính theo tiết khí thay vì quý dương lịch.
+  const SEASON_MONTH_MAP = {
+    1: 'dong', 2: 'xuan', 3: 'xuan', 4: 'xuan',
+    5: 'ha', 6: 'ha', 7: 'ha',
+    8: 'thu', 9: 'thu', 10: 'thu',
+    11: 'dong', 12: 'dong',
+  };
+  function seasonForDate(dateStr) {
+    const month = Number(String(dateStr).slice(5, 7));
+    return SEASON_MONTH_MAP[month] || 'xuan';
+  }
+
   // Hướng dẫn phân tích + cấu trúc output cho Agent 1 ("An Lộ"). Gửi kèm mỗi lần
   // gọi (không cấu hình trong GoClaw dashboard) để version-controlled và deploy
   // được qua quy trình chuẩn. Không được chẩn đoán bệnh — chỉ phân tích biểu
@@ -1114,13 +1155,58 @@ ${TTM_PRIORITY_AREAS.map((a, i) => `${i + 1}. ${a}`).join('\n')}
 ${summaryText}`;
   }
 
-  async function callGoclawAgent1(summaryText) {
+  const PROGRAM377_BLOCK_CATEGORY_LABELS = {
+    an_uong: 'Ăn uống theo Ngũ Hành',
+    tap_luyen: 'Duy trì tập luyện / vận động',
+    bat_ta_bat_phong_bat_hu: 'Bài trừ bát tà, bát phong, bát hư',
+    quan_sat_co_the: 'Quan sát biểu hiện cơ thể',
+    phong_thuy: 'Phong thuỷ nhà ở & tài chính',
+    biet_on: '3 điều biết ơn mỗi ngày',
+  };
+  const PROGRAM377_SEASON_LABELS = { xuan: 'Xuân', ha: 'Hạ', thu: 'Thu', dong: 'Đông', all: 'Tất cả các mùa' };
+
+  // Soạn nháp 1 khối nội dung của Chương trình 377 ngày, đúng 1 category, đúng
+  // mùa, đúng thể trạng — admin sẽ đọc/sửa trước khi xuất bản, không tự động
+  // hiển thị cho khách. Dùng cùng khung Ngũ Hành ăn uống đã áp dụng cho An Lộ.
+  function buildProgram377BlockPrompt(category, season, theTrang) {
+    const categoryLabel = PROGRAM377_BLOCK_CATEGORY_LABELS[category] || category;
+    const seasonLabel = PROGRAM377_SEASON_LABELS[season] || season;
+    const theTrangLabel = theTrang === 'all' ? 'mọi thể trạng (không phân biệt Hàn/Nhiệt)' : theTrang;
+
+    let extra = '';
+    if (category === 'an_uong') {
+      extra = `
+[QUY TẮC ĂN UỐNG THEO NGŨ HÀNH — bắt buộc áp dụng]
+- Khung vị theo giờ trong ngày: Sáng vị CHUA (ưu tiên màu xanh) + ĐẮNG (ưu tiên màu đỏ) + NGỌT (đường/mật mía, KHÔNG dùng mật ong); Trưa ưu tiên CHUA + ĐẮNG; Chiều vị CAY (ưu tiên màu trắng) + MẶN (ưu tiên màu đen); CHÁT và chất béo bổ sung xen kẽ.
+- Mỗi vị thải độc 1 tạng: Chua → Gan; Ngọt (mật mía) → Dạ dày, Lá lách; Chát → Ruột; Cay → Phổi; Mặn → Thận; Đắng → Tim — luôn nêu rõ tạng được hỗ trợ khi gợi ý món.
+- Thể trạng ${theTrangLabel}: ${theTrang === 'Nhiệt' ? 'ưu tiên thực phẩm tính Hàn/mát trong mỗi vị' : theTrang === 'Hàn' ? 'ưu tiên thực phẩm tính Nhiệt/ấm trong mỗi vị' : theTrang === 'all' ? 'nêu rõ gợi ý riêng cho từng nhóm thể trạng (Nhiệt dùng món mát, Hàn dùng món ấm) thay vì chỉ 1 phương án chung' : 'ưu tiên món trung tính, cân bằng nhẹ nhàng'}.
+- Mùa ${seasonLabel}: chọn thực phẩm/món ăn theo mùa thực tế (rau củ quả trái mùa, món giữ ấm/giải nhiệt phù hợp thời tiết mùa này).
+- Đưa ra thực đơn CỤ THỂ (tên món/thực phẩm thật), không viết chung chung.`;
+    } else if (category === 'tap_luyen') {
+      extra = `\n[LƯU Ý] Vận động là thứ yếu, hỗ trợ thêm cho phần ăn uống — gợi ý bài tập nhẹ nhàng, cụ thể (tên bài tập, thời lượng), phù hợp mùa ${seasonLabel} và thể trạng ${theTrangLabel} (VD thể Hàn nên vận động buổi có nắng ấm, thể Nhiệt tránh vận động quá sức lúc nắng gắt).`;
+    }
+
+    return `[VAI TRÒ] Bạn là trợ lý soạn nội dung hướng dẫn hằng ngày cho "Chương trình 377 ngày" của cộng đồng Hồi Sinh Thân-Tâm-Mệnh, dựa trên kiến thức Ngũ Hành (tham khảo các tài liệu Ngũ Hành đã có: ăn uống theo hành Thổ/Thủy/Hỏa/Kim/Mộc, cẩm nang dinh dưỡng Ngũ Hành 24h).
+
+[NHIỆM VỤ] Soạn 1 khối nội dung ngắn gọn, thực tế, áp dụng được ngay hôm nay cho mục "${categoryLabel}", dành cho người có thể trạng: ${theTrangLabel}, vào mùa: ${seasonLabel}.
+${extra}
+
+[YÊU CẦU CHUNG]
+- Văn phong thân thiện, dễ hiểu, không thuật ngữ y khoa khó hiểu, không chẩn đoán bệnh.
+- Nội dung súc tích (đủ đọc trong 1-2 phút), có thể dùng danh sách gạch đầu dòng hoặc bảng markdown nếu cần liệt kê nhiều món/bài tập.
+- Chỉ dùng văn bản thuần và ký tự Unicode thường. KHÔNG dùng ký hiệu LaTeX/toán học (VD \\rightarrow, $...$).
+- Trả lời TRỰC TIẾP nội dung khối này — không thêm lời chào, không nhắc lại yêu cầu, không thêm tiêu đề "## ${categoryLabel}" (admin sẽ tự đặt tiêu đề khi lưu).`;
+  }
+
+  // Gọi thẳng webhook GoClaw (mode=sync) với 1 chuỗi input đã soạn sẵn — dùng
+  // chung cho mọi agent gửi qua webhook này (An Lộ, và soạn nháp khối nội dung
+  // 377 ngày), mỗi caller tự soạn instructions riêng trước khi gọi hàm này.
+  async function callGoclawWebhook(inputText) {
     if (!GOCLAW_WEBHOOK_SECRET) {
       return { ok: false, error: 'Chưa cấu hình GOCLAW_WEBHOOK_SECRET trong .env' };
     }
     try {
-      const wrappedInput = buildTtmAgentInstructions(summaryText);
-      const body = JSON.stringify({ input: wrappedInput, mode: 'sync' });
+      const body = JSON.stringify({ input: inputText, mode: 'sync' });
 
       const resp = await fetch(`${GOCLAW_BASE_URL}/v1/webhooks/llm`, {
         method: 'POST',
@@ -1144,6 +1230,10 @@ ${summaryText}`;
     } catch (err) {
       return { ok: false, error: `Không gọi được GoClaw: ${err.message}` };
     }
+  }
+
+  async function callGoclawAgent1(summaryText) {
+    return callGoclawWebhook(buildTtmAgentInstructions(summaryText));
   }
 
   // ── GoClaw Agent 2 ("Đồng hành & Thúc đẩy lối sống") webhook ─
@@ -1692,6 +1782,14 @@ ${summaryText}`;
       console.log(`  Migrated program377_reports: added ${col}.`);
     }
   });
+
+  // Migrate program377_days: thêm liên kết bài học (mục II.1 — "chọn trong danh
+  // sách bài học" — liên kết tới 1 course_lessons có sẵn cho ngày đó).
+  const p377DaysCols = db.all('PRAGMA table_info(program377_days)').map(c => c.name);
+  if (!p377DaysCols.includes('linked_lesson_id')) {
+    db.exec('ALTER TABLE program377_days ADD COLUMN linked_lesson_id INTEGER REFERENCES course_lessons(id)');
+    console.log('  Migrated program377_days: added linked_lesson_id.');
+  }
 
   // Vá dữ liệu cũ từ trước khi runProgram377Coaching biết đồng bộ sang meal_logs: những báo cáo
   // 377 ngày đã có nhận xét AI nhưng dòng meal_logs cùng ngày vẫn trống ai_feedback.
@@ -4460,6 +4558,78 @@ QUY TẮC BẮT BUỘC:
     return row ? Math.max(row.n, 0) : 0;
   }
 
+  // Ngày dương lịch thực tế ứng với "ngày thứ N" của 1 user cụ thể — vì mỗi
+  // người có start_date khác nhau, ngày thứ N của người này có thể rơi vào mùa
+  // khác với người kia, nên không thể gán cứng mùa theo day_number.
+  function program377CalendarDate(startDate, dayNumber) {
+    const row = db.get("SELECT date(?, ?) AS d", [startDate, `+${dayNumber - 1} days`]);
+    return row ? row.d : startDate;
+  }
+
+  // Thể trạng + bản đồ ưu tiên từ lộ trình Thân-Tâm-Mệnh đã duyệt gần nhất —
+  // dùng để lắp ghép nội dung 377 ngày đúng theo từng người (tái dùng cùng
+  // nguồn dữ liệu với buildCustomerContext, nhưng trả object thay vì text).
+  function getUserTtmProfile(userId) {
+    const roadmap = db.get(
+      `SELECT the_trang, priority_map_json FROM ttm_roadmaps
+       WHERE user_id = ? AND status = 'approved' ORDER BY reviewed_at DESC LIMIT 1`,
+      [userId]
+    );
+    if (!roadmap) return { theTrang: null, priorityMap: null };
+    let priorityMap = null;
+    try { priorityMap = JSON.parse(roadmap.priority_map_json || 'null'); } catch (e) { priorityMap = null; }
+    return { theTrang: roadmap.the_trang || null, priorityMap };
+  }
+
+  // Chọn 1 khối nội dung đã xuất bản cho 1 category, khớp giảm dần: đúng cả
+  // mùa lẫn thể trạng → đúng mùa (thể trạng 'all') → đúng thể trạng (mùa 'all')
+  // → khối chung ('all'/'all'). Luôn trả về khối nào đó nếu có ít nhất 1 khối
+  // published cho category này — không bao giờ để trống 1 mục trong ngày.
+  function pickProgram377Block(category, season, theTrang) {
+    const candidates = [
+      [season, theTrang || 'all'],
+      [season, 'all'],
+      ['all', theTrang || 'all'],
+      ['all', 'all'],
+    ];
+    for (const [s, t] of candidates) {
+      const row = db.get(
+        `SELECT * FROM program377_content_blocks
+         WHERE category = ? AND season = ? AND the_trang = ? AND status = 'published'
+         ORDER BY updated_at DESC, created_at DESC LIMIT 1`,
+        [category, s, t]
+      );
+      if (row) return row;
+    }
+    return null;
+  }
+
+  // Lắp ghép nội dung đầy đủ của 1 ngày cho 1 user cụ thể: 6 mục cố định (chọn
+  // đúng khối theo mùa thực tế + thể trạng của người này) + dòng cá nhân hoá
+  // rút từ bản đồ ưu tiên + bài học liên kết (nếu có).
+  function resolveProgram377DayContent(userId, dayNumber, startDate) {
+    const calendarDate = program377CalendarDate(startDate, dayNumber);
+    const season = seasonForDate(calendarDate);
+    const { theTrang, priorityMap } = getUserTtmProfile(userId);
+
+    const blocks = PROGRAM377_BLOCK_CATEGORIES.map((category) => {
+      const block = pickProgram377Block(category, season, theTrang);
+      return {
+        category,
+        title: block ? block.title : null,
+        bodyHtml: block ? block.body_html : null,
+      };
+    });
+
+    let personalizedNote = null;
+    if (Array.isArray(priorityMap)) {
+      const topPriority = priorityMap.find(p => p && p.priority === 'Cao');
+      if (topPriority) personalizedNote = `Ưu tiên của bạn hôm nay: ${topPriority.area}${topPriority.status ? ` — ${topPriority.status}` : ''}`;
+    }
+
+    return { calendarDate, season, theTrang, blocks, personalizedNote };
+  }
+
   app.get('/api/program377/status', (req, res) => {
     const userId = req.query.user_id;
     if (!userId) return res.status(400).json({ error: 'Thiếu user_id' });
@@ -4517,7 +4687,11 @@ QUY TẮC BẮT BUỘC:
       return res.status(403).json({ error: 'Ngày này chưa được mở khóa.' });
     const day = db.get('SELECT * FROM program377_days WHERE day_number = ?', [dayNumber]);
     if (!day) return res.status(404).json({ error: 'Nội dung ngày này chưa được soạn.' });
-    res.json({ day });
+    const resolved = resolveProgram377DayContent(userId, dayNumber, enrollment.start_date);
+    const linkedLesson = day.linked_lesson_id
+      ? db.get('SELECT id, title, course_id FROM course_lessons WHERE id = ?', [day.linked_lesson_id])
+      : null;
+    res.json({ day: { ...day, ...resolved, linkedLesson } });
   });
 
   app.get('/api/program377/reports', (req, res) => {
@@ -4653,23 +4827,23 @@ QUY TẮC BẮT BUỘC:
   }
 
   app.post('/api/admin/program377/days', requireAdmin, (req, res) => {
-    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward } = req.body;
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     const existing = db.get('SELECT id FROM program377_days WHERE day_number = ?', [day_number]);
     if (existing) return res.status(409).json({ error: `Ngày ${day_number} đã có nội dung — vui lòng sửa thay vì thêm mới.` });
     const r = db.run(
-      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward) VALUES (?,?,?,?,?,?,?,?)',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0]
+      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id) VALUES (?,?,?,?,?,?,?,?,?)',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null]
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/program377/days/:id', requireAdmin, (req, res) => {
-    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward } = req.body;
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     db.run(
-      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=? WHERE id=?',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, req.params.id]
+      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=?, linked_lesson_id=? WHERE id=?',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, req.params.id]
     );
     res.json({ ok: true });
   });
@@ -4677,6 +4851,76 @@ QUY TẮC BẮT BUỘC:
   app.delete('/api/admin/program377/days/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM program377_days WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
+  });
+
+  // Xem trước nội dung 1 ngày sẽ hiển thị cho 1 tổ hợp mùa/thể trạng mẫu — giúp
+  // admin biết còn thiếu khối nào trước khi khách thật gặp phải (không cần user
+  // thật, không đụng tới enrollment/start_date).
+  app.get('/api/admin/program377/days/:dayNumber/preview', requireAdmin, (req, res) => {
+    const dayNumber = Number(req.params.dayNumber);
+    const season = PROGRAM377_SEASONS.includes(req.query.season) ? req.query.season : 'xuan';
+    const theTrang = THE_TRANG_VALUES.includes(req.query.the_trang) ? req.query.the_trang : null;
+    const blocks = PROGRAM377_BLOCK_CATEGORIES.map((category) => {
+      const block = pickProgram377Block(category, season, theTrang);
+      return { category, title: block ? block.title : null, bodyHtml: block ? block.body_html : null, missing: !block };
+    });
+    res.json({ season, theTrang, blocks });
+  });
+
+  // ── Admin: khối nội dung 377 ngày (an_uong, tap_luyen, ...) theo mùa/thể trạng ──
+  app.get('/api/admin/program377/content-blocks', requireAdmin, (req, res) => {
+    const { category = '', season = '', the_trang = '', status = '' } = req.query;
+    let sql = 'SELECT * FROM program377_content_blocks WHERE 1=1';
+    const params = [];
+    if (category) { sql += ' AND category = ?'; params.push(category); }
+    if (season) { sql += ' AND season = ?'; params.push(season); }
+    if (the_trang) { sql += ' AND the_trang = ?'; params.push(the_trang); }
+    if (status) { sql += ' AND status = ?'; params.push(status); }
+    sql += ' ORDER BY category ASC, season ASC, the_trang ASC';
+    res.json({ blocks: db.all(sql, params), categories: PROGRAM377_BLOCK_CATEGORIES, seasons: PROGRAM377_SEASONS, theTrangValues: THE_TRANG_VALUES });
+  });
+
+  app.post('/api/admin/program377/content-blocks', requireAdmin, (req, res) => {
+    const { category, season, the_trang, title, body_html } = req.body;
+    if (!PROGRAM377_BLOCK_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Category không hợp lệ.' });
+    const seasonVal = season === 'all' || PROGRAM377_SEASONS.includes(season) ? season : 'all';
+    const theTrangVal = the_trang === 'all' || THE_TRANG_VALUES.includes(the_trang) ? the_trang : 'all';
+    if (!body_html?.trim()) return res.status(400).json({ error: 'Thiếu nội dung.' });
+    const r = db.run(
+      'INSERT INTO program377_content_blocks (category, season, the_trang, title, body_html, status, ai_generated, created_by) VALUES (?,?,?,?,?,?,?,?)',
+      [category, seasonVal, theTrangVal, title || null, body_html, 'draft', req.body.ai_generated ? 1 : 0, req.adminUserId || null]
+    );
+    res.status(201).json({ ok: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/program377/content-blocks/:id', requireAdmin, (req, res) => {
+    const existing = db.get('SELECT id FROM program377_content_blocks WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Không tìm thấy khối nội dung.' });
+    const { category, season, the_trang, title, body_html, status } = req.body;
+    const seasonVal = season === 'all' || PROGRAM377_SEASONS.includes(season) ? season : 'all';
+    const theTrangVal = the_trang === 'all' || THE_TRANG_VALUES.includes(the_trang) ? the_trang : 'all';
+    const statusVal = ['draft', 'published'].includes(status) ? status : 'draft';
+    db.run(
+      "UPDATE program377_content_blocks SET category=?, season=?, the_trang=?, title=?, body_html=?, status=?, updated_at = datetime('now','localtime') WHERE id=?",
+      [PROGRAM377_BLOCK_CATEGORIES.includes(category) ? category : existing.category, seasonVal, theTrangVal, title || null, body_html || '', statusVal, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.delete('/api/admin/program377/content-blocks/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM program377_content_blocks WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  });
+
+  // Soạn nháp 1 khối nội dung bằng AI (GoClaw) — admin chủ động bấm và chờ (mode
+  // sync), không phải request khách hàng nên không cần fire-and-forget như Agent 1.
+  app.post('/api/admin/program377/content-blocks/ai-draft', requireAdmin, async (req, res) => {
+    const { category, season, the_trang } = req.body;
+    if (!PROGRAM377_BLOCK_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Category không hợp lệ.' });
+    const prompt = buildProgram377BlockPrompt(category, season || 'all', the_trang || 'all');
+    const result = await callGoclawWebhook(prompt);
+    if (!result.ok) return res.status(502).json({ error: result.error || 'GoClaw không phản hồi.' });
+    res.json({ ok: true, draft: result.text });
   });
 
   app.get('/api/admin/program377/enrollments', requireAdmin, (req, res) => {
@@ -4985,6 +5229,17 @@ QUY TẮC BẮT BUỘC:
   });
 
   // Course lessons
+  // Danh sách phẳng mọi bài học đã xuất bản, kèm tên khoá học — dùng cho dropdown
+  // "liên kết bài học" ở nơi khác (VD nội dung ngày của Chương trình 377 ngày).
+  app.get('/api/admin/course-lessons/all', requireAdmin, (_req, res) => {
+    const lessons = db.all(
+      `SELECT cl.id, cl.title, cl.course_id, c.title AS course_title
+       FROM course_lessons cl JOIN courses c ON c.id = cl.course_id
+       WHERE cl.status = 'published' ORDER BY c.order_num ASC, cl.order_num ASC, cl.id ASC`
+    );
+    res.json({ lessons });
+  });
+
   app.get('/api/admin/courses/:id/lessons', requireAdmin, (req, res) => {
     const lessons = db.all(
       'SELECT * FROM course_lessons WHERE course_id = ? ORDER BY order_num ASC, id ASC',

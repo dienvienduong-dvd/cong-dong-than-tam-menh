@@ -1855,6 +1855,7 @@
           <button id="p377TabBtn-topics" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('topics')">Tổng quan chủ đề</button>
           <button id="p377TabBtn-enrollments" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('enrollments')">Duyệt đăng ký</button>
           <button id="p377TabBtn-days" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('days')">Nội dung từng ngày</button>
+          <button id="p377TabBtn-blocks" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('blocks')">Thư viện khối nội dung</button>
           <button id="p377TabBtn-reports" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('reports')">Báo cáo hằng ngày</button>
           <button id="p377TabBtn-sessions" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('sessions')">Lịch Zoom / sự kiện</button>
         </div>
@@ -1908,6 +1909,48 @@
                 </thead>
                 <tbody id="p377DaysTbody">
                   <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="p377-tab-panel" data-tab="blocks">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>Thư viện khối nội dung (6 mục cố định mỗi ngày)</h2>
+              <button class="btn-sm primary" onclick="openP377BlockModal()">+ Thêm khối</button>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 20px 14px;">
+              <select class="filter-select" id="p377BlockFilterCategory" onchange="loadP377Blocks()">
+                <option value="">Tất cả mục</option>
+              </select>
+              <select class="filter-select" id="p377BlockFilterSeason" onchange="loadP377Blocks()">
+                <option value="">Tất cả mùa</option>
+              </select>
+              <select class="filter-select" id="p377BlockFilterTheTrang" onchange="loadP377Blocks()">
+                <option value="">Tất cả thể trạng</option>
+              </select>
+              <select class="filter-select" id="p377BlockFilterStatus" onchange="loadP377Blocks()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="draft">Nháp</option>
+                <option value="published">Đã xuất bản</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mục</th>
+                    <th>Mùa</th>
+                    <th>Thể trạng</th>
+                    <th>Tiêu đề</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="p377BlocksTbody">
+                  <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
                 </tbody>
               </table>
             </div>
@@ -3749,10 +3792,68 @@
           <label style="font-size:12px;font-weight:600;color:var(--muted);">XP thưởng</label>
           <input type="number" id="p377DayXp" value="0" style="width:120px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
         </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Bài học liên kết (không bắt buộc)</label>
+          <select id="p377DayLinkedLesson" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+            <option value="">— Không liên kết —</option>
+          </select>
+        </div>
       </div>
       <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
         <button class="btn-sm" onclick="closeP377DayModal()">Hủy</button>
         <button class="btn-sm primary" onclick="saveP377Day()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Chương trình 377 ngày — modal khối nội dung (6 mục cố định) ──── -->
+  <div id="p377BlockModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 id="p377BlockModalTitle" style="font-size:16px;font-weight:700;">Thêm khối nội dung</h3>
+        <button onclick="closeP377BlockModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <input type="hidden" id="p377BlockId">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:2;min-width:180px;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Mục (category)</label>
+            <select id="p377BlockCategory" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;"></select>
+          </div>
+          <div style="flex:1;min-width:120px;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Mùa</label>
+            <select id="p377BlockSeason" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;"></select>
+          </div>
+          <div style="flex:1;min-width:140px;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Thể trạng</label>
+            <select id="p377BlockTheTrang" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;"></select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Tiêu đề hiển thị (không bắt buộc)</label>
+          <input type="text" id="p377BlockTitle" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Nội dung (markdown)</label>
+          <button class="btn-sm" onclick="aiDraftP377Block()" id="p377BlockAiBtn">✨ Soạn nháp bằng AI</button>
+        </div>
+        <textarea id="p377BlockBody" rows="8" oninput="renderP377BlockPreview()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Xem trước</label>
+          <div id="p377BlockPreview" class="mpp-doc-body" style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;background:#fafcfe;min-height:40px;"></div>
+        </div>
+        <div class="p377-msg-admin" id="p377BlockMsg" style="font-size:12.5px;"></div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:10px;">
+        <select id="p377BlockStatus" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+          <option value="draft">Nháp</option>
+          <option value="published">Xuất bản</option>
+        </select>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-sm" onclick="closeP377BlockModal()">Hủy</button>
+          <button class="btn-sm primary" onclick="saveP377Block()">Lưu</button>
+        </div>
       </div>
     </div>
   </div>
@@ -4385,6 +4486,7 @@
       if (btn) mpTab('p377-tab-btn', 'p377-tab-panel', name, btn);
       if (name === 'enrollments') loadP377Enrollments();
       if (name === 'days') loadP377Days();
+      if (name === 'blocks') loadP377Blocks();
       if (name === 'reports') loadP377Reports();
       if (name === 'sessions') loadP377Sessions();
       if (name === 'letter') loadP377Letter();
@@ -5765,6 +5867,18 @@
     // ── Chương trình 377 ngày ─────────────────────────────────────────
     let p377TopicsCache = [];
     let p377DaysCache = [];
+    let p377LessonsCache = [];
+    let p377BlocksCache = [];
+    const P377_BLOCK_CATEGORY_LABELS = {
+      an_uong: 'Ăn uống theo Ngũ Hành',
+      tap_luyen: 'Duy trì tập luyện / vận động',
+      bat_ta_bat_phong_bat_hu: 'Bài trừ bát tà, bát phong, bát hư',
+      quan_sat_co_the: 'Quan sát biểu hiện cơ thể',
+      phong_thuy: 'Phong thuỷ nhà ở & tài chính',
+      biet_on: '3 điều biết ơn mỗi ngày',
+    };
+    const P377_SEASON_LABELS = { xuan: 'Xuân', ha: 'Hạ', thu: 'Thu', dong: 'Đông', all: 'Tất cả các mùa' };
+    const THE_TRANG_VALUES = ['Nhiệt', 'Hàn', 'Hàn giả nhiệt', 'Nhiệt giả hàn'];
     let p377EnrollCache = [];
     let p377SessionsCache = [];
     let p377ReportsCache = [];
@@ -5865,10 +5979,20 @@
     </tr>`).join('');
     }
 
+    async function ensureP377Lessons() {
+      if (p377LessonsCache.length) return;
+      const d = await api('/admin/course-lessons/all');
+      p377LessonsCache = d.lessons;
+    }
+
     async function openP377DayModal(id) {
       await ensureP377Topics();
+      await ensureP377Lessons();
       const topicSelect = document.getElementById('p377DayTopic');
       topicSelect.innerHTML = p377TopicsCache.map(t => `<option value="${t.key}">${escHtml(t.label)}</option>`).join('');
+      const lessonSelect = document.getElementById('p377DayLinkedLesson');
+      lessonSelect.innerHTML = '<option value="">— Không liên kết —</option>' +
+        p377LessonsCache.map(l => `<option value="${l.id}">${escHtml(l.course_title)} — ${escHtml(l.title)}</option>`).join('');
       document.getElementById('p377DayModalTitle').textContent = id ? 'Sửa nội dung ngày' : 'Thêm nội dung ngày';
       document.getElementById('p377DayId').value = id || '';
       if (id) {
@@ -5881,6 +6005,7 @@
         document.getElementById('p377DayExTitle').value = day.exercise_title || '';
         document.getElementById('p377DayExBody').value = day.exercise_body || '';
         document.getElementById('p377DayXp').value = day.xp_reward || 0;
+        lessonSelect.value = day.linked_lesson_id || '';
       } else {
         document.getElementById('p377DayNumber').value = '';
         document.getElementById('p377DayTitle').value = '';
@@ -5889,6 +6014,7 @@
         document.getElementById('p377DayExTitle').value = '';
         document.getElementById('p377DayExBody').value = '';
         document.getElementById('p377DayXp').value = 0;
+        lessonSelect.value = '';
       }
       document.getElementById('p377DayModal').style.display = 'flex';
     }
@@ -5905,6 +6031,7 @@
         exercise_title: document.getElementById('p377DayExTitle').value.trim(),
         exercise_body: document.getElementById('p377DayExBody').value,
         xp_reward: Number(document.getElementById('p377DayXp').value) || 0,
+        linked_lesson_id: document.getElementById('p377DayLinkedLesson').value || null,
       };
       if (!payload.day_number || !payload.title) { showToast('Vui lòng nhập ngày và tiêu đề.', 'red'); return; }
       try {
@@ -5923,6 +6050,154 @@
       if (!confirm('Xóa nội dung ngày này?')) return;
       await api(`/admin/program377/days/${id}`, { method: 'DELETE' });
       loadP377Days();
+    }
+
+    // -- Thư viện khối nội dung (6 mục cố định × mùa × thể trạng) --
+    function p377BlockFilterOptionsHtml(includeAll) {
+      return (includeAll ? '' : '') +
+        Object.entries(P377_SEASON_LABELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+    }
+    function ensureP377BlockFilterSelects() {
+      const catSel = document.getElementById('p377BlockFilterCategory');
+      if (!catSel.dataset.filled) {
+        catSel.innerHTML = '<option value="">Tất cả mục</option>' +
+          Object.entries(P377_BLOCK_CATEGORY_LABELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+        catSel.dataset.filled = '1';
+      }
+      const seasonSel = document.getElementById('p377BlockFilterSeason');
+      if (!seasonSel.dataset.filled) {
+        seasonSel.innerHTML = '<option value="">Tất cả mùa</option>' + p377BlockFilterOptionsHtml(false);
+        seasonSel.dataset.filled = '1';
+      }
+      const theTrangSel = document.getElementById('p377BlockFilterTheTrang');
+      if (!theTrangSel.dataset.filled) {
+        theTrangSel.innerHTML = '<option value="">Tất cả thể trạng</option>' +
+          THE_TRANG_VALUES.map(v => `<option value="${v}">${v}</option>`).join('') +
+          '<option value="all">Tất cả (chung)</option>';
+        theTrangSel.dataset.filled = '1';
+      }
+    }
+
+    async function loadP377Blocks() {
+      ensureP377BlockFilterSelects();
+      const params = new URLSearchParams();
+      const category = document.getElementById('p377BlockFilterCategory').value;
+      const season = document.getElementById('p377BlockFilterSeason').value;
+      const theTrang = document.getElementById('p377BlockFilterTheTrang').value;
+      const status = document.getElementById('p377BlockFilterStatus').value;
+      if (category) params.set('category', category);
+      if (season) params.set('season', season);
+      if (theTrang) params.set('the_trang', theTrang);
+      if (status) params.set('status', status);
+      const d = await api(`/admin/program377/content-blocks?${params.toString()}`);
+      p377BlocksCache = d.blocks;
+      const tbody = document.getElementById('p377BlocksTbody');
+      if (!d.blocks.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Chưa có khối nội dung nào — bấm "+ Thêm khối" để soạn.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = d.blocks.map(b => `
+    <tr>
+      <td style="font-weight:600;">${escHtml(P377_BLOCK_CATEGORY_LABELS[b.category] || b.category)}</td>
+      <td>${escHtml(P377_SEASON_LABELS[b.season] || b.season)}</td>
+      <td>${escHtml(b.the_trang === 'all' ? 'Tất cả (chung)' : b.the_trang)}</td>
+      <td>${escHtml(b.title || '—')}</td>
+      <td><span class="badge" style="background:${b.status === 'published' ? '#dcfce7;color:#16a34a' : '#fef9c3;color:#ca8a04'};">${b.status === 'published' ? 'Đã xuất bản' : 'Nháp'}</span></td>
+      <td>
+        <button class="act-btn" onclick="openP377BlockModal(${b.id})">Sửa</button>
+        <button class="act-btn" style="color:#dc2626;" onclick="deleteP377Block(${b.id})">Xóa</button>
+      </td>
+    </tr>`).join('');
+    }
+
+    function fillP377BlockSelects() {
+      document.getElementById('p377BlockCategory').innerHTML =
+        Object.entries(P377_BLOCK_CATEGORY_LABELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+      document.getElementById('p377BlockSeason').innerHTML = p377BlockFilterOptionsHtml(false);
+      document.getElementById('p377BlockTheTrang').innerHTML =
+        THE_TRANG_VALUES.map(v => `<option value="${v}">${v}</option>`).join('') +
+        '<option value="all">Tất cả (chung)</option>';
+    }
+
+    function renderP377BlockPreview() {
+      document.getElementById('p377BlockPreview').innerHTML = mppMdToHtml(document.getElementById('p377BlockBody').value || '');
+    }
+
+    function openP377BlockModal(id) {
+      fillP377BlockSelects();
+      document.getElementById('p377BlockModalTitle').textContent = id ? 'Sửa khối nội dung' : 'Thêm khối nội dung';
+      document.getElementById('p377BlockId').value = id || '';
+      document.getElementById('p377BlockMsg').textContent = '';
+      if (id) {
+        const b = p377BlocksCache.find(x => x.id === id);
+        document.getElementById('p377BlockCategory').value = b.category;
+        document.getElementById('p377BlockSeason').value = b.season;
+        document.getElementById('p377BlockTheTrang').value = b.the_trang;
+        document.getElementById('p377BlockTitle').value = b.title || '';
+        document.getElementById('p377BlockBody').value = b.body_html || '';
+        document.getElementById('p377BlockStatus').value = b.status || 'draft';
+      } else {
+        document.getElementById('p377BlockTitle').value = '';
+        document.getElementById('p377BlockBody').value = '';
+        document.getElementById('p377BlockStatus').value = 'draft';
+      }
+      renderP377BlockPreview();
+      document.getElementById('p377BlockModal').style.display = 'flex';
+    }
+    function closeP377BlockModal() { document.getElementById('p377BlockModal').style.display = 'none'; }
+
+    async function saveP377Block() {
+      const id = document.getElementById('p377BlockId').value;
+      const payload = {
+        category: document.getElementById('p377BlockCategory').value,
+        season: document.getElementById('p377BlockSeason').value,
+        the_trang: document.getElementById('p377BlockTheTrang').value,
+        title: document.getElementById('p377BlockTitle').value.trim(),
+        body_html: document.getElementById('p377BlockBody').value,
+        status: document.getElementById('p377BlockStatus').value,
+      };
+      if (!payload.body_html.trim()) { showToast('Vui lòng nhập nội dung.', 'red'); return; }
+      try {
+        if (id) {
+          await api(`/admin/program377/content-blocks/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        } else {
+          await api('/admin/program377/content-blocks', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        showToast('✅ Đã lưu.', 'green');
+        closeP377BlockModal();
+        loadP377Blocks();
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
+    }
+
+    async function deleteP377Block(id) {
+      if (!confirm('Xóa khối nội dung này?')) return;
+      await api(`/admin/program377/content-blocks/${id}`, { method: 'DELETE' });
+      loadP377Blocks();
+    }
+
+    async function aiDraftP377Block() {
+      const category = document.getElementById('p377BlockCategory').value;
+      const season = document.getElementById('p377BlockSeason').value;
+      const theTrang = document.getElementById('p377BlockTheTrang').value;
+      const btn = document.getElementById('p377BlockAiBtn');
+      const msg = document.getElementById('p377BlockMsg');
+      btn.disabled = true; btn.textContent = '⏳ Đang soạn nháp...';
+      msg.textContent = '';
+      try {
+        const d = await api('/admin/program377/content-blocks/ai-draft', {
+          method: 'POST',
+          body: JSON.stringify({ category, season, the_trang: theTrang }),
+        });
+        document.getElementById('p377BlockBody').value = d.draft || '';
+        renderP377BlockPreview();
+        msg.textContent = 'Đã soạn nháp — vui lòng đọc kỹ, sửa lại trước khi xuất bản.';
+        msg.style.color = 'var(--muted)';
+      } catch (e) {
+        msg.textContent = 'Lỗi soạn nháp AI: ' + e.message;
+        msg.style.color = '#dc2626';
+      } finally {
+        btn.disabled = false; btn.textContent = '✨ Soạn nháp bằng AI';
+      }
     }
 
     // -- Báo cáo hằng ngày --
