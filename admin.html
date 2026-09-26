@@ -3865,6 +3865,11 @@
           <label style="font-size:12px;font-weight:600;color:var(--muted);">Nội dung bài tập</label>
           <textarea id="p377DayExBody" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
         </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;">
+          <label style="font-size:13px;font-weight:700;">Ghim khối nội dung cho ngày này (không bắt buộc)</label>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px;margin-bottom:10px;">Để trống thì mục đó tự động chọn theo mùa/thể trạng của từng khách như bình thường. Chỉ chọn khi muốn ép đúng 1 khối cụ thể cho ngày này.</div>
+          <div id="p377DayBlockOverrides" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
         <div>
           <label style="font-size:12px;font-weight:600;color:var(--muted);">XP thưởng</label>
           <input type="number" id="p377DayXp" value="0" style="width:120px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
@@ -5993,6 +5998,7 @@
     let p377DaysCache = [];
     let p377LessonsCache = [];
     let p377BlocksCache = [];
+    let p377PublishedBlocksCache = null;
     const P377_BLOCK_CATEGORY_LABELS = {
       an_uong: 'Ăn uống theo Ngũ Hành',
       tap_luyen: 'Duy trì tập luyện / vận động',
@@ -6109,10 +6115,45 @@
       p377LessonsCache = d.lessons;
     }
 
+    // Danh sách khối đã xuất bản dùng cho dropdown "ghim khối" trong editor Ngày
+    // — tách riêng khỏi p377BlocksCache (cache đó đổi theo bộ lọc của trang Thư
+    // viện khối nội dung, không đáng tin cậy để tái dùng ở đây).
+    async function ensureP377PublishedBlocks() {
+      if (p377PublishedBlocksCache) return;
+      const d = await api('/admin/program377/content-blocks?status=published');
+      p377PublishedBlocksCache = d.blocks;
+    }
+
+    function renderP377DayBlockOverrides(selected) {
+      const wrap = document.getElementById('p377DayBlockOverrides');
+      wrap.innerHTML = Object.keys(P377_BLOCK_CATEGORY_LABELS).map((cat) => {
+        const opts = p377PublishedBlocksCache.filter(b => b.category === cat);
+        const label = P377_BLOCK_CATEGORY_LABELS[cat] || cat;
+        const selId = selected && selected[cat] ? String(selected[cat]) : '';
+        return `
+      <div>
+        <label style="font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:3px;display:block;">${escHtml(label)}</label>
+        <select class="p377-day-block-override" data-category="${cat}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+          <option value="">— Tự động theo mùa/thể trạng —</option>
+          ${opts.map(b => `<option value="${b.id}" ${String(b.id) === selId ? 'selected' : ''}>${escHtml(P377_SEASON_LABELS[b.season] || b.season)} · ${escHtml(b.the_trang === 'all' ? 'Tất cả' : b.the_trang)} — ${escHtml(b.title || '(không tiêu đề)')}</option>`).join('')}
+        </select>
+      </div>`;
+      }).join('');
+    }
+
+    function collectP377DayBlockOverrides() {
+      const result = {};
+      document.querySelectorAll('.p377-day-block-override').forEach((sel) => {
+        if (sel.value) result[sel.dataset.category] = Number(sel.value);
+      });
+      return result;
+    }
+
     async function openP377DayModal(id) {
       await ensureP377Topics();
       await ensureP377Lessons();
       await ensureAssignmentsCache();
+      await ensureP377PublishedBlocks();
       const topicSelect = document.getElementById('p377DayTopic');
       topicSelect.innerHTML = p377TopicsCache.map(t => `<option value="${t.key}">${escHtml(t.label)}</option>`).join('');
       const lessonSelect = document.getElementById('p377DayLinkedLesson');
@@ -6135,6 +6176,9 @@
         document.getElementById('p377DayXp').value = day.xp_reward || 0;
         lessonSelect.value = day.linked_lesson_id || '';
         assignmentSelect.value = day.linked_assignment_id || '';
+        let overrides = null;
+        try { overrides = JSON.parse(day.block_overrides_json || 'null'); } catch (e) { overrides = null; }
+        renderP377DayBlockOverrides(overrides);
       } else {
         document.getElementById('p377DayNumber').value = '';
         document.getElementById('p377DayTitle').value = '';
@@ -6145,6 +6189,7 @@
         document.getElementById('p377DayXp').value = 0;
         lessonSelect.value = '';
         assignmentSelect.value = '';
+        renderP377DayBlockOverrides(null);
       }
       document.getElementById('p377DayModal').style.display = 'flex';
     }
@@ -6163,6 +6208,7 @@
         xp_reward: Number(document.getElementById('p377DayXp').value) || 0,
         linked_lesson_id: document.getElementById('p377DayLinkedLesson').value || null,
         linked_assignment_id: document.getElementById('p377DayLinkedAssignment').value || null,
+        block_overrides: collectP377DayBlockOverrides(),
       };
       if (!payload.day_number || !payload.title) { showToast('Vui lòng nhập ngày và tiêu đề.', 'red'); return; }
       try {

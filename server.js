@@ -1827,6 +1827,14 @@ ${extra}
     db.exec('ALTER TABLE program377_days ADD COLUMN linked_assignment_id INTEGER REFERENCES assignments(id)');
     console.log('  Migrated program377_days: added linked_assignment_id.');
   }
+  // Cho phép admin ghim cứng 1 khối cụ thể cho 1 trong 6 mục của riêng ngày này
+  // (VD muốn đúng khối "Ăn uống — Xuân — Nhiệt" bất kể mùa/thể trạng thật của
+  // khách) — JSON { [category]: blockId }. Mục nào không ghim thì vẫn tự động
+  // chọn theo mùa/thể trạng như cũ (resolveProgram377DayContent).
+  if (!p377DaysCols.includes('block_overrides_json')) {
+    db.exec('ALTER TABLE program377_days ADD COLUMN block_overrides_json TEXT');
+    console.log('  Migrated program377_days: added block_overrides_json.');
+  }
 
   // Vá dữ liệu cũ từ trước khi runProgram377Coaching biết đồng bộ sang meal_logs: những báo cáo
   // 377 ngày đã có nhận xét AI nhưng dòng meal_logs cùng ngày vẫn trống ai_feedback.
@@ -4779,15 +4787,23 @@ QUY TẮC BẮT BUỘC:
   }
 
   // Lắp ghép nội dung đầy đủ của 1 ngày cho 1 user cụ thể: 6 mục cố định (chọn
-  // đúng khối theo mùa thực tế + thể trạng của người này) + dòng cá nhân hoá
-  // rút từ bản đồ ưu tiên + bài học liên kết (nếu có).
-  function resolveProgram377DayContent(userId, dayNumber, startDate) {
+  // đúng khối theo mùa thực tế + thể trạng của người này, trừ khi admin đã ghim
+  // cứng 1 khối cụ thể cho mục đó qua blockOverrides) + dòng cá nhân hoá rút từ
+  // bản đồ ưu tiên + bài học liên kết (nếu có).
+  function resolveProgram377DayContent(userId, dayNumber, startDate, blockOverrides) {
     const calendarDate = program377CalendarDate(startDate, dayNumber);
     const season = seasonForDate(calendarDate);
     const { theTrang, priorityMap } = getUserTtmProfile(userId);
 
     const blocks = PROGRAM377_BLOCK_CATEGORIES.map((category) => {
-      const block = pickProgram377Block(category, season, theTrang);
+      const overrideId = blockOverrides && blockOverrides[category];
+      // Khối ghim cứng phải còn tồn tại và đã xuất bản, nếu không thì rơi về
+      // tự động chọn theo mùa/thể trạng như bình thường — không bao giờ để
+      // trống 1 mục chỉ vì khối được ghim đã bị xoá/chuyển về nháp.
+      const block = (overrideId && db.get(
+        `SELECT * FROM program377_content_blocks WHERE id = ? AND category = ? AND status = 'published'`,
+        [overrideId, category]
+      )) || pickProgram377Block(category, season, theTrang);
       return {
         category,
         title: block ? block.title : null,
@@ -4861,7 +4877,9 @@ QUY TẮC BẮT BUỘC:
       return res.status(403).json({ error: 'Ngày này chưa được mở khóa.' });
     const day = db.get('SELECT * FROM program377_days WHERE day_number = ?', [dayNumber]);
     if (!day) return res.status(404).json({ error: 'Nội dung ngày này chưa được soạn.' });
-    const resolved = resolveProgram377DayContent(userId, dayNumber, enrollment.start_date);
+    let blockOverrides = null;
+    try { blockOverrides = JSON.parse(day.block_overrides_json || 'null'); } catch (e) { blockOverrides = null; }
+    const resolved = resolveProgram377DayContent(userId, dayNumber, enrollment.start_date, blockOverrides);
     const linkedLesson = day.linked_lesson_id
       ? db.get('SELECT id, title, course_id FROM course_lessons WHERE id = ?', [day.linked_lesson_id])
       : null;
@@ -5003,24 +5021,35 @@ QUY TẮC BẮT BUỘC:
     } catch { return url; }
   }
 
+  // { [category]: blockId, ... } → JSON string, bỏ qua category lạ/giá trị rỗng.
+  // Trả null nếu không ghim khối nào — để mọi mục tự động chọn theo mùa/thể trạng.
+  function sanitizeBlockOverrides(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    const result = {};
+    PROGRAM377_BLOCK_CATEGORIES.forEach((cat) => {
+      if (obj[cat]) result[cat] = Number(obj[cat]);
+    });
+    return Object.keys(result).length ? JSON.stringify(result) : null;
+  }
+
   app.post('/api/admin/program377/days', requireAdmin, (req, res) => {
-    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id } = req.body;
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id, block_overrides } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     const existing = db.get('SELECT id FROM program377_days WHERE day_number = ?', [day_number]);
     if (existing) return res.status(409).json({ error: `Ngày ${day_number} đã có nội dung — vui lòng sửa thay vì thêm mới.` });
     const r = db.run(
-      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id) VALUES (?,?,?,?,?,?,?,?,?,?)',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, linked_assignment_id ? Number(linked_assignment_id) : null]
+      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id, block_overrides_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, linked_assignment_id ? Number(linked_assignment_id) : null, sanitizeBlockOverrides(block_overrides)]
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/program377/days/:id', requireAdmin, (req, res) => {
-    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id } = req.body;
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id, block_overrides } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     db.run(
-      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=?, linked_lesson_id=?, linked_assignment_id=? WHERE id=?',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, linked_assignment_id ? Number(linked_assignment_id) : null, req.params.id]
+      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=?, linked_lesson_id=?, linked_assignment_id=?, block_overrides_json=? WHERE id=?',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, linked_assignment_id ? Number(linked_assignment_id) : null, sanitizeBlockOverrides(block_overrides), req.params.id]
     );
     res.json({ ok: true });
   });
