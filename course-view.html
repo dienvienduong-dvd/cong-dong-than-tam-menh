@@ -124,7 +124,9 @@
       overflow-y: auto;
     }
     @media (max-width: 860px) {
-      .cv-lessons-col { position: static; max-height: none; min-width: 0; }
+      .cv-lessons-col { position: static; max-height: none; min-width: 0; display: none; }
+      .cv-lessons-col.cv-toc-open { display: block; }
+      .cv-toc-toggle { display: flex; }
       /* iOS Safari tự động zoom trang khi focus vào input/textarea có font-size < 16px */
       .ex-textarea, .lc-reply-input, .lc-input { font-size: 16px; }
       /* Tên bài học/chương dài không được ép nowrap trên màn hình hẹp, tránh tràn viền */
@@ -132,6 +134,29 @@
       .module-title { overflow-wrap: anywhere; }
       .cv-header-title { overflow-wrap: anywhere; white-space: normal; }
     }
+
+    /* Nút "Nội dung" — chỉ hiện trên mobile (≤860px), ẩn mặc định trên desktop
+       vì màn hình rộng đã thấy sẵn danh sách bài học bên cạnh. */
+    .cv-toc-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 11px 14px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      color: var(--color-primary);
+      font-weight: 700;
+      font-size: 13.5px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .cv-toc-toggle:hover { background: var(--bg-hover); }
+    .cv-toc-toggle svg { width: 16px; height: 16px; transition: transform .15s; flex-shrink: 0; }
+    .cv-toc-toggle.cv-toc-active svg { transform: rotate(180deg); }
     .cv-lessons-title {
       font-size: var(--fs-xs);
       font-weight: 700;
@@ -481,6 +506,11 @@
             </div>
           </div>
 
+          <button class="cv-toc-toggle" onclick="toggleCvToc()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+            📑 Nội dung
+          </button>
+
           <div class="cv-grid" id="cvGrid" style="display:none;">
             <aside class="cv-lessons-col">
               <div class="cv-lessons-title">Danh sách bài học</div>
@@ -658,10 +688,19 @@
       return url;
     }
 
+    function toggleCvToc() {
+      const open = document.querySelector('.cv-lessons-col').classList.toggle('cv-toc-open');
+      document.querySelectorAll('.cv-toc-toggle').forEach(btn => btn.classList.toggle('cv-toc-active', open));
+      if (open) document.getElementById('cvGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function selectLesson(id) {
       const lesson = lessons.find(l => l.id === id);
       if (!lesson) return;
       activeLessonId = id;
+      // Bấm chọn bài học khác thì tự thu gọn danh sách trên mobile (nếu đang mở)
+      document.querySelector('.cv-lessons-col')?.classList.remove('cv-toc-open');
+      document.querySelectorAll('.cv-toc-toggle').forEach(btn => btn.classList.remove('cv-toc-active'));
       document.querySelectorAll('#cvLessonList .lesson-row').forEach(row => {
         row.classList.toggle('active', Number(row.dataset.id) === id);
       });
@@ -691,6 +730,11 @@
         ${prev ? `<button class="btn btn-secondary" onclick="selectLesson(${prev.id})">← ${escHtml(prev.title)}</button>` : '<span></span>'}
         ${next ? `<button class="btn btn-primary" onclick="selectLesson(${next.id})">${escHtml(next.title)} →</button>` : '<span></span>'}
       </div>`;
+
+      html += `<button class="cv-toc-toggle" onclick="toggleCvToc()" style="margin-top:16px;margin-bottom:0;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        📑 Nội dung
+      </button>`;
 
       html += `<div class="lc-section">
         <div class="lc-title">💬 Thảo luận <span class="lc-count" id="lcCount"></span></div>
