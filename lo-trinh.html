@@ -280,6 +280,8 @@
     .doc-body h3 { font-size: 16.5px; color: var(--sky-dark); }
     .doc-body h4 { font-size: 15px; }
     .doc-body p { font-size: 14.5px; line-height: 1.85; margin-bottom: 12px; }
+    .doc-body p.md-subhead { margin: 16px 0 6px; }
+    .doc-body p.md-subhead:first-child { margin-top: 0; }
     .doc-body ul, .doc-body ol { padding-left: 22px; margin-bottom: 12px; }
     .doc-body li { font-size: 14.5px; line-height: 1.8; margin-bottom: 4px; }
     .doc-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
@@ -647,6 +649,15 @@
 
         let m = line.match(/^(#{1,4})\s+(.*)$/);
         if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; i++; continue; }
+
+        // "- Buổi nào đó (...):" là tiêu đề nhóm khi dòng kế tiếp là "+ ..." — in
+        // đậm thay vì làm bullet, để không lẫn với các ý con bên dưới.
+        m = line.match(/^-\s+(.*)$/);
+        if (m && /^\+\s+/.test((lines[i + 1] || '').trim())) {
+          flushPara(); closeList();
+          html += `<p class="md-subhead"><strong>${inlineFmt(m[1])}</strong></p>`;
+          i++; continue;
+        }
 
         m = line.match(/^[-*+]\s+(.*)$/);
         if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
