@@ -899,7 +899,24 @@
       }
     }
 
+    // Bài tập 'link' (chọn từ Danh sách bài tập) không AI chấm, không nộp bài —
+    // chỉ hướng dẫn + 1 link, học viên tự đọc và bấm vào làm.
+    function renderLinkedAssignmentBlock(lesson) {
+      const a = lesson.linkedAssignment;
+      if (!a) return `<div class="ex-block"><div class="ex-title">📝 Bài tập</div><div style="color:var(--text-muted);">Bài tập chưa được thiết lập.</div></div>`;
+      const linkHtml = !a.link_url ? '' : (a.display_mode === 'embed'
+        ? `<iframe src="${escHtml(a.link_url)}" style="width:100%;min-height:480px;border:0;border-radius:8px;margin-top:10px;"></iframe>`
+        : `<a class="btn btn-primary" href="${escHtml(a.link_url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;text-decoration:none;">Làm bài tập →</a>`);
+      return `
+      <div class="ex-block">
+        <div class="ex-title">📝 ${escHtml(a.title)}</div>
+        ${a.instructions ? `<div class="ex-prompt">${escHtml(a.instructions)}</div>` : ''}
+        ${linkHtml}
+      </div>`;
+    }
+
     function renderExerciseBlock(lesson) {
+      if (lesson.exercise_type === 'link') return renderLinkedAssignmentBlock(lesson);
       const s = lesson.my_submission;
       const isResubmit = s && s.status === 'needs_resubmit';
 

@@ -446,6 +446,19 @@ const SCHEMA = `
     status       TEXT DEFAULT 'pending',
     created_at   TEXT DEFAULT (datetime('now','localtime'))
   );
+  -- Thư viện bài tập dùng lại (không AI chấm điểm) — chỉ hướng dẫn + 1 link, học
+  -- viên tự đọc và bấm vào làm. Dùng chung cho bài học (exercise_type='link') và
+  -- nội dung 377 ngày (program377_days.linked_assignment_id).
+  CREATE TABLE IF NOT EXISTS assignments (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    title         TEXT    NOT NULL,
+    instructions  TEXT,
+    link_url      TEXT,
+    display_mode  TEXT    DEFAULT 'link',
+    created_by    INTEGER REFERENCES users(id),
+    created_at    TEXT    DEFAULT (datetime('now','localtime')),
+    updated_at    TEXT
+  );
   CREATE TABLE IF NOT EXISTS lesson_exercise_submissions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id         INTEGER NOT NULL REFERENCES users(id),
@@ -1680,6 +1693,12 @@ ${extra}
     db.exec("ALTER TABLE course_lessons ADD COLUMN exercise_type TEXT DEFAULT 'text'");
     console.log('  Migrated course_lessons: added exercise_type.');
   }
+  // exercise_type='link' — bài tập không AI chấm, chỉ hướng dẫn + link, chọn từ
+  // thư viện assignments dùng chung với nội dung 377 ngày.
+  if (!lessonCols.includes('linked_assignment_id')) {
+    db.exec('ALTER TABLE course_lessons ADD COLUMN linked_assignment_id INTEGER REFERENCES assignments(id)');
+    console.log('  Migrated course_lessons: added linked_assignment_id.');
+  }
 
   // Migrate lesson_exercise_submissions: add teacher workflow fields (resubmit request / manual final grade)
   const lesCols = db.all('PRAGMA table_info(lesson_exercise_submissions)').map(c => c.name);
@@ -1789,6 +1808,10 @@ ${extra}
   if (!p377DaysCols.includes('linked_lesson_id')) {
     db.exec('ALTER TABLE program377_days ADD COLUMN linked_lesson_id INTEGER REFERENCES course_lessons(id)');
     console.log('  Migrated program377_days: added linked_lesson_id.');
+  }
+  if (!p377DaysCols.includes('linked_assignment_id')) {
+    db.exec('ALTER TABLE program377_days ADD COLUMN linked_assignment_id INTEGER REFERENCES assignments(id)');
+    console.log('  Migrated program377_days: added linked_assignment_id.');
   }
 
   // Vá dữ liệu cũ từ trước khi runProgram377Coaching biết đồng bộ sang meal_logs: những báo cáo
@@ -2277,7 +2300,8 @@ QUY TẮC BẮT BUỘC:
     const lessons = unlocked
       ? db.all(
           `SELECT cl.id, cl.module_id, cl.title, cl.content, cl.video_url, cl.duration_min, cl.order_num,
-                  cl.exercise_enabled, cl.exercise_type, cl.exercise_prompt, cl.exercise_max_score, cl.exercise_pass_score
+                  cl.exercise_enabled, cl.exercise_type, cl.exercise_prompt, cl.exercise_max_score, cl.exercise_pass_score,
+                  cl.linked_assignment_id
            FROM course_lessons cl
            LEFT JOIN course_modules cm ON cm.id = cl.module_id
            WHERE cl.course_id = ? AND cl.status = 'published'
@@ -2285,6 +2309,14 @@ QUY TẮC BẮT BUỘC:
           [req.params.id]
         ).map(l => {
           if (!l.exercise_enabled) return { ...l, my_submission: null };
+          // Bài tập 'link' (chọn từ thư viện assignments) không AI chấm, không nộp
+          // bài — chỉ cần hiển thị hướng dẫn + link, không cần tra lesson_exercise_submissions.
+          if (l.exercise_type === 'link') {
+            const linkedAssignment = l.linked_assignment_id
+              ? db.get('SELECT id, title, instructions, link_url, display_mode FROM assignments WHERE id = ?', [l.linked_assignment_id])
+              : null;
+            return { ...l, my_submission: null, linkedAssignment };
+          }
           const s = user_id ? db.get(
             'SELECT answer_text, score, max_score, pass_score, passed, issues, hints, xp_awarded, status, teacher_note, submitted_at FROM lesson_exercise_submissions WHERE user_id = ? AND lesson_id = ?',
             [user_id, l.id]
@@ -2357,6 +2389,8 @@ QUY TẮC BẮT BUỘC:
 
     const lesson = db.get('SELECT * FROM course_lessons WHERE id = ? AND exercise_enabled = 1', [req.params.lessonId]);
     if (!lesson) return res.status(404).json({ error: 'Bài tập không tồn tại.' });
+    if (lesson.exercise_type === 'link')
+      return res.status(400).json({ error: 'Bài tập này chỉ cần đọc hướng dẫn và bấm vào link, không cần nộp bài.' });
 
     const enrollment = getEnrollment(lesson.course_id, user_id);
     if (!enrollment || enrollment.status !== 'approved')
@@ -4691,7 +4725,10 @@ QUY TẮC BẮT BUỘC:
     const linkedLesson = day.linked_lesson_id
       ? db.get('SELECT id, title, course_id FROM course_lessons WHERE id = ?', [day.linked_lesson_id])
       : null;
-    res.json({ day: { ...day, ...resolved, linkedLesson } });
+    const linkedAssignment = day.linked_assignment_id
+      ? db.get('SELECT id, title, instructions, link_url, display_mode FROM assignments WHERE id = ?', [day.linked_assignment_id])
+      : null;
+    res.json({ day: { ...day, ...resolved, linkedLesson, linkedAssignment } });
   });
 
   app.get('/api/program377/reports', (req, res) => {
@@ -4827,23 +4864,23 @@ QUY TẮC BẮT BUỘC:
   }
 
   app.post('/api/admin/program377/days', requireAdmin, (req, res) => {
-    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id } = req.body;
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     const existing = db.get('SELECT id FROM program377_days WHERE day_number = ?', [day_number]);
     if (existing) return res.status(409).json({ error: `Ngày ${day_number} đã có nội dung — vui lòng sửa thay vì thêm mới.` });
     const r = db.run(
-      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id) VALUES (?,?,?,?,?,?,?,?,?)',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null]
+      'INSERT INTO program377_days (day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, linked_assignment_id ? Number(linked_assignment_id) : null]
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/program377/days/:id', requireAdmin, (req, res) => {
-    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id } = req.body;
+    const { day_number, topic_key, title, body_html, video_url, exercise_title, exercise_body, xp_reward, linked_lesson_id, linked_assignment_id } = req.body;
     if (!day_number || !title?.trim()) return res.status(400).json({ error: 'Thiếu số ngày hoặc tiêu đề.' });
     db.run(
-      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=?, linked_lesson_id=? WHERE id=?',
-      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, req.params.id]
+      'UPDATE program377_days SET day_number=?, topic_key=?, title=?, body_html=?, video_url=?, exercise_title=?, exercise_body=?, xp_reward=?, linked_lesson_id=?, linked_assignment_id=? WHERE id=?',
+      [Number(day_number), topic_key || null, title.trim(), body_html || '', normalizeEmbedVideoUrl(video_url), exercise_title || null, exercise_body || null, Number(xp_reward) || 0, linked_lesson_id ? Number(linked_lesson_id) : null, linked_assignment_id ? Number(linked_assignment_id) : null, req.params.id]
     );
     res.json({ ok: true });
   });
@@ -5240,6 +5277,39 @@ QUY TẮC BẮT BUỘC:
     res.json({ lessons });
   });
 
+  // ── Thư viện bài tập (không AI chấm — chỉ hướng dẫn + link) ────────
+  // Dùng chung cho bài học (exercise_type='link') và nội dung 377 ngày.
+  app.get('/api/admin/assignments', requireAdmin, (_req, res) => {
+    res.json({ assignments: db.all('SELECT * FROM assignments ORDER BY created_at DESC') });
+  });
+
+  app.post('/api/admin/assignments', requireAdmin, (req, res) => {
+    const { title, instructions, link_url, display_mode } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Thiếu tên bài tập.' });
+    const r = db.run(
+      'INSERT INTO assignments (title, instructions, link_url, display_mode, created_by) VALUES (?,?,?,?,?)',
+      [title.trim(), instructions || '', link_url || '', display_mode === 'embed' ? 'embed' : 'link', req.adminUserId || null]
+    );
+    res.status(201).json({ ok: true, id: r.lastInsertRowid });
+  });
+
+  app.patch('/api/admin/assignments/:id', requireAdmin, (req, res) => {
+    const existing = db.get('SELECT id FROM assignments WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'Không tìm thấy bài tập.' });
+    const { title, instructions, link_url, display_mode } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Thiếu tên bài tập.' });
+    db.run(
+      "UPDATE assignments SET title=?, instructions=?, link_url=?, display_mode=?, updated_at=datetime('now','localtime') WHERE id=?",
+      [title.trim(), instructions || '', link_url || '', display_mode === 'embed' ? 'embed' : 'link', req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.delete('/api/admin/assignments/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM assignments WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  });
+
   app.get('/api/admin/courses/:id/lessons', requireAdmin, (req, res) => {
     const lessons = db.all(
       'SELECT * FROM course_lessons WHERE course_id = ? ORDER BY order_num ASC, id ASC',
@@ -5248,11 +5318,16 @@ QUY TẮC BẮT BUỘC:
     res.json({ lessons });
   });
 
+  // exercise_type: 'text' (tự luận, AI chấm), 'quiz' (trắc nghiệm, chấm tự động),
+  // 'link' (chọn từ thư viện assignments — chỉ hướng dẫn + link, không chấm điểm).
+  const LESSON_EXERCISE_TYPES = ['text', 'quiz', 'link'];
+  function normalizeExerciseType(t) { return LESSON_EXERCISE_TYPES.includes(t) ? t : 'text'; }
+
   app.post('/api/admin/courses/:id/lessons', requireAdmin, (req, res) => {
     const {
       title, content, video_url, duration_min = 0, order_num = 0, status = 'published', module_id = null,
       exercise_enabled = 0, exercise_type = 'text', exercise_prompt = '', exercise_rubric = '',
-      exercise_max_score = 100, exercise_pass_score = 70, exercise_xp_reward = 0,
+      exercise_max_score = 100, exercise_pass_score = 70, exercise_xp_reward = 0, linked_assignment_id = null,
     } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: 'Tên bài học không được để trống.' });
     const course = db.get('SELECT id FROM courses WHERE id = ?', [req.params.id]);
@@ -5260,10 +5335,11 @@ QUY TẮC BẮT BUỘC:
     const r = db.run(
       `INSERT INTO course_lessons
         (course_id, module_id, title, content, video_url, duration_min, order_num, status,
-         exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward, linked_assignment_id)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [req.params.id, module_id || null, title.trim(), content || '', video_url || '', Number(duration_min), Number(order_num), status === 'draft' ? 'draft' : 'published',
-       exercise_enabled ? 1 : 0, exercise_type === 'quiz' ? 'quiz' : 'text', exercise_prompt || '', exercise_rubric || '', Number(exercise_max_score) || 100, Number(exercise_pass_score) || 70, Number(exercise_xp_reward) || 0]
+       exercise_enabled ? 1 : 0, normalizeExerciseType(exercise_type), exercise_prompt || '', exercise_rubric || '', Number(exercise_max_score) || 100, Number(exercise_pass_score) || 70, Number(exercise_xp_reward) || 0,
+       linked_assignment_id ? Number(linked_assignment_id) : null]
     );
     res.status(201).json({ success: true, id: r.lastInsertRowid });
   });
@@ -5272,6 +5348,7 @@ QUY TẮC BẮT BUỘC:
     const {
       title, content, video_url, duration_min, order_num, status, module_id,
       exercise_enabled, exercise_type, exercise_prompt, exercise_rubric, exercise_max_score, exercise_pass_score, exercise_xp_reward,
+      linked_assignment_id,
     } = req.body;
     const l = db.get('SELECT id FROM course_lessons WHERE id = ?', [req.params.id]);
     if (!l) return res.status(404).json({ error: 'Bài học không tồn tại.' });
@@ -5283,12 +5360,13 @@ QUY TẮC BẮT BUỘC:
     if (status !== undefined)      db.run('UPDATE course_lessons SET status = ? WHERE id = ?', [status === 'draft' ? 'draft' : 'published', req.params.id]);
     if (module_id !== undefined)   db.run('UPDATE course_lessons SET module_id = ? WHERE id = ?', [module_id || null, req.params.id]);
     if (exercise_enabled !== undefined)   db.run('UPDATE course_lessons SET exercise_enabled = ? WHERE id = ?', [exercise_enabled ? 1 : 0, req.params.id]);
-    if (exercise_type !== undefined)      db.run('UPDATE course_lessons SET exercise_type = ? WHERE id = ?', [exercise_type === 'quiz' ? 'quiz' : 'text', req.params.id]);
+    if (exercise_type !== undefined)      db.run('UPDATE course_lessons SET exercise_type = ? WHERE id = ?', [normalizeExerciseType(exercise_type), req.params.id]);
     if (exercise_prompt !== undefined)    db.run('UPDATE course_lessons SET exercise_prompt = ? WHERE id = ?', [exercise_prompt, req.params.id]);
     if (exercise_rubric !== undefined)    db.run('UPDATE course_lessons SET exercise_rubric = ? WHERE id = ?', [exercise_rubric, req.params.id]);
     if (exercise_max_score !== undefined) db.run('UPDATE course_lessons SET exercise_max_score = ? WHERE id = ?', [Number(exercise_max_score) || 100, req.params.id]);
     if (exercise_pass_score !== undefined) db.run('UPDATE course_lessons SET exercise_pass_score = ? WHERE id = ?', [Number(exercise_pass_score) || 70, req.params.id]);
     if (exercise_xp_reward !== undefined) db.run('UPDATE course_lessons SET exercise_xp_reward = ? WHERE id = ?', [Number(exercise_xp_reward) || 0, req.params.id]);
+    if (linked_assignment_id !== undefined) db.run('UPDATE course_lessons SET linked_assignment_id = ? WHERE id = ?', [linked_assignment_id ? Number(linked_assignment_id) : null, req.params.id]);
     res.json({ success: true });
   });
 

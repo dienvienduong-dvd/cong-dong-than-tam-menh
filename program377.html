@@ -38,6 +38,8 @@
     .p377-linked-lesson { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
     .p377-linked-lesson a { font-size: 13.5px; font-weight: 700; color: var(--color-primary); text-decoration: none; }
     .p377-linked-lesson a:hover { text-decoration: underline; }
+    .p377-assignment-btn { display: inline-block; margin-top: 10px; padding: 9px 18px; border-radius: var(--radius-md); background: var(--color-primary); color: #fff; font-size: 13.5px; font-weight: 700; text-decoration: none; }
+    .p377-assignment-btn:hover { opacity: .9; }
     .p377-field { margin-bottom: 12px; }
     .p377-field label { display:block; font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
     .p377-field input, .p377-field select, .p377-field textarea { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-input); color: var(--text); font-family: inherit; font-size: var(--fs-sm); resize: vertical; }
@@ -509,6 +511,20 @@ const API = '/api';
       phong_thuy: 'Phong thuỷ nhà ở & tài chính', biet_on: '3 điều biết ơn mỗi ngày',
     };
 
+    // Bài tập liên kết (từ "Danh sách bài tập") — chỉ hướng dẫn + 1 link, không
+    // AI chấm điểm, hiển thị dạng nút mở link hoặc nhúng khung tuỳ display_mode.
+    function renderLinkedAssignmentHtml(a) {
+      const linkHtml = !a.link_url ? '' : (a.display_mode === 'embed'
+        ? `<iframe src="${esc(a.link_url)}" style="width:100%;min-height:480px;border:0;border-radius:8px;margin-top:10px;"></iframe>`
+        : `<a class="p377-assignment-btn" href="${esc(a.link_url)}" target="_blank" rel="noopener">Làm bài tập →</a>`);
+      return `
+      <div class="p377-block">
+        <div class="p377-block-title">📝 ${esc(a.title)}</div>
+        ${a.instructions ? `<div class="p377-block-body" style="white-space:pre-wrap;">${esc(a.instructions)}</div>` : ''}
+        ${linkHtml}
+      </div>`;
+    }
+
     function renderDayContentHtml(day) {
       const blocksHtml = (day.blocks || []).filter(b => b.bodyHtml).map(b => `
       <div class="p377-block">
@@ -523,6 +539,7 @@ const API = '/api';
       ${day.body_html ? `<div style="font-size:14px;line-height:1.7;">${day.body_html}</div>` : ''}
       ${blocksHtml}
       ${day.exercise_title ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"><b>📝 ${esc(day.exercise_title)}</b><div style="margin-top:6px;font-size:14px;color:var(--text-muted);">${esc(day.exercise_body || '')}</div></div>` : ''}
+      ${day.linkedAssignment ? renderLinkedAssignmentHtml(day.linkedAssignment) : ''}
       ${day.linkedLesson ? `<div class="p377-linked-lesson"><a href="course-view.html?id=${day.linkedLesson.course_id}">📚 Bài học hôm nay: ${esc(day.linkedLesson.title)}</a></div>` : ''}
       ${day.session ? `<div class="p377-linked-lesson">🗓️ <a href="${esc(day.session.link_url || '#')}" target="_blank" rel="noopener">${esc(day.session.title)} — ${esc(day.session.session_date)}</a></div>` : ''}
     `;

@@ -1396,6 +1396,12 @@
         </svg>
         Nhật ký ăn uống
       </button>
+      <button class="sbar-item" onclick="showPage('assignments')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Danh sách bài tập
+      </button>
 
       <button class="sbar-section sbar-section-toggle" data-key="marketing" aria-expanded="true" onclick="toggleSbarGroup(this)">
         <span>Marketing</span>
@@ -2328,9 +2334,16 @@
                     <select class="search-input" style="width:100%" id="lsnExerciseType" onchange="onExerciseTypeChange()">
                       <option value="text">Tự luận (AI chấm)</option>
                       <option value="quiz">Trắc nghiệm (chấm tự động)</option>
+                      <option value="link">Liên kết bài tập có sẵn (chỉ hướng dẫn + link, không chấm điểm)</option>
                     </select>
                   </div>
-                  <div>
+                  <div id="lsnLinkedAssignmentWrap" style="display:none;">
+                    <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Chọn bài tập (từ "Danh sách bài tập")</label>
+                    <select class="search-input" style="width:100%" id="lsnLinkedAssignment">
+                      <option value="">— Chưa chọn —</option>
+                    </select>
+                  </div>
+                  <div id="lsnExercisePromptWrap">
                     <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Đề bài / Hướng dẫn (học viên sẽ thấy)</label>
                     <textarea class="search-input" style="width:100%;min-height:70px;resize:vertical;" id="lsnExercisePrompt" placeholder="VD: Viết 1 câu mở đầu email cold outreach cho... (trắc nghiệm có thể để trống)"></textarea>
                   </div>
@@ -2346,12 +2359,12 @@
                     <button class="btn-sm" type="button" id="lsnAddQuestionBtn" onclick="openQuizQuestionModal()">+ Thêm câu hỏi</button>
                   </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <div id="lsnScoreGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                   <div id="lsnExerciseMaxScoreWrap">
                     <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Điểm tối đa</label>
                     <input class="search-input" style="width:100%" type="number" id="lsnExerciseMaxScore" placeholder="100" min="1">
                   </div>
-                  <div>
+                  <div id="lsnExercisePassScoreWrap">
                     <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">Điểm đạt</label>
                     <input class="search-input" style="width:100%" type="number" id="lsnExercisePassScore" placeholder="70" min="0">
                   </div>
@@ -2485,6 +2498,31 @@
             <button class="btn-sm" id="mlPrevBtn" onclick="mlPage(-1)">← Trước</button>
             <span id="mlPageInfo" style="font-size:12px;color:var(--muted);align-self:center;"></span>
             <button class="btn-sm" id="mlNextBtn" onclick="mlPage(1)">Sau →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Danh sách bài tập (thư viện dùng chung, không AI chấm) ──── -->
+      <section class="page" id="page-assignments">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Danh sách bài tập</h2>
+            <button class="btn-sm primary" onclick="openAssignmentModal()">+ Thêm bài tập</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tên bài tập</th>
+                  <th>Link</th>
+                  <th>Cách hiển thị</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="assignmentsTbody">
+                <tr><td colspan="4"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -3804,6 +3842,12 @@
             <option value="">— Không liên kết —</option>
           </select>
         </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Bài tập liên kết (từ "Danh sách bài tập", không bắt buộc)</label>
+          <select id="p377DayLinkedAssignment" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+            <option value="">— Không liên kết —</option>
+          </select>
+        </div>
       </div>
       <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
         <button class="btn-sm" onclick="closeP377DayModal()">Hủy</button>
@@ -3860,6 +3904,43 @@
           <button class="btn-sm" onclick="closeP377BlockModal()">Hủy</button>
           <button class="btn-sm primary" onclick="saveP377Block()">Lưu</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Danh sách bài tập — modal thêm/sửa ────────────────────────── -->
+  <div id="assignmentModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 id="assignmentModalTitle" style="font-size:16px;font-weight:700;">Thêm bài tập</h3>
+        <button onclick="closeAssignmentModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <input type="hidden" id="asgId">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Tên bài tập</label>
+          <input type="text" id="asgTitle" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Hướng dẫn làm bài (học viên sẽ thấy)</label>
+          <textarea id="asgInstructions" rows="5" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Link liên kết (Google Form, tài liệu, trang ngoài...)</label>
+          <input type="text" id="asgLinkUrl" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Cách hiển thị link cho học viên</label>
+          <select id="asgDisplayMode" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+            <option value="link">Nút bấm mở link ở tab mới</option>
+            <option value="embed">Nhúng trực tiếp dạng khung (chỉ dùng cho link hỗ trợ nhúng, VD Google Form)</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeAssignmentModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="saveAssignment()">Lưu</button>
       </div>
     </div>
   </div>
@@ -4442,6 +4523,7 @@
       pillars: ['Trụ cột', 'Phân loại nội dung bài đăng'],
       camnang: ['Thực phẩm & Công thức', 'Dữ liệu cho trang Tra cứu & Thư viện công thức'],
       meallogs: ['Nhật ký ăn uống', 'Toàn bộ nhật ký ăn uống của thành viên'],
+      assignments: ['Danh sách bài tập', 'Thư viện bài tập (hướng dẫn + link) dùng chung cho bài học & nội dung 377 ngày'],
       'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
       'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
       'member-profile-detail': ['Hồ sơ thành viên', ''],
@@ -4477,6 +4559,7 @@
       if (name === 'challenge-progress') loadChallengeProgress();
       if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
       if (name === 'meallogs') loadMealLogs();
+      if (name === 'assignments') loadAssignments();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
       if (name === 'member-profile-list') loadMemberProfileList();
       if (name === 'program377') loadP377Letter();
@@ -5994,11 +6077,15 @@
     async function openP377DayModal(id) {
       await ensureP377Topics();
       await ensureP377Lessons();
+      await ensureAssignmentsCache();
       const topicSelect = document.getElementById('p377DayTopic');
       topicSelect.innerHTML = p377TopicsCache.map(t => `<option value="${t.key}">${escHtml(t.label)}</option>`).join('');
       const lessonSelect = document.getElementById('p377DayLinkedLesson');
       lessonSelect.innerHTML = '<option value="">— Không liên kết —</option>' +
         p377LessonsCache.map(l => `<option value="${l.id}">${escHtml(l.course_title)} — ${escHtml(l.title)}</option>`).join('');
+      const assignmentSelect = document.getElementById('p377DayLinkedAssignment');
+      assignmentSelect.innerHTML = '<option value="">— Không liên kết —</option>' +
+        assignmentsCache.map(a => `<option value="${a.id}">${escHtml(a.title)}</option>`).join('');
       document.getElementById('p377DayModalTitle').textContent = id ? 'Sửa nội dung ngày' : 'Thêm nội dung ngày';
       document.getElementById('p377DayId').value = id || '';
       if (id) {
@@ -6012,6 +6099,7 @@
         document.getElementById('p377DayExBody').value = day.exercise_body || '';
         document.getElementById('p377DayXp').value = day.xp_reward || 0;
         lessonSelect.value = day.linked_lesson_id || '';
+        assignmentSelect.value = day.linked_assignment_id || '';
       } else {
         document.getElementById('p377DayNumber').value = '';
         document.getElementById('p377DayTitle').value = '';
@@ -6021,6 +6109,7 @@
         document.getElementById('p377DayExBody').value = '';
         document.getElementById('p377DayXp').value = 0;
         lessonSelect.value = '';
+        assignmentSelect.value = '';
       }
       document.getElementById('p377DayModal').style.display = 'flex';
     }
@@ -6038,6 +6127,7 @@
         exercise_body: document.getElementById('p377DayExBody').value,
         xp_reward: Number(document.getElementById('p377DayXp').value) || 0,
         linked_lesson_id: document.getElementById('p377DayLinkedLesson').value || null,
+        linked_assignment_id: document.getElementById('p377DayLinkedAssignment').value || null,
       };
       if (!payload.day_number || !payload.title) { showToast('Vui lòng nhập ngày và tiêu đề.', 'red'); return; }
       try {
@@ -6204,6 +6294,81 @@
       } finally {
         btn.disabled = false; btn.textContent = '✨ Soạn nháp bằng AI';
       }
+    }
+
+    // -- Danh sách bài tập (thư viện dùng chung — không AI chấm, chỉ hướng dẫn + link) --
+    let assignmentsCache = [];
+    const ASSIGNMENT_DISPLAY_LABELS = { link: 'Nút mở link', embed: 'Nhúng khung (iframe)' };
+
+    async function ensureAssignmentsCache() {
+      const d = await api('/admin/assignments');
+      assignmentsCache = d.assignments;
+      return assignmentsCache;
+    }
+
+    async function loadAssignments() {
+      await ensureAssignmentsCache();
+      const tbody = document.getElementById('assignmentsTbody');
+      if (!assignmentsCache.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Chưa có bài tập nào — bấm "+ Thêm bài tập" để tạo.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = assignmentsCache.map(a => `
+    <tr onclick="openAssignmentModal(${a.id})" style="cursor:pointer;">
+      <td style="font-weight:600;">${escHtml(a.title)}</td>
+      <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(a.link_url || '—')}</td>
+      <td>${ASSIGNMENT_DISPLAY_LABELS[a.display_mode] || a.display_mode}</td>
+      <td>
+        <button class="act-btn" onclick="event.stopPropagation(); openAssignmentModal(${a.id})">Sửa</button>
+        <button class="act-btn" style="color:#dc2626;" onclick="event.stopPropagation(); deleteAssignment(${a.id})">Xóa</button>
+      </td>
+    </tr>`).join('');
+    }
+
+    function openAssignmentModal(id) {
+      document.getElementById('assignmentModalTitle').textContent = id ? 'Sửa bài tập' : 'Thêm bài tập';
+      document.getElementById('asgId').value = id || '';
+      if (id) {
+        const a = assignmentsCache.find(x => x.id === id);
+        document.getElementById('asgTitle').value = a.title || '';
+        document.getElementById('asgInstructions').value = a.instructions || '';
+        document.getElementById('asgLinkUrl').value = a.link_url || '';
+        document.getElementById('asgDisplayMode').value = a.display_mode || 'link';
+      } else {
+        document.getElementById('asgTitle').value = '';
+        document.getElementById('asgInstructions').value = '';
+        document.getElementById('asgLinkUrl').value = '';
+        document.getElementById('asgDisplayMode').value = 'link';
+      }
+      document.getElementById('assignmentModal').style.display = 'flex';
+    }
+    function closeAssignmentModal() { document.getElementById('assignmentModal').style.display = 'none'; }
+
+    async function saveAssignment() {
+      const id = document.getElementById('asgId').value;
+      const payload = {
+        title: document.getElementById('asgTitle').value.trim(),
+        instructions: document.getElementById('asgInstructions').value,
+        link_url: document.getElementById('asgLinkUrl').value.trim(),
+        display_mode: document.getElementById('asgDisplayMode').value,
+      };
+      if (!payload.title) { showToast('Vui lòng nhập tên bài tập.', 'red'); return; }
+      try {
+        if (id) {
+          await api(`/admin/assignments/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        } else {
+          await api('/admin/assignments', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        showToast('✅ Đã lưu.', 'green');
+        closeAssignmentModal();
+        loadAssignments();
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
+    }
+
+    async function deleteAssignment(id) {
+      if (!confirm('Xóa bài tập này? Các bài học/ngày đang liên kết sẽ mất liên kết.')) return;
+      await api(`/admin/assignments/${id}`, { method: 'DELETE' });
+      loadAssignments();
     }
 
     // -- Báo cáo hằng ngày --
@@ -8490,7 +8655,7 @@
       document.getElementById('lsnStatus').value = l.status === 'draft' ? 'draft' : 'published';
       document.getElementById('lsnExerciseEnabled').checked = !!l.exercise_enabled;
       document.getElementById('lsnExerciseFields').style.display = l.exercise_enabled ? 'flex' : 'none';
-      document.getElementById('lsnExerciseType').value = l.exercise_type === 'quiz' ? 'quiz' : 'text';
+      document.getElementById('lsnExerciseType').value = ['quiz', 'link'].includes(l.exercise_type) ? l.exercise_type : 'text';
       document.getElementById('lsnExercisePrompt').value = l.exercise_prompt || '';
       document.getElementById('lsnExerciseRubric').value = l.exercise_rubric || '';
       document.getElementById('lsnExerciseMaxScore').value = l.exercise_max_score || 100;
@@ -8499,6 +8664,11 @@
       document.getElementById('lsnQuizNoLessonMsg').style.display = 'none';
       document.getElementById('lsnAddQuestionBtn').style.display = '';
       onExerciseTypeChange();
+      if (l.exercise_type === 'link') {
+        await ensureAssignmentsCache();
+        fillLsnLinkedAssignmentSelect();
+        document.getElementById('lsnLinkedAssignment').value = l.linked_assignment_id || '';
+      }
       await loadQuizQuestions(id);
       document.getElementById('lsnFormTitle').textContent = 'Sửa bài học';
       document.getElementById('lsnSaveBtn').textContent = 'Cập nhật bài học';
@@ -8523,6 +8693,7 @@
       document.getElementById('lsnExerciseMaxScore').value = '';
       document.getElementById('lsnExercisePassScore').value = '';
       document.getElementById('lsnExerciseXpReward').value = '';
+      document.getElementById('lsnLinkedAssignment').value = '';
       lsnQuizQuestionsCache = [];
       document.getElementById('lsnQuizQuestionsList').innerHTML = '';
       document.getElementById('lsnQuizNoLessonMsg').style.display = '';
@@ -8549,6 +8720,7 @@
         exercise_max_score: Number(document.getElementById('lsnExerciseMaxScore').value) || 100,
         exercise_pass_score: Number(document.getElementById('lsnExercisePassScore').value) || 70,
         exercise_xp_reward: Number(document.getElementById('lsnExerciseXpReward').value) || 0,
+        linked_assignment_id: document.getElementById('lsnLinkedAssignment').value || null,
       };
       if (!body.title) { showToast('Vui lòng nhập tên bài học.', 'red'); return; }
       let res;
@@ -8581,8 +8753,20 @@
     // ── Quiz questions (bài tập trắc nghiệm) ─────────────────────────
     function onExerciseTypeChange() {
       const type = document.getElementById('lsnExerciseType').value;
-      document.getElementById('lsnRubricWrap').style.display = type === 'quiz' ? 'none' : 'block';
+      document.getElementById('lsnRubricWrap').style.display = (type === 'quiz' || type === 'link') ? 'none' : 'block';
       document.getElementById('lsnQuizSection').style.display = type === 'quiz' ? 'flex' : 'none';
+      document.getElementById('lsnLinkedAssignmentWrap').style.display = type === 'link' ? 'block' : 'none';
+      document.getElementById('lsnExercisePromptWrap').style.display = type === 'link' ? 'none' : 'block';
+      document.getElementById('lsnScoreGrid').style.display = type === 'link' ? 'none' : 'grid';
+      if (type === 'link') ensureAssignmentsCache().then(fillLsnLinkedAssignmentSelect);
+    }
+
+    function fillLsnLinkedAssignmentSelect() {
+      const sel = document.getElementById('lsnLinkedAssignment');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— Chưa chọn —</option>' +
+        assignmentsCache.map(a => `<option value="${a.id}">${escHtml(a.title)}</option>`).join('');
+      sel.value = current;
     }
 
     async function loadQuizQuestions(lessonId) {
