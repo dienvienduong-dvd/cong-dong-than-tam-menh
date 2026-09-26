@@ -123,20 +123,11 @@
       max-height: calc(100vh - 90px);
       overflow-y: auto;
     }
-    @media (max-width: 860px) {
-      .cv-lessons-col { position: static; max-height: none; min-width: 0; display: none; }
-      .cv-lessons-col.cv-toc-open { display: block; }
-      .cv-toc-toggle { display: flex; }
-      /* iOS Safari tự động zoom trang khi focus vào input/textarea có font-size < 16px */
-      .ex-textarea, .lc-reply-input, .lc-input { font-size: 16px; }
-      /* Tên bài học/chương dài không được ép nowrap trên màn hình hẹp, tránh tràn viền */
-      .lesson-title { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-      .module-title { overflow-wrap: anywhere; }
-      .cv-header-title { overflow-wrap: anywhere; white-space: normal; }
-    }
-
     /* Nút "Nội dung" — chỉ hiện trên mobile (≤860px), ẩn mặc định trên desktop
-       vì màn hình rộng đã thấy sẵn danh sách bài học bên cạnh. */
+       vì màn hình rộng đã thấy sẵn danh sách bài học bên cạnh. Khai báo TRƯỚC
+       @media bên dưới — nếu để sau, rule display:none không-media này sẽ đứng
+       sau và thắng rule display:flex trong @media do cùng độ đặc hiệu, khiến
+       nút luôn ẩn kể cả trên mobile (lỗi thực tế đã gặp). */
     .cv-toc-toggle {
       display: none;
       align-items: center;
@@ -157,6 +148,18 @@
     .cv-toc-toggle:hover { background: var(--bg-hover); }
     .cv-toc-toggle svg { width: 16px; height: 16px; transition: transform .15s; flex-shrink: 0; }
     .cv-toc-toggle.cv-toc-active svg { transform: rotate(180deg); }
+
+    @media (max-width: 860px) {
+      .cv-lessons-col { position: static; max-height: none; min-width: 0; display: none; }
+      .cv-lessons-col.cv-toc-open { display: block; }
+      .cv-toc-toggle { display: flex; }
+      /* iOS Safari tự động zoom trang khi focus vào input/textarea có font-size < 16px */
+      .ex-textarea, .lc-reply-input, .lc-input { font-size: 16px; }
+      /* Tên bài học/chương dài không được ép nowrap trên màn hình hẹp, tránh tràn viền */
+      .lesson-title { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+      .module-title { overflow-wrap: anywhere; }
+      .cv-header-title { overflow-wrap: anywhere; white-space: normal; }
+    }
     .cv-lessons-title {
       font-size: var(--fs-xs);
       font-weight: 700;
