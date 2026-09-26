@@ -459,6 +459,20 @@ const SCHEMA = `
     created_at    TEXT    DEFAULT (datetime('now','localtime')),
     updated_at    TEXT
   );
+  -- Minigame công khai "Kiểm tra cơ thể Hàn - Nhiệt" (kiem-tra-han-nhiet.html) —
+  -- công cụ marketing/thu lead, không cần đăng nhập. Khác với ttm_roadmaps
+  -- (khảo sát 29 câu + AI phân tích cho khách đã đăng ký), đây là bản rút gọn
+  -- công khai, tính điểm bằng công thức cố định (classifyHanNhiet), không AI.
+  CREATE TABLE IF NOT EXISTS han_nhiet_quiz_results (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT    NOT NULL,
+    phone         TEXT    NOT NULL,
+    han_count     INTEGER DEFAULT 0,
+    nhiet_count   INTEGER DEFAULT 0,
+    result_type   TEXT    NOT NULL,
+    answers_json  TEXT,
+    created_at    TEXT    DEFAULT (datetime('now','localtime'))
+  );
   CREATE TABLE IF NOT EXISTS lesson_exercise_submissions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id         INTEGER NOT NULL REFERENCES users(id),
@@ -4565,6 +4579,132 @@ QUY TẮC BẮT BUỘC:
   app.delete('/api/admin/meal-logs/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM meal_logs WHERE id = ?', [req.params.id]);
     res.json({ success: true });
+  });
+
+  // ── Minigame công khai: Kiểm tra cơ thể Hàn - Nhiệt (thu lead) ──────
+  // Nội dung lấy từ "bang-kiem-tra-han-nhiet.md" — 6 nhóm biểu hiện, mỗi nhóm
+  // có các mục thuộc phe Hàn hoặc Nhiệt xen kẽ (không gắn nhãn khi hiển thị
+  // cho khách, tránh gợi ý câu trả lời). Đây là bản rút gọn công khai, tính
+  // điểm bằng công thức cố định — khác với khảo sát 29 câu + AI phân tích
+  // (ttm_roadmaps) dành cho khách đã đăng ký.
+  const HAN_NHIET_CATEGORIES = [
+    {
+      id: 'bieu_hien_ngoai', label: 'Biểu hiện ngoài thể chất',
+      items: [
+        { id: 'bh_h1', side: 'han', text: 'Tay lạnh, chân lạnh' },
+        { id: 'bh_n1', side: 'nhiet', text: 'Môi khô' },
+        { id: 'bh_h2', side: 'han', text: 'Da nhợt, nhạt màu' },
+        { id: 'bh_n2', side: 'nhiet', text: 'Tay chân ấm, hoặc nóng rát' },
+        { id: 'bh_h3', side: 'han', text: 'Mồ hôi lạnh, dính' },
+        { id: 'bh_n3', side: 'nhiet', text: 'Mồ hôi ít, nóng' },
+        { id: 'bh_h4', side: 'han', text: 'Phân lỏng, không thành khuôn' },
+        { id: 'bh_n4', side: 'nhiet', text: 'Đại tiện táo, khô' },
+      ],
+    },
+    {
+      id: 'tieu_hoa', label: 'Hệ tiêu hóa & Ăn uống',
+      items: [
+        { id: 'th_h1', side: 'han', text: 'Ăn ít, ăn chậm' },
+        { id: 'th_n1', side: 'nhiet', text: 'Ăn nhiều vẫn nhanh đói' },
+        { id: 'th_h2', side: 'han', text: 'Khó tiêu, đầy bụng' },
+        { id: 'th_n2', side: 'nhiet', text: 'Cảm giác nóng ruột, cồn cào' },
+        { id: 'th_h3', side: 'han', text: 'Ăn đồ lạnh dễ tiêu chảy' },
+        { id: 'th_n3', side: 'nhiet', text: 'Thích ăn đồ mát' },
+      ],
+    },
+    {
+      id: 'nhiet_do', label: 'Nhiệt độ thân thể',
+      items: [
+        { id: 'nd_h1', side: 'han', text: 'Thường xuyên cảm thấy lạnh' },
+        { id: 'nd_n1', side: 'nhiet', text: 'Dễ bức bối, khó chịu' },
+        { id: 'nd_h2', side: 'han', text: 'Sợ gió, sợ lạnh' },
+        { id: 'nd_n2', side: 'nhiet', text: 'Ghét nóng, thích nơi mát' },
+        { id: 'nd_h3', side: 'han', text: 'Thích nơi ấm, thích đắp chăn' },
+        { id: 'nd_n3', side: 'nhiet', text: 'Cơ thể nóng bất thường' },
+      ],
+    },
+    {
+      id: 'da_di_ung', label: 'Vấn đề về da & Dị ứng',
+      items: [
+        { id: 'dd_h1', side: 'han', text: 'Mẩn ngứa âm ỉ' },
+        { id: 'dd_n1', side: 'nhiet', text: 'Mụn viêm sưng đỏ' },
+        { id: 'dd_h2', side: 'han', text: 'Mụn nước lạnh, mụn Herpes' },
+        { id: 'dd_n2', side: 'nhiet', text: 'Viêm da, mẩn ngứa phát nóng' },
+        { id: 'dd_h3', side: 'han', text: 'Lạnh dễ bị viêm xoang' },
+        { id: 'dd_n3', side: 'nhiet', text: 'Dị ứng với thời tiết khô nóng' },
+      ],
+    },
+    {
+      id: 'thoi_diem', label: 'Thời điểm triệu chứng nặng hơn',
+      items: [
+        { id: 'td_h1', side: 'han', text: 'Lúc sáng sớm hoặc chiều tối' },
+        { id: 'td_n1', side: 'nhiet', text: 'Giữa trưa hoặc chiều tối oi ả' },
+        { id: 'td_h2', side: 'han', text: 'Khi bắt gặp gió lạnh' },
+        { id: 'td_n2', side: 'nhiet', text: 'Khi thời tiết oi bức' },
+      ],
+    },
+    {
+      id: 'dau_hieu_dac_biet', label: 'Dấu hiệu đặc biệt cần lưu ý',
+      items: [
+        { id: 'db_h1', side: 'han', text: 'Rất dễ uể oải, mệt mỏi' },
+        { id: 'db_n1', side: 'nhiet', text: 'Khó ngủ, dễ mất ngủ' },
+        { id: 'db_h2', side: 'han', text: 'Cực kỳ sợ lạnh vào mùa đông' },
+        { id: 'db_n2', side: 'nhiet', text: 'Dễ bị nhiệt miệng, nhiệt đầu' },
+      ],
+    },
+  ];
+
+  const HAN_NHIET_RESULT_INFO = {
+    'Hàn': 'Năng lượng lạnh đang lấn át cơ thể bạn — cần ưu tiên ôn ấm, tăng vận động và ăn uống theo hướng ấm nóng.',
+    'Nhiệt': 'Cơ thể bạn đang dư thừa sức nóng — cần thanh nhiệt, làm mát và điều chỉnh ăn uống theo hướng mát dịu.',
+    'Hàn giả nhiệt': 'Bề ngoài có vẻ nóng bức nhưng gốc rễ cơ thể lại đang bị nhiễm lạnh sâu — cần được đánh giá kỹ để ôn ấm đúng chỗ, tránh làm mát nhầm hướng.',
+    'Nhiệt giả hàn': 'Tay chân có thể lạnh nhưng bên trong đang bốc hỏa, bức bối — cần được đánh giá kỹ để thanh nhiệt đúng chỗ, tránh làm ấm nhầm hướng.',
+  };
+
+  // Công thức cố định (không AI) — dùng cho minigame công khai. hanRatio >=70%
+  // hoặc <=30% thì kết luận rõ ràng; ở giữa (mix cả 2 phe) thì xếp vào 1 trong
+  // 2 loại "giả" theo bên nào nổi trội hơn, đúng tinh thần "GIẢI MÃ CƠ THỂ"
+  // trong tài liệu gốc. Không chọn khi 0 lựa chọn nào — trả về null, để client
+  // nhắc khách chọn ít nhất vài mục cho kết quả có ý nghĩa.
+  function classifyHanNhiet(hanCount, nhietCount) {
+    const total = hanCount + nhietCount;
+    if (total === 0) return null;
+    const hanRatio = hanCount / total;
+    if (hanRatio >= 0.7) return 'Hàn';
+    if (hanRatio <= 0.3) return 'Nhiệt';
+    return hanCount >= nhietCount ? 'Hàn giả nhiệt' : 'Nhiệt giả hàn';
+  }
+
+  app.get('/api/han-nhiet-quiz/questions', (_req, res) => {
+    res.json({ categories: HAN_NHIET_CATEGORIES.map(c => ({ id: c.id, label: c.label, items: c.items.map(i => ({ id: i.id, text: i.text })) })) });
+  });
+
+  app.post('/api/han-nhiet-quiz/submit', (req, res) => {
+    const { name, phone, selectedItemIds } = req.body;
+    if (!name?.trim() || !phone?.trim()) return res.status(400).json({ error: 'Vui lòng nhập tên và số điện thoại.' });
+    const selectedSet = new Set(Array.isArray(selectedItemIds) ? selectedItemIds : []);
+    let hanCount = 0, nhietCount = 0;
+    HAN_NHIET_CATEGORIES.forEach(c => c.items.forEach(it => {
+      if (selectedSet.has(it.id)) { if (it.side === 'han') hanCount++; else nhietCount++; }
+    }));
+    const resultType = classifyHanNhiet(hanCount, nhietCount) || 'Hàn giả nhiệt';
+    db.run(
+      'INSERT INTO han_nhiet_quiz_results (name, phone, han_count, nhiet_count, result_type, answers_json) VALUES (?,?,?,?,?,?)',
+      [name.trim(), phone.trim(), hanCount, nhietCount, resultType, JSON.stringify([...selectedSet])]
+    );
+    res.json({ ok: true, hanCount, nhietCount, resultType, description: HAN_NHIET_RESULT_INFO[resultType] });
+  });
+
+  app.get('/api/admin/han-nhiet-quiz/results', requireAdmin, (req, res) => {
+    const { search = '', limit = 50, offset = 0 } = req.query;
+    const like = `%${search}%`;
+    let sql = 'SELECT * FROM han_nhiet_quiz_results WHERE (name LIKE ? OR phone LIKE ?)';
+    const params = [like, like];
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+    const results = db.all(sql, params);
+    const total = db.get('SELECT COUNT(*) AS n FROM han_nhiet_quiz_results WHERE (name LIKE ? OR phone LIKE ?)', [like, like]).n;
+    res.json({ results, total });
   });
 
   // ── Chương trình 377 ngày ──────────────────────────────────────────

@@ -1402,6 +1402,12 @@
         </svg>
         Danh sách bài tập
       </button>
+      <button class="sbar-item" onclick="showPage('hannhietleads')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        Lead Kiểm tra Hàn-Nhiệt
+      </button>
 
       <button class="sbar-section sbar-section-toggle" data-key="marketing" aria-expanded="true" onclick="toggleSbarGroup(this)">
         <span>Marketing</span>
@@ -2521,6 +2527,33 @@
               </thead>
               <tbody id="assignmentsTbody">
                 <tr><td colspan="4"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Lead Kiểm tra Hàn-Nhiệt (minigame công khai) ────────────── -->
+      <section class="page" id="page-hannhietleads">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Lead từ minigame Kiểm tra Hàn-Nhiệt</h2>
+            <input class="search-input" type="text" placeholder="Tìm tên, SĐT..." id="hnLeadSearch" oninput="debounceHanNhietLeads()">
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Số điện thoại</th>
+                  <th>Kết quả</th>
+                  <th>Hàn / Nhiệt</th>
+                  <th>Thời gian</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="hnLeadsTbody">
+                <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -4524,6 +4557,7 @@
       camnang: ['Thực phẩm & Công thức', 'Dữ liệu cho trang Tra cứu & Thư viện công thức'],
       meallogs: ['Nhật ký ăn uống', 'Toàn bộ nhật ký ăn uống của thành viên'],
       assignments: ['Danh sách bài tập', 'Thư viện bài tập (hướng dẫn + link) dùng chung cho bài học & nội dung 377 ngày'],
+      hannhietleads: ['Lead Kiểm tra Hàn-Nhiệt', 'Danh sách người đã làm minigame công khai kiem-tra-han-nhiet.html'],
       'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
       'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
       'member-profile-detail': ['Hồ sơ thành viên', ''],
@@ -4560,6 +4594,7 @@
       if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
       if (name === 'meallogs') loadMealLogs();
       if (name === 'assignments') loadAssignments();
+      if (name === 'hannhietleads') loadHanNhietLeads();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
       if (name === 'member-profile-list') loadMemberProfileList();
       if (name === 'program377') loadP377Letter();
@@ -6369,6 +6404,33 @@
       if (!confirm('Xóa bài tập này? Các bài học/ngày đang liên kết sẽ mất liên kết.')) return;
       await api(`/admin/assignments/${id}`, { method: 'DELETE' });
       loadAssignments();
+    }
+
+    // -- Lead Kiểm tra Hàn-Nhiệt (minigame công khai kiem-tra-han-nhiet.html) --
+    let hnLeadDebTimer = null;
+    function debounceHanNhietLeads() {
+      clearTimeout(hnLeadDebTimer);
+      hnLeadDebTimer = setTimeout(loadHanNhietLeads, 300);
+    }
+
+    async function loadHanNhietLeads() {
+      const search = document.getElementById('hnLeadSearch').value.trim();
+      const qs = new URLSearchParams({ search, limit: 100, offset: 0 });
+      const { results } = await api(`/admin/han-nhiet-quiz/results?${qs}`);
+      const tbody = document.getElementById('hnLeadsTbody');
+      if (!results.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Chưa có ai làm minigame này.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = results.map(r => `
+    <tr>
+      <td style="font-weight:600;">${escHtml(r.name)}</td>
+      <td>${escHtml(r.phone)}</td>
+      <td><span class="badge" style="background:#ede9fe;color:#5b21b6;">${escHtml(r.result_type)}</span></td>
+      <td style="color:var(--muted);font-size:12.5px;">${r.han_count} Hàn / ${r.nhiet_count} Nhiệt</td>
+      <td style="color:var(--muted);font-size:12.5px;">${escHtml(r.created_at)}</td>
+      <td><a class="act-btn" href="https://zalo.me/${escHtml(r.phone.replace(/\D/g, ''))}" target="_blank" rel="noopener">Nhắn Zalo</a></td>
+    </tr>`).join('');
     }
 
     // -- Báo cáo hằng ngày --
