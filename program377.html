@@ -35,6 +35,16 @@
     .p377-block:first-of-type { margin-top: 10px; }
     .p377-block-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
     .p377-block-body { font-size: 14px; line-height: 1.7; }
+    .p377-block-body p { margin-bottom: 10px; }
+    .p377-block-body p:last-child { margin-bottom: 0; }
+    .p377-block-body ul, .p377-block-body ol { padding-left: 20px; margin-bottom: 10px; }
+    .p377-block-body li { margin-bottom: 4px; }
+    .p377-block-body h2, .p377-block-body h3, .p377-block-body h4 { font-family: var(--font-heading); font-weight: 800; margin: 14px 0 8px; }
+    .p377-block-body hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .p377-table-wrap { overflow-x: auto; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
+    .p377-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .p377-table-wrap th, .p377-table-wrap td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+    .p377-table-wrap th { background: var(--bg-hover); font-weight: 700; white-space: nowrap; }
     .p377-linked-lesson { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
     .p377-linked-lesson a { font-size: 13.5px; font-weight: 700; color: var(--color-primary); text-decoration: none; }
     .p377-linked-lesson a:hover { text-decoration: underline; }
@@ -457,6 +467,67 @@ const API = '/api';
     const TASTES = ['chua','cay','đắng','mặn','ngọt'];
     const sel = { colors: new Set(), tastes: new Set() };
     function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+    // Khối nội dung 377 ngày được soạn dạng markdown (kể cả khi AI soạn nháp) —
+    // cần chuyển sang HTML trước khi hiển thị, không được nhét thẳng text thô
+    // vào innerHTML (newline bị trình duyệt gộp mất, nhìn như 1 đoạn dính liền).
+    // Cùng thuật toán với mdToHtml() ở lo-trinh.html, chỉ thêm "+" làm dấu gạch
+    // đầu dòng tương đương "-"/"*" vì AI hay dùng "+" cho ý phụ thụt lề.
+    function mdToHtml(md) {
+      const lines = esc(md).split('\n');
+      let html = '', inList = false, listType = null, para = [];
+
+      const inlineFmt = s => s
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+      const flushPara = () => { if (para.length) { html += `<p>${para.join(' ')}</p>`; para = []; } };
+      const closeList = () => { if (inList) { html += listType === 'ol' ? '</ol>' : '</ul>'; inList = false; listType = null; } };
+
+      const isTableRow = l => /^\|.+\|$/.test(l);
+      const isSepRow = l => isTableRow(l) && /^\|[\s:|-]+\|$/.test(l) && l.includes('-');
+      const splitRow = l => l.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i].trim();
+
+        if (!line) { flushPara(); closeList(); i++; continue; }
+
+        if (isTableRow(line) && i + 1 < lines.length && isSepRow(lines[i + 1].trim())) {
+          flushPara(); closeList();
+          const headers = splitRow(line);
+          html += '<div class="p377-table-wrap"><table><thead><tr>' +
+            headers.map(h => `<th>${inlineFmt(h)}</th>`).join('') + '</tr></thead><tbody>';
+          i += 2;
+          while (i < lines.length && isTableRow(lines[i].trim())) {
+            const cells = splitRow(lines[i].trim());
+            html += '<tr>' + cells.map(c => `<td>${inlineFmt(c)}</td>`).join('') + '</tr>';
+            i++;
+          }
+          html += '</tbody></table></div>';
+          continue;
+        }
+
+        if (/^-{3,}$/.test(line)) { flushPara(); closeList(); html += '<hr>'; i++; continue; }
+
+        let m = line.match(/^(#{1,4})\s+(.*)$/);
+        if (m) { flushPara(); closeList(); const lvl = m[1].length + 1; html += `<h${lvl}>${inlineFmt(m[2])}</h${lvl}>`; i++; continue; }
+
+        m = line.match(/^[-*+]\s+(.*)$/);
+        if (m) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; inList = true; listType = 'ul'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
+
+        m = line.match(/^\d+[.)]\s+(.*)$/);
+        if (m) { flushPara(); if (listType !== 'ol') { closeList(); html += '<ol>'; inList = true; listType = 'ol'; } html += `<li>${inlineFmt(m[1])}</li>`; i++; continue; }
+
+        closeList();
+        para.push(inlineFmt(line));
+        i++;
+      }
+      flushPara(); closeList();
+      return html;
+    }
+
     function fmtDate(s){ if(!s) return ''; return String(s).slice(0,10).split('-').reverse().join('/'); }
     function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
@@ -529,7 +600,7 @@ const API = '/api';
       const blocksHtml = (day.blocks || []).filter(b => b.bodyHtml).map(b => `
       <div class="p377-block">
         <div class="p377-block-title">${P377_BLOCK_ICONS[b.category] || ''} ${esc(b.title || P377_BLOCK_LABELS[b.category] || b.category)}</div>
-        <div class="p377-block-body">${b.bodyHtml}</div>
+        <div class="p377-block-body">${mdToHtml(b.bodyHtml)}</div>
       </div>`).join('');
       return `
       ${day.topic_key ? `<div class="p377-topic">${esc(P377_TOPICS[day.topic_key] || day.topic_key)}</div>` : ''}
