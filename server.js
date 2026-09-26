@@ -191,11 +191,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname), {
   setHeaders(res, filePath) {
-    if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+    if (filePath.endsWith('.js') || filePath.endsWith('.css') || filePath.endsWith('.html')) {
       // `no-cache` (not `no-store`): browser still revalidates every request
-      // (never serves stale JS/CSS after an edit) but can get a 304 instead
-      // of re-downloading the whole file — full downloads on every single
-      // page navigation were a major source of the menu-click stutter.
+      // (never serves stale JS/CSS/HTML after an edit) but can get a 304
+      // instead of re-downloading the whole file — full downloads on every
+      // single page navigation were a major source of the menu-click stutter.
+      // .html was added after repeatedly seeing real devices (mobile Safari
+      // in particular) render an old page's markup/inline script for a while
+      // after a deploy, even though desktop/hard-reload always saw the fix.
       res.setHeader('Cache-Control', 'no-cache');
     }
   }
@@ -2175,9 +2178,12 @@ QUY TẮC BẮT BUỘC:
     const modules = db.all('SELECT id, title, order_num FROM course_modules WHERE course_id = ? ORDER BY order_num ASC, id ASC', [req.params.id]);
     const lessons = unlocked
       ? db.all(
-          `SELECT id, module_id, title, content, video_url, duration_min, order_num,
-                  exercise_enabled, exercise_type, exercise_prompt, exercise_max_score, exercise_pass_score
-           FROM course_lessons WHERE course_id = ? AND status = 'published' ORDER BY order_num ASC, id ASC`,
+          `SELECT cl.id, cl.module_id, cl.title, cl.content, cl.video_url, cl.duration_min, cl.order_num,
+                  cl.exercise_enabled, cl.exercise_type, cl.exercise_prompt, cl.exercise_max_score, cl.exercise_pass_score
+           FROM course_lessons cl
+           LEFT JOIN course_modules cm ON cm.id = cl.module_id
+           WHERE cl.course_id = ? AND cl.status = 'published'
+           ORDER BY cm.order_num ASC, cm.id ASC, cl.order_num ASC, cl.id ASC`,
           [req.params.id]
         ).map(l => {
           if (!l.exercise_enabled) return { ...l, my_submission: null };
