@@ -322,6 +322,9 @@
                       <select id="p377SweatTaste"><option value="">— chọn —</option><option>không vị</option><option>chua</option><option>hơi mặn</option><option>mặn</option></select>
                     </div>
                   </div>
+                  <div class="p377-field"><label>🙏 3 điều biết ơn hôm nay — điều 1</label><input id="p377Gratitude1" placeholder="VD: Biết ơn vì hôm nay có bữa ăn đủ đầy..."></div>
+                  <div class="p377-field"><label>🙏 3 điều biết ơn hôm nay — điều 2</label><input id="p377Gratitude2" placeholder=""></div>
+                  <div class="p377-field"><label>🙏 3 điều biết ơn hôm nay — điều 3</label><input id="p377Gratitude3" placeholder=""></div>
                   <div class="p377-field"><label>Biểu hiện cơ thể / cảm nhận sức khỏe tổng quát</label><textarea id="p377Feeling" rows="2"></textarea></div>
                   <button class="btn btn-primary" id="p377Save" onclick="saveP377Report()">Lưu báo cáo hôm nay</button>
                   <div class="p377-msg" id="p377Msg"></div>
@@ -567,6 +570,9 @@ const API = '/api';
       document.getElementById('p377ExMinutes').value = r?.exercise_minutes || '';
       document.getElementById('p377SweatAmount').value = r?.sweat_amount || '';
       document.getElementById('p377SweatTaste').value = r?.sweat_taste || '';
+      document.getElementById('p377Gratitude1').value = r?.gratitude_1 || '';
+      document.getElementById('p377Gratitude2').value = r?.gratitude_2 || '';
+      document.getElementById('p377Gratitude3').value = r?.gratitude_3 || '';
       document.getElementById('p377Feeling').value = r?.feeling_note || '';
       document.getElementById('p377FormTitle').textContent = r ? 'Cập nhật báo cáo hôm nay' : 'Báo cáo hôm nay';
       document.getElementById('p377Save').textContent = r ? 'Cập nhật' : 'Lưu báo cáo hôm nay';
@@ -734,6 +740,7 @@ const API = '/api';
     <div class="p377-result-summary-line">${esc(meals) || '—'}</div>
     ${badgeParts.length ? `<div class="p377-result-badge-line">${esc(badgeParts.join(' · '))}</div>` : ''}
     ${extra.length ? `<div class="p377-result-badge-line">${esc(extra.join(' · '))}</div>` : ''}
+    ${[r.gratitude_1, r.gratitude_2, r.gratitude_3].filter(Boolean).length ? `<div class="p377-result-badge-line">🙏 ${esc([r.gratitude_1, r.gratitude_2, r.gratitude_3].filter(Boolean).join(' · '))}</div>` : ''}
     ${r.feeling_note ? `<div class="p377-result-badge-line">Cảm nhận: ${esc(r.feeling_note)}</div>` : ''}`;
     }
 
@@ -831,6 +838,9 @@ const API = '/api';
         exercise_minutes: document.getElementById('p377ExMinutes').value,
         sweat_amount: document.getElementById('p377SweatAmount').value,
         sweat_taste: document.getElementById('p377SweatTaste').value,
+        gratitude_1: document.getElementById('p377Gratitude1').value.trim(),
+        gratitude_2: document.getElementById('p377Gratitude2').value.trim(),
+        gratitude_3: document.getElementById('p377Gratitude3').value.trim(),
         feeling_note: document.getElementById('p377Feeling').value.trim(),
       };
       try {

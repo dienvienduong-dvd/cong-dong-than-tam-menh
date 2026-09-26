@@ -6519,6 +6519,7 @@
     ${row('Phân', [r.stool_shape, r.stool_color].filter(Boolean).join(' — '))}
     ${row('Tập luyện', [r.exercise_type, r.exercise_minutes ? r.exercise_minutes + ' phút' : ''].filter(Boolean).join(' — '))}
     ${row('Mồ hôi', [r.sweat_amount, r.sweat_taste].filter(Boolean).join(' — '))}
+    ${[r.gratitude_1, r.gratitude_2, r.gratitude_3].some(Boolean) ? row('🙏 3 điều biết ơn', [r.gratitude_1, r.gratitude_2, r.gratitude_3].filter(Boolean).join(' · ')) : ''}
     ${row('Cảm nhận', r.feeling_note)}
     ${r.is_late ? '<div style="color:#dc2626;font-size:12px;margin-top:8px;">⚠️ Báo cáo trễ hạn</div>' : ''}`;
       document.getElementById('p377ReportModal').style.display = 'flex';

@@ -1809,7 +1809,7 @@ ${extra}
   // Migrate program377_reports: thêm cột AI feedback (An Nhiên nhận xét thay đổi sức khỏe
   // dựa trên hồ sơ/lộ trình + báo cáo hằng ngày — tab "Kết quả" ở trang khách).
   const p377ReportCols = db.all('PRAGMA table_info(program377_reports)').map(c => c.name);
-  ['ai_feedback', 'flag_level', 'flagged_reason', 'agent2_notified_at'].forEach((col) => {
+  ['ai_feedback', 'flag_level', 'flagged_reason', 'agent2_notified_at', 'gratitude_1', 'gratitude_2', 'gratitude_3'].forEach((col) => {
     if (!p377ReportCols.includes(col)) {
       db.exec(`ALTER TABLE program377_reports ADD COLUMN ${col} TEXT`);
       console.log(`  Migrated program377_reports: added ${col}.`);
@@ -4855,15 +4855,26 @@ QUY TẮC BẮT BUỘC:
     const dayNumberToday = enrollment && enrollment.status === 'approved'
       ? Math.min(program377DayNumberToday(enrollment.start_date), 377)
       : 0;
-    const days = db.all('SELECT id, day_number, topic_key, title, xp_reward FROM program377_days ORDER BY day_number ASC');
-    res.json({
-      days: days.map(d => {
-        const unlocked = d.day_number <= dayNumberToday;
+    // Danh sách luôn đủ 1..377 — không chỉ những ngày admin đã tạo riêng. Vì
+    // hệ thống khối nội dung tự động lắp ghép theo mùa/thể trạng, một ngày
+    // không cần admin tạo riêng vẫn có thể có đủ nội dung để hiển thị, nên
+    // không được để những ngày chưa tạo "biến mất" khỏi danh sách.
+    const existingDays = db.all('SELECT id, day_number, topic_key, title, xp_reward FROM program377_days ORDER BY day_number ASC');
+    const byDayNumber = new Map(existingDays.map(d => [d.day_number, d]));
+    const days = [];
+    for (let n = 1; n <= 377; n++) {
+      const unlocked = n <= dayNumberToday;
+      const d = byDayNumber.get(n);
+      if (!unlocked) {
         // Ngày chưa mở khóa: không trả tiêu đề/chủ đề thật, tránh lộ nội dung trước khi tới ngày.
-        return unlocked ? { ...d, unlocked } : { id: d.id, day_number: d.day_number, topic_key: null, title: null, xp_reward: d.xp_reward, unlocked };
-      }),
-      dayNumberToday,
-    });
+        days.push({ id: d ? d.id : null, day_number: n, topic_key: null, title: null, xp_reward: d ? d.xp_reward : 0, unlocked });
+        continue;
+      }
+      days.push(d
+        ? { ...d, unlocked }
+        : { id: null, day_number: n, topic_key: null, title: `Ngày ${n}`, xp_reward: 0, unlocked });
+    }
+    res.json({ days, dayNumberToday });
   });
 
   app.get('/api/program377/day/:dayNumber', (req, res) => {
@@ -4875,8 +4886,15 @@ QUY TẮC BẮT BUỘC:
     const dayNumberToday = Math.min(program377DayNumberToday(enrollment.start_date), 377);
     if (!dayNumber || dayNumber > dayNumberToday)
       return res.status(403).json({ error: 'Ngày này chưa được mở khóa.' });
-    const day = db.get('SELECT * FROM program377_days WHERE day_number = ?', [dayNumber]);
-    if (!day) return res.status(404).json({ error: 'Nội dung ngày này chưa được soạn.' });
+    // Ngày admin chưa tạo riêng vẫn phải hiển thị được — nội dung 6 mục cố định
+    // đến từ khối tự động lắp ghép theo mùa/thể trạng (resolveProgram377DayContent),
+    // không phụ thuộc việc có row program377_days hay không. Chỉ khi admin muốn
+    // thêm tiêu đề/video/bài học riêng cho 1 ngày cụ thể thì mới cần tạo row.
+    const day = db.get('SELECT * FROM program377_days WHERE day_number = ?', [dayNumber]) || {
+      id: null, day_number: dayNumber, topic_key: null, title: `Ngày ${dayNumber}`,
+      body_html: null, video_url: null, exercise_title: null, exercise_body: null,
+      xp_reward: 0, linked_lesson_id: null, linked_assignment_id: null, block_overrides_json: null,
+    };
     let blockOverrides = null;
     try { blockOverrides = JSON.parse(day.block_overrides_json || 'null'); } catch (e) { blockOverrides = null; }
     const resolved = resolveProgram377DayContent(userId, dayNumber, enrollment.start_date, blockOverrides);
@@ -4906,6 +4924,7 @@ QUY TẮC BẮT BUỘC:
       meal_breakfast, meal_lunch, meal_dinner, meal_colors, meal_tastes,
       urine_amount, urine_color, stool_shape, stool_color,
       exercise_type, exercise_minutes, sweat_amount, sweat_taste, feeling_note,
+      gratitude_1, gratitude_2, gratitude_3,
     } = req.body;
     if (!user_id || !report_date || !/^\d{4}-\d{2}-\d{2}$/.test(report_date))
       return res.status(400).json({ error: 'Thiếu user_id hoặc ngày không hợp lệ.' });
@@ -4935,6 +4954,7 @@ QUY TẮC BẮT BUỘC:
       urine_amount || null, urine_color || null, stool_shape || null, stool_color || null,
       exercise_type || null, exercise_minutes ? Number(exercise_minutes) : null,
       sweat_amount || null, sweat_taste || null, feeling_note || null, isLate, dayNumber,
+      gratitude_1 || null, gratitude_2 || null, gratitude_3 || null,
     ];
     let reportId;
     if (existing) {
@@ -4943,7 +4963,7 @@ QUY TẮC BẮT BUỘC:
            meal_breakfast=?, meal_lunch=?, meal_dinner=?, meal_colors=?, meal_tastes=?,
            urine_amount=?, urine_color=?, stool_shape=?, stool_color=?,
            exercise_type=?, exercise_minutes=?, sweat_amount=?, sweat_taste=?, feeling_note=?,
-           is_late=?, day_number=?, updated_at = datetime('now','localtime')
+           is_late=?, day_number=?, gratitude_1=?, gratitude_2=?, gratitude_3=?, updated_at = datetime('now','localtime')
          WHERE id = ?`,
         [...fields, existing.id]
       );
@@ -4953,8 +4973,9 @@ QUY TẮC BẮT BUỘC:
         `INSERT INTO program377_reports (
            user_id, report_date, meal_breakfast, meal_lunch, meal_dinner, meal_colors, meal_tastes,
            urine_amount, urine_color, stool_shape, stool_color,
-           exercise_type, exercise_minutes, sweat_amount, sweat_taste, feeling_note, is_late, day_number
-         ) VALUES (?, ?, ?,?,?,?,?, ?,?,?,?, ?,?,?,?,?, ?,?)`,
+           exercise_type, exercise_minutes, sweat_amount, sweat_taste, feeling_note, is_late, day_number,
+           gratitude_1, gratitude_2, gratitude_3
+         ) VALUES (?, ?, ?,?,?,?,?, ?,?,?,?, ?,?,?,?,?, ?,?, ?,?,?)`,
         [user_id, report_date, ...fields]
       );
       reportId = db.get('SELECT id FROM program377_reports WHERE user_id = ? AND report_date = ?', [user_id, report_date]).id;
