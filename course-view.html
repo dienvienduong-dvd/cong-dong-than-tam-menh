@@ -194,6 +194,14 @@
     .cv-nav-row .btn {
       flex: 1;
       min-width: 0;
+      /* text-overflow:ellipsis không đáng tin cậy khi đặt trực tiếp lên
+         chính flex container (mất icon mũi tên, canh lề sai ở một số
+         trình duyệt) — bọc phần chữ trong .cv-nav-btn-text riêng bên dưới
+         để cắt "..." đúng chỗ, giữ mũi tên luôn hiện đầy đủ. */
+    }
+    .cv-nav-row .btn .cv-nav-arrow { flex-shrink: 0; }
+    .cv-nav-row .btn .cv-nav-btn-text {
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -737,8 +745,8 @@
       const prev = lessons[idx - 1];
       const next = lessons[idx + 1];
       html += `<div class="cv-nav-row">
-        ${prev ? `<button class="btn btn-secondary" onclick="selectLesson(${prev.id})">← ${escHtml(prev.title)}</button>` : '<span></span>'}
-        ${next ? `<button class="btn btn-primary" onclick="selectLesson(${next.id})">${escHtml(next.title)} →</button>` : '<span></span>'}
+        ${prev ? `<button class="btn btn-secondary" onclick="selectLesson(${prev.id})"><span class="cv-nav-arrow">←</span><span class="cv-nav-btn-text">${escHtml(prev.title)}</span></button>` : '<span></span>'}
+        ${next ? `<button class="btn btn-primary" onclick="selectLesson(${next.id})"><span class="cv-nav-btn-text">${escHtml(next.title)}</span><span class="cv-nav-arrow">→</span></button>` : '<span></span>'}
       </div>`;
 
       html += `<button class="cv-toc-toggle" onclick="toggleCvToc()" style="margin-top:16px;margin-bottom:0;">
