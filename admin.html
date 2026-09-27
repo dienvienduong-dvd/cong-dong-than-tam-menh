@@ -2561,14 +2561,29 @@
 
       <!-- ── Coach 1-1: yêu cầu đặt lịch ──────────────────────────────── -->
       <section class="page" id="page-coaching">
+        <div class="table-card" style="margin-bottom:16px;">
+          <div class="table-card-header"><h2>Đánh dấu đã dùng 1 buổi cho khách</h2></div>
+          <div style="padding:16px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:end;">
+            <div style="flex:1;min-width:220px;">
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Email khách hàng</label>
+              <input class="search-input" style="width:100%" id="coachMarkUsedEmail" placeholder="VD: khach@example.com">
+            </div>
+            <div style="flex:2;min-width:220px;">
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Ghi chú (không bắt buộc)</label>
+              <input class="search-input" style="width:100%" id="coachMarkUsedNote" placeholder="VD: Đã coach qua Google Meet ngày 10/10">
+            </div>
+            <button class="btn-sm primary" onclick="markCoachUsedForCustomer()">Đánh dấu đã dùng 1 buổi</button>
+          </div>
+          <div style="padding:0 20px 14px;font-size:11.5px;color:var(--muted);">Dùng khi thấy khách đã đặt lịch và hoàn thành buổi coach qua Google Calendar (hệ thống không tự biết vì lịch đặt trực tiếp qua Google, ngoài app).</div>
+        </div>
         <div class="table-card">
           <div class="table-card-header">
-            <h2>Yêu cầu đặt lịch Coach 1-1</h2>
+            <h2>Lịch sử buổi Coach 1-1</h2>
             <select class="filter-select" id="coachStatusFilter" onchange="loadCoachingBookings()">
               <option value="">Tất cả trạng thái</option>
-              <option value="pending" selected>Chờ xác nhận</option>
+              <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
-              <option value="completed">Hoàn thành</option>
+              <option value="completed" selected>Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>
@@ -6585,26 +6600,41 @@
         tbody.innerHTML = bookings.map(b => `
     <tr>
       <td style="font-weight:600;">${escHtml(`${b.first_name} ${b.last_name || ''}`.trim())}<div style="font-size:11.5px;color:var(--muted);font-weight:400;">${escHtml(b.email)}${b.phone ? ' · ' + escHtml(b.phone) : ''}</div></td>
-      <td>${fmtDateOnly(b.preferred_date)} ${escHtml(b.preferred_time || '')}</td>
+      <td>${b.preferred_date ? fmtDateOnly(b.preferred_date) + ' ' + escHtml(b.preferred_time || '') : '<span style="color:var(--muted);">Đặt qua Google Calendar</span>'}</td>
       <td style="color:var(--muted);font-size:12.5px;max-width:220px;">${escHtml(b.note || '—')}</td>
       <td><span class="badge" style="${COACH_STATUS_STYLE[b.status] || ''}">${COACH_STATUS_LABELS[b.status] || b.status}</span></td>
       <td style="color:var(--muted);font-size:12.5px;">${b.confirmed_date ? fmtDateOnly(b.confirmed_date) + ' ' + (b.confirmed_time || '') : '—'}</td>
       <td><button class="act-btn" onclick="openCoachBookingModal(${b.id})">Xử lý</button></td>
     </tr>`).join('');
       }
-      const badge = document.getElementById('sbCoachPendingCount');
-      if (status === 'pending') {
-        badge.textContent = bookings.length;
-        badge.style.display = bookings.length > 0 ? 'inline' : 'none';
-      }
+      // Badge "chờ xác nhận" luôn cập nhật đúng bất kể bộ lọc đang chọn gì.
+      api('/admin/coaching/bookings?status=pending').then((d) => {
+        const badge = document.getElementById('sbCoachPendingCount');
+        badge.textContent = d.bookings.length;
+        badge.style.display = d.bookings.length > 0 ? 'inline' : 'none';
+      });
+    }
+
+    async function markCoachUsedForCustomer() {
+      const email = document.getElementById('coachMarkUsedEmail').value.trim();
+      const note = document.getElementById('coachMarkUsedNote').value.trim();
+      if (!email) { showToast('Vui lòng nhập email khách hàng.', 'red'); return; }
+      try {
+        await api('/admin/coaching/mark-used', { method: 'POST', body: JSON.stringify({ email, note }) });
+        showToast('✅ Đã đánh dấu.', 'green');
+        document.getElementById('coachMarkUsedEmail').value = '';
+        document.getElementById('coachMarkUsedNote').value = '';
+        loadCoachingBookings();
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
     }
 
     function openCoachBookingModal(id) {
       const b = coachBookingsCache.find(x => x.id === id);
       if (!b) return;
       document.getElementById('coachBookingId').value = id;
+      const whenText = b.preferred_date ? `mong muốn ${fmtDateOnly(b.preferred_date)} ${escHtml(b.preferred_time || '')}` : 'đặt qua Google Calendar';
       document.getElementById('coachBookingInfo').innerHTML =
-        `<b>${escHtml(`${b.first_name} ${b.last_name || ''}`.trim())}</b> — mong muốn ${fmtDateOnly(b.preferred_date)} ${escHtml(b.preferred_time || '')}${b.note ? `<br>Ghi chú: ${escHtml(b.note)}` : ''}`;
+        `<b>${escHtml(`${b.first_name} ${b.last_name || ''}`.trim())}</b> — ${whenText}${b.note ? `<br>Ghi chú: ${escHtml(b.note)}` : ''}`;
       document.getElementById('coachConfirmedDate').value = b.confirmed_date || b.preferred_date || '';
       document.getElementById('coachConfirmedTime').value = b.confirmed_time || b.preferred_time || '';
       document.getElementById('coachMeetingLink').value = b.meeting_link || '';

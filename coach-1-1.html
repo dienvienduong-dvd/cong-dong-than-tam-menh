@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="assets/css/base.css?v=2">
   <link rel="stylesheet" href="assets/css/components.css?v=2">
   <link rel="stylesheet" href="assets/css/layout.css?v=2">
+  <link href="https://calendar.google.com/calendar/scheduling-button-script.css" rel="stylesheet">
   <style>
     .c1-wrap { max-width: 760px; margin: 0 auto; }
     .c1-hero { background: linear-gradient(135deg,#0ea5e9,#8b5cf6); color:#fff; border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
@@ -247,13 +248,25 @@
             </div>
 
             <div class="c1-card" id="c1BookingCard" style="display:none;">
-              <h3>Đặt lịch hẹn</h3>
-              <div class="c1-row2">
-                <div class="c1-field"><label>Ngày mong muốn</label><input type="date" id="c1Date"></div>
-                <div class="c1-field"><label>Giờ mong muốn</label><input type="time" id="c1Time"></div>
-              </div>
-              <div class="c1-field"><label>Ghi chú (mong muốn trao đổi vấn đề gì...)</label><textarea id="c1Note" rows="2"></textarea></div>
-              <button class="btn btn-primary" id="c1BookBtn" onclick="submitBooking()">Gửi yêu cầu đặt lịch</button>
+              <h3>Đặt lịch hẹn qua Google Calendar</h3>
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Chọn đúng giờ trống thật của Ngô Lâm — hệ thống tự tạo lịch hẹn và gửi link Google Meet qua email bạn.</p>
+              <!-- Google Calendar Appointment Scheduling begin -->
+              <script src="https://calendar.google.com/calendar/scheduling-button-script.js" async></script>
+              <script>
+                (function() {
+                  var target = document.currentScript;
+                  window.addEventListener('load', function() {
+                    calendar.schedulingButton.load({
+                      url: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ37wFD3zy1SxLJojtyHoMs7vjDsE6YyiCDa83nNP0l2bHRINJmPz02GFfuty6EAT5RsQifL1stE?gv=true',
+                      color: '#039BE5',
+                      label: "Đăng ký tư vấn 1-1 với Ngô Lâm",
+                      target,
+                    });
+                  });
+                })();
+              </script>
+              <!-- end Google Calendar Appointment Scheduling -->
+              <button class="btn" style="margin-top:16px;" id="c1MarkUsedBtn" onclick="markSessionUsed()">✅ Đánh dấu đã dùng 1 buổi (sau khi hoàn thành buổi hẹn)</button>
               <div class="c1-msg" id="c1Msg"></div>
             </div>
 
@@ -452,9 +465,14 @@
       const box = document.getElementById('c1Bookings');
       if (!bookings.length) { box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Chưa có lịch hẹn nào.</div>'; return; }
       box.innerHTML = bookings.map(b => {
-        const when = b.status === 'confirmed' || b.status === 'completed'
-          ? `${fmtDate(b.confirmed_date || b.preferred_date)} ${b.confirmed_time || b.preferred_time || ''}`.trim()
-          : `Mong muốn: ${fmtDate(b.preferred_date)} ${b.preferred_time || ''}`.trim();
+        let when;
+        if (!b.preferred_date && !b.confirmed_date) {
+          when = `Đã dùng 1 buổi — ${fmtDate(b.created_at)}`;
+        } else if (b.status === 'confirmed' || b.status === 'completed') {
+          when = `${fmtDate(b.confirmed_date || b.preferred_date)} ${b.confirmed_time || b.preferred_time || ''}`.trim();
+        } else {
+          when = `Mong muốn: ${fmtDate(b.preferred_date)} ${b.preferred_time || ''}`.trim();
+        }
         return `
       <div class="c1-booking-row">
         <div class="c1-booking-head">
@@ -490,25 +508,15 @@
       renderPackages(d.packages || []);
     }
 
-    async function submitBooking() {
-      const btn = document.getElementById('c1BookBtn'); btn.disabled = true;
+    async function markSessionUsed() {
+      if (!confirm('Xác nhận bạn đã đặt lịch và hoàn thành 1 buổi coach qua Google Calendar? Số buổi khả dụng sẽ giảm đi 1.')) return;
+      const btn = document.getElementById('c1MarkUsedBtn'); btn.disabled = true;
       const msg = document.getElementById('c1Msg');
-      const body = {
-        user_id: currentUser.id,
-        preferred_date: document.getElementById('c1Date').value,
-        preferred_time: document.getElementById('c1Time').value,
-        note: document.getElementById('c1Note').value.trim(),
-      };
-      if (!body.preferred_date || !body.preferred_time) {
-        msg.style.color = '#ef4444'; msg.textContent = 'Vui lòng chọn ngày và giờ mong muốn.';
-        btn.disabled = false; return;
-      }
       try {
-        const res = await fetch(`${API}/coaching/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+        const res = await fetch(`${API}/coaching/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: currentUser.id }) }).then(r => r.json());
         if (res.error) { msg.style.color = '#ef4444'; msg.textContent = res.error; }
         else {
-          msg.style.color = '#10b981'; msg.textContent = 'Đã gửi yêu cầu — đội ngũ sẽ xác nhận lịch cụ thể trong vòng 24 giờ.';
-          document.getElementById('c1Date').value = ''; document.getElementById('c1Time').value = ''; document.getElementById('c1Note').value = '';
+          msg.style.color = '#10b981'; msg.textContent = 'Đã ghi nhận — cảm ơn bạn!';
           await loadStatus();
         }
       } catch { msg.style.color = '#ef4444'; msg.textContent = 'Có lỗi, thử lại.'; }

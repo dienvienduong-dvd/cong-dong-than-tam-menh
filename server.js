@@ -6086,15 +6086,22 @@ QUY TẮC BẮT BUỘC:
     res.json({ remaining, bookings });
   });
 
+  // Đặt lịch thật diễn ra qua nút Google Calendar Scheduling nhúng trên trang
+  // (ngoài hệ thống, không có webhook báo về) — nên preferred_date/time giờ là
+  // không bắt buộc: khi thiếu, coi như khách vừa bấm "Đánh dấu đã dùng 1 buổi"
+  // sau khi đặt lịch qua Google Calendar, trừ thẳng 1 buổi (status='completed')
+  // thay vì tạo yêu cầu chờ admin duyệt.
   app.post('/api/coaching/bookings', (req, res) => {
     const { user_id, preferred_date, preferred_time, note } = req.body;
-    if (!user_id || !preferred_date || !preferred_time)
-      return res.status(400).json({ error: 'Vui lòng chọn ngày và giờ mong muốn.' });
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
     if (coachingRemainingSessions(user_id) <= 0)
       return res.status(403).json({ error: 'Bạn chưa có buổi coach nào khả dụng — vui lòng mua gói trước.' });
+    const hasDateTime = !!(preferred_date && preferred_time);
     const r = db.run(
-      'INSERT INTO coaching_bookings (user_id, preferred_date, preferred_time, note) VALUES (?,?,?,?)',
-      [user_id, preferred_date, preferred_time, note || '']
+      'INSERT INTO coaching_bookings (user_id, preferred_date, preferred_time, note, status) VALUES (?,?,?,?,?)',
+      [user_id, preferred_date || null, preferred_time || null,
+       note || (hasDateTime ? '' : 'Đã đặt lịch qua Google Calendar — tự đánh dấu đã dùng 1 buổi.'),
+       hasDateTime ? 'pending' : 'completed']
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });
@@ -6116,6 +6123,23 @@ QUY TẮC BẮT BUỘC:
     if (status) { sql += ' AND b.status = ?'; params.push(status); }
     sql += ' ORDER BY b.created_at DESC, b.id DESC';
     res.json({ bookings: db.all(sql, params) });
+  });
+
+  // Admin đánh dấu 1 buổi đã dùng thay cho khách (VD thấy lịch hẹn thật đã
+  // diễn ra trên Google Calendar) — tìm khách qua email vì admin thường không
+  // nhớ user_id.
+  app.post('/api/admin/coaching/mark-used', requireAdmin, (req, res) => {
+    const { email, note } = req.body;
+    if (!email?.trim()) return res.status(400).json({ error: 'Vui lòng nhập email khách hàng.' });
+    const user = db.get('SELECT id FROM users WHERE email = ?', [email.trim()]);
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy khách hàng với email này.' });
+    if (coachingRemainingSessions(user.id) <= 0)
+      return res.status(400).json({ error: 'Khách hàng này không còn buổi khả dụng.' });
+    db.run(
+      "INSERT INTO coaching_bookings (user_id, note, status) VALUES (?,?,'completed')",
+      [user.id, note || 'Admin đánh dấu đã dùng 1 buổi (đặt lịch qua Google Calendar).']
+    );
+    res.json({ ok: true });
   });
 
   app.patch('/api/admin/coaching/bookings/:id', requireAdmin, (req, res) => {
