@@ -1410,6 +1410,13 @@
         </svg>
         Lead Kiểm tra Hàn-Nhiệt
       </button>
+      <button class="sbar-item" onclick="showPage('coaching')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><path d="M8 14l2 2 4-4" />
+        </svg>
+        Coach 1-1
+        <span class="sbar-count" id="sbCoachPendingCount" style="background:#ef4444;color:#fff;display:none">0</span>
+      </button>
 
       <button class="sbar-section sbar-section-toggle" data-key="marketing" aria-expanded="true" onclick="toggleSbarGroup(this)">
         <span>Marketing</span>
@@ -2555,6 +2562,39 @@
                 </tr>
               </thead>
               <tbody id="hnLeadsTbody">
+                <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Coach 1-1: yêu cầu đặt lịch ──────────────────────────────── -->
+      <section class="page" id="page-coaching">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>Yêu cầu đặt lịch Coach 1-1</h2>
+            <select class="filter-select" id="coachStatusFilter" onchange="loadCoachingBookings()">
+              <option value="">Tất cả trạng thái</option>
+              <option value="pending" selected>Chờ xác nhận</option>
+              <option value="confirmed">Đã xác nhận</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Khách hàng</th>
+                  <th>Ngày/giờ mong muốn</th>
+                  <th>Ghi chú</th>
+                  <th>Trạng thái</th>
+                  <th>Lịch đã xác nhận</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="coachBookingsTbody">
                 <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
               </tbody>
             </table>
@@ -3985,6 +4025,52 @@
     </div>
   </div>
 
+  <!-- ── Coach 1-1 — modal xác nhận lịch hẹn ───────────────────────── -->
+  <div id="coachBookingModal"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;box-shadow:0 24px 48px rgba(0,0,0,.2);">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="font-size:16px;font-weight:700;">Xác nhận lịch hẹn</h3>
+        <button onclick="closeCoachBookingModal()" style="border:none;background:none;cursor:pointer;font-size:20px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <input type="hidden" id="coachBookingId">
+        <div id="coachBookingInfo" style="font-size:13px;color:var(--muted);"></div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Ngày xác nhận</label>
+            <input type="date" id="coachConfirmedDate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Giờ xác nhận</label>
+            <input type="time" id="coachConfirmedTime" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Link buổi coach (Zoom/Meet...)</label>
+          <input type="text" id="coachMeetingLink" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Ghi chú cho khách (không bắt buộc)</label>
+          <textarea id="coachAdminNote" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);">Trạng thái</label>
+          <select id="coachStatus" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+            <option value="pending">Chờ xác nhận</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="completed">Hoàn thành</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn-sm" onclick="closeCoachBookingModal()">Hủy</button>
+        <button class="btn-sm primary" onclick="saveCoachBooking()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Chương trình 377 ngày — modal duyệt đăng ký ──────────────────── -->
   <div id="p377EnrollModal"
     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;padding:16px;">
@@ -4565,6 +4651,7 @@
       meallogs: ['Nhật ký ăn uống', 'Toàn bộ nhật ký ăn uống của thành viên'],
       assignments: ['Danh sách bài tập', 'Thư viện bài tập (hướng dẫn + link) dùng chung cho bài học & nội dung 377 ngày'],
       hannhietleads: ['Lead Kiểm tra Hàn-Nhiệt', 'Danh sách người đã làm minigame công khai kiem-tra-han-nhiet.html'],
+      coaching: ['Coach 1-1', 'Yêu cầu đặt lịch coach 1-1 từ khách đã mua gói'],
       'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
       'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
       'member-profile-detail': ['Hồ sơ thành viên', ''],
@@ -4602,6 +4689,7 @@
       if (name === 'meallogs') loadMealLogs();
       if (name === 'assignments') loadAssignments();
       if (name === 'hannhietleads') loadHanNhietLeads();
+      if (name === 'coaching') loadCoachingBookings();
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
       if (name === 'member-profile-list') loadMemberProfileList();
       if (name === 'program377') loadP377Letter();
@@ -6479,6 +6567,78 @@
       <td style="color:var(--muted);font-size:12.5px;">${escHtml(r.created_at)}</td>
       <td><a class="act-btn" href="https://zalo.me/${escHtml(r.phone.replace(/\D/g, ''))}" target="_blank" rel="noopener">Nhắn Zalo</a></td>
     </tr>`).join('');
+    }
+
+    // -- Coach 1-1: yêu cầu đặt lịch --
+    // fmtDate() ở trên được thiết kế cho chuỗi datetime đầy đủ (created_at kiểu
+    // "2026-09-27 14:32:11") — dùng cho preferred_date/confirmed_date (chỉ có
+    // ngày, không giờ, kiểu "2026-11-01") sẽ bị new Date() hiểu là nửa đêm UTC
+    // rồi đổi sang giờ địa phương, hiện sai lệch giờ (VD "07:00" ảo). Dùng hàm
+    // rút gọn riêng cho các trường chỉ-có-ngày này.
+    function fmtDateOnly(s) { if (!s) return '—'; return String(s).slice(0, 10).split('-').reverse().join('/'); }
+    let coachBookingsCache = [];
+    const COACH_STATUS_LABELS = { pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', completed: 'Hoàn thành', cancelled: 'Đã hủy' };
+    const COACH_STATUS_STYLE = {
+      pending: 'background:#fef3c7;color:#92400e;', confirmed: 'background:#dbeafe;color:#1e40af;',
+      completed: 'background:#dcfce7;color:#166534;', cancelled: 'background:#f1f5f9;color:#64748b;',
+    };
+
+    async function loadCoachingBookings() {
+      const status = document.getElementById('coachStatusFilter').value;
+      const qs = new URLSearchParams(status ? { status } : {});
+      const { bookings } = await api(`/admin/coaching/bookings?${qs}`);
+      coachBookingsCache = bookings;
+      const tbody = document.getElementById('coachBookingsTbody');
+      if (!bookings.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Không có yêu cầu nào.</div></td></tr>`;
+      } else {
+        tbody.innerHTML = bookings.map(b => `
+    <tr>
+      <td style="font-weight:600;">${escHtml(`${b.first_name} ${b.last_name || ''}`.trim())}<div style="font-size:11.5px;color:var(--muted);font-weight:400;">${escHtml(b.email)}${b.phone ? ' · ' + escHtml(b.phone) : ''}</div></td>
+      <td>${fmtDateOnly(b.preferred_date)} ${escHtml(b.preferred_time || '')}</td>
+      <td style="color:var(--muted);font-size:12.5px;max-width:220px;">${escHtml(b.note || '—')}</td>
+      <td><span class="badge" style="${COACH_STATUS_STYLE[b.status] || ''}">${COACH_STATUS_LABELS[b.status] || b.status}</span></td>
+      <td style="color:var(--muted);font-size:12.5px;">${b.confirmed_date ? fmtDateOnly(b.confirmed_date) + ' ' + (b.confirmed_time || '') : '—'}</td>
+      <td><button class="act-btn" onclick="openCoachBookingModal(${b.id})">Xử lý</button></td>
+    </tr>`).join('');
+      }
+      const badge = document.getElementById('sbCoachPendingCount');
+      if (status === 'pending') {
+        badge.textContent = bookings.length;
+        badge.style.display = bookings.length > 0 ? 'inline' : 'none';
+      }
+    }
+
+    function openCoachBookingModal(id) {
+      const b = coachBookingsCache.find(x => x.id === id);
+      if (!b) return;
+      document.getElementById('coachBookingId').value = id;
+      document.getElementById('coachBookingInfo').innerHTML =
+        `<b>${escHtml(`${b.first_name} ${b.last_name || ''}`.trim())}</b> — mong muốn ${fmtDateOnly(b.preferred_date)} ${escHtml(b.preferred_time || '')}${b.note ? `<br>Ghi chú: ${escHtml(b.note)}` : ''}`;
+      document.getElementById('coachConfirmedDate').value = b.confirmed_date || b.preferred_date || '';
+      document.getElementById('coachConfirmedTime').value = b.confirmed_time || b.preferred_time || '';
+      document.getElementById('coachMeetingLink').value = b.meeting_link || '';
+      document.getElementById('coachAdminNote').value = b.admin_note || '';
+      document.getElementById('coachStatus').value = b.status === 'pending' ? 'confirmed' : b.status;
+      document.getElementById('coachBookingModal').style.display = 'flex';
+    }
+    function closeCoachBookingModal() { document.getElementById('coachBookingModal').style.display = 'none'; }
+
+    async function saveCoachBooking() {
+      const id = document.getElementById('coachBookingId').value;
+      const payload = {
+        status: document.getElementById('coachStatus').value,
+        confirmed_date: document.getElementById('coachConfirmedDate').value,
+        confirmed_time: document.getElementById('coachConfirmedTime').value,
+        meeting_link: document.getElementById('coachMeetingLink').value.trim(),
+        admin_note: document.getElementById('coachAdminNote').value.trim(),
+      };
+      try {
+        await api(`/admin/coaching/bookings/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        showToast('✅ Đã lưu.', 'green');
+        closeCoachBookingModal();
+        loadCoachingBookings();
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
     }
 
     // -- Báo cáo hằng ngày --

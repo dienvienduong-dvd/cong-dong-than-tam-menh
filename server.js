@@ -410,6 +410,30 @@ const SCHEMA = `
     note            TEXT,
     created_at      TEXT DEFAULT (datetime('now','localtime'))
   );
+  -- Coach 1-1: 1 dòng mỗi đơn hàng gói coaching đã hoàn tất (UNIQUE order_id
+  -- chống cộng buổi 2 lần nếu webhook xử lý trùng). Số buổi còn lại của 1
+  -- user = SUM(sessions) - COUNT(coaching_bookings chưa bị hủy).
+  CREATE TABLE IF NOT EXISTS coaching_credits (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    order_id    INTEGER NOT NULL UNIQUE REFERENCES orders(id),
+    sessions    INTEGER NOT NULL,
+    created_at  TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE TABLE IF NOT EXISTS coaching_bookings (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id),
+    preferred_date  TEXT,
+    preferred_time  TEXT,
+    note            TEXT,
+    status          TEXT DEFAULT 'pending',
+    confirmed_date  TEXT,
+    confirmed_time  TEXT,
+    meeting_link    TEXT,
+    admin_note      TEXT,
+    created_at      TEXT DEFAULT (datetime('now','localtime')),
+    updated_at      TEXT
+  );
   CREATE TABLE IF NOT EXISTS courses (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     title        TEXT NOT NULL,
@@ -1677,6 +1701,12 @@ ${extra}
     db.exec('ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0');
     console.log('  Migrated products: added is_featured.');
   }
+  // Sản phẩm gói Coach 1-1 — hoàn tất đơn hàng sẽ cộng số buổi này vào
+  // coaching_credits của người mua (song song với course_id ở trên).
+  if (!productCols.includes('coaching_sessions')) {
+    db.exec('ALTER TABLE products ADD COLUMN coaching_sessions INTEGER');
+    console.log('  Migrated products: added coaching_sessions.');
+  }
 
   // Migrate course_lessons: add status (draft/published, independent from the parent course's status)
   const lessonCols = db.all('PRAGMA table_info(course_lessons)').map(c => c.name);
@@ -2051,6 +2081,33 @@ ${extra}
          5000000, 0, 'combo', '#10b981', 'published', 1, 'challenge.html']
       );
       console.log('  Seeded featured product: 28 Ngày Dưỡng Hóa.');
+    }
+  }
+
+  // Seed 3 gói Coach 1-1 sức khỏe (60 phút/buổi) — mua qua checkout.html như
+  // sản phẩm bình thường; hoàn tất đơn hàng sẽ cộng số buổi vào coaching_credits
+  // (xem autoEnrollFromProductPurchase). Giá/buổi giảm dần theo gói lớn hơn.
+  if (db.get("SELECT COUNT(*) AS n FROM products WHERE coaching_sessions IS NOT NULL").n === 0) {
+    const adminUser = db.get('SELECT id FROM users ORDER BY id ASC LIMIT 1');
+    if (adminUser) {
+      const coachingPackages = [
+        [1, 5000000, 5000000, 'Coach 1-1 sức khỏe — Gói 1 buổi',
+         'Đồng hành 1-1 trực tiếp cùng chuyên gia, 60 phút/buổi.'],
+        [5, 21250000, 25000000, 'Coach 1-1 sức khỏe — Gói 5 buổi (giảm 15%/buổi)',
+         '5 buổi × 60 phút, đồng hành 1-1 trực tiếp — giảm 15% mỗi buổi so với mua lẻ.'],
+        [10, 37500000, 50000000, 'Coach 1-1 sức khỏe — Gói 10 buổi (giảm 25%/buổi)',
+         '10 buổi × 60 phút, đồng hành 1-1 trực tiếp — giảm 25% mỗi buổi so với mua lẻ.'],
+      ];
+      coachingPackages.forEach(([sessions, price, comparePrice, title, desc]) => {
+        db.run(
+          `INSERT INTO products (seller_id, title, description, long_description, price, compare_price, category, cover_color, status, coaching_sessions)
+           VALUES (?,?,?,?,?,?,?,?,?,?)`,
+          [adminUser.id, title, desc,
+           `## ${title}\n\n- Mỗi buổi 60 phút, coach 1-1 trực tiếp.\n- Sau khi thanh toán, bạn đặt lịch hẹn ngày/giờ mong muốn tại trang "Đặt lịch coach 1-1".\n- Đội ngũ sẽ xác nhận lịch cụ thể trong vòng 24 giờ.`,
+           price, comparePrice, 'coaching', '#0ea5e9', 'published', sessions]
+        );
+      });
+      console.log('  Seeded 3 gói Coach 1-1 sức khỏe.');
     }
   }
 
@@ -3149,14 +3206,21 @@ QUY TẮC BẮT BUỘC:
   }
   // Called whenever an order flips to 'completed' — if the purchased product represents
   // a private course's checkout, approve (or create) that buyer's enrollment automatically.
-  function autoEnrollFromProductPurchase(productId, buyerId) {
-    const product = db.get('SELECT course_id FROM products WHERE id = ?', [productId]);
-    if (!product || !product.course_id) return;
-    const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [product.course_id, buyerId]);
-    if (existing) {
-      db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
-    } else {
-      db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [product.course_id, buyerId, 'approved']);
+  // Also handles Coach 1-1 packages: crediting the buyer with N bookable sessions.
+  function autoEnrollFromProductPurchase(productId, buyerId, orderId) {
+    const product = db.get('SELECT course_id, coaching_sessions FROM products WHERE id = ?', [productId]);
+    if (!product) return;
+    if (product.course_id) {
+      const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [product.course_id, buyerId]);
+      if (existing) {
+        db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
+      } else {
+        db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [product.course_id, buyerId, 'approved']);
+      }
+    }
+    if (product.coaching_sessions && orderId) {
+      const already = db.get('SELECT id FROM coaching_credits WHERE order_id = ?', [orderId]);
+      if (!already) db.run('INSERT INTO coaching_credits (user_id, order_id, sessions) VALUES (?,?,?)', [buyerId, orderId, product.coaching_sessions]);
     }
   }
   function canSeeSpace(space, userId, isAdmin) {
@@ -5999,6 +6063,73 @@ QUY TẮC BẮT BUỘC:
     }
   });
 
+  // ── Coach 1-1 sức khỏe ───────────────────────────────────────────
+  // Mua gói qua checkout.html như sản phẩm bình thường (coaching_sessions trên
+  // products); sau khi đơn hoàn tất, autoEnrollFromProductPurchase cộng buổi
+  // vào coaching_credits. Số buổi còn lại = tổng đã mua - số booking chưa hủy.
+  function coachingRemainingSessions(userId) {
+    const total = db.get('SELECT COALESCE(SUM(sessions), 0) AS n FROM coaching_credits WHERE user_id = ?', [userId]).n;
+    const used = db.get("SELECT COUNT(*) AS n FROM coaching_bookings WHERE user_id = ? AND status != 'cancelled'", [userId]).n;
+    return Math.max(0, total - used);
+  }
+
+  app.get('/api/coaching/packages', (_req, res) => {
+    const packages = db.all("SELECT id, title, description, price, compare_price, coaching_sessions FROM products WHERE coaching_sessions IS NOT NULL AND status = 'published' ORDER BY coaching_sessions ASC");
+    res.json({ packages });
+  });
+
+  app.get('/api/coaching/status', (req, res) => {
+    const userId = req.query.user_id;
+    if (!userId) return res.status(400).json({ error: 'Thiếu user_id' });
+    const remaining = coachingRemainingSessions(userId);
+    const bookings = db.all('SELECT * FROM coaching_bookings WHERE user_id = ? ORDER BY created_at DESC, id DESC', [userId]);
+    res.json({ remaining, bookings });
+  });
+
+  app.post('/api/coaching/bookings', (req, res) => {
+    const { user_id, preferred_date, preferred_time, note } = req.body;
+    if (!user_id || !preferred_date || !preferred_time)
+      return res.status(400).json({ error: 'Vui lòng chọn ngày và giờ mong muốn.' });
+    if (coachingRemainingSessions(user_id) <= 0)
+      return res.status(403).json({ error: 'Bạn chưa có buổi coach nào khả dụng — vui lòng mua gói trước.' });
+    const r = db.run(
+      'INSERT INTO coaching_bookings (user_id, preferred_date, preferred_time, note) VALUES (?,?,?,?)',
+      [user_id, preferred_date, preferred_time, note || '']
+    );
+    res.status(201).json({ ok: true, id: r.lastInsertRowid });
+  });
+
+  app.post('/api/coaching/bookings/:id/cancel', (req, res) => {
+    const { user_id } = req.body;
+    const booking = db.get('SELECT * FROM coaching_bookings WHERE id = ?', [req.params.id]);
+    if (!booking || Number(booking.user_id) !== Number(user_id)) return res.status(404).json({ error: 'Không tìm thấy lịch hẹn.' });
+    if (booking.status === 'completed') return res.status(400).json({ error: 'Buổi này đã hoàn thành, không thể hủy.' });
+    db.run("UPDATE coaching_bookings SET status = 'cancelled', updated_at = datetime('now','localtime') WHERE id = ?", [req.params.id]);
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/coaching/bookings', requireAdmin, (req, res) => {
+    const { status = '' } = req.query;
+    let sql = `SELECT b.*, u.first_name, u.last_name, u.email, u.phone
+               FROM coaching_bookings b JOIN users u ON u.id = b.user_id WHERE 1=1`;
+    const params = [];
+    if (status) { sql += ' AND b.status = ?'; params.push(status); }
+    sql += ' ORDER BY b.created_at DESC, b.id DESC';
+    res.json({ bookings: db.all(sql, params) });
+  });
+
+  app.patch('/api/admin/coaching/bookings/:id', requireAdmin, (req, res) => {
+    const booking = db.get('SELECT * FROM coaching_bookings WHERE id = ?', [req.params.id]);
+    if (!booking) return res.status(404).json({ error: 'Không tìm thấy lịch hẹn.' });
+    const { status, confirmed_date, confirmed_time, meeting_link, admin_note } = req.body;
+    const statusVal = ['pending', 'confirmed', 'completed', 'cancelled'].includes(status) ? status : booking.status;
+    db.run(
+      `UPDATE coaching_bookings SET status=?, confirmed_date=?, confirmed_time=?, meeting_link=?, admin_note=?, updated_at=datetime('now','localtime') WHERE id=?`,
+      [statusVal, confirmed_date || null, confirmed_time || null, meeting_link || null, admin_note || null, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
   // My orders (buyer)
   app.get('/api/my/orders', (req, res) => {
     const { user_id } = req.query;
@@ -6160,7 +6291,7 @@ QUY TẮC BẮT BUỘC:
     const amtFmt = Number(info.amount).toLocaleString('vi-VN') + 'đ';
 
     if (status === 'completed') {
-      autoEnrollFromProductPurchase(info.product_id, info.buyer_id);
+      autoEnrollFromProductPurchase(info.product_id, info.buyer_id, orderId);
       sendPaymentConfirmedEmails(orderId);
     } else if (status === 'cancelled') {
       sendEmail({
@@ -6334,7 +6465,7 @@ QUY TẮC BẮT BUỘC:
 
     db.run('UPDATE orders SET status = ? WHERE id = ?', ['completed', order.id]);
     db.run('UPDATE products SET sales_count = sales_count + 1 WHERE id = ?', [productId]);
-    autoEnrollFromProductPurchase(productId, buyerId);
+    autoEnrollFromProductPurchase(productId, buyerId, order.id);
     console.log(`✅ SePay: Order #${order.id} completed — ${transferAmount}₫`);
     res.json({ success: true });
 
@@ -6387,7 +6518,7 @@ QUY TẮC BẮT BUỘC:
 
         db.run('UPDATE orders SET status = ? WHERE id = ?', ['completed', order.id]);
         db.run('UPDATE products SET sales_count = sales_count + 1 WHERE id = ?', [productId]);
-        autoEnrollFromProductPurchase(Number(productId), Number(buyerId));
+        autoEnrollFromProductPurchase(Number(productId), Number(buyerId), order.id);
         console.log(`✅ GSheet: Đơn #${order.id} xác nhận tự động (${amount}₫)`);
         sendPaymentConfirmedEmails(order.id);
       }
