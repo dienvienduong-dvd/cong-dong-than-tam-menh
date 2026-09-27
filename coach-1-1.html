@@ -20,7 +20,6 @@
   <link rel="stylesheet" href="assets/css/base.css?v=2">
   <link rel="stylesheet" href="assets/css/components.css?v=2">
   <link rel="stylesheet" href="assets/css/layout.css?v=2">
-  <link href="https://calendar.google.com/calendar/scheduling-button-script.css" rel="stylesheet">
   <style>
     .c1-wrap { max-width: 760px; margin: 0 auto; }
     .c1-hero { background: linear-gradient(135deg,#0ea5e9,#8b5cf6); color:#fff; border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
@@ -250,24 +249,11 @@
             <div class="c1-card" id="c1BookingCard" style="display:none;">
               <h3>Đặt lịch hẹn qua Google Calendar</h3>
               <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Chọn đúng giờ trống thật của Ngô Lâm — hệ thống tự tạo lịch hẹn và gửi link Google Meet qua email bạn.</p>
-              <!-- Google Calendar Appointment Scheduling begin -->
-              <script src="https://calendar.google.com/calendar/scheduling-button-script.js" async></script>
-              <script>
-                (function() {
-                  var target = document.currentScript;
-                  window.addEventListener('load', function() {
-                    calendar.schedulingButton.load({
-                      url: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ37wFD3zy1SxLJojtyHoMs7vjDsE6YyiCDa83nNP0l2bHRINJmPz02GFfuty6EAT5RsQifL1stE?gv=true',
-                      color: '#039BE5',
-                      label: "Đăng ký tư vấn 1-1 với Ngô Lâm",
-                      target,
-                    });
-                  });
-                })();
-              </script>
-              <!-- end Google Calendar Appointment Scheduling -->
+              <div style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:#fff;">
+                <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ37wFD3zy1SxLJojtyHoMs7vjDsE6YyiCDa83nNP0l2bHRINJmPz02GFfuty6EAT5RsQifL1stE?gv=true" style="border:0;display:block;width:100%;height:600px;" frameborder="0"></iframe>
+              </div>
               <div style="margin-top:10px;font-size:12.5px;">
-                <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ37wFD3zy1SxLJojtyHoMs7vjDsE6YyiCDa83nNP0l2bHRINJmPz02GFfuty6EAT5RsQifL1stE?gv=true" target="_blank" rel="noopener">Nút ở trên hiển thị không đúng? Bấm vào đây để mở trang đặt lịch trực tiếp ở tab mới →</a>
+                <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ37wFD3zy1SxLJojtyHoMs7vjDsE6YyiCDa83nNP0l2bHRINJmPz02GFfuty6EAT5RsQifL1stE?gv=true" target="_blank" rel="noopener">Lịch không hiển thị đúng? Bấm vào đây để mở trang đặt lịch trực tiếp ở tab mới →</a>
               </div>
               <button class="btn" style="margin-top:16px;" id="c1MarkUsedBtn" onclick="markSessionUsed()">✅ Đánh dấu đã dùng 1 buổi (sau khi hoàn thành buổi hẹn)</button>
               <div class="c1-msg" id="c1Msg"></div>
