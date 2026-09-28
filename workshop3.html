@@ -33,15 +33,21 @@
     .wk3-video-empty { display:flex; align-items:center; justify-content:center; height:100%; color:#94a3b8; font-size:13px; text-align:center; padding: 0 20px; }
     .wk3-session { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
     .wk3-session:first-of-type { margin-top: 8px; padding-top: 0; border-top: none; }
-    .wk3-session-title { font-family: var(--font-heading); font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-    .wk3-session-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .wk3-session-date { font-size: 12px; font-weight: 700; color: var(--color-primary); background: rgba(14,165,233,.1); padding: 4px 10px; border-radius: 99px; }
-    .wk3-session-zoom { font-size: 12.5px; font-weight: 700; color: #fff; background: #0ea5e9; padding: 5px 14px; border-radius: 99px; text-decoration: none; }
+    .wk3-session-title { font-family: var(--font-heading); font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .wk3-session-info { background: rgba(14,165,233,.08); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 12px; }
+    .wk3-session-info-line { font-size: 16px; font-weight: 700; color: var(--text); }
+    .wk3-session-info-line + .wk3-session-info-line { margin-top: 6px; }
+    .wk3-session-info-line strong { color: var(--color-primary); }
+    .wk3-session-zoom-row { margin-bottom: 16px; }
+    .wk3-session-zoom { display: inline-block; font-size: 13.5px; font-weight: 700; color: #fff; background: #0ea5e9; padding: 8px 18px; border-radius: 99px; text-decoration: none; }
     .wk3-session-zoom:hover { opacity: .9; }
     .wk3-session-zoom.disabled { background: var(--border); color: var(--text-muted); pointer-events: none; }
-    .wk3-session-body { font-size: 14px; line-height: 1.7; }
-    .wk3-session-body p { margin-bottom: 10px; }
+    .wk3-session-body { font-size: 14px; line-height: 1.8; }
+    .wk3-session-body p { margin-bottom: 18px; }
     .wk3-session-body p:last-child { margin-bottom: 0; }
+    .wk3-session-body ol, .wk3-session-body ul { padding-left: 22px; margin-bottom: 18px; }
+    .wk3-session-body li { margin-bottom: 14px; }
+    .wk3-session-body li:last-child { margin-bottom: 0; }
     .wk3-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
     .wk3-cta-btn { flex: 1 1 220px; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 14px 16px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; text-decoration: none; }
     .wk3-cta-btn.primary { background: var(--color-primary); color: #fff; }
@@ -295,11 +301,43 @@
 
     function fmtSessionDate(d) {
       if (!d) return '';
-      const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
       if (!m) return escHtml(d);
-      return `${m[3]}/${m[2]}/${m[1]}`;
+      const datePart = `${m[3]}/${m[2]}/${m[1]}`;
+      return m[4] ? `${datePart}, ${m[4]}:${m[5]}` : datePart;
     }
     function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // Chuyển các link video phổ biến (YouTube watch/live/shorts, youtu.be, Vimeo,
+    // Google Drive) sang đúng dạng URL nhúng được — dán thẳng link xem thường vào
+    // iframe sẽ bị trình duyệt chặn ("refused to connect") vì đó không phải link embed.
+    function toEmbedUrl(url) {
+      try {
+        const u = new URL(url);
+        const host = u.hostname.replace(/^www\./, '').replace(/^m\./, '');
+        if (host === 'youtu.be') {
+          return `https://www.youtube.com/embed/${u.pathname.slice(1)}`;
+        }
+        if (host === 'youtube.com') {
+          if (u.pathname === '/watch' && u.searchParams.get('v')) {
+            return `https://www.youtube.com/embed/${u.searchParams.get('v')}`;
+          }
+          const liveMatch = u.pathname.match(/^\/live\/([^/]+)/);
+          if (liveMatch) return `https://www.youtube.com/embed/${liveMatch[1]}`;
+          const shortsMatch = u.pathname.match(/^\/shorts\/([^/]+)/);
+          if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+        }
+        if (host === 'vimeo.com') {
+          const id = u.pathname.split('/').filter(Boolean)[0];
+          if (id) return `https://player.vimeo.com/video/${id}`;
+        }
+        if (host === 'drive.google.com') {
+          const m = u.pathname.match(/\/file\/d\/([^/]+)/);
+          if (m) return `https://drive.google.com/file/d/${m[1]}/preview`;
+        }
+        return url;
+      } catch { return url; }
+    }
 
     function renderVideoEmbed(url) {
       const wrap = document.getElementById('wk3VideoWrap');
@@ -310,7 +348,7 @@
       if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) {
         wrap.innerHTML = `<video src="${escHtml(url)}" controls></video>`;
       } else {
-        wrap.innerHTML = `<iframe src="${escHtml(url)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        wrap.innerHTML = `<iframe src="${escHtml(toEmbedUrl(url))}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
       }
     }
 
@@ -323,8 +361,11 @@
       wrap.innerHTML = sessions.map(s => `
         <div class="wk3-session">
           <div class="wk3-session-title">${escHtml(s.title || '')}</div>
-          <div class="wk3-session-meta">
-            ${s.date ? `<span class="wk3-session-date">📅 ${fmtSessionDate(s.date)}</span>` : ''}
+          <div class="wk3-session-info">
+            <div class="wk3-session-info-line">🕐 <strong>Thời gian đào tạo:</strong> ${s.date ? fmtSessionDate(s.date) : 'Sẽ thông báo sau'}</div>
+            <div class="wk3-session-info-line">💻 <strong>Hình thức đào tạo:</strong> Online qua Zoom</div>
+          </div>
+          <div class="wk3-session-zoom-row">
             ${s.zoom_link
               ? `<a href="${escHtml(s.zoom_link)}" target="_blank" rel="noopener" class="wk3-session-zoom">📹 Tham gia Zoom</a>`
               : `<span class="wk3-session-zoom disabled">📹 Link Zoom sẽ cập nhật sau</span>`}
