@@ -397,6 +397,14 @@
       const msg = document.getElementById('wk8EnrollMsg');
       btn.disabled = true;
       try {
+        // Nếu admin đã cấu hình bắt buộc khảo sát Thân-Tâm-Mệnh vào đúng lúc
+        // đăng ký chương trình này, chuyển hướng sang khảo sát trước, sau khi
+        // hoàn thành sẽ quay lại đây để đăng ký tiếp.
+        const settings = await fetch(`${API}/settings`).then(r => r.json());
+        if (settings.ttm_intake_trigger === 'workshop8') {
+          const st = await fetch(`${API}/ttm/intake-status/${currentUser.id}`).then(r => r.json());
+          if (!st.done) { window.location.href = 'intake-than-tam-menh.html?redirect=workshop8'; return; }
+        }
         const r = await fetch(`${API}/workshop8/enroll`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: currentUser.id }),

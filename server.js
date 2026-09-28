@@ -2150,6 +2150,9 @@ ${extra}
     ['workshop8_letter_html',  WORKSHOP8_DEFAULT_LETTER_HTML],
     ['workshop8_time_note',    '20:00 - 21:30 (Zoom mở lúc 19:45)'],
     ['workshop8_sessions',     JSON.stringify(WORKSHOP8_DEFAULT_SESSIONS)],
+    // Thời điểm bắt buộc khảo sát Thân-Tâm-Mệnh: 'signup' (ngay khi tạo tài
+    // khoản, mặc định) | 'workshop8' | 'program377' | 'none' (không bắt buộc)
+    ['ttm_intake_trigger',     'signup'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -6006,6 +6009,7 @@ QUY TẮC BẮT BUỘC:
       'workshop3_video_url', 'workshop3_space_url', 'workshop3_course_url', 'workshop3_sessions',
       'workshop3_time_note',
       'workshop8_video_url', 'workshop8_letter_html', 'workshop8_time_note', 'workshop8_sessions',
+      'ttm_intake_trigger',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });

@@ -474,13 +474,21 @@ async function savePendingIntakeProfile(userId) {
   } catch {}
 }
 
-function redirectAfterLogin() {
+async function redirectAfterLogin() {
   // Bắt buộc hoàn thành khảo sát Thân-Tâm-Mệnh trước khi vào các tính năng
-  // khác của cộng đồng — ưu tiên hơn mọi giá trị ?redirect= khác.
+  // khác của cộng đồng — ưu tiên hơn mọi giá trị ?redirect= khác. Chỉ áp dụng
+  // khi admin đã chọn thời điểm "signup" (mặc định) trong Cài đặt → Khảo sát;
+  // nếu chọn thời điểm khác (khi đăng ký 8 buổi / 377 ngày / không bắt buộc)
+  // thì không chặn ở đây, để enrollWorkshop8()/enrollP377() tự kiểm tra.
   let user = null;
   try { user = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) {}
   if (user && !user.ttm_intake_done_at) {
-    return window.location.href = 'intake-than-tam-menh.html';
+    let trigger = 'signup';
+    try {
+      const settings = await fetch('/api/settings').then(r => r.json());
+      trigger = settings.ttm_intake_trigger || 'signup';
+    } catch (e) { /* nếu không tải được cài đặt, giữ hành vi mặc định an toàn */ }
+    if (trigger === 'signup') return window.location.href = 'intake-than-tam-menh.html';
   }
 
   const params = new URLSearchParams(window.location.search);

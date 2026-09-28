@@ -579,6 +579,14 @@ const API = '/api';
 
     async function enrollP377() {
       try {
+        // Nếu admin đã cấu hình bắt buộc khảo sát Thân-Tâm-Mệnh vào đúng lúc
+        // đăng ký chương trình này, chuyển hướng sang khảo sát trước, sau khi
+        // hoàn thành sẽ quay lại đây để đăng ký tiếp.
+        const settings = await fetch(`${API}/settings`).then(r => r.json());
+        if (settings.ttm_intake_trigger === 'program377') {
+          const st = await fetch(`${API}/ttm/intake-status/${currentUser.id}`).then(r => r.json());
+          if (!st.done) { window.location.href = 'intake-than-tam-menh.html?redirect=377'; return; }
+        }
         const res = await fetch(`${API}/program377/enroll`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ user_id: currentUser.id }) }).then(r=>r.json());
         if (res.error) { document.getElementById('p377EnrollMsg').textContent = res.error; return; }
         load();

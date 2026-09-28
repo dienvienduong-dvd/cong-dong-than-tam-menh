@@ -627,6 +627,15 @@
       location.href = 'index.html?redirect=ttm';
     }
 
+    // Nếu đến đây từ luồng đăng ký 8 buổi/377 ngày (bị chặn vì chưa khảo sát),
+    // sau khi hoàn thành đưa thành viên quay lại đúng trang đó để đăng ký tiếp.
+    function getPostIntakeRedirectUrl() {
+      const redirectParam = new URLSearchParams(location.search).get('redirect');
+      if (redirectParam === 'workshop8') return 'workshop8.html';
+      if (redirectParam === '377') return 'program377.html';
+      return 'feed.html';
+    }
+
     /* ================= DATA ================= */
     const QUESTIONS = [
       // ---------- PHẦN THÂN ----------
@@ -1198,7 +1207,7 @@
           <p class="intro-body" style="margin-left:auto;margin-right:auto;">
             Đội ngũ Điền Viên Đường đã nhận được phiếu khảo sát của bạn. Dựa trên những chia sẻ này, chúng tôi sẽ soạn một lộ trình ăn uống thuận tự nhiên cá nhân hóa và gửi tới bạn trong thời gian sớm nhất, sau khi đã được Ngô Lâm xem xét kỹ lưỡng.
           </p>
-          <button class="btn-primary btn-primary-lg" style="max-width:280px;margin:26px auto 0;" onclick="location.href='feed.html'">Vào cộng đồng</button>
+          <button class="btn-primary btn-primary-lg" style="max-width:280px;margin:26px auto 0;" onclick="location.href=getPostIntakeRedirectUrl()">Vào cộng đồng</button>
         </div>
       `;
     }

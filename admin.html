@@ -3101,6 +3101,7 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('banner', this)">📢 Banner</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('challenge', this)">🎯 Challenge</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('courses', this)">🎓 Khóa học</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('survey', this); loadTtmIntakeTrigger();">📋 Khảo sát</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('email', this)">⚙️ Email</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('ai', this)">🤖 AI</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('drive', this); loadDriveStatus();">🗂️ Google Drive</button>
@@ -3219,6 +3220,44 @@
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveHomeHero()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="settings-tab-panel" data-tab="survey">
+        <div class="table-card" style="max-width:600px;">
+          <div class="table-card-header">
+            <h2>📋 Thời điểm khảo sát Thân-Tâm-Mệnh</h2>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:4px;">
+              Chọn thời điểm bắt buộc thành viên hoàn thành khảo sát Thân-Tâm-Mệnh (29 câu hỏi) để nhận lộ trình ăn
+              uống cá nhân hóa. Thành viên chưa hoàn thành sẽ được điều hướng sang trang khảo sát đúng vào lúc này.
+            </div>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;">
+              <input type="radio" name="ttmIntakeTrigger" value="signup" style="margin-top:3px;accent-color:#0ea5e9;">
+              <span><strong style="font-size:13.5px;">Ngay khi tạo tài khoản</strong><br>
+                <span style="font-size:12px;color:var(--muted)">Bắt buộc làm khảo sát ngay sau khi đăng ký/đăng nhập, trước khi vào bất kỳ tính năng nào khác. (Mặc định hiện tại)</span></span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;">
+              <input type="radio" name="ttmIntakeTrigger" value="workshop8" style="margin-top:3px;accent-color:#0ea5e9;">
+              <span><strong style="font-size:13.5px;">Khi đăng ký 8 Buổi Chuyên Sâu</strong><br>
+                <span style="font-size:12px;color:var(--muted)">Không bắt buộc ngay từ đầu — chỉ yêu cầu khảo sát khi thành viên bấm "Đăng ký tham gia" ở trang 8 Buổi Chuyên Sâu.</span></span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;">
+              <input type="radio" name="ttmIntakeTrigger" value="program377" style="margin-top:3px;accent-color:#0ea5e9;">
+              <span><strong style="font-size:13.5px;">Khi đăng ký 377 Ngày</strong><br>
+                <span style="font-size:12px;color:var(--muted)">Không bắt buộc ngay từ đầu — chỉ yêu cầu khảo sát khi thành viên bấm "Đăng ký tham gia" ở trang 377 ngày.</span></span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;">
+              <input type="radio" name="ttmIntakeTrigger" value="none" style="margin-top:3px;accent-color:#0ea5e9;">
+              <span><strong style="font-size:13.5px;">Không bắt buộc</strong><br>
+                <span style="font-size:12px;color:var(--muted)">Thành viên có thể tự vào làm khảo sát bất cứ lúc nào qua mục "Lộ trình của tôi", không bị ép buộc ở đâu cả.</span></span>
+            </label>
+            <div>
+              <button class="btn-sm primary" onclick="saveTtmIntakeTrigger()">💾 Lưu cài đặt</button>
+              <div id="ttmIntakeTriggerMsg" style="font-size:12.5px;margin-top:6px;"></div>
             </div>
           </div>
         </div>
@@ -7402,6 +7441,27 @@
       } catch (e) {
         document.getElementById('wk8Msg').textContent = 'Lỗi: ' + e.message;
         document.getElementById('wk8Msg').style.color = '#ef4444';
+      }
+    }
+
+    // ── Thời điểm khảo sát Thân-Tâm-Mệnh (Cài đặt → tab "Khảo sát") ───
+    async function loadTtmIntakeTrigger() {
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        const val = s.ttm_intake_trigger || 'signup';
+        const radio = document.querySelector(`input[name="ttmIntakeTrigger"][value="${val}"]`);
+        if (radio) radio.checked = true;
+      } catch { showToast('Không tải được cài đặt khảo sát.', 'red'); }
+    }
+    async function saveTtmIntakeTrigger() {
+      const val = document.querySelector('input[name="ttmIntakeTrigger"]:checked')?.value || 'signup';
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ ttm_intake_trigger: val }) });
+        document.getElementById('ttmIntakeTriggerMsg').textContent = '✅ Đã lưu.';
+        document.getElementById('ttmIntakeTriggerMsg').style.color = '#10b981';
+      } catch (e) {
+        document.getElementById('ttmIntakeTriggerMsg').textContent = 'Lỗi: ' + e.message;
+        document.getElementById('ttmIntakeTriggerMsg').style.color = '#ef4444';
       }
     }
 
