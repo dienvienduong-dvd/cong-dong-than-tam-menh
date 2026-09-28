@@ -775,6 +775,17 @@ const SCHEMA = `
     created_at    TEXT    DEFAULT (datetime('now','localtime')),
     updated_at    TEXT
   );
+
+  -- ── 8 Buổi Chuyên Sâu (có phí, duyệt thủ công như 377 ngày) ────────
+  CREATE TABLE IF NOT EXISTS workshop8_enrollments (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL UNIQUE REFERENCES users(id),
+    status       TEXT    DEFAULT 'pending',
+    enrolled_at  TEXT    DEFAULT (datetime('now','localtime')),
+    approved_at  TEXT,
+    approved_by  INTEGER REFERENCES users(id),
+    admin_note   TEXT
+  );
 `;
 
 // [day_number, title, description, instructions, xp_reward] — 28 ngày Dưỡng Hóa theo Ngũ Hành
@@ -2010,6 +2021,93 @@ ${extra}
     },
   ];
 
+  // Nội dung mặc định 8 Buổi Chuyên Sâu (dùng nếu admin chưa cấu hình qua
+  // trang admin → mục Thân Tâm Mệnh → Lịch Zoom / sự kiện → tab "Zoom 8 buổi")
+  const WORKSHOP8_DEFAULT_LETTER_HTML =
+    '<p>Trong <strong>8 buổi học</strong>, bạn sẽ được dẫn dắt theo đúng tiến trình sinh học tự nhiên của cơ thể — ứng dụng triết lý <strong>5 chữ vàng Dưỡng Hóa: MẬT - ÂM - ẤM - KIÊN - KIẾT</strong> để giảm gánh nặng tiêu hóa, phục hồi tự nhiên và tìm lại sự cân bằng Thân – Tâm, không cần ép buộc, không cần vội vã.</p>' +
+    '<div style="font-weight:700;font-size:14px;margin:16px 0 8px;">Nội dung 8 buổi:</div>' +
+    '<ol style="padding-left:20px;font-size:13.5px;line-height:1.8;margin-bottom:10px;">' +
+    '<li>Hiểu Cơ Thể &amp; Ăn Uống Theo Ngũ Hành</li>' +
+    '<li>Thanh Lọc Gan – Thận – Ruột &amp; Tái Tạo Cấp Tế Bào</li>' +
+    '<li>Khai Thông 33 Đốt Sống, Hơi Thở Đan Điền &amp; Tự Chăm Sóc</li>' +
+    '<li>Tăng Miễn Dịch, Sauna Thải Độc &amp; Chấm Dứt Viêm Mạn Tính</li>' +
+    '<li>Điều Hòa Nhịp Sinh Học Bốn Mùa &amp; Làm Chủ Hormone</li>' +
+    '<li>Phong Thủy Không Gian Sống &amp; Tối Ưu Giấc Ngủ 24h</li>' +
+    '<li>Xây Dựng Thói Quen &amp; Kế Hoạch 377 Ngày Tái Tạo</li>' +
+    '<li>Tổng Kết, Lễ Thắp Nến Tri Ân &amp; Định Hướng</li>' +
+    '</ol>' +
+    '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;padding:16px 18px;margin:16px 0;color:#78350f;">' +
+    '<div style="font-weight:700;font-size:14px;margin-bottom:6px;">Mức đầu tư</div>' +
+    '<div style="font-size:13.5px;line-height:1.7;">Giá niêm yết: <b>6.800.000đ</b> / Trọn gói 8 buổi.<br><br>Ưu đãi ghi danh sớm — chỉ còn <b>4.800.000đ</b> / người.</div>' +
+    '</div>';
+
+  const WORKSHOP8_DEFAULT_SESSIONS = [
+    {
+      title: 'Buổi 1: Hiểu Cơ Thể & Ăn Uống Theo Ngũ Hành',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Nhận diện cơ địa <strong>Hàn hay Nhiệt</strong> ở cả 3 cấp độ: Da cơ gân – Phủ tạng – Cốt tủy</li>' +
+        '<li>Biết chính xác nên ăn gì, tránh gì theo đúng cơ địa</li>' +
+        '<li>Tự xây được <strong>thực đơn 7 ngày</strong> phù hợp với chính mình</li></ul>',
+    },
+    {
+      title: 'Buổi 2: Thanh Lọc Gan – Thận – Ruột & Tái Tạo Cấp Tế Bào',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Hiểu cơ chế <strong>tiêu hóa – hấp thu</strong> của cơ thể</li>' +
+        '<li>Nắm nguyên tắc giảm viêm bằng <strong>Ngủ – Nước – Vi chất</strong></li>' +
+        '<li>Có trong tay <strong>kế hoạch 21 ngày</strong> để cơ thể tự làm sạch, tự phục hồi</li></ul>',
+    },
+    {
+      title: 'Buổi 3: Khai Thông 33 Đốt Sống, Hơi Thở Đan Điền & Tự Chăm Sóc',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Thực hành <strong>5 bài khai thông khí huyết</strong> vùng Đầu – Mặt – Ngực/Bụng – Tay – Chân</li>' +
+        '<li>Hiểu đúng chuyển động cột sống khi đi, khi ngồi</li>' +
+        '<li>Làm chủ kỹ thuật <strong>thở bụng, thở Đan điền</strong></li></ul>',
+    },
+    {
+      title: 'Buổi 4: Tăng Miễn Dịch, Sauna Thải Độc & Chấm Dứt Viêm Mạn Tính',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Nắm được mối liên hệ <strong>Dinh dưỡng – Vận động – Giấc ngủ – Miễn dịch</strong></li>' +
+        '<li>Nhận diện đúng biểu hiện viêm theo cơ địa <strong>Hàn/Nhiệt</strong></li>' +
+        '<li>Biết cách ứng dụng <strong>Sauna</strong> để thải độc tân dịch, hệ bạch huyết</li></ul>',
+    },
+    {
+      title: 'Buổi 5: Điều Hòa Nhịp Sinh Học Bốn Mùa & Làm Chủ Hormone',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Hiểu cách <strong>Dopamine, Serotonin, Melatonin, Cortisol</strong> biến đổi theo mùa và theo cảm xúc</li>' +
+        '<li>Học kỹ thuật thở để điều hòa cảm xúc</li>' +
+        '<li>Thực hành lòng biết ơn để chủ động quản lý stress, thay vì bị nó cuốn đi</li></ul>',
+    },
+    {
+      title: 'Buổi 6: Phong Thủy Không Gian Sống & Tối Ưu Giấc Ngủ 24h',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Biết cách sắp xếp ánh sáng theo <strong>nhịp sinh học 24 giờ</strong> của cơ thể</li>' +
+        '<li>Bố trí không gian phòng ngủ tối ưu cho giấc ngủ sâu</li>' +
+        '<li>Biến môi trường sống thành nơi hỗ trợ chữa lành, thay vì cản trở</li></ul>',
+    },
+    {
+      title: 'Buổi 7: Xây Dựng Thói Quen & Kế Hoạch 377 Ngày Tái Tạo',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Nhìn lại chặng đường đã tiến bộ qua 7 buổi học</li>' +
+        '<li>Nhận kế hoạch chi tiết cho <strong>hành trình 377 ngày</strong> tái tạo</li>' +
+        '<li>Biến thay đổi tích cực thành thói quen bền vững, không phụ thuộc vào động lực nhất thời</li></ul>',
+    },
+    {
+      title: 'Buổi 8: Tổng Kết, Lễ Thắp Nến Tri Ân & Định Hướng',
+      date: '', zoom_link: '',
+      content_html:
+        '<ul><li>Nhìn lại toàn bộ <strong>hành trình 8 buổi</strong> đã đi qua</li>' +
+        '<li>Tham gia <strong>nghi thức thắp nến tri ân</strong> đầy xúc động</li>' +
+        '<li>Nhận định hướng rõ ràng cho chặng đường tiếp theo — kể cả nếu muốn đồng hành lâu dài hoặc làm nghề</li></ul>',
+    },
+  ];
+
   // Seed default site settings
   const defaultSettings = [
     ['announcement_enabled',   '0'],
@@ -2048,6 +2146,10 @@ ${extra}
     ['workshop3_course_url',   'course-view.html?id=10'],
     ['workshop3_sessions',     JSON.stringify(WORKSHOP3_DEFAULT_SESSIONS)],
     ['workshop3_time_note',    '20:00 - 21:30 (Zoom mở lúc 19:45)'],
+    ['workshop8_video_url',    ''],
+    ['workshop8_letter_html',  WORKSHOP8_DEFAULT_LETTER_HTML],
+    ['workshop8_time_note',    '20:00 - 21:30 (Zoom mở lúc 19:45)'],
+    ['workshop8_sessions',     JSON.stringify(WORKSHOP8_DEFAULT_SESSIONS)],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -4990,6 +5092,24 @@ QUY TẮC BẮT BUỘC:
     res.status(201).json({ ok: true });
   });
 
+  // ── 8 Buổi Chuyên Sâu — đăng ký chờ duyệt thủ công (như 377 ngày, không
+  // qua đơn hàng/marketplace vì thanh toán xử lý ngoài hệ thống) ───────
+  app.get('/api/workshop8/status', (req, res) => {
+    const userId = req.query.user_id;
+    if (!userId) return res.status(400).json({ error: 'Thiếu user_id' });
+    const enrollment = db.get('SELECT * FROM workshop8_enrollments WHERE user_id = ?', [userId]);
+    res.json({ enrollment: enrollment || null });
+  });
+
+  app.post('/api/workshop8/enroll', (req, res) => {
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Thiếu user_id' });
+    const existing = db.get('SELECT id FROM workshop8_enrollments WHERE user_id = ?', [user_id]);
+    if (existing) return res.status(409).json({ error: 'Bạn đã đăng ký chương trình này rồi.' });
+    db.run('INSERT INTO workshop8_enrollments (user_id, status) VALUES (?, ?)', [user_id, 'pending']);
+    res.status(201).json({ ok: true });
+  });
+
   app.get('/api/program377/days', (req, res) => {
     const userId = req.query.user_id;
     const enrollment = userId ? db.get('SELECT * FROM program377_enrollments WHERE user_id = ?', [userId]) : null;
@@ -5317,6 +5437,35 @@ QUY TẮC BẮT BUỘC:
   app.post('/api/admin/program377/enrollments/:id/reject', requireAdmin, (req, res) => {
     db.run(
       "UPDATE program377_enrollments SET status = 'rejected', admin_note = ? WHERE id = ?",
+      [req.body.admin_note || null, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/workshop8/enrollments', requireAdmin, (req, res) => {
+    const status = req.query.status || 'pending';
+    const rows = db.all(
+      `SELECT e.*, u.first_name, u.last_name, u.email
+       FROM workshop8_enrollments e JOIN users u ON u.id = e.user_id
+       WHERE e.status = ? ORDER BY e.enrolled_at DESC`,
+      [status]
+    );
+    res.json({ enrollments: rows });
+  });
+
+  app.post('/api/admin/workshop8/enrollments/:id/approve', requireAdmin, (req, res) => {
+    const enrollment = db.get('SELECT id FROM workshop8_enrollments WHERE id = ?', [req.params.id]);
+    if (!enrollment) return res.status(404).json({ error: 'Không tìm thấy đăng ký.' });
+    db.run(
+      "UPDATE workshop8_enrollments SET status = 'approved', approved_at = datetime('now','localtime'), approved_by = ? WHERE id = ?",
+      [req.adminUserId || null, req.params.id]
+    );
+    res.json({ ok: true });
+  });
+
+  app.post('/api/admin/workshop8/enrollments/:id/reject', requireAdmin, (req, res) => {
+    db.run(
+      "UPDATE workshop8_enrollments SET status = 'rejected', admin_note = ? WHERE id = ?",
       [req.body.admin_note || null, req.params.id]
     );
     res.json({ ok: true });
@@ -5856,6 +6005,7 @@ QUY TẮC BẮT BUỘC:
       'coaching_date_overrides',
       'workshop3_video_url', 'workshop3_space_url', 'workshop3_course_url', 'workshop3_sessions',
       'workshop3_time_note',
+      'workshop8_video_url', 'workshop8_letter_html', 'workshop8_time_note', 'workshop8_sessions',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });

@@ -2085,9 +2085,59 @@
         </div>
 
         <div class="zoom-tab-panel" data-tab="eight">
-          <div class="table-card">
-            <div class="table-card-header"><h2>Zoom 8 buổi</h2></div>
-            <div style="padding:24px;color:var(--muted);font-size:13px;">Chưa triển khai — sẽ dùng cho lịch Zoom của chương trình 8 buổi.</div>
+          <div class="table-card" style="max-width:820px;">
+            <div class="table-card-header"><h2>📝 8 Buổi Chuyên Sâu — đăng ký chờ duyệt</h2></div>
+            <div style="padding:20px 24px;">
+              <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">
+                Học viên đăng ký sau khi đã chuyển khoản/liên hệ ngoài hệ thống — duyệt thủ công giống chương trình 377 ngày.
+              </div>
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;">
+                    <th style="padding:6px 4px;">#</th>
+                    <th style="padding:6px 4px;">Học viên</th>
+                    <th style="padding:6px 4px;">Trạng thái</th>
+                    <th style="padding:6px 4px;">Ngày đăng ký</th>
+                    <th style="padding:6px 4px;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="wk8EnrollTbody">
+                  <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-card" style="max-width:820px;">
+            <div class="table-card-header"><h2>✉️ Thư ngỏ trước khi đăng ký</h2></div>
+            <div style="padding:20px 24px;">
+              <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+                Nội dung hiển thị ở trang khách (workshop8.html) trước khi khách bấm "Đăng ký tham gia" — giới thiệu, nội
+                dung tổng quát 8 buổi, mức đầu tư. Để trống sẽ dùng nội dung mặc định có sẵn.
+              </div>
+              <div id="wk8LetterRte"></div>
+              <button class="btn-sm primary" style="margin-top:10px;" onclick="saveWorkshop8Letter()">Lưu thư ngỏ</button>
+              <div class="p377-msg-admin" id="wk8LetterMsg" style="font-size:12.5px;margin-top:6px;"></div>
+            </div>
+          </div>
+
+          <div class="table-card" style="max-width:820px;">
+            <div class="table-card-header"><h2>💎 8 Buổi Chuyên Sâu — nội dung &amp; lịch Zoom (hiện ra sau khi được duyệt)</h2></div>
+            <div style="padding:20px 24px;">
+              <div style="margin-bottom:14px;">
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">🎥 Link video đào tạo khoá trước (1 video)</label>
+                <input class="search-input" style="width:100%" id="wk8VideoUrl" placeholder="https://... (YouTube/Vimeo embed hoặc .mp4)">
+              </div>
+              <div style="margin-bottom:14px;">
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">⏰ Khung giờ đào tạo (áp dụng chung cho cả 8 buổi)</label>
+                <input class="search-input" style="width:100%" id="wk8TimeNote" placeholder="VD: 20:00 - 21:30 (Zoom mở lúc 19:45)">
+              </div>
+
+              <div id="wk8SessionsEditor"></div>
+
+              <button class="btn-sm primary" style="margin-top:14px;" onclick="saveWorkshop8Settings()">💾 Lưu cài đặt 8 buổi Chuyên sâu</button>
+              <div class="p377-msg-admin" id="wk8Msg" style="font-size:12.5px;margin-top:6px;"></div>
+            </div>
           </div>
         </div>
 
@@ -4865,6 +4915,7 @@
       mpTab('zoom-tab-btn', 'zoom-tab-panel', name, btn);
       if (name === '377') loadP377Sessions();
       if (name === 'three') loadWorkshop3Settings();
+      if (name === 'eight') { loadWorkshop8Settings(); loadWorkshop8Enrollments(); }
     }
 
     // ── Cẩm nang: thực phẩm & công thức ──────────────────────────
@@ -7227,6 +7278,130 @@
       } catch (e) {
         document.getElementById('wk3Msg').textContent = 'Lỗi: ' + e.message;
         document.getElementById('wk3Msg').style.color = '#ef4444';
+      }
+    }
+
+    // ── 8 Buổi Chuyên Sâu (Zoom / sự kiện → tab "Zoom 8 buổi") ────────
+    let wk8EnrollCache = [];
+
+    async function loadWorkshop8Enrollments() {
+      const d = await api('/admin/workshop8/enrollments?status=pending');
+      wk8EnrollCache = d.enrollments;
+      const tbody = document.getElementById('wk8EnrollTbody');
+      if (!d.enrollments.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Không có đăng ký chờ duyệt.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = d.enrollments.map((e, i) => `
+        <tr>
+          <td style="padding:8px 4px;color:var(--muted)">${i + 1}</td>
+          <td style="padding:8px 4px;"><span style="font-weight:600;">${escHtml(`${e.first_name} ${e.last_name || ''}`.trim())}</span>
+            <div style="font-size:11px;color:var(--muted)">${escHtml(e.email)}</div></td>
+          <td style="padding:8px 4px;"><span class="badge" style="background:#fef3c7;color:#92400e;">Chờ duyệt</span></td>
+          <td style="padding:8px 4px;color:var(--muted)">${fmtDate(e.enrolled_at)}</td>
+          <td style="padding:8px 4px;">
+            <button class="act-btn" onclick="approveWorkshop8Enrollment(${e.id})">Duyệt</button>
+            <button class="act-btn" style="color:#dc2626;" onclick="rejectWorkshop8Enrollment(${e.id})">Từ chối</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function approveWorkshop8Enrollment(id) {
+      try {
+        await api(`/admin/workshop8/enrollments/${id}/approve`, { method: 'POST', body: JSON.stringify({}) });
+        showToast('✅ Đã duyệt tham gia 8 buổi Chuyên sâu.', 'green');
+        loadWorkshop8Enrollments();
+      } catch (e) { showToast('Lỗi kết nối.', 'red'); }
+    }
+
+    async function rejectWorkshop8Enrollment(id) {
+      if (!confirm('Từ chối đăng ký này?')) return;
+      try {
+        await api(`/admin/workshop8/enrollments/${id}/reject`, { method: 'POST', body: JSON.stringify({}) });
+        showToast('Đã từ chối.', '');
+        loadWorkshop8Enrollments();
+      } catch (e) { showToast('Lỗi kết nối.', 'red'); }
+    }
+
+    const WORKSHOP8_DEFAULT_LETTER_HTML_FALLBACK = '<p>Chưa có nội dung thư ngỏ. Hãy soạn nội dung giới thiệu 8 buổi Chuyên sâu tại đây.</p>';
+
+    async function loadWorkshop8Letter() {
+      const wrap = document.getElementById('wk8LetterRte');
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        wrap.innerHTML = buildRteHtml(s.workshop8_letter_html || WORKSHOP8_DEFAULT_LETTER_HTML_FALLBACK, '', '360px');
+      } catch { showToast('Không tải được thư ngỏ.', 'red'); }
+    }
+    async function saveWorkshop8Letter() {
+      const editor = document.querySelector('#wk8LetterRte .rte-editor');
+      const html = editor ? editor.innerHTML.trim() : '';
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ workshop8_letter_html: html }) });
+        document.getElementById('wk8LetterMsg').textContent = '✅ Đã lưu — kiểm tra lại ở trang khách.';
+        document.getElementById('wk8LetterMsg').style.color = '#10b981';
+      } catch (e) {
+        document.getElementById('wk8LetterMsg').textContent = 'Lỗi: ' + e.message;
+        document.getElementById('wk8LetterMsg').style.color = '#ef4444';
+      }
+    }
+
+    async function loadWorkshop8Settings() {
+      loadWorkshop8Letter();
+      try {
+        const s = await fetch(`${API}/settings`).then(r => r.json());
+        document.getElementById('wk8VideoUrl').value = s.workshop8_video_url || '';
+        document.getElementById('wk8TimeNote').value = s.workshop8_time_note || '';
+        let sessions = [];
+        try { sessions = JSON.parse(s.workshop8_sessions || '[]'); } catch {}
+        if (!Array.isArray(sessions) || !sessions.length) sessions = Array.from({ length: 8 }, () => ({}));
+        const editor = document.getElementById('wk8SessionsEditor');
+        editor.innerHTML = sessions.map((sess, i) => `
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;">
+              <div style="flex:2;min-width:240px;">
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Tiêu đề Buổi ${i + 1}</label>
+                <input class="search-input" style="width:100%" id="wk8Title${i}" value="${escHtmlAttr(sess.title || '')}">
+              </div>
+              <div style="flex:1;min-width:150px;">
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Ngày đào tạo</label>
+                <input type="date" class="search-input" style="width:100%" id="wk8Date${i}" value="${escHtmlAttr(sess.date || '')}">
+              </div>
+            </div>
+            <div style="margin-bottom:10px;">
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Link Zoom</label>
+              <input class="search-input" style="width:100%" id="wk8Zoom${i}" placeholder="https://zoom.us/j/..." value="${escHtmlAttr(sess.zoom_link || '')}">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Nội dung</label>
+              <div id="wk8ContentRte${i}"></div>
+            </div>
+          </div>
+        `).join('');
+        sessions.forEach((sess, i) => initRTE(`wk8ContentRte${i}`, sess.content_html || '', '140px'));
+      } catch { showToast('Không tải được nội dung 8 buổi Chuyên sâu.', 'red'); }
+    }
+
+    async function saveWorkshop8Settings() {
+      const sessions = Array.from({ length: 8 }, (_, i) => ({
+        title: document.getElementById(`wk8Title${i}`).value.trim(),
+        date: document.getElementById(`wk8Date${i}`).value,
+        zoom_link: document.getElementById(`wk8Zoom${i}`).value.trim(),
+        content_html: getRteContent(`wk8ContentRte${i}`),
+      }));
+      try {
+        await api('/admin/settings', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            workshop8_video_url: document.getElementById('wk8VideoUrl').value.trim(),
+            workshop8_time_note: document.getElementById('wk8TimeNote').value.trim(),
+            workshop8_sessions: JSON.stringify(sessions),
+          }),
+        });
+        document.getElementById('wk8Msg').textContent = '✅ Đã lưu — kiểm tra lại ở trang khách (workshop8.html).';
+        document.getElementById('wk8Msg').style.color = '#10b981';
+      } catch (e) {
+        document.getElementById('wk8Msg').textContent = 'Lỗi: ' + e.message;
+        document.getElementById('wk8Msg').style.color = '#ef4444';
       }
     }
 
