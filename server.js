@@ -2786,14 +2786,18 @@ QUY TẮC BẮT BUỘC:
     res.json({ ok: req.body.key === ADMIN_KEY });
   });
 
-  // Admin login for community admins (is_admin=1): email + password + 6-digit PIN.
-  // Separate from /api/auth/login — issues a short-lived admin_sessions token instead
-  // of trusting a client-supplied user id, since this gates destructive back-office actions.
+  // Admin login for community admins (is_admin=1): step 1 = email + password.
+  // On success, emails a 6-digit OTP; the client then calls verify-otp (step 2)
+  // to finish and receive a short-lived admin_sessions token. Replaces the old
+  // PIN 2nd factor — separate from /api/auth/login since this gates destructive
+  // back-office actions.
   const adminLoginAttempts = new Map(); // email -> { count, resetAt }
-  app.post('/api/admin/login', (req, res) => {
-    const { email, password, pin } = req.body;
-    if (!email || !password || !pin)
-      return res.status(400).json({ error: 'Vui lòng nhập đủ email, mật khẩu và mã PIN.' });
+  const adminOtpStore = new Map(); // email -> { hash, expiresAt, userId, attempts }
+
+  app.post('/api/admin/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ error: 'Vui lòng nhập đủ email và mật khẩu.' });
 
     const attempt = adminLoginAttempts.get(email);
     if (attempt && attempt.count >= 5 && Date.now() < attempt.resetAt)
@@ -2813,21 +2817,61 @@ QUY TẮC BẮT BUỘC:
     if (!user.password_hash)
       return fail('Tài khoản này đăng nhập bằng Google, chưa có mật khẩu. Hãy đặt mật khẩu qua "Quên mật khẩu" trước.');
     if (!bcrypt.compareSync(password, user.password_hash)) return fail('Email hoặc mật khẩu không đúng.');
-    if (!user.admin_pin_hash) return fail('Tài khoản chưa được cấp mã PIN admin. Liên hệ quản trị viên.');
-    if (!bcrypt.compareSync(pin, user.admin_pin_hash)) return fail('Mã PIN không đúng.');
 
     adminLoginAttempts.delete(email);
-    db.run("DELETE FROM admin_sessions WHERE expires_at < datetime('now','localtime')");
 
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const hash = bcrypt.hashSync(otp, 10);
+    adminOtpStore.set(email, { hash, expiresAt: Date.now() + 10 * 60 * 1000, userId: user.id, attempts: 0 });
+
+    await sendEmail({
+      to: user.email,
+      subject: `🔐 Mã đăng nhập admin — ${COMMUNITY_NAME}`,
+      html: emailWrap('Mã đăng nhập admin', `
+        <p>Xin chào <strong>${user.first_name}</strong>,</p>
+        <p>Mã xác thực để đăng nhập admin.html của bạn là:</p>
+        <p style="font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;margin:20px 0;">${otp}</p>
+        <p>Mã có hiệu lực trong 10 phút. Nếu không phải bạn yêu cầu đăng nhập, hãy bỏ qua email này.</p>
+      `)
+    });
+
+    const payload = { success: true, otp_required: true };
+    // No RESEND_API_KEY configured (local dev) — return the OTP directly so
+    // testing doesn't require a real inbox, matching the forgot-password dev fallback.
+    if (!resendClient) payload.dev_otp = otp;
+    res.json(payload);
+  });
+
+  // Admin login step 2 — verify the emailed OTP and issue the session token.
+  app.post('/api/admin/login/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ error: 'Vui lòng nhập mã OTP.' });
+
+    const entry = adminOtpStore.get(email);
+    if (!entry) return res.status(401).json({ error: 'Vui lòng đăng nhập lại để nhận mã mới.' });
+    if (Date.now() > entry.expiresAt) {
+      adminOtpStore.delete(email);
+      return res.status(401).json({ error: 'Mã OTP đã hết hạn. Vui lòng đăng nhập lại.' });
+    }
+    if (entry.attempts >= 5) {
+      adminOtpStore.delete(email);
+      return res.status(429).json({ error: 'Sai quá nhiều lần. Vui lòng đăng nhập lại.' });
+    }
+    if (!bcrypt.compareSync(otp, entry.hash)) {
+      entry.attempts += 1;
+      return res.status(401).json({ error: 'Mã OTP không đúng.' });
+    }
+
+    adminOtpStore.delete(email);
+    const user = db.get('SELECT id, first_name, last_name, email FROM users WHERE id = ?', [entry.userId]);
+    if (!user) return res.status(401).json({ error: 'Tài khoản không tồn tại.' });
+
+    db.run("DELETE FROM admin_sessions WHERE expires_at < datetime('now','localtime')");
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
     db.run('INSERT INTO admin_sessions (user_id, token, expires_at) VALUES (?,?,?)', [user.id, token, expiresAt]);
 
-    res.json({
-      success: true,
-      token,
-      user: { id: user.id, first_name: user.first_name, last_name: user.last_name, email: user.email },
-    });
+    res.json({ success: true, token, user });
   });
 
   // Logout — invalidate the current session token (no-op for the master ADMIN_KEY)
@@ -2897,16 +2941,6 @@ QUY TẮC BẮT BUỘC:
     const isAdmin = req.body.is_admin ? 1 : 0;
     db.run('UPDATE users SET is_admin = ? WHERE id = ?', [isAdmin, req.params.id]);
     if (!isAdmin) db.run('DELETE FROM admin_sessions WHERE user_id = ?', [req.params.id]);
-    res.json({ success: true });
-  });
-
-  // Set/reset an admin's 6-digit PIN (2nd factor for admin.html login)
-  app.patch('/api/admin/users/:id/pin', requireAdmin, (req, res) => {
-    const { pin } = req.body;
-    if (!/^\d{6}$/.test(pin || ''))
-      return res.status(400).json({ error: 'Mã PIN phải gồm đúng 6 chữ số.' });
-    const hash = bcrypt.hashSync(pin, 10);
-    db.run('UPDATE users SET admin_pin_hash = ? WHERE id = ?', [hash, req.params.id]);
     res.json({ success: true });
   });
 
