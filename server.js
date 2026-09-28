@@ -5774,6 +5774,7 @@ QUY TẮC BẮT BUỘC:
       'courses_hero_icon', 'courses_hero_title', 'courses_hero_desc',
       'assistant_enabled', 'assistant_daily_limit',
       'p377_letter_html', 'p377_topics_overview',
+      'coaching_weekly_hours', 'coaching_slot_duration_minutes', 'coaching_slot_buffer_minutes',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
@@ -6073,6 +6074,66 @@ QUY TẮC BẮT BUỘC:
     return Math.max(0, total - used);
   }
 
+  // Cấu hình khung giờ nhận lịch hẹn (admin sửa trong site_settings, xem
+  // PATCH /api/admin/settings). Thuật toán sinh mốc giờ mô phỏng đúng cách
+  // Google Calendar Appointment Schedule làm: bắt đầu từ giờ mở cửa, mỗi mốc
+  // cách nhau (thời lượng + khoảng nghỉ) phút, dừng khi mốc + thời lượng vượt
+  // giờ đóng cửa.
+  const COACH_WEEKDAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  function getCoachWeeklyHours() {
+    const row = db.get("SELECT value FROM site_settings WHERE key = 'coaching_weekly_hours'");
+    if (row?.value) {
+      try {
+        const arr = JSON.parse(row.value);
+        if (Array.isArray(arr) && arr.length === 7) return arr;
+      } catch {}
+    }
+    return COACH_WEEKDAY_LABELS.map(() => ({ enabled: false, start: '09:00', end: '18:00' }));
+  }
+  function getCoachSlotConfig() {
+    const duration = Number(db.get("SELECT value FROM site_settings WHERE key = 'coaching_slot_duration_minutes'")?.value) || 60;
+    const buffer = Number(db.get("SELECT value FROM site_settings WHERE key = 'coaching_slot_buffer_minutes'")?.value);
+    return { duration, buffer: Number.isFinite(buffer) ? buffer : 30 };
+  }
+  function generateDaySlots(dateStr) {
+    const weekday = new Date(dateStr + 'T00:00:00Z').getUTCDay();
+    const cfg = getCoachWeeklyHours()[weekday];
+    if (!cfg?.enabled || !cfg.start || !cfg.end) return { weekday, enabled: false, slots: [] };
+    const { duration, buffer } = getCoachSlotConfig();
+    const [startH, startM] = cfg.start.split(':').map(Number);
+    const [endH, endM] = cfg.end.split(':').map(Number);
+    const startMin = startH * 60 + startM, endMin = endH * 60 + endM;
+    let slots = [];
+    for (let t = startMin; t + duration <= endMin; t += duration + buffer) {
+      slots.push(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
+    }
+    const taken = new Set(db.all(
+      "SELECT preferred_time AS t FROM coaching_bookings WHERE preferred_date = ? AND status != 'cancelled'",
+      [dateStr]
+    ).map(r => r.t));
+    slots = slots.filter(s => !taken.has(s));
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (dateStr === todayStr) {
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      slots = slots.filter(s => {
+        const [h, m] = s.split(':').map(Number);
+        return h * 60 + m > nowMin;
+      });
+    }
+    return { weekday, enabled: true, slots };
+  }
+
+  app.get('/api/coaching/availability', (req, res) => {
+    const date = String(req.query.date || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Ngày không hợp lệ.' });
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (date < todayStr) return res.json({ weekday: null, enabled: false, slots: [] });
+    const result = generateDaySlots(date);
+    res.json({ ...result, weekdayLabel: COACH_WEEKDAY_LABELS[result.weekday] });
+  });
+
   app.get('/api/coaching/packages', (_req, res) => {
     const packages = db.all("SELECT id, title, description, price, compare_price, coaching_sessions FROM products WHERE coaching_sessions IS NOT NULL AND status = 'published' ORDER BY coaching_sessions ASC");
     res.json({ packages });
@@ -6086,22 +6147,18 @@ QUY TẮC BẮT BUỘC:
     res.json({ remaining, bookings });
   });
 
-  // Đặt lịch thật diễn ra qua nút Google Calendar Scheduling nhúng trên trang
-  // (ngoài hệ thống, không có webhook báo về) — nên preferred_date/time giờ là
-  // không bắt buộc: khi thiếu, coi như khách vừa bấm "Đánh dấu đã dùng 1 buổi"
-  // sau khi đặt lịch qua Google Calendar, trừ thẳng 1 buổi (status='completed')
-  // thay vì tạo yêu cầu chờ admin duyệt.
   app.post('/api/coaching/bookings', (req, res) => {
     const { user_id, preferred_date, preferred_time, note } = req.body;
     if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
+    if (!preferred_date || !preferred_time) return res.status(400).json({ error: 'Vui lòng chọn ngày và giờ hẹn.' });
     if (coachingRemainingSessions(user_id) <= 0)
       return res.status(403).json({ error: 'Bạn chưa có buổi coach nào khả dụng — vui lòng mua gói trước.' });
-    const hasDateTime = !!(preferred_date && preferred_time);
+    const { slots } = generateDaySlots(preferred_date);
+    if (!slots.includes(preferred_time))
+      return res.status(409).json({ error: 'Khung giờ này vừa hết hoặc không hợp lệ, vui lòng chọn lại.' });
     const r = db.run(
       'INSERT INTO coaching_bookings (user_id, preferred_date, preferred_time, note, status) VALUES (?,?,?,?,?)',
-      [user_id, preferred_date || null, preferred_time || null,
-       note || (hasDateTime ? '' : 'Đã đặt lịch qua Google Calendar — tự đánh dấu đã dùng 1 buổi.'),
-       hasDateTime ? 'pending' : 'completed']
+      [user_id, preferred_date, preferred_time, note || '', 'pending']
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });

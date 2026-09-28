@@ -2562,6 +2562,25 @@
       <!-- ── Coach 1-1: yêu cầu đặt lịch ──────────────────────────────── -->
       <section class="page" id="page-coaching">
         <div class="table-card" style="margin-bottom:16px;">
+          <div class="table-card-header"><h2>⚙️ Cấu hình khung giờ nhận lịch hẹn</h2></div>
+          <div style="padding:16px 20px;">
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;" id="coachHoursRows"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin-bottom:8px;">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Thời lượng mỗi buổi (phút)</label>
+                <input type="number" class="search-input" style="width:120px" id="coachSlotDuration" min="15" step="5" value="60" oninput="renderCoachSlotPreview()">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Khoảng cách giữa các buổi (phút)</label>
+                <input type="number" class="search-input" style="width:120px" id="coachSlotBuffer" min="0" step="5" value="30" oninput="renderCoachSlotPreview()">
+              </div>
+              <button class="btn-sm primary" onclick="saveCoachAvailabilitySettings()">💾 Lưu cài đặt</button>
+            </div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;">Đổi thời lượng ở đây không tự sửa mô tả gói coaching, cần vào mục Sản phẩm sửa lại cho khớp.</div>
+            <div id="coachSlotPreview" style="font-size:12px;color:var(--text);"></div>
+          </div>
+        </div>
+        <div class="table-card" style="margin-bottom:16px;">
           <div class="table-card-header"><h2>Đánh dấu đã dùng 1 buổi cho khách</h2></div>
           <div style="padding:16px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:end;">
             <div style="flex:1;min-width:220px;">
@@ -2581,9 +2600,9 @@
             <h2>Lịch sử buổi Coach 1-1</h2>
             <select class="filter-select" id="coachStatusFilter" onchange="loadCoachingBookings()">
               <option value="">Tất cả trạng thái</option>
-              <option value="pending">Chờ xác nhận</option>
+              <option value="pending" selected>Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
-              <option value="completed" selected>Hoàn thành</option>
+              <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>
@@ -4694,7 +4713,7 @@
       if (name === 'meallogs') loadMealLogs();
       if (name === 'assignments') loadAssignments();
       if (name === 'hannhietleads') loadHanNhietLeads();
-      if (name === 'coaching') loadCoachingBookings();
+      if (name === 'coaching') { loadCoachingBookings(); loadCoachAvailabilitySettings(); }
       if (name === 'ttm-roadmaps') loadTtmRoadmaps();
       if (name === 'member-profile-list') loadMemberProfileList();
       if (name === 'program377') loadP377Letter();
@@ -6572,6 +6591,81 @@
       <td style="color:var(--muted);font-size:12.5px;">${escHtml(r.created_at)}</td>
       <td><a class="act-btn" href="https://zalo.me/${escHtml(r.phone.replace(/\D/g, ''))}" target="_blank" rel="noopener">Nhắn Zalo</a></td>
     </tr>`).join('');
+    }
+
+    // -- Coach 1-1: cấu hình khung giờ nhận lịch hẹn --
+    const COACH_WEEKDAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+    function renderCoachHoursRows(hours) {
+      const box = document.getElementById('coachHoursRows');
+      box.innerHTML = hours.map((h, i) => `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label style="display:flex;align-items:center;gap:6px;width:70px;font-size:13px;font-weight:600;">
+          <input type="checkbox" id="coachHourEnabled${i}" ${h.enabled ? 'checked' : ''} onchange="onCoachHourToggle(${i})"> ${COACH_WEEKDAY_LABELS[i]}
+        </label>
+        <input type="time" class="search-input" style="width:120px" id="coachHourStart${i}" value="${h.start || '09:00'}" ${h.enabled ? '' : 'disabled'} oninput="renderCoachSlotPreview()">
+        <span style="color:var(--muted);">—</span>
+        <input type="time" class="search-input" style="width:120px" id="coachHourEnd${i}" value="${h.end || '18:00'}" ${h.enabled ? '' : 'disabled'} oninput="renderCoachSlotPreview()">
+      </div>`).join('');
+    }
+
+    function onCoachHourToggle(i) {
+      const on = document.getElementById(`coachHourEnabled${i}`).checked;
+      document.getElementById(`coachHourStart${i}`).disabled = !on;
+      document.getElementById(`coachHourEnd${i}`).disabled = !on;
+      renderCoachSlotPreview();
+    }
+
+    function readCoachHoursForm() {
+      return COACH_WEEKDAY_LABELS.map((_, i) => ({
+        enabled: document.getElementById(`coachHourEnabled${i}`).checked,
+        start: document.getElementById(`coachHourStart${i}`).value || '09:00',
+        end: document.getElementById(`coachHourEnd${i}`).value || '18:00',
+      }));
+    }
+
+    function renderCoachSlotPreview() {
+      const hours = readCoachHoursForm();
+      const duration = Number(document.getElementById('coachSlotDuration').value) || 60;
+      const buffer = Number(document.getElementById('coachSlotBuffer').value) || 0;
+      const idx = hours.findIndex(h => h.enabled);
+      const box = document.getElementById('coachSlotPreview');
+      if (idx === -1) { box.textContent = 'Chưa bật ngày nào — khách sẽ không thấy khung giờ nào để đặt.'; return; }
+      const h = hours[idx];
+      const [sh, sm] = h.start.split(':').map(Number), [eh, em] = h.end.split(':').map(Number);
+      const startMin = sh * 60 + sm, endMin = eh * 60 + em;
+      const slots = [];
+      for (let t = startMin; t + duration <= endMin; t += duration + buffer) {
+        slots.push(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
+      }
+      box.textContent = `Ví dụ khung giờ ${COACH_WEEKDAY_LABELS[idx]}: ${slots.length ? slots.join(', ') : '(không có giờ nào hợp lệ — kiểm tra lại giờ bắt đầu/kết thúc)'}`;
+    }
+
+    async function loadCoachAvailabilitySettings() {
+      const s = await fetch(`${API}/settings`).then(r => r.json());
+      let hours;
+      try { hours = JSON.parse(s.coaching_weekly_hours); } catch { hours = null; }
+      if (!Array.isArray(hours) || hours.length !== 7) hours = COACH_WEEKDAY_LABELS.map(() => ({ enabled: false, start: '09:00', end: '18:00' }));
+      renderCoachHoursRows(hours);
+      document.getElementById('coachSlotDuration').value = s.coaching_slot_duration_minutes || 60;
+      document.getElementById('coachSlotBuffer').value = s.coaching_slot_buffer_minutes ?? 30;
+      renderCoachSlotPreview();
+    }
+
+    async function saveCoachAvailabilitySettings() {
+      const hours = readCoachHoursForm();
+      const duration = Number(document.getElementById('coachSlotDuration').value) || 60;
+      const buffer = Number(document.getElementById('coachSlotBuffer').value) || 0;
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          coaching_weekly_hours: JSON.stringify(hours),
+          coaching_slot_duration_minutes: duration,
+          coaching_slot_buffer_minutes: buffer,
+        })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('✅ Đã lưu cài đặt khung giờ.', 'green');
     }
 
     // -- Coach 1-1: yêu cầu đặt lịch --
