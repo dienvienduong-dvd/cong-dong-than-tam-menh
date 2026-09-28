@@ -2574,10 +2574,48 @@
                 <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Khoảng cách giữa các buổi (phút)</label>
                 <input type="number" class="search-input" style="width:120px" id="coachSlotBuffer" min="0" step="5" value="30" oninput="renderCoachSlotPreview()">
               </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin-bottom:8px;">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Đặt trước tối đa (ngày)</label>
+                <input type="number" class="search-input" style="width:120px" id="coachMaxAdvanceDays" min="1" step="1" value="60">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Đặt trước tối thiểu (giờ)</label>
+                <input type="number" class="search-input" style="width:120px" id="coachMinAdvanceHours" min="0" step="1" value="2">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Số lịch hẹn tối đa/ngày (0 = không giới hạn)</label>
+                <input type="number" class="search-input" style="width:180px" id="coachMaxPerDay" min="0" step="1" value="0">
+              </div>
               <button class="btn-sm primary" onclick="saveCoachAvailabilitySettings()">💾 Lưu cài đặt</button>
             </div>
             <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;">Đổi thời lượng ở đây không tự sửa mô tả gói coaching, cần vào mục Sản phẩm sửa lại cho khớp.</div>
             <div id="coachSlotPreview" style="font-size:12px;color:var(--text);"></div>
+
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+              <h3 style="font-size:14px;font-weight:700;margin-bottom:6px;">📅 Ngày nghỉ / điều chỉnh riêng</h3>
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Dùng khi 1 ngày cụ thể khác với lịch thường tuần ở trên (VD: nghỉ lễ, hoặc mở thêm giờ 1 ngày đặc biệt). Nhớ bấm "💾 Lưu cài đặt" ở trên để lưu lại.</div>
+              <div id="coachOverridesList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;">
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Ngày</label>
+                  <input type="date" class="search-input" id="coachOvrDate">
+                </div>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+                  <input type="checkbox" id="coachOvrDayOff" onchange="toggleCoachOvrDayOff()"> Nghỉ cả ngày
+                </label>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Giờ bắt đầu</label>
+                  <input type="time" class="search-input" id="coachOvrStart" value="09:00">
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Giờ kết thúc</label>
+                  <input type="time" class="search-input" id="coachOvrEnd" value="18:00">
+                </div>
+                <button class="btn-sm" onclick="addCoachOverride()">+ Thêm</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="table-card" style="margin-bottom:16px;">
@@ -6641,6 +6679,44 @@
       box.textContent = `Ví dụ khung giờ ${COACH_WEEKDAY_LABELS[idx]}: ${slots.length ? slots.join(', ') : '(không có giờ nào hợp lệ — kiểm tra lại giờ bắt đầu/kết thúc)'}`;
     }
 
+    let coachOverrides = [];
+
+    function renderCoachOverridesList() {
+      const box = document.getElementById('coachOverridesList');
+      if (!coachOverrides.length) { box.innerHTML = '<div style="font-size:12.5px;color:var(--muted);">Chưa có ngày điều chỉnh riêng nào.</div>'; return; }
+      const sorted = [...coachOverrides].sort((a, b) => a.date < b.date ? -1 : 1);
+      box.innerHTML = sorted.map(o => `
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+        <span style="font-weight:600;width:100px;">${fmtDateOnly(o.date)}</span>
+        <span style="color:${o.enabled ? 'var(--text)' : '#ef4444'};">${o.enabled ? `Giờ riêng: ${o.start}–${o.end}` : 'Nghỉ cả ngày'}</span>
+        <button class="c1-cancel-link" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;" onclick="removeCoachOverride('${o.date}')">Xoá</button>
+      </div>`).join('');
+    }
+
+    function toggleCoachOvrDayOff() {
+      const off = document.getElementById('coachOvrDayOff').checked;
+      document.getElementById('coachOvrStart').disabled = off;
+      document.getElementById('coachOvrEnd').disabled = off;
+    }
+
+    function addCoachOverride() {
+      const date = document.getElementById('coachOvrDate').value;
+      if (!date) { showToast('Vui lòng chọn ngày.', 'red'); return; }
+      const dayOff = document.getElementById('coachOvrDayOff').checked;
+      const entry = dayOff
+        ? { date, enabled: false }
+        : { date, enabled: true, start: document.getElementById('coachOvrStart').value || '09:00', end: document.getElementById('coachOvrEnd').value || '18:00' };
+      coachOverrides = coachOverrides.filter(o => o.date !== date);
+      coachOverrides.push(entry);
+      renderCoachOverridesList();
+      document.getElementById('coachOvrDate').value = '';
+    }
+
+    function removeCoachOverride(date) {
+      coachOverrides = coachOverrides.filter(o => o.date !== date);
+      renderCoachOverridesList();
+    }
+
     async function loadCoachAvailabilitySettings() {
       const s = await fetch(`${API}/settings`).then(r => r.json());
       let hours;
@@ -6649,6 +6725,12 @@
       renderCoachHoursRows(hours);
       document.getElementById('coachSlotDuration').value = s.coaching_slot_duration_minutes || 60;
       document.getElementById('coachSlotBuffer').value = s.coaching_slot_buffer_minutes ?? 30;
+      document.getElementById('coachMaxAdvanceDays').value = s.coaching_max_advance_days || 60;
+      document.getElementById('coachMinAdvanceHours').value = s.coaching_min_advance_hours ?? 2;
+      document.getElementById('coachMaxPerDay').value = s.coaching_max_bookings_per_day ?? 0;
+      try { coachOverrides = JSON.parse(s.coaching_date_overrides) || []; } catch { coachOverrides = []; }
+      if (!Array.isArray(coachOverrides)) coachOverrides = [];
+      renderCoachOverridesList();
       renderCoachSlotPreview();
     }
 
@@ -6656,12 +6738,19 @@
       const hours = readCoachHoursForm();
       const duration = Number(document.getElementById('coachSlotDuration').value) || 60;
       const buffer = Number(document.getElementById('coachSlotBuffer').value) || 0;
+      const maxAdvanceDays = Number(document.getElementById('coachMaxAdvanceDays').value) || 60;
+      const minAdvanceHours = Number(document.getElementById('coachMinAdvanceHours').value) || 0;
+      const maxPerDay = Number(document.getElementById('coachMaxPerDay').value) || 0;
       const res = await api('/admin/settings', {
         method: 'PATCH',
         body: JSON.stringify({
           coaching_weekly_hours: JSON.stringify(hours),
           coaching_slot_duration_minutes: duration,
           coaching_slot_buffer_minutes: buffer,
+          coaching_max_advance_days: maxAdvanceDays,
+          coaching_min_advance_hours: minAdvanceHours,
+          coaching_max_bookings_per_day: maxPerDay,
+          coaching_date_overrides: JSON.stringify(coachOverrides),
         })
       });
       if (res.error) { showToast(res.error, 'red'); return; }

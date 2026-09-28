@@ -5775,6 +5775,8 @@ QUY TẮC BẮT BUỘC:
       'assistant_enabled', 'assistant_daily_limit',
       'p377_letter_html', 'p377_topics_overview',
       'coaching_weekly_hours', 'coaching_slot_duration_minutes', 'coaching_slot_buffer_minutes',
+      'coaching_max_advance_days', 'coaching_min_advance_hours', 'coaching_max_bookings_per_day',
+      'coaching_date_overrides',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
@@ -6095,10 +6097,49 @@ QUY TẮC BẮT BUỘC:
     const buffer = Number(db.get("SELECT value FROM site_settings WHERE key = 'coaching_slot_buffer_minutes'")?.value);
     return { duration, buffer: Number.isFinite(buffer) ? buffer : 30 };
   }
+  // maxAdvanceDays: khách chỉ đặt được trong vòng N ngày tới. minAdvanceHours:
+  // khách phải đặt trước ít nhất N giờ so với giờ hẹn. maxPerDay: giới hạn số
+  // lịch hẹn (chưa hủy) mỗi ngày, 0 = không giới hạn.
+  function getCoachBookingLimits() {
+    const maxAdvanceDays = Number(db.get("SELECT value FROM site_settings WHERE key = 'coaching_max_advance_days'")?.value);
+    const minAdvanceHours = Number(db.get("SELECT value FROM site_settings WHERE key = 'coaching_min_advance_hours'")?.value);
+    const maxPerDay = Number(db.get("SELECT value FROM site_settings WHERE key = 'coaching_max_bookings_per_day'")?.value);
+    return {
+      maxAdvanceDays: Number.isFinite(maxAdvanceDays) && maxAdvanceDays > 0 ? maxAdvanceDays : 60,
+      minAdvanceHours: Number.isFinite(minAdvanceHours) && minAdvanceHours >= 0 ? minAdvanceHours : 2,
+      maxPerDay: Number.isFinite(maxPerDay) && maxPerDay > 0 ? maxPerDay : 0,
+    };
+  }
+  // Điều chỉnh riêng cho 1 ngày cụ thể (nghỉ lễ, hoặc mở giờ khác ngày thường
+  // trong tuần) — mảng { date:'YYYY-MM-DD', enabled:bool, start, end }, ưu
+  // tiên cao hơn lịch tuần ở trên khi trùng ngày.
+  function getCoachDateOverride(dateStr) {
+    const row = db.get("SELECT value FROM site_settings WHERE key = 'coaching_date_overrides'");
+    if (!row?.value) return null;
+    try {
+      const arr = JSON.parse(row.value);
+      if (Array.isArray(arr)) return arr.find(o => o.date === dateStr) || null;
+    } catch {}
+    return null;
+  }
   function generateDaySlots(dateStr) {
     const weekday = new Date(dateStr + 'T00:00:00Z').getUTCDay();
-    const cfg = getCoachWeeklyHours()[weekday];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const { maxAdvanceDays, minAdvanceHours, maxPerDay } = getCoachBookingLimits();
+    const daysAhead = Math.round((new Date(dateStr + 'T00:00:00') - new Date(todayStr + 'T00:00:00')) / 86400000);
+    if (daysAhead < 0 || daysAhead > maxAdvanceDays) return { weekday, enabled: false, slots: [] };
+
+    const override = getCoachDateOverride(dateStr);
+    let cfg;
+    if (override) {
+      if (!override.enabled) return { weekday, enabled: false, slots: [] };
+      cfg = { enabled: true, start: override.start, end: override.end };
+    } else {
+      cfg = getCoachWeeklyHours()[weekday];
+    }
     if (!cfg?.enabled || !cfg.start || !cfg.end) return { weekday, enabled: false, slots: [] };
+
     const { duration, buffer } = getCoachSlotConfig();
     const [startH, startM] = cfg.start.split(':').map(Number);
     const [endH, endM] = cfg.end.split(':').map(Number);
@@ -6112,24 +6153,29 @@ QUY TẮC BẮT BUỘC:
       [dateStr]
     ).map(r => r.t));
     slots = slots.filter(s => !taken.has(s));
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    if (dateStr === todayStr) {
-      const nowMin = now.getHours() * 60 + now.getMinutes();
-      slots = slots.filter(s => {
-        const [h, m] = s.split(':').map(Number);
-        return h * 60 + m > nowMin;
-      });
+
+    const minAdvanceMs = minAdvanceHours * 3600 * 1000;
+    slots = slots.filter(s => {
+      const [h, m] = s.split(':').map(Number);
+      const slotDt = new Date(dateStr + 'T00:00:00');
+      slotDt.setHours(h, m, 0, 0);
+      return slotDt.getTime() - now.getTime() >= minAdvanceMs;
+    });
+
+    if (maxPerDay > 0) {
+      const countToday = db.get(
+        "SELECT COUNT(*) AS n FROM coaching_bookings WHERE preferred_date = ? AND status != 'cancelled'",
+        [dateStr]
+      ).n;
+      if (countToday >= maxPerDay) slots = [];
     }
+
     return { weekday, enabled: true, slots };
   }
 
   app.get('/api/coaching/availability', (req, res) => {
     const date = String(req.query.date || '');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Ngày không hợp lệ.' });
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    if (date < todayStr) return res.json({ weekday: null, enabled: false, slots: [] });
     const result = generateDaySlots(date);
     res.json({ ...result, weekdayLabel: COACH_WEEKDAY_LABELS[result.weekday] });
   });
