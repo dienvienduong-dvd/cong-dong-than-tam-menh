@@ -1972,6 +1972,44 @@ ${extra}
     seedChallengeDays();
   }
 
+  // Nội dung mặc định 3 buổi Workshop (dùng nếu admin chưa cấu hình qua
+  // trang admin → mục Thân Tâm Mệnh → Lịch Zoom / sự kiện → tab "Zoom 3 buổi")
+  const WORKSHOP3_DEFAULT_SESSIONS = [
+    {
+      title: 'Buổi 1: Nhìn Nhận Sự Thật: "Tôi Sai"',
+      date: '',
+      zoom_link: '',
+      content_html:
+        '<p><strong>Nguyên tắc 5Đ — Ăn đúng theo tự nhiên:</strong> Đúng thổ nhưỡng, Đúng cơ địa, Đúng thời điểm, Đúng màu, Đúng vị. Tại sao uống nước cam sai giờ gây mất ngủ?</p>' +
+        '<p><strong>Bài test cơ địa Hàn–Nhiệt:</strong> Xác định nhóm cơ địa cá nhân: Hàn, Nhiệt, Nhiệt giả Hàn, Hàn giả Nhiệt — nền tảng điều chỉnh ăn uống.</p>' +
+        '<p><strong>Mô hình 4 hướng Đông-Tây-Nam-Bắc:</strong> Kết hợp Tây y, Đông-Bắc y và Nam y để tạo ra phương pháp DƯỠNG HÓA phù hợp người Việt.</p>' +
+        '<p><strong>Ma trận Eisenhower — Xác định mục tiêu:</strong> Sắp xếp 8 mục tiêu cuộc đời (nhà, xe, sức khỏe, gia đình...) để biết đâu là ưu tiên thực sự.</p>' +
+        '<p style="margin-top:12px;padding:10px 14px;background:#fef3c7;border-radius:8px;color:#78350f;"><strong>🎯 Kết quả đầu ra:</strong> Biết rõ cơ địa Hàn-Nhiệt của mình và xác định mục tiêu sức khỏe ưu tiên qua Ma trận Eisenhower.</p>',
+    },
+    {
+      title: 'Buổi 2: Đánh Thức Cơ Thể: "Tôi Cần Làm Ngay"',
+      date: '',
+      zoom_link: '',
+      content_html:
+        '<p><strong>Metaphor "Ngôi nhà cũ" — Độc tố thế kỷ 21:</strong> Cơ thể như ngôi nhà hỏng điện, tắc cống. Dùng thuốc khi hệ thống đang hỏng giống như sơn tường mà không sửa đường cống.</p>' +
+        '<p><strong>Đại tràng — "Máy lọc nước" của cơ thể:</strong> Mối liên hệ đại tràng với phổi, da, tuyến giáp, hệ bạch huyết. Quy trình thanh lọc: Đại tràng → Gan → Thận → Bạch huyết.</p>' +
+        '<p><strong>Tác động Cột sống (TDCS) — Gốc bệnh:</strong> "Trăm bệnh từ cột sống mà ra." Khi cột sống lệch, dây thần kinh bị chèn ép, tín hiệu từ não xuống nội tạng bị sai lệch.</p>' +
+        '<p><strong>Thực hành TDCS trực tiếp trên Zoom:</strong> Hướng dẫn làm ấm tay chân, tạo môi trường cơ thể kiềm, đủ oxy — điều kiện cần để phòng ngừa tái phát.</p>' +
+        '<p style="margin-top:12px;padding:10px 14px;background:#fef3c7;border-radius:8px;color:#78350f;"><strong>🎯 Kết quả đầu ra:</strong> Nhận diện 2 nguyên nhân cốt lõi khiến bệnh tái phát và thực hành Tác động Cột sống ngay trên Zoom.</p>',
+    },
+    {
+      title: 'Buổi 3: Tái Sinh Toàn Diện: "Tôi Phải Thay Đổi Cuộc Đời"',
+      date: '',
+      zoom_link: '',
+      content_html:
+        '<p><strong>Tần số năng lượng Hawkins:</strong> Dưới 200 (sợ hãi, oán giận) = gốc rễ viêm mãn tính. Trên 500 (yêu thương, bình an) = chìa khóa tự chữa lành.</p>' +
+        '<p><strong>Quy luật 4 mùa — Sinh Trưởng Lão Tử:</strong> Thiên nhiên vận hành theo Xuân-Hạ-Thu-Đông. Cơ thể cũng vậy. Sống ngược quy luật này = nguồn gốc của bệnh.</p>' +
+        '<p><strong>Thực hành 2 ly nước — Biết ơn &amp; Yêu thương:</strong> Trải nghiệm trực tiếp sức mạnh của tâm thái đối với cơ thể. Bài tập biết ơn chuyển hóa năng lượng ngay tại lớp.</p>' +
+        '<p><strong>Phong thủy nhà &amp; Lộ trình 377 ngày:</strong> Tối ưu không gian sống (hướng giường, bếp, luồng khí). Giới thiệu trọn vẹn hành trình 377 ngày tái tạo cấp tế bào.</p>' +
+        '<p style="margin-top:12px;padding:10px 14px;background:#fef3c7;border-radius:8px;color:#78350f;"><strong>🎯 Kết quả đầu ra:</strong> Hiểu tại sao 377 ngày là chu trình tối thiểu và đưa ra quyết định rõ ràng cho hành trình hồi sinh dài hạn.</p>',
+    },
+  ];
+
   // Seed default site settings
   const defaultSettings = [
     ['announcement_enabled',   '0'],
@@ -2005,6 +2043,10 @@ ${extra}
     ['courses_hero_icon',      '📗'],
     ['courses_hero_title',     'Khóa học Ăn Uống Ngũ Hành'],
     ['courses_hero_desc',      'Từ nền tảng Âm Dương Ngũ Hành đến ăn theo từng Hành, công thức cháo bổ âm và cách dùng gừng.'],
+    ['workshop3_video_url',    ''],
+    ['workshop3_space_url',    'space.html?id=6'],
+    ['workshop3_course_url',   'course-view.html?id=10'],
+    ['workshop3_sessions',     JSON.stringify(WORKSHOP3_DEFAULT_SESSIONS)],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -5811,6 +5853,7 @@ QUY TẮC BẮT BUỘC:
       'coaching_weekly_hours', 'coaching_slot_duration_minutes', 'coaching_slot_buffer_minutes',
       'coaching_max_advance_days', 'coaching_min_advance_hours', 'coaching_max_bookings_per_day',
       'coaching_date_overrides',
+      'workshop3_video_url', 'workshop3_space_url', 'workshop3_course_url', 'workshop3_sessions',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
