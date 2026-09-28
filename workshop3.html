@@ -352,17 +352,20 @@
       }
     }
 
-    function renderSessions(sessions) {
+    function renderSessions(sessions, timeNote) {
       const wrap = document.getElementById('wk3Sessions');
       if (!Array.isArray(sessions) || !sessions.length) {
         wrap.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Nội dung đang được cập nhật.</div>';
         return;
       }
-      wrap.innerHTML = sessions.map(s => `
+      wrap.innerHTML = sessions.map(s => {
+        const dateStr = s.date ? fmtSessionDate(s.date) : '';
+        const timeStr = [dateStr, timeNote].filter(Boolean).join(' · ') || 'Sẽ thông báo sau';
+        return `
         <div class="wk3-session">
           <div class="wk3-session-title">${escHtml(s.title || '')}</div>
           <div class="wk3-session-info">
-            <div class="wk3-session-info-line">🕐 <strong>Thời gian đào tạo:</strong> ${s.date ? fmtSessionDate(s.date) : 'Sẽ thông báo sau'}</div>
+            <div class="wk3-session-info-line">🕐 <strong>Thời gian đào tạo:</strong> ${escHtml(timeStr)}</div>
             <div class="wk3-session-info-line">💻 <strong>Hình thức đào tạo:</strong> Online qua Zoom</div>
           </div>
           <div class="wk3-session-zoom-row">
@@ -372,7 +375,8 @@
           </div>
           <div class="wk3-session-body">${s.content_html || ''}</div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     async function loadWorkshop3() {
@@ -381,7 +385,7 @@
         renderVideoEmbed(s.workshop3_video_url || '');
         let sessions = [];
         try { sessions = JSON.parse(s.workshop3_sessions || '[]'); } catch {}
-        renderSessions(sessions);
+        renderSessions(sessions, s.workshop3_time_note || '');
         if (s.workshop3_space_url) document.getElementById('wk3SpaceLink').setAttribute('href', s.workshop3_space_url);
         if (s.workshop3_course_url) document.getElementById('wk3CourseLink').setAttribute('href', s.workshop3_course_url);
       } catch (e) {

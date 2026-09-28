@@ -2071,6 +2071,10 @@
                   <input class="search-input" style="width:100%" id="wk3CourseUrl" placeholder="course-view.html?id=10">
                 </div>
               </div>
+              <div style="margin-bottom:14px;">
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">⏰ Khung giờ đào tạo (áp dụng chung cho cả 3 buổi)</label>
+                <input class="search-input" style="width:100%" id="wk3TimeNote" placeholder="VD: 20:00 - 21:30 (Zoom mở lúc 19:45)">
+              </div>
 
               <div id="wk3SessionsEditor"></div>
 
@@ -7169,6 +7173,7 @@
         document.getElementById('wk3VideoUrl').value = s.workshop3_video_url || '';
         document.getElementById('wk3SpaceUrl').value = s.workshop3_space_url || 'space.html?id=6';
         document.getElementById('wk3CourseUrl').value = s.workshop3_course_url || 'course-view.html?id=10';
+        document.getElementById('wk3TimeNote').value = s.workshop3_time_note || '';
         let sessions = [];
         try { sessions = JSON.parse(s.workshop3_sessions || '[]'); } catch {}
         if (!Array.isArray(sessions) || !sessions.length) sessions = [{}, {}, {}];
@@ -7181,8 +7186,8 @@
                 <input class="search-input" style="width:100%" id="wk3Title${i}" value="${escHtmlAttr(sess.title || '')}">
               </div>
               <div style="flex:1;min-width:150px;">
-                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Ngày &amp; giờ đào tạo</label>
-                <input type="datetime-local" class="search-input" style="width:100%" id="wk3Date${i}" value="${escHtmlAttr(sess.date || '')}">
+                <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Ngày đào tạo</label>
+                <input type="date" class="search-input" style="width:100%" id="wk3Date${i}" value="${escHtmlAttr(sess.date || '')}">
               </div>
             </div>
             <div style="margin-bottom:10px;">
@@ -7213,6 +7218,7 @@
             workshop3_video_url: document.getElementById('wk3VideoUrl').value.trim(),
             workshop3_space_url: document.getElementById('wk3SpaceUrl').value.trim(),
             workshop3_course_url: document.getElementById('wk3CourseUrl').value.trim(),
+            workshop3_time_note: document.getElementById('wk3TimeNote').value.trim(),
             workshop3_sessions: JSON.stringify(sessions),
           }),
         });

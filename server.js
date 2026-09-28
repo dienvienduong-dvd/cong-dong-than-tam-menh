@@ -2047,6 +2047,7 @@ ${extra}
     ['workshop3_space_url',    'space.html?id=6'],
     ['workshop3_course_url',   'course-view.html?id=10'],
     ['workshop3_sessions',     JSON.stringify(WORKSHOP3_DEFAULT_SESSIONS)],
+    ['workshop3_time_note',    '20:00 - 21:30 (Zoom mở lúc 19:45)'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -5854,6 +5855,7 @@ QUY TẮC BẮT BUỘC:
       'coaching_max_advance_days', 'coaching_min_advance_hours', 'coaching_max_bookings_per_day',
       'coaching_date_overrides',
       'workshop3_video_url', 'workshop3_space_url', 'workshop3_course_url', 'workshop3_sessions',
+      'workshop3_time_note',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
