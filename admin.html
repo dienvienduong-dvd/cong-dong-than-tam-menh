@@ -2062,7 +2062,7 @@
             <div class="table-card-header">
               <h2>Zoom / sự kiện — Chương trình 377 ngày</h2>
               <div style="display:flex;gap:8px;">
-                <button class="btn-sm" onclick="quickAddP377MonthlySessions()">📅 Thêm nhanh mùng 1 &amp; rằm tháng tới</button>
+                <button class="btn-sm" onclick="quickAddP377MonthlySessions()">📅 Thêm nhanh Zoom ngày 1 và ngày 15</button>
                 <button class="btn-sm primary" onclick="openP377SessionModal()">+ Thêm buổi</button>
               </div>
             </div>
@@ -6986,16 +6986,24 @@
       loadP377Sessions();
     }
 
-    function quickAddP377MonthlySessions() {
+    async function quickAddP377MonthlySessions() {
+      const { sessions } = await api('/admin/program377/sessions');
+      const existingDates = new Set(sessions.map(s => String(s.session_date).slice(0, 10)));
       const now = new Date();
-      const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      const y = next.getFullYear(), m = String(next.getMonth() + 1).padStart(2, '0');
-      const first = `${y}-${m}-01`;
-      const fifteenth = `${y}-${m}-15`;
+      let y = now.getFullYear(), m = now.getMonth() + 2; // bắt đầu dò từ tháng tới
+      if (m > 12) { m -= 12; y++; }
+      let first, fifteenth;
+      for (let i = 0; i < 24; i++) { // giới hạn an toàn: dò tối đa 2 năm tới
+        const ms = String(m).padStart(2, '0');
+        first = `${y}-${ms}-01`;
+        fifteenth = `${y}-${ms}-15`;
+        if (!existingDates.has(first) && !existingDates.has(fifteenth)) break;
+        m++; if (m > 12) { m = 1; y++; }
+      }
       Promise.all([
-        api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: first, title: 'Zoom mùng 1', session_type: 'zoom' }) }),
-        api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: fifteenth, title: 'Zoom rằm', session_type: 'zoom' }) }),
-      ]).then(() => { showToast('✅ Đã thêm 2 buổi Zoom tháng tới.', 'green'); loadP377Sessions(); })
+        api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: first, title: 'Zoom ngày 1 định kỳ hằng tháng', session_type: 'zoom' }) }),
+        api('/admin/program377/sessions', { method: 'POST', body: JSON.stringify({ session_date: fifteenth, title: 'Zoom ngày 15 định kỳ hằng tháng', session_type: 'zoom' }) }),
+      ]).then(() => { showToast(`✅ Đã thêm 2 buổi Zoom tháng ${m}/${y}.`, 'green'); loadP377Sessions(); })
         .catch(() => showToast('Lỗi khi thêm.', 'red'));
     }
 
