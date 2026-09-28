@@ -1133,7 +1133,7 @@
     <div class="login-box">
       <div class="login-logo">
         <div class="login-logo-mark" style="background:transparent;"><img src="assets/img/app-icon.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;"></div>
-        <div class="login-logo-name">Cộng đồng Hồi Sinh THÂN - TÂM -MỆNH</div>
+        <div class="login-logo-name">Cộng đồng Hồi Sinh<br>THÂN - TÂM -MỆNH</div>
       </div>
       <h2>Admin Panel</h2>
       <p>Đăng nhập để quản lý hệ thống</p>
@@ -1149,6 +1149,9 @@
           <label>Mật khẩu</label>
           <input type="password" id="adminPasswordInput" placeholder="Mật khẩu tài khoản..."
             onkeydown="if(event.key==='Enter') doLoginAdmin()">
+        </div>
+        <div class="login-switch" style="text-align:right;margin:-8px 0 14px;">
+          <a href="forgot-password.html">Quên mật khẩu / Chưa có mật khẩu (tài khoản Google)?</a>
         </div>
         <button class="login-btn" onclick="doLoginAdmin()">Gửi mã đăng nhập</button>
         <div class="login-switch"><a href="#" onclick="toggleLoginMode(event)">Đăng nhập bằng Admin Key</a></div>
@@ -1185,7 +1188,7 @@
     <aside id="sbar">
       <div class="sbar-logo">
         <div class="sbar-logo-mark" style="background:transparent;"><img src="assets/img/app-icon.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;"></div>
-        <div class="sbar-logo-name">Cộng đồng Hồi Sinh THÂN - TÂM -MỆNH</div>
+        <div class="sbar-logo-name">Cộng đồng Hồi Sinh<br>THÂN - TÂM -MỆNH</div>
       </div>
 
       <nav>
@@ -8135,10 +8138,15 @@
 
     function applyCommunityName(name) {
       if (!name) return;
+      // Break "THÂN" onto its own line so long names don't wrap mid-word.
+      const idx = name.indexOf('THÂN');
+      const html = idx > 0
+        ? `${escHtml(name.slice(0, idx).trim())}<br>${escHtml(name.slice(idx).trim())}`
+        : escHtml(name);
       const sbarEl = document.querySelector('.sbar-logo-name');
-      if (sbarEl) sbarEl.textContent = name;
+      if (sbarEl) sbarEl.innerHTML = html;
       const loginEl = document.querySelector('.login-logo-name');
-      if (loginEl) loginEl.textContent = name;
+      if (loginEl) loginEl.innerHTML = html;
     }
 
     function updateCalendarPreview() {
