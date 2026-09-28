@@ -597,6 +597,27 @@
     }
     .intake-redo:hover { background: #bae6fd; }
 
+    /* Roadmap diagram: 3 buổi -> 8 buổi -> 377 ngày */
+    .rmap-card { background: var(--bg-card); border: 1px solid #bae6fd; border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 16px; }
+    .rmap-title { font-weight: 700; font-size: var(--fs-sm); color: #0369a1; margin-bottom: 14px; text-align: center; }
+    .rmap-flow { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .rmap-bookend { flex: 0 0 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); background: var(--bg-input); border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px 8px; }
+    .rmap-bookend strong { display: block; font-size: 12px; color: var(--text); margin-bottom: 2px; }
+    .rmap-arrow { display: flex; align-items: center; color: #94a3b8; font-size: 18px; font-weight: 700; flex: 0 0 auto; }
+    .rmap-group { flex: 1 1 320px; border: 1.5px solid #bae6fd; border-radius: 12px; padding: 12px; background: #f0f9ff; }
+    .rmap-group-label { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #0284c7; margin-bottom: 10px; }
+    .rmap-steps { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+    .rmap-step { flex: 1 1 90px; display: block; text-align: center; background: #fff; border: 1.5px solid #0ea5e9; border-radius: 10px; padding: 10px 6px; font-size: 12px; font-weight: 700; color: #0369a1; text-decoration: none; transition: background .15s, transform .15s; }
+    .rmap-step:hover { background: #e0f2fe; transform: translateY(-1px); }
+    .rmap-step span { display: block; font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px; text-transform: none; letter-spacing: 0; }
+    @media (max-width: 640px) {
+      .rmap-flow { flex-direction: column; }
+      .rmap-arrow { transform: rotate(90deg); }
+      .rmap-bookend { flex-basis: auto; width: 100%; }
+      .rmap-steps { flex-direction: column; }
+      .rmap-step { width: 100%; }
+    }
+
     .rp-card-title {
       font-size: var(--fs-xs);
       font-weight: 700;
@@ -1339,6 +1360,9 @@
               </div>
             </div>
 
+            <!-- Sơ đồ lộ trình 3 chương trình (chỉ hiện với chủ trang) -->
+            <div id="roadmapDiagramWrap"></div>
+
             <!-- Intake profile (chỉ hiện với chủ trang) -->
             <div id="intakeSectionWrap"></div>
 
@@ -1658,6 +1682,31 @@
       document.getElementById('profileError').style.display = 'block';
     }
 
+    function renderRoadmapDiagram(isMe) {
+      const wrap = document.getElementById('roadmapDiagramWrap');
+      if (!wrap || !isMe) return;
+      wrap.innerHTML = `
+        <div class="rmap-card">
+          <div class="rmap-title">🗺️ Lộ trình để có cuộc đời như mong muốn</div>
+          <div class="rmap-flow">
+            <div class="rmap-bookend"><strong>Cuộc sống hiện tại</strong>của bạn — điểm bắt đầu</div>
+            <div class="rmap-arrow">→</div>
+            <div class="rmap-group">
+              <div class="rmap-group-label">Hồi Sinh Thân Tâm Mệnh</div>
+              <div class="rmap-steps">
+                <a href="#" class="rmap-step">3 Buổi<span>Workshop</span></a>
+                <div class="rmap-arrow">→</div>
+                <a href="#" class="rmap-step">8 Buổi<span>Chuyên sâu</span></a>
+                <div class="rmap-arrow">→</div>
+                <a href="program377.html" class="rmap-step">377 Ngày<span>Thực hành</span></a>
+              </div>
+            </div>
+            <div class="rmap-arrow">→</div>
+            <div class="rmap-bookend"><strong>Cuộc đời</strong>mong muốn</div>
+          </div>
+        </div>`;
+    }
+
     function renderIntakeSection(intakeData, isMe) {
       const wrap = document.getElementById('intakeSectionWrap');
       if (!wrap || !isMe) return;
@@ -1845,6 +1894,9 @@
 
       // Heatmap
       renderHeatmap(activityMap);
+
+      // Sơ đồ lộ trình 3 chương trình (chỉ hiện với chủ trang)
+      renderRoadmapDiagram(isMe);
 
       // Intake section (chỉ hiện với chủ trang)
       renderIntakeSection(intakeData, isMe);
