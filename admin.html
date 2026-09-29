@@ -1444,6 +1444,13 @@
         Địa điểm
         <span class="sbar-count" id="sbLocPendingCount" style="background:#ef4444;color:#fff;display:none">0</span>
       </button>
+      <button class="sbar-item" onclick="showPage('contact-messages')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+        </svg>
+        Liên hệ BTC
+        <span class="sbar-count" id="sbContactNewCount" style="background:#ef4444;color:#fff;display:none">0</span>
+      </button>
       <button class="sbar-item" onclick="showPage('notifications')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -2641,6 +2648,48 @@
               </thead>
               <tbody id="assignmentsTbody">
                 <tr><td colspan="4"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Tin nhắn form "Liên hệ Ban tổ chức" (lien-he.html) ── -->
+      <section class="page" id="page-contact-messages">
+        <div class="table-card">
+          <div class="table-card-header" style="flex-wrap:wrap;gap:10px;">
+            <h2>Tin nhắn liên hệ Ban tổ chức</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select class="search-input" id="cmDeptFilter" onchange="loadContactMessages()" style="min-width:0">
+                <option value="">Tất cả bộ phận</option>
+                <option value="center">Trung tâm Điền Viên Đường</option>
+                <option value="consult">Hỗ trợ tư vấn</option>
+                <option value="payment">Hỗ trợ thanh toán</option>
+                <option value="community">Hỗ trợ cộng đồng</option>
+              </select>
+              <input class="search-input" type="text" placeholder="Tìm tên, SĐT, email, nội dung..." id="cmSearch" oninput="renderContactMessages()">
+              <a href="lien-he.html" target="_blank"><button class="btn-sm">Xem trang ↗</button></a>
+            </div>
+          </div>
+          <div class="mp-tabs" style="padding:0 20px;margin-bottom:0;" id="cmStatusTabs">
+            <button class="mp-tab-btn active" onclick="setCmStatusTab('new', this)">📩 Chưa xử lý <span id="cmCnt-new"></span></button>
+            <button class="mp-tab-btn" onclick="setCmStatusTab('handled', this)">✅ Đã xử lý <span id="cmCnt-handled"></span></button>
+            <button class="mp-tab-btn" onclick="setCmStatusTab('', this)">Tất cả</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Người gửi</th>
+                  <th>Gửi đến</th>
+                  <th style="min-width:280px">Nội dung</th>
+                  <th>Thời gian</th>
+                  <th>Trạng thái</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="cmTbody">
+                <tr><td colspan="6"><div class="empty-state">Đang tải...</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -4008,6 +4057,14 @@
           <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Link Google Maps (tuỳ chọn)</label>
           <input class="search-input" style="width:100%;min-width:0" id="locMapUrl" placeholder="https://maps.app.goo.gl/... — để trống sẽ tự tìm theo địa chỉ">
         </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Giờ mở cửa</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locOpenTime" type="time">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Giờ đóng cửa</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locCloseTime" type="time">
+        </div>
         <div style="grid-column:1/-1">
           <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Mô tả ngắn</label>
           <textarea id="locDescription" rows="2" maxlength="1000" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="VD: Giờ mở cửa 8h–20h, nhận đặt lịch qua Zalo..."></textarea>
@@ -5105,7 +5162,8 @@
       'lesson-exercises': ['Bài tập AI đã chấm', 'Giám sát chất lượng chấm điểm của AI'],
       marketplace: ['Marketplace', 'Sản phẩm & Đơn hàng'],
       notifications: ['Thông báo', 'Gửi thông báo đến thành viên'],
-      locations: ['Địa điểm', 'Duyệt đăng ký & quản lý trang Danh sách địa điểm (dia-diem.html)'],
+      'contact-messages': ['Liên hệ BTC', 'Tin nhắn từ form Liên hệ Ban tổ chức (lien-he.html)'],
+      locations: ['Địa điểm','Duyệt đăng ký & quản lý trang Danh sách địa điểm (dia-diem.html)'],
       crm: ['Email CRM', 'Lists · Tags · Sequences · Templates'],
       'challenge-progress': ['Tiến độ 28 ngày', 'Theo dõi tiến độ từng thành viên'],
       topics: ['Topics', 'Chủ đề đăng bài trong từng Space'],
@@ -5148,6 +5206,7 @@
       if (name === 'marketplace') { loadAdminMarketplace(); loadMpSettings(); }
       if (name === 'notifications') { loadAdminNotifications(); loadNotifUserDropdown(); }
       if (name === 'locations') loadAdminLocations();
+      if (name === 'contact-messages') loadContactMessages();
       if (name === 'crm') loadCRM();
       if (name === 'challenge-progress') loadChallengeProgress();
       if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
@@ -5473,6 +5532,7 @@
     // ── Dashboard ─────────────────────────────────────────────────
     async function loadDashboard() {
       refreshLocPendingBadge();
+      refreshContactNewBadge();
       try {
         const d = await api('/admin/stats');
         document.getElementById('sTotal').textContent = d.total_users;
@@ -7013,6 +7073,105 @@
       hnLeadDebTimer = setTimeout(loadHanNhietLeads, 300);
     }
 
+    // ── Tin nhắn Liên hệ BTC (lien-he.html) ──────────────────────
+    const CM_DEPT_LABELS = {
+      center: ['Trung tâm Điền Viên Đường', 'background:#ccfbf1;color:#115e59'],
+      consult: ['Hỗ trợ tư vấn', 'background:#e0f2fe;color:#075985'],
+      payment: ['Hỗ trợ thanh toán', 'background:#fef3c7;color:#92400e'],
+      community: ['Hỗ trợ cộng đồng', 'background:#ede9fe;color:#5b21b6'],
+    };
+    let cmStatusTab = 'new';
+    let contactMessages = [];
+
+    function setContactNewBadge(n) {
+      const badge = document.getElementById('sbContactNewCount');
+      badge.textContent = n;
+      badge.style.display = n > 0 ? 'inline' : 'none';
+    }
+    function refreshContactNewBadge() {
+      api('/admin/contact-messages?status=new').then(d => setContactNewBadge(d.counts.new || 0)).catch(() => {});
+    }
+
+    function setCmStatusTab(status, btn) {
+      cmStatusTab = status;
+      document.querySelectorAll('#cmStatusTabs .mp-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      loadContactMessages();
+    }
+
+    async function loadContactMessages() {
+      try {
+        const qs = new URLSearchParams({ status: cmStatusTab, department: document.getElementById('cmDeptFilter').value });
+        const d = await api(`/admin/contact-messages?${qs}`);
+        contactMessages = d.messages;
+        ['new', 'handled'].forEach(s => { document.getElementById('cmCnt-' + s).textContent = d.counts[s] ? `(${d.counts[s]})` : ''; });
+        setContactNewBadge(d.counts.new || 0);
+        renderContactMessages();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    function renderContactMessages() {
+      const tbody = document.getElementById('cmTbody');
+      const q = document.getElementById('cmSearch').value.trim().toLowerCase();
+      const list = contactMessages.filter(m => !q || [m.full_name, m.phone, m.email, m.message, m.admin_note]
+        .some(v => String(v || '').toLowerCase().includes(q)));
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">${cmStatusTab === 'new' ? 'Không có tin nhắn nào chưa xử lý.' : 'Không có tin nhắn nào.'}</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(m => {
+        const [deptLabel, deptStyle] = CM_DEPT_LABELS[m.department] || [m.department, ''];
+        const tel = String(m.phone || '').replace(/[^0-9+]/g, '');
+        return `<tr>
+      <td style="min-width:170px;">
+        <div style="font-weight:600;">${escHtml(m.full_name)}${m.user_id ? ` <a href="profile.html?id=${m.user_id}" target="_blank" title="Xem hồ sơ thành viên" style="font-size:11px;">↗</a>` : ''}</div>
+        ${m.phone ? `<div style="font-size:12px;"><a href="tel:${escHtml(tel)}">${escHtml(m.phone)}</a></div>` : ''}
+        ${m.email ? `<div style="font-size:12px;"><a href="mailto:${escHtml(m.email)}">${escHtml(m.email)}</a></div>` : ''}
+      </td>
+      <td><span class="badge" style="${deptStyle};white-space:nowrap;">${escHtml(deptLabel)}</span></td>
+      <td style="font-size:13px;line-height:1.5;white-space:pre-wrap;max-width:420px;">${escHtml(m.message)}${m.admin_note ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);white-space:pre-wrap;">📝 ${escHtml(m.admin_note)}</div>` : ''}</td>
+      <td style="color:var(--muted);font-size:12.5px;white-space:nowrap;">${escHtml((m.created_at || '').slice(0, 16))}</td>
+      <td>${m.status === 'handled'
+        ? `<span class="badge" style="background:#dcfce7;color:#166534;white-space:nowrap;">✅ Đã xử lý</span>`
+        : `<span class="badge" style="background:#fee2e2;color:#991b1b;white-space:nowrap;">📩 Chưa xử lý</span>`}</td>
+      <td style="white-space:nowrap;">
+        ${m.status === 'handled'
+          ? `<button class="act-btn" onclick="setContactMessageStatus(${m.id}, 'new')">Mở lại</button>`
+          : `<button class="act-btn" style="color:#166534" onclick="setContactMessageStatus(${m.id}, 'handled')">Đã xử lý</button>`}
+        <button class="act-btn" onclick="editContactMessageNote(${m.id})">Ghi chú</button>
+        <button class="act-btn" style="color:#991b1b" onclick="deleteContactMessage(${m.id})">Xoá</button>
+      </td>
+    </tr>`;
+      }).join('');
+    }
+
+    async function setContactMessageStatus(id, status) {
+      try {
+        await api(`/admin/contact-messages/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+        showToast(status === 'handled' ? '✅ Đã đánh dấu đã xử lý.' : 'Đã chuyển về chưa xử lý.', 'green');
+        loadContactMessages();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    async function editContactMessageNote(id) {
+      const m = contactMessages.find(x => x.id === id);
+      const note = prompt('Ghi chú nội bộ (chỉ admin thấy):', m?.admin_note || '');
+      if (note === null) return;
+      try {
+        await api(`/admin/contact-messages/${id}`, { method: 'PATCH', body: JSON.stringify({ admin_note: note }) });
+        showToast('Đã lưu ghi chú.', 'green');
+        loadContactMessages();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    async function deleteContactMessage(id) {
+      if (!confirm('Xoá vĩnh viễn tin nhắn này?')) return;
+      try {
+        await api(`/admin/contact-messages/${id}`, { method: 'DELETE' });
+        showToast('Đã xoá tin nhắn.', 'green');
+        loadContactMessages();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
     // ── Địa điểm (dia-diem.html) ─────────────────────────────────
     const LOC_STATUS_META = {
       pending:  ['⏳ Chờ duyệt', 'background:#fef3c7;color:#92400e'],
@@ -7073,7 +7232,7 @@
             : `<button class="act-btn" style="color:#166534" onclick="setLocationStatus(${l.id}, 'approved')">Hiển thị</button>`;
         return `<tr>
       <td>${l.image_url ? `<img src="${escHtml(l.image_url)}" alt="" style="width:72px;height:45px;object-fit:cover;border-radius:6px;display:block;">` : '<div style="width:72px;height:45px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px;">🏪</div>'}</td>
-      <td style="font-weight:600;max-width:240px;">${escHtml(l.place_name || '—')}<div style="font-size:11.5px;color:var(--muted);font-weight:400;">${escHtml(l.address || '')}</div></td>
+      <td style="font-weight:600;max-width:240px;">${escHtml(l.place_name || '—')}<div style="font-size:11.5px;color:var(--muted);font-weight:400;">${escHtml(l.address || '')}</div>${l.open_time || l.close_time ? `<div style="font-size:11.5px;color:var(--muted);font-weight:400;">🕗 ${escHtml(l.open_time || '?')} – ${escHtml(l.close_time || '?')}</div>` : ''}</td>
       <td>${escHtml(l.full_name)}<div style="font-size:11.5px;color:var(--muted);">${escHtml(l.phone)}${l.email ? ' · ' + escHtml(l.email) : ''}</div></td>
       <td style="font-size:12.5px;">${services || '—'}</td>
       <td style="font-size:12.5px;">${l.certified ? '✅ Đã xác nhận' : '<span style="color:var(--muted)">—</span>'}</td>
@@ -7133,6 +7292,8 @@
       set('locPlaceName', l?.place_name);
       set('locAddress', l?.address);
       set('locMapUrl', l?.map_url);
+      set('locOpenTime', l?.open_time);
+      set('locCloseTime', l?.close_time);
       set('locDescription', l?.description);
       set('locStatus', l ? l.status : 'approved');
       set('locSortOrder', l ? l.sort_order : 0);
@@ -7161,6 +7322,8 @@
         place_name: val('locPlaceName'),
         address: val('locAddress'),
         map_url: val('locMapUrl'),
+        open_time: val('locOpenTime'),
+        close_time: val('locCloseTime'),
         description: val('locDescription'),
         status: val('locStatus'),
         sort_order: Number(val('locSortOrder')) || 0,

@@ -137,6 +137,52 @@
 
     .contact-loading { text-align: center; padding: 40px 20px; color: var(--text-muted); }
 
+    /* Form "Liên hệ Ban tổ chức" */
+    .cf-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 20px;
+    }
+    .cf-card h2 {
+      font-family: var(--font-heading); font-size: 15px; text-transform: uppercase;
+      color: var(--text); margin: 0 0 4px; text-align: center;
+    }
+    .cf-sub { text-align: center; color: var(--text-muted); font-size: var(--fs-sm); margin: 0 0 16px; }
+    .cf-form { display: flex; flex-direction: column; gap: 12px; }
+    .cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .cf-field > label, .cf-legend {
+      display: block; font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .3px; margin-bottom: 5px;
+    }
+    .cf-req { color: #ef4444; }
+    .cf-field input, .cf-field textarea {
+      width: 100%; box-sizing: border-box;
+      border: 1px solid var(--border); background: var(--bg-input, var(--bg-card)); color: var(--text);
+      border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+    }
+    .cf-field textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+    .cf-field input:focus, .cf-field textarea:focus { outline: none; border-color: var(--border-focus); }
+    .cf-depts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cf-dept {
+      display: flex; align-items: center; gap: 10px;
+      border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px;
+      cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text);
+    }
+    .cf-dept input { width: 17px; height: 17px; margin: 0; accent-color: #0f766e; flex-shrink: 0; }
+    .cf-dept:has(input:checked) { border-color: var(--color-primary); background: var(--bg-active); }
+    .cf-err { color: #dc2626; font-size: 13px; }
+    .cf-submit {
+      background: var(--color-primary); color: #fff; border: none; border-radius: 10px;
+      padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .cf-submit:disabled { opacity: .6; cursor: default; }
+    .cf-done { text-align: center; padding: 10px 0 4px; }
+    .cf-done .ico { font-size: 40px; line-height: 1; margin-bottom: 8px; }
+    .cf-done p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin: 0 0 14px; }
+    .cf-again { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 9px 18px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    @media (max-width: 520px) { .cf-grid, .cf-depts { grid-template-columns: 1fr; } }
+
     @media (max-width: 480px) {
       .contact-card { flex-wrap: wrap; }
       .contact-call { width: 100%; justify-content: center; }
@@ -318,6 +364,50 @@
           <!-- Contact — rendered by JS from /api/settings (contact_*) -->
           <div class="contact-wrap" id="contactBox">
             <div class="contact-loading">Đang tải thông tin liên hệ...</div>
+          </div>
+
+          <!-- Form liên hệ BTC — lưu vào contact_messages, xem ở Admin → Hệ thống → Liên hệ BTC -->
+          <div class="contact-wrap" style="margin-top:16px;">
+            <section class="cf-card" aria-labelledby="cfTitle">
+              <h2 id="cfTitle">Liên hệ Ban tổ chức</h2>
+              <p class="cf-sub">Gửi câu hỏi hoặc yêu cầu, BTC sẽ phản hồi bạn sớm nhất.</p>
+              <form class="cf-form" id="cfForm" onsubmit="submitContactForm(event)" novalidate>
+                <div class="cf-field">
+                  <label for="cfName">Họ và tên <span class="cf-req">*</span></label>
+                  <input id="cfName" autocomplete="name" maxlength="120">
+                </div>
+                <div class="cf-grid">
+                  <div class="cf-field">
+                    <label for="cfPhone">Số điện thoại</label>
+                    <input id="cfPhone" type="tel" autocomplete="tel" maxlength="20">
+                  </div>
+                  <div class="cf-field">
+                    <label for="cfEmail">Email</label>
+                    <input id="cfEmail" type="email" autocomplete="email" maxlength="160">
+                  </div>
+                </div>
+                <div>
+                  <span class="cf-legend">Gửi đến <span class="cf-req">*</span></span>
+                  <div class="cf-depts" role="radiogroup" aria-label="Chọn bộ phận nhận">
+                    <label class="cf-dept"><input type="radio" name="cfDept" value="center"> Trung tâm Điền Viên Đường</label>
+                    <label class="cf-dept"><input type="radio" name="cfDept" value="consult"> Hỗ trợ tư vấn</label>
+                    <label class="cf-dept"><input type="radio" name="cfDept" value="payment"> Hỗ trợ thanh toán</label>
+                    <label class="cf-dept"><input type="radio" name="cfDept" value="community"> Hỗ trợ cộng đồng</label>
+                  </div>
+                </div>
+                <div class="cf-field">
+                  <label for="cfMessage">Nội dung liên hệ <span class="cf-req">*</span></label>
+                  <textarea id="cfMessage" maxlength="3000" placeholder="Nhập nội dung bạn cần BTC hỗ trợ..."></textarea>
+                </div>
+                <div class="cf-err" id="cfErr" role="alert"></div>
+                <button class="cf-submit" id="cfSubmit" type="submit">Gửi liên hệ</button>
+              </form>
+              <div class="cf-done" id="cfDone" style="display:none">
+                <div class="ico">✅</div>
+                <p>Đã gửi liên hệ thành công!<br>Ban tổ chức sẽ phản hồi bạn qua số điện thoại hoặc email đã cung cấp.</p>
+                <button class="cf-again" type="button" onclick="resetContactForm()">Gửi liên hệ khác</button>
+              </div>
+            </section>
           </div>
 
         </main>
@@ -605,7 +695,67 @@
         ${socialsHtml}`;
     }
 
+    // ── Form "Liên hệ Ban tổ chức" ──────────────────────────────
+    function prefillContactForm() {
+      const u = currentUser || {};
+      const fill = (id, v) => { const el = document.getElementById(id); if (el && !el.value && v) el.value = v; };
+      fill('cfName', [u.first_name, u.last_name].filter(Boolean).join(' ').trim());
+      fill('cfPhone', u.phone);
+      fill('cfEmail', u.email);
+      // currentUser trong localStorage không có SĐT (và có thể thiếu email) → lấy từ hồ sơ
+      if (u.id && (!u.phone || !u.email)) {
+        fetch(`${API}/users/${u.id}?requester_id=${u.id}`).then(r => r.ok ? r.json() : null).then(p => {
+          if (!p) return;
+          fill('cfPhone', p.phone);
+          fill('cfEmail', p.email);
+        }).catch(() => {});
+      }
+    }
+
+    function resetContactForm() {
+      document.getElementById('cfForm').reset();
+      document.getElementById('cfErr').textContent = '';
+      document.getElementById('cfForm').style.display = '';
+      document.getElementById('cfDone').style.display = 'none';
+      prefillContactForm();
+    }
+
+    async function submitContactForm(e) {
+      e.preventDefault();
+      const val = id => document.getElementById(id).value.trim();
+      const err = document.getElementById('cfErr');
+      const body = {
+        user_id: currentUser?.id || null,
+        full_name: val('cfName'),
+        phone: val('cfPhone'),
+        email: val('cfEmail'),
+        department: document.querySelector('input[name="cfDept"]:checked')?.value || '',
+        message: val('cfMessage'),
+      };
+      if (!body.full_name) { err.textContent = 'Vui lòng nhập họ và tên.'; return; }
+      if (!body.phone && !body.email) { err.textContent = 'Vui lòng nhập số điện thoại hoặc email để BTC liên hệ lại.'; return; }
+      if (!body.department) { err.textContent = 'Vui lòng chọn bộ phận muốn gửi.'; return; }
+      if (body.message.length < 5) { err.textContent = 'Vui lòng nhập nội dung liên hệ.'; return; }
+      err.textContent = '';
+      const btn = document.getElementById('cfSubmit');
+      btn.disabled = true; btn.textContent = 'Đang gửi...';
+      try {
+        const res = await fetch(`${API}/contact-messages`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Gửi không thành công, vui lòng thử lại.');
+        document.getElementById('cfForm').style.display = 'none';
+        document.getElementById('cfDone').style.display = '';
+      } catch (ex) {
+        err.textContent = ex.message;
+      } finally {
+        btn.disabled = false; btn.textContent = 'Gửi liên hệ';
+      }
+    }
+
     loadContact();
+    prefillContactForm();
   </script>
 </body>
 

@@ -507,6 +507,8 @@ const SCHEMA = `
     description     TEXT,
     map_url         TEXT,
     image_url       TEXT,
+    open_time       TEXT,
+    close_time      TEXT,
     do_spine        INTEGER DEFAULT 0,
     do_supply       INTEGER DEFAULT 0,
     certified       INTEGER DEFAULT 0,
@@ -516,6 +518,20 @@ const SCHEMA = `
     created_at      TEXT DEFAULT (datetime('now','localtime')),
     updated_at      TEXT,
     approved_at     TEXT
+  );
+  -- Tin nhắn từ form "Liên hệ Ban tổ chức" (lien-he.html), admin xem & xử lý
+  CREATE TABLE IF NOT EXISTS contact_messages (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER,
+    full_name       TEXT NOT NULL,
+    phone           TEXT,
+    email           TEXT,
+    department      TEXT NOT NULL,
+    message         TEXT NOT NULL,
+    status          TEXT DEFAULT 'new',
+    admin_note      TEXT,
+    created_at      TEXT DEFAULT (datetime('now','localtime')),
+    handled_at      TEXT
   );
   -- Thư viện bài tập dùng lại (không AI chấm điểm) — chỉ hướng dẫn + 1 link, học
   -- viên tự đọc và bấm vào làm. Dùng chung cho bài học (exercise_type='link') và
@@ -1683,6 +1699,12 @@ ${extra}
   }
 
   // Migrate posts: add space_id
+  const locationCols = db.all('PRAGMA table_info(locations)').map(c => c.name);
+  if (!locationCols.includes('open_time')) {
+    db.exec('ALTER TABLE locations ADD COLUMN open_time TEXT');
+    db.exec('ALTER TABLE locations ADD COLUMN close_time TEXT');
+    console.log('  Migrated locations: added open_time, close_time.');
+  }
   const postCols = db.all('PRAGMA table_info(posts)').map(c => c.name);
   if (!postCols.includes('space_id')) {
     db.exec('ALTER TABLE posts ADD COLUMN space_id INTEGER REFERENCES spaces(id)');
@@ -5106,6 +5128,7 @@ QUY TẮC BẮT BUỘC:
   const LOCATION_STATUSES = ['pending', 'approved', 'rejected', 'hidden'];
   const cleanText = (v, max = 300) => String(v == null ? '' : v).trim().slice(0, max);
   const cleanUrl = v => { const s = cleanText(v, 500); return /^https?:\/\//i.test(s) ? s : ''; };
+  const cleanTime = v => { const s = cleanText(v, 5); return /^([01]\d|2[0-3]):[0-5]\d$/.test(s) ? s : null; };
   function removeLocationImage(url) {
     if (!url || !url.startsWith('/uploads/locations/')) return;
     fs.unlink(path.join(LOCATION_IMG_DIR, path.basename(url)), () => {});
@@ -5114,7 +5137,7 @@ QUY TẮC BẮT BUỘC:
   // Công khai: chỉ địa điểm đã duyệt, không trả email / ghi chú admin
   app.get('/api/locations', (_req, res) => {
     const locations = db.all(`SELECT id, full_name, phone, place_name, address, description, map_url, image_url,
-      do_spine, do_supply, certified FROM locations WHERE status = 'approved'
+      open_time, close_time, do_spine, do_supply, certified FROM locations WHERE status = 'approved'
       ORDER BY sort_order ASC, approved_at DESC, id DESC`);
     res.json({ locations });
   });
@@ -5136,10 +5159,11 @@ QUY TẮC BẮT BUỘC:
     if (dup) return res.status(409).json({ error: 'Số điện thoại này đã có đơn đăng ký đang chờ duyệt.' });
     const userId = Number(b.user_id) || null;
     const user = userId ? db.get('SELECT id FROM users WHERE id = ?', [userId]) : null;
-    db.run(`INSERT INTO locations (user_id, full_name, phone, email, place_name, address, do_spine, do_supply, certified, status)
-      VALUES (?,?,?,?,?,?,?,?,?, 'pending')`,
+    db.run(`INSERT INTO locations (user_id, full_name, phone, email, place_name, address, open_time, close_time,
+      do_spine, do_supply, certified, status)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?, 'pending')`,
       [user ? user.id : null, full_name, phone, email || null, cleanText(b.place_name, 160) || null,
-       cleanText(b.address, 300) || null, doSpine, doSupply, certified]);
+       cleanText(b.address, 300) || null, cleanTime(b.open_time), cleanTime(b.close_time), doSpine, doSupply, certified]);
     res.json({ ok: true });
   });
 
@@ -5162,6 +5186,8 @@ QUY TẮC BẮT BUỘC:
       address: cleanText(b.address, 300) || null,
       description: cleanText(b.description, 1000) || null,
       map_url: cleanUrl(b.map_url) || null,
+      open_time: cleanTime(b.open_time),
+      close_time: cleanTime(b.close_time),
       do_spine: b.do_spine ? 1 : 0,
       do_supply: b.do_supply ? 1 : 0,
       certified: b.certified ? 1 : 0,
@@ -5175,10 +5201,10 @@ QUY TẮC BẮT BUỘC:
     const l = readLocationBody(req.body || {});
     if (!l.full_name || !l.phone) return res.status(400).json({ error: 'Cần có họ tên và số điện thoại.' });
     const r = db.run(`INSERT INTO locations (full_name, phone, email, place_name, address, description, map_url,
-      do_spine, do_supply, certified, status, sort_order, admin_note, approved_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, CASE WHEN ? = 'approved' THEN datetime('now','localtime') END)`,
+      open_time, close_time, do_spine, do_supply, certified, status, sort_order, admin_note, approved_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CASE WHEN ? = 'approved' THEN datetime('now','localtime') END)`,
       [l.full_name, l.phone, l.email, l.place_name, l.address, l.description, l.map_url,
-       l.do_spine, l.do_supply, l.certified, l.status, l.sort_order, l.admin_note, l.status]);
+       l.open_time, l.close_time, l.do_spine, l.do_supply, l.certified, l.status, l.sort_order, l.admin_note, l.status]);
     res.json({ ok: true, id: r.lastInsertRowid });
   });
 
@@ -5188,11 +5214,11 @@ QUY TẮC BẮT BUỘC:
     const l = readLocationBody({ status: cur.status, ...req.body });
     if (!l.full_name || !l.phone) return res.status(400).json({ error: 'Cần có họ tên và số điện thoại.' });
     db.run(`UPDATE locations SET full_name=?, phone=?, email=?, place_name=?, address=?, description=?, map_url=?,
-      do_spine=?, do_supply=?, certified=?, status=?, sort_order=?, admin_note=?,
+      open_time=?, close_time=?, do_spine=?, do_supply=?, certified=?, status=?, sort_order=?, admin_note=?,
       approved_at = CASE WHEN ? = 'approved' AND approved_at IS NULL THEN datetime('now','localtime') ELSE approved_at END,
       updated_at = datetime('now','localtime') WHERE id = ?`,
       [l.full_name, l.phone, l.email, l.place_name, l.address, l.description, l.map_url,
-       l.do_spine, l.do_supply, l.certified, l.status, l.sort_order, l.admin_note, l.status, cur.id]);
+       l.open_time, l.close_time, l.do_spine, l.do_supply, l.certified, l.status, l.sort_order, l.admin_note, l.status, cur.id]);
     res.json({ ok: true });
   });
 
@@ -5233,6 +5259,58 @@ QUY TẮC BẮT BUỘC:
     if (!cur) return res.status(404).json({ error: 'Không tìm thấy địa điểm.' });
     db.run("UPDATE locations SET image_url = NULL, updated_at = datetime('now','localtime') WHERE id = ?", [cur.id]);
     removeLocationImage(cur.image_url);
+    res.json({ ok: true });
+  });
+
+  // ── Form "Liên hệ Ban tổ chức" (lien-he.html) ──────────────────────
+  const CONTACT_DEPARTMENTS = ['center', 'consult', 'payment', 'community'];
+  const CONTACT_MSG_STATUSES = ['new', 'handled'];
+
+  app.post('/api/contact-messages', (req, res) => {
+    const b = req.body || {};
+    const full_name = cleanText(b.full_name, 120);
+    const phone = cleanText(b.phone, 30);
+    const email = cleanText(b.email, 160).toLowerCase();
+    const message = cleanText(b.message, 3000);
+    if (!full_name) return res.status(400).json({ error: 'Vui lòng nhập họ và tên.' });
+    if (!phone && !email) return res.status(400).json({ error: 'Vui lòng nhập số điện thoại hoặc email để BTC liên hệ lại.' });
+    if (phone && !/^[0-9+().\s-]{8,20}$/.test(phone)) return res.status(400).json({ error: 'Số điện thoại không hợp lệ.' });
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email không hợp lệ.' });
+    if (!CONTACT_DEPARTMENTS.includes(b.department)) return res.status(400).json({ error: 'Vui lòng chọn bộ phận muốn gửi.' });
+    if (message.length < 5) return res.status(400).json({ error: 'Vui lòng nhập nội dung liên hệ.' });
+    const userId = Number(b.user_id) || null;
+    const user = userId ? db.get('SELECT id FROM users WHERE id = ?', [userId]) : null;
+    db.run('INSERT INTO contact_messages (user_id, full_name, phone, email, department, message) VALUES (?,?,?,?,?,?)',
+      [user ? user.id : null, full_name, phone || null, email || null, b.department, message]);
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/contact-messages', requireAdmin, (req, res) => {
+    const { status = '', department = '' } = req.query;
+    const where = [], params = [];
+    if (CONTACT_MSG_STATUSES.includes(status)) { where.push('status = ?'); params.push(status); }
+    if (CONTACT_DEPARTMENTS.includes(department)) { where.push('department = ?'); params.push(department); }
+    const messages = db.all(`SELECT * FROM contact_messages ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+      ORDER BY id DESC LIMIT 500`, params);
+    const counts = {};
+    db.all('SELECT status, COUNT(*) AS n FROM contact_messages GROUP BY status').forEach(r => { counts[r.status] = r.n; });
+    res.json({ messages, counts });
+  });
+
+  app.patch('/api/admin/contact-messages/:id', requireAdmin, (req, res) => {
+    const cur = db.get('SELECT id, status FROM contact_messages WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy tin nhắn.' });
+    const b = req.body || {};
+    const status = CONTACT_MSG_STATUSES.includes(b.status) ? b.status : cur.status;
+    db.run(`UPDATE contact_messages SET status = ?,
+      handled_at = CASE WHEN ? = 'handled' THEN COALESCE(handled_at, datetime('now','localtime')) ELSE NULL END
+      ${b.admin_note !== undefined ? ', admin_note = ?' : ''} WHERE id = ?`,
+      b.admin_note !== undefined ? [status, status, cleanText(b.admin_note, 1000) || null, cur.id] : [status, status, cur.id]);
+    res.json({ ok: true });
+  });
+
+  app.delete('/api/admin/contact-messages/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM contact_messages WHERE id = ?', [req.params.id]);
     res.json({ ok: true });
   });
 
