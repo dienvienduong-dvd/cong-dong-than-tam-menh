@@ -3616,6 +3616,12 @@
                 style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"></textarea>
               <img id="contactQrPreview" alt="Xem trước QR" style="width:160px;height:160px;object-fit:contain;border:1px solid var(--border);border-radius:8px;padding:6px;background:#fff;display:none;">
             </div>
+            <div style="display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--border);">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Mạng xã hội</label>
+              <div style="font-size:12px;color:var(--muted);">Hiển thị bên dưới thông tin tài khoản, theo thứ tự dưới đây. Link phải bắt đầu bằng https://. Để trống tên hiển thị thì dùng tên nền tảng.</div>
+              <div id="contactSocialList" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <button class="btn-sm" type="button" onclick="addContactSocialRow()">+ Thêm mạng xã hội</button>
+            </div>
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveContactSettings()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
@@ -8589,7 +8595,32 @@
       try { people = JSON.parse(s.contact_people || '[]'); } catch (e) {}
       document.getElementById('contactPeopleList').innerHTML = '';
       people.forEach(p => addContactPersonRow(p));
+      let socials = [];
+      try { socials = JSON.parse(s.contact_socials || '[]'); } catch (e) {}
+      document.getElementById('contactSocialList').innerHTML = '';
+      socials.forEach(x => addContactSocialRow(x));
       updateContactQrPreview();
+    }
+
+    const CONTACT_SOCIAL_PLATFORMS = [
+      ['facebook', 'Facebook'], ['youtube', 'YouTube'], ['tiktok', 'TikTok'], ['zalo', 'Zalo'],
+      ['instagram', 'Instagram'], ['website', 'Website'], ['other', 'Khác'],
+    ];
+
+    function addContactSocialRow(x = {}) {
+      const row = document.createElement('div');
+      row.className = 'contact-social-row';
+      row.style.cssText = 'display:grid;grid-template-columns:130px 1fr 2fr auto auto auto;gap:6px;align-items:center;';
+      const opts = CONTACT_SOCIAL_PLATFORMS.map(([v, n]) =>
+        `<option value="${v}" ${v === (x.platform || 'facebook') ? 'selected' : ''}>${n}</option>`).join('');
+      row.innerHTML = `
+        <select class="filter-select" data-f="platform" style="padding:8px 10px;border-radius:6px;font-size:13px;">${opts}</select>
+        <input type="text" class="search-input" style="width:100%;min-width:0" data-f="label" placeholder="Tên hiển thị (VD: Fanpage Điền Viên Đường)" value="${escHtml(x.label || '')}">
+        <input type="url" class="search-input" style="width:100%;min-width:0" data-f="url" placeholder="https://..." value="${escHtml(x.url || '')}">
+        <button class="btn-sm" type="button" title="Lên" onclick="moveContactPersonRow(this, -1)">↑</button>
+        <button class="btn-sm" type="button" title="Xuống" onclick="moveContactPersonRow(this, 1)">↓</button>
+        <button class="btn-sm" type="button" title="Xoá" style="color:#ef4444" onclick="this.parentElement.remove()">✕</button>`;
+      document.getElementById('contactSocialList').appendChild(row);
     }
 
     function addContactPersonRow(p = {}) {
@@ -8597,9 +8628,9 @@
       row.className = 'contact-person-row';
       row.style.cssText = 'display:grid;grid-template-columns:1.2fr 1.2fr 1fr auto auto auto;gap:6px;align-items:center;';
       row.innerHTML = `
-        <input type="text" class="search-input" data-f="role" placeholder="Vai trò (VD: Hỗ trợ tư vấn)" value="${escHtml(p.role || '')}">
-        <input type="text" class="search-input" data-f="name" placeholder="Họ tên" value="${escHtml(p.name || '')}">
-        <input type="text" class="search-input" data-f="phone" placeholder="SĐT" value="${escHtml(p.phone || '')}">
+        <input type="text" class="search-input" style="width:100%;min-width:0" data-f="role" placeholder="Vai trò (VD: Hỗ trợ tư vấn)" value="${escHtml(p.role || '')}">
+        <input type="text" class="search-input" style="width:100%;min-width:0" data-f="name" placeholder="Họ tên" value="${escHtml(p.name || '')}">
+        <input type="text" class="search-input" style="width:100%;min-width:0" data-f="phone" placeholder="SĐT" value="${escHtml(p.phone || '')}">
         <button class="btn-sm" type="button" title="Lên" onclick="moveContactPersonRow(this, -1)">↑</button>
         <button class="btn-sm" type="button" title="Xuống" onclick="moveContactPersonRow(this, 1)">↓</button>
         <button class="btn-sm" type="button" title="Xoá" style="color:#ef4444" onclick="this.parentElement.remove()">✕</button>`;
@@ -8632,6 +8663,13 @@
         name: row.querySelector('[data-f="name"]').value.trim(),
         phone: row.querySelector('[data-f="phone"]').value.trim(),
       })).filter(p => p.name || p.role);
+      const socials = Array.from(document.querySelectorAll('#contactSocialList .contact-social-row')).map(row => ({
+        platform: row.querySelector('[data-f="platform"]').value,
+        label: row.querySelector('[data-f="label"]').value.trim(),
+        url: row.querySelector('[data-f="url"]').value.trim(),
+      })).filter(x => x.url);
+      const badUrl = socials.find(x => !/^https?:\/\//i.test(x.url));
+      if (badUrl) { showToast(`Link "${badUrl.url}" phải bắt đầu bằng https://`, 'red'); return; }
       const res = await api('/admin/settings', {
         method: 'PATCH',
         body: JSON.stringify({
@@ -8642,6 +8680,7 @@
           contact_bank_account: document.getElementById('settingContactBankAccount').value.trim(),
           contact_bank_holder: document.getElementById('settingContactBankHolder').value.trim(),
           contact_bank_note: document.getElementById('settingContactBankNote').value.trim(),
+          contact_socials: JSON.stringify(socials),
         })
       });
       if (res.error) { showToast(res.error, 'red'); return; }

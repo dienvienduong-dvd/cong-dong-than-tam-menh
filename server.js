@@ -2187,6 +2187,8 @@ ${extra}
     ['contact_bank_account',   '8600359368'],
     ['contact_bank_holder',    'HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG'],
     ['contact_bank_note',      'Cộng đồng chỉ sử dụng duy nhất tài khoản Hộ kinh doanh Điền Viên Đường. Vui lòng không chuyển cho bất kỳ tài khoản nào ngoài tài khoản này.'],
+    // [{ platform: facebook|youtube|tiktok|zalo|instagram|website|other, label, url }]
+    ['contact_socials',        '[]'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -6137,6 +6139,7 @@ QUY TẮC BẮT BUỘC:
       'ttm_intake_trigger',
       'contact_heading', 'contact_intro', 'contact_people',
       'contact_bank_name', 'contact_bank_account', 'contact_bank_holder', 'contact_bank_note',
+      'contact_socials',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
