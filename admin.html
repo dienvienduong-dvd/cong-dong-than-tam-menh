@@ -1032,6 +1032,9 @@
     .settings-tab-btn.active { color: var(--primary); background: var(--bg-active,#e0f2fe); }
     .settings-tab-panel { display: none; }
     .settings-tab-panel.active { display: block; flex: 1; min-width: 0; }
+    /* Khung trong từng tab Cài đặt giãn hết chiều ngang (bỏ max-width inline 600–760px) */
+    .settings-tab-panel > .table-card,
+    .settings-tab-panel > div { max-width: none !important; }
     .mpp-top-tab-panel, .mpp-ttm-tab-panel, .mpp-comm-tab-panel, .mpp-learn-tab-panel { display: none; }
     .mpp-top-tab-panel.active, .mpp-ttm-tab-panel.active, .mpp-comm-tab-panel.active, .mpp-learn-tab-panel.active { display: block; }
 
@@ -3623,7 +3626,7 @@
 
         <!-- Payment: SePay auto-confirm + tài khoản nhận thanh toán -->
         <div class="settings-tab-panel" data-tab="payment">
-        <div style="display:flex;flex-direction:column;gap:16px;max-width:760px;">
+        <div style="display:flex;flex-direction:column;max-width:760px;">
           <div class="table-card">
             <div class="table-card-header">
               <h2>⚡ Tự động xác nhận chuyển khoản (SePay)</h2>
