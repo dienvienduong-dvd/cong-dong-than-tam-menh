@@ -4680,6 +4680,8 @@
       <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
         <input class="search-input" style="flex:1" id="courseMemberAddEmail" placeholder="Thêm học viên bằng email...">
         <button class="btn-sm primary" onclick="addCourseMemberByEmail()">+ Thêm</button>
+        <button class="btn-sm" onclick="document.getElementById('courseMemberCsvInput').click()" title="Nhập danh sách học viên từ file CSV (cột Email)">📥 Nhập CSV</button>
+        <input type="file" id="courseMemberCsvInput" accept=".csv,text/csv" style="display:none" onchange="importCourseMembersCsv(this)">
       </div>
       <div style="padding:8px 22px 20px;overflow-y:auto;flex:1;" id="courseMembersList"></div>
     </div>
@@ -9041,11 +9043,24 @@
       el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Đang tải...</div>';
       const data = await api(`/admin/courses/${managingMembersCourseId}/enrollments`);
       const enrollments = data.enrollments || [];
-      if (!enrollments.length) {
+      const grants = data.grants || [];
+      if (!enrollments.length && !grants.length) {
         el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Chưa có học viên hoặc yêu cầu nào.</div>';
         return;
       }
-      el.innerHTML = enrollments.map(m => `
+      const grantsHtml = grants.length ? `
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:12px 0 4px;">
+      Chưa tạo tài khoản (${grants.length}) — tự vào học khi đăng ký/đăng nhập bằng email này
+    </div>` + grants.map(g => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;">${escHtml(g.name || g.email)}</div>
+        <div style="font-size:11px;color:var(--muted);">${escHtml(g.email)}</div>
+      </div>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e0f2fe;color:#0369a1;">Chờ tài khoản</span>
+      <button class="btn-sm" style="color:#ef4444" onclick="removeCourseEmailGrant(${g.id})">Xoá</button>
+    </div>`).join('') : '';
+      el.innerHTML = grantsHtml + enrollments.map(m => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
       <div style="flex:1;min-width:0;">
         <div style="font-weight:600;font-size:13px;">${escHtml(m.first_name)} ${escHtml(m.last_name)}</div>
@@ -9075,12 +9090,62 @@
       loadAdminCourses();
     }
 
+    async function removeCourseEmailGrant(grantId) {
+      await api(`/admin/course-email-grants/${grantId}`, { method: 'DELETE' });
+      showToast('Đã xoá.', 'green');
+      loadCourseEnrollments();
+    }
+
+    // Parse CSV (hỗ trợ ô có dấu ngoặc kép) → [{ name, email }] theo cột Email / Name
+    function parseStudentsCsv(text) {
+      const rows = [];
+      let row = [], cell = '', q = false;
+      text = text.replace(/^﻿/, '');
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (q) {
+          if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+          else if (c === '"') q = false;
+          else cell += c;
+        } else if (c === '"') q = true;
+        else if (c === ',') { row.push(cell); cell = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(cell); rows.push(row); row = []; cell = '';
+        } else cell += c;
+      }
+      if (cell || row.length) { row.push(cell); rows.push(row); }
+      if (!rows.length) return [];
+      const header = rows[0].map(h => h.trim().toLowerCase());
+      const emailIdx = header.findIndex(h => h === 'email' || h === 'e-mail');
+      const nameIdx = header.findIndex(h => ['name', 'họ tên', 'tên', 'full name'].includes(h));
+      const body = emailIdx >= 0 ? rows.slice(1) : rows;
+      return body.map(r => {
+        const email = emailIdx >= 0 ? r[emailIdx] : r.find(v => /\S+@\S+\.\S+/.test(v));
+        return { email: (email || '').trim(), name: nameIdx >= 0 ? (r[nameIdx] || '').trim() : '' };
+      }).filter(r => r.email);
+    }
+
+    async function importCourseMembersCsv(input) {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      const students = parseStudentsCsv(await file.text());
+      if (!students.length) { showToast('Không tìm thấy email nào trong file CSV.', 'red'); return; }
+      if (!confirm(`Cấp quyền học khoá này cho ${students.length} email trong file?`)) return;
+      const res = await api(`/admin/courses/${managingMembersCourseId}/enrollments/bulk`, { method: 'POST', body: JSON.stringify({ students }) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast(`Đã cấp quyền ngay: ${res.enrolled} · Chờ tạo tài khoản: ${res.granted}` + (res.invalid ? ` · Email lỗi: ${res.invalid}` : ''), 'green');
+      loadCourseEnrollments();
+      loadAdminCourses();
+    }
+
     async function addCourseMemberByEmail() {
       const email = document.getElementById('courseMemberAddEmail').value.trim();
       if (!email) { showToast('Vui lòng nhập email.', 'red'); return; }
       const res = await api(`/admin/courses/${managingMembersCourseId}/enrollments`, { method: 'POST', body: JSON.stringify({ email }) });
       if (res.error) { showToast(res.error, 'red'); return; }
-      showToast('Đã thêm học viên.', 'green');
+      showToast(res.granted ? 'Email chưa có tài khoản — sẽ tự vào học khi đăng ký/đăng nhập.' : 'Đã thêm học viên.', 'green');
       document.getElementById('courseMemberAddEmail').value = '';
       loadCourseEnrollments();
       loadAdminCourses();

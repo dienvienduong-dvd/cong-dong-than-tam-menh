@@ -475,6 +475,16 @@ const SCHEMA = `
     status       TEXT DEFAULT 'pending',
     created_at   TEXT DEFAULT (datetime('now','localtime'))
   );
+  -- Quyền học cấp trước theo email (học viên cũ chưa có tài khoản). Khi user đăng ký /
+  -- đăng nhập bằng email này, quyền được chuyển thành course_enrollments 'approved' rồi xoá.
+  CREATE TABLE IF NOT EXISTS course_email_grants (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id    INTEGER NOT NULL REFERENCES courses(id),
+    email        TEXT NOT NULL,
+    name         TEXT,
+    created_at   TEXT DEFAULT (datetime('now','localtime')),
+    UNIQUE(course_id, email)
+  );
   -- Thư viện bài tập dùng lại (không AI chấm điểm) — chỉ hướng dẫn + 1 link, học
   -- viên tự đọc và bấm vào làm. Dùng chung cho bài học (exercise_type='link') và
   -- nội dung 377 ngày (program377_days.linked_assignment_id).
@@ -2343,6 +2353,23 @@ ${extra}
   }
 
   // ── Helpers ────────────────────────────────────────────────
+  // Enroll (approved) — dùng chung cho cấp quyền thủ công, CSV và grant theo email
+  function approveCourseEnrollment(courseId, userId) {
+    const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [courseId, userId]);
+    if (existing) db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
+    else db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [courseId, userId, 'approved']);
+  }
+
+  // Chuyển các quyền học cấp trước theo email thành enrollment thật cho user này
+  function applyCourseEmailGrants(userId, email) {
+    if (!userId || !email) return;
+    const grants = db.all('SELECT id, course_id FROM course_email_grants WHERE email = ?', [String(email).trim().toLowerCase()]);
+    grants.forEach(g => {
+      approveCourseEnrollment(g.course_id, userId);
+      db.run('DELETE FROM course_email_grants WHERE id = ?', [g.id]);
+    });
+  }
+
   function addXP(userId, amount, source, note = null) {
     db.run('UPDATE users SET xp = xp + ? WHERE id = ?', [amount, userId]);
     db.run(
@@ -2777,6 +2804,7 @@ QUY TẮC BẮT BUỘC:
 
     const userId = result.lastInsertRowid;
     addXP(userId, 10, 'register', 'Chào mừng thành viên mới');
+    applyCourseEmailGrants(userId, email);
 
     const user = db.get(
       'SELECT id, first_name, last_name, email, level, xp, created_at FROM users WHERE id = ?',
@@ -2820,6 +2848,7 @@ QUY TẮC BẮT BUỘC:
       return res.status(403).json({ error: 'Tài khoản này đã bị khoá.' });
 
     db.run("UPDATE users SET last_active_at = datetime('now','localtime') WHERE id = ?", [user.id]);
+    applyCourseEmailGrants(user.id, user.email);
     res.json({
       success: true,
       user: { id: user.id, first_name: user.first_name, last_name: user.last_name,
@@ -2883,6 +2912,7 @@ QUY TẮC BẮT BUỘC:
     if (user.status === 'banned') return res.status(403).json({ error: 'Tài khoản đã bị khoá.' });
 
     db.run("UPDATE users SET last_active_at = datetime('now','localtime') WHERE id = ?", [user.id]);
+    applyCourseEmailGrants(user.id, user.email);
     res.json({
       success: true,
       user: {
@@ -5706,6 +5736,7 @@ QUY TẮC BẮT BUỘC:
   app.delete('/api/admin/courses/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM course_lessons WHERE course_id = ?', [req.params.id]);
     db.run('DELETE FROM course_enrollments WHERE course_id = ?', [req.params.id]);
+    db.run('DELETE FROM course_email_grants WHERE course_id = ?', [req.params.id]);
     db.run("UPDATE products SET status = 'draft', course_id = NULL WHERE course_id = ?", [req.params.id]);
     db.run('DELETE FROM courses WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -5719,20 +5750,53 @@ QUY TẮC BẮT BUỘC:
       WHERE ce.course_id = ?
       ORDER BY ce.status ASC, ce.created_at ASC
     `, [req.params.id]);
-    res.json({ enrollments });
+    const grants = db.all('SELECT id, email, name, created_at FROM course_email_grants WHERE course_id = ? ORDER BY created_at DESC, email', [req.params.id]);
+    res.json({ enrollments, grants });
+  });
+
+  // Nhập danh sách học viên (từ CSV): email đã có tài khoản → cấp quyền ngay;
+  // chưa có → lưu course_email_grants, tự cấp khi họ đăng ký / đăng nhập.
+  app.post('/api/admin/courses/:id/enrollments/bulk', requireAdmin, (req, res) => {
+    const course = db.get('SELECT id FROM courses WHERE id = ?', [req.params.id]);
+    if (!course) return res.status(404).json({ error: 'Không tìm thấy khóa học.' });
+    const rows = Array.isArray(req.body.students) ? req.body.students : [];
+    let enrolled = 0, granted = 0, invalid = 0;
+    const seen = new Set();
+    rows.forEach(r => {
+      const email = String(r?.email || '').trim().toLowerCase();
+      if (seen.has(email)) return;
+      if (!/^\S+@\S+\.\S+$/.test(email)) { invalid++; return; }
+      seen.add(email);
+      const user = db.get('SELECT id FROM users WHERE lower(email) = ?', [email]);
+      if (user) {
+        approveCourseEnrollment(course.id, user.id);
+        enrolled++;
+      } else {
+        db.run('INSERT OR IGNORE INTO course_email_grants (course_id, email, name) VALUES (?,?,?)',
+          [course.id, email, String(r?.name || '').trim() || null]);
+        granted++;
+      }
+    });
+    res.json({ success: true, enrolled, granted, invalid });
+  });
+
+  app.delete('/api/admin/course-email-grants/:id', requireAdmin, (req, res) => {
+    db.run('DELETE FROM course_email_grants WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
   });
 
   app.post('/api/admin/courses/:id/enrollments', requireAdmin, (req, res) => {
     const { email } = req.body;
     if (!email?.trim()) return res.status(400).json({ error: 'Vui lòng nhập email học viên.' });
-    const user = db.get('SELECT id FROM users WHERE email = ?', [email.trim()]);
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy thành viên với email này.' });
-    const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [req.params.id, user.id]);
-    if (existing) {
-      db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
-    } else {
-      db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [req.params.id, user.id, 'approved']);
+    const normEmail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(normEmail)) return res.status(400).json({ error: 'Email không hợp lệ.' });
+    const user = db.get('SELECT id FROM users WHERE lower(email) = ?', [normEmail]);
+    if (!user) {
+      // Chưa có tài khoản → cấp quyền chờ, tự vào học khi đăng ký / đăng nhập bằng email này
+      db.run('INSERT OR IGNORE INTO course_email_grants (course_id, email) VALUES (?,?)', [req.params.id, normEmail]);
+      return res.status(201).json({ success: true, granted: true });
     }
+    approveCourseEnrollment(req.params.id, user.id);
     res.status(201).json({ success: true });
   });
 
