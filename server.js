@@ -24,7 +24,7 @@ const { Resend } = require('resend');
 const app      = express();
 const PORT     = process.env.PORT || 3000;
 const ADMIN_KEY   = process.env.ADMIN_KEY   || 'nguhanh-admin-2025';
-const SEPAY_KEY   = process.env.SEPAY_KEY   || 'ae3066fa595768259e92553aa371405a8fa814c6';
+const SEPAY_KEY   = process.env.SEPAY_KEY   || ''; // key webhook SePay đặt trong Admin → Cài đặt → Thanh toán
 const GSHEET_ID   = process.env.GSHEET_ID   || '1TNzXmIR9Qcu_oqeNxYGFdnFxt2YN9xik4OPJOtac4nI';
 const RESEND_KEY       = process.env.RESEND_API_KEY    || '';
 const OPENROUTER_KEY   = process.env.OPENROUTER_API_KEY || '';
@@ -6911,10 +6911,50 @@ QUY TẮC BẮT BUỘC:
     }
   }
 
+  // ── SePay settings (Admin → Cài đặt → Thanh toán) ──────────
+  // API key webhook lưu trong admin_secrets (không lộ qua /api/settings công khai).
+  // Chưa lưu key trong DB → dùng SEPAY_KEY từ env như trước.
+  function getSecret(key) {
+    return db.get('SELECT value FROM admin_secrets WHERE key = ?', [key])?.value || '';
+  }
+  function setSecret(key, value) {
+    db.run('INSERT INTO admin_secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', [key, value]);
+  }
+  function sepayApiKey() {
+    return getSecret('sepay_api_key') || SEPAY_KEY || '';
+  }
+  function sepayAutoConfirm() {
+    return getSecret('sepay_auto_confirm') !== '0'; // mặc định bật (giữ hành vi cũ)
+  }
+
+  app.get('/api/admin/payment-settings', requireAdmin, (_req, res) => {
+    const dbKey = getSecret('sepay_api_key');
+    const key = sepayApiKey();
+    res.json({
+      auto_confirm: sepayAutoConfirm(),
+      key_source: dbKey ? 'db' : (SEPAY_KEY ? 'env' : 'none'),
+      key_masked: key ? '••••••••' + key.slice(-4) : '',
+      webhook_url: `${SITE_URL}/api/webhook/sepay`,
+      memo_prefix: SEPAY_MEMO_PREFIX,
+    });
+  });
+
+  app.put('/api/admin/payment-settings', requireAdmin, (req, res) => {
+    const { auto_confirm, api_key, clear_key } = req.body || {};
+    if (typeof auto_confirm === 'boolean') setSecret('sepay_auto_confirm', auto_confirm ? '1' : '0');
+    if (clear_key) db.run("DELETE FROM admin_secrets WHERE key = 'sepay_api_key'");
+    else if (typeof api_key === 'string' && api_key.trim()) setSecret('sepay_api_key', api_key.trim());
+    res.json({ success: true });
+  });
+
   // ── SePay webhook ──────────────────────────────────────────
   app.post('/api/webhook/sepay', (req, res) => {
-    const apikey = req.headers['apikey'] || req.headers['x-api-key'] || req.body?.apikey;
-    if (apikey !== SEPAY_KEY) {
+    // SePay gửi "Authorization: Apikey <KEY>"; giữ thêm các cách cũ (header apikey / x-api-key / body)
+    const auth = String(req.headers['authorization'] || '');
+    const apikey = (auth.match(/^apikey\s+(.+)$/i) || [])[1]?.trim()
+      || req.headers['apikey'] || req.headers['x-api-key'] || req.body?.apikey;
+    const expected = sepayApiKey();
+    if (!expected || apikey !== expected) {
       console.warn('SePay webhook: unauthorized request');
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
@@ -6923,6 +6963,10 @@ QUY TẮC BẮT BUỘC:
     console.log(`SePay webhook received: type=${transferType} amount=${transferAmount} content="${content}"`);
 
     if (transferType !== 'in') return res.json({ success: true });
+    if (!sepayAutoConfirm()) {
+      console.log('SePay: tự động xác nhận đang tắt — bỏ qua, admin duyệt thủ công.');
+      return res.json({ success: true, message: 'Auto-confirm disabled.' });
+    }
 
     // Parse "{PREFIX} {product_id} {buyer_id}" from nội dung chuyển khoản
     const match = String(content || '').match(new RegExp(SEPAY_MEMO_PREFIX + '\\s+(\\d+)\\s+(\\d+)', 'i'));
@@ -8141,7 +8185,7 @@ b) "Mỗi sáng bạn dậy được lúc mấy giờ, có thời gian cho quy t
     console.log(`   Admin: http://localhost:${PORT}/admin.html`);
     console.log(`   Admin key : ${ADMIN_KEY}`);
     console.log(`\n🔔  SePay Webhook`);
-    console.log(`   SePay Key : ${SEPAY_KEY}`);
+    console.log(`   SePay Key : ${SEPAY_KEY ? '••••' + SEPAY_KEY.slice(-4) : '(chưa đặt)'} (env; key lưu trong Admin được ưu tiên)`);
     console.log(`   Webhook   : ${SITE_URL}/api/webhook/sepay`);
     console.log(`\n📧  Email (Resend)`);
     console.log(`   Status    : ${resendClient ? '✅ Active' : '⚠️  No RESEND_API_KEY — emails disabled'}`);

@@ -2879,7 +2879,6 @@
           <button class="mp-tab-btn active" onclick="showMpTab('general', this)">⚙️ Cài đặt chung</button>
           <button class="mp-tab-btn" onclick="showMpTab('products', this)">🛍️ Sản phẩm</button>
           <button class="mp-tab-btn" onclick="showMpTab('orders', this)">🧾 Đơn hàng</button>
-          <button class="mp-tab-btn" onclick="showMpTab('payment', this)">💳 Thanh toán</button>
         </div>
 
         <!-- Cài đặt chung -->
@@ -2905,39 +2904,6 @@
               </div>
               <div style="display:flex;gap:10px;">
                 <button class="btn-sm primary" onclick="saveMpGeneralSettings()">💾 Lưu</button>
-                <button class="btn-sm" onclick="loadMpSettings()">↺ Đặt lại</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Thanh toán -->
-        <div class="mp-tab-panel" data-tab="payment">
-          <div class="table-card" style="max-width:600px;">
-            <div class="table-card-header">
-              <h2>💳 Cài đặt thanh toán — Chuyển khoản ngân hàng</h2>
-            </div>
-            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
-              <div style="font-size:12px;color:var(--muted);line-height:1.5;">
-                Thông tin này sẽ hiển thị cho người mua ở trang thanh toán (checkout.html) khi chọn chuyển khoản ngân hàng.
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:13px;font-weight:600;color:var(--text);">Ngân hàng</label>
-                <input id="mpSettingBankName" type="text" class="search-input" maxlength="60"
-                  style="width:100%" placeholder="VD: BIDV">
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:13px;font-weight:600;color:var(--text);">Tên tài khoản</label>
-                <input id="mpSettingBankAccountName" type="text" class="search-input" maxlength="80"
-                  style="width:100%" placeholder="VD: HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG">
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:13px;font-weight:600;color:var(--text);">Số tài khoản</label>
-                <input id="mpSettingBankAccountNumber" type="text" class="search-input" maxlength="40"
-                  style="width:100%" placeholder="VD: 8600359368">
-              </div>
-              <div style="display:flex;gap:10px;">
-                <button class="btn-sm primary" onclick="saveMpPaymentSettings()">💾 Lưu</button>
                 <button class="btn-sm" onclick="loadMpSettings()">↺ Đặt lại</button>
               </div>
             </div>
@@ -3110,6 +3076,7 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('calendar', this)">📅 Lịch</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('contact', this)">📞 Thông tin liên hệ</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('payment', this); loadPaymentSettings();">💳 Thanh toán</button>
         </div>
 
         <div class="settings-tab-panel active" data-tab="community">
@@ -3649,6 +3616,85 @@
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveContactSettings()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- Payment: SePay auto-confirm + tài khoản nhận thanh toán -->
+        <div class="settings-tab-panel" data-tab="payment">
+        <div style="display:flex;flex-direction:column;gap:16px;max-width:760px;">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>⚡ Tự động xác nhận chuyển khoản (SePay)</h2>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;font-size:13px;">
+              <div style="color:var(--muted);line-height:1.6;">
+                Tự động xác nhận đơn hàng chuyển khoản ngay khi tiền về, không cần vào Admin bấm xác nhận thủ công.
+                Cần có tài khoản tại <a href="https://my.sepay.vn" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600;">my.sepay.vn</a>
+                đã liên kết với <strong>đúng tài khoản ngân hàng</strong> ở mục "Phương thức nhận thanh toán" bên dưới.
+              </div>
+              <ol style="margin:0;padding-left:20px;color:var(--text);line-height:1.9;">
+                <li>Vào my.sepay.vn → <strong>Tích hợp Webhooks</strong> → thêm webhook trỏ về:
+                  <code id="paySepayWebhookUrl" style="background:var(--bg-hover,#f1f5f9);padding:2px 6px;border-radius:4px;font-size:12px;">—</code>
+                  <button class="btn-sm" type="button" style="padding:2px 8px;font-size:11px;" onclick="copyPaySepayWebhook(this)">Chép</button>
+                </li>
+                <li>Kiểu chứng thực: <strong>API Key</strong>. Lấy API Key của webhook đó, dán vào ô bên dưới.</li>
+                <li>Bật công tắc "Tự động xác nhận" và bấm Lưu.</li>
+              </ol>
+              <div style="font-size:12px;color:var(--muted);">
+                Nội dung chuyển khoản tự sinh ở trang thanh toán có dạng <code id="paySepayMemo">—</code> — hệ thống dựa vào đó để khớp đơn.
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
+                <input type="checkbox" id="paySepayAuto"> Tự động xác nhận đơn hàng chuyển khoản qua SePay
+              </label>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-weight:600;">API Key webhook <span id="paySepayKeyInfo" style="font-weight:400;color:var(--muted);"></span></label>
+                <input type="password" id="paySepayKey" class="search-input" style="width:100%;max-width:420px;" autocomplete="new-password" placeholder="Để trống nếu không đổi API key">
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="paySepayClear"> Xoá API Key đã lưu
+              </label>
+              <div><button class="btn-sm primary" onclick="savePaymentSettings()">💾 Lưu thay đổi</button></div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>🏦 Phương thức nhận thanh toán</h2>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;font-size:13px;">
+              <div id="payBankView" style="display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                <div style="font-size:22px;">🏛️</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:700;">Chuyển khoản ngân hàng
+                    <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--bg-hover,#f1f5f9);color:var(--muted);margin-left:6px;">Ngân hàng</span>
+                  </div>
+                  <div id="payBankSummary" style="color:var(--muted);margin-top:4px;">—</div>
+                </div>
+                <button class="btn-sm" type="button" onclick="togglePayBankEdit(true)">Sửa</button>
+              </div>
+              <div id="payBankEdit" style="display:none;flex-direction:column;gap:12px;">
+                <div style="font-size:12px;color:var(--muted);line-height:1.5;">
+                  Hiển thị cho người mua ở trang thanh toán (mã QR + số tài khoản) và trong email nhắc thanh toán.
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <label style="font-weight:600;">Ngân hàng</label>
+                  <input id="mpSettingBankName" type="text" class="search-input" maxlength="60" style="width:100%" placeholder="VD: BIDV">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <label style="font-weight:600;">Tên tài khoản</label>
+                  <input id="mpSettingBankAccountName" type="text" class="search-input" maxlength="80" style="width:100%" placeholder="VD: HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <label style="font-weight:600;">Số tài khoản</label>
+                  <input id="mpSettingBankAccountNumber" type="text" class="search-input" maxlength="40" style="width:100%" placeholder="VD: 8600359368">
+                </div>
+                <div style="display:flex;gap:10px;">
+                  <button class="btn-sm primary" onclick="saveMpPaymentSettings()">💾 Lưu</button>
+                  <button class="btn-sm" onclick="togglePayBankEdit(false)">Huỷ</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -9989,7 +10035,67 @@
         body: JSON.stringify({ mp_bank_name, mp_bank_account_name, mp_bank_account_number })
       });
       if (res.error) { showToast(res.error, 'red'); return; }
-      showToast('Đã lưu cài đặt thanh toán.', 'green');
+      showToast('Đã lưu tài khoản nhận thanh toán.', 'green');
+      renderPayBankSummary();
+      togglePayBankEdit(false);
+    }
+
+    // ── Cài đặt → Thanh toán (SePay + tài khoản nhận) ─────────────
+    function renderPayBankSummary() {
+      const name = document.getElementById('mpSettingBankName').value.trim();
+      const acc = document.getElementById('mpSettingBankAccountNumber').value.trim();
+      const owner = document.getElementById('mpSettingBankAccountName').value.trim();
+      document.getElementById('payBankSummary').textContent =
+        [name, acc, owner].filter(Boolean).join('  ·  ') || 'Chưa cấu hình tài khoản ngân hàng';
+    }
+
+    function togglePayBankEdit(show) {
+      document.getElementById('payBankEdit').style.display = show ? 'flex' : 'none';
+      document.getElementById('payBankView').style.display = show ? 'none' : 'flex';
+    }
+
+    async function loadPaymentSettings() {
+      try {
+        const [s, p] = await Promise.all([
+          fetch(`${API}/settings`).then(r => r.json()),
+          api('/admin/payment-settings'),
+        ]);
+        document.getElementById('mpSettingBankName').value = s.mp_bank_name || '';
+        document.getElementById('mpSettingBankAccountName').value = s.mp_bank_account_name || '';
+        document.getElementById('mpSettingBankAccountNumber').value = s.mp_bank_account_number || '';
+        renderPayBankSummary();
+        togglePayBankEdit(false);
+        if (p.error) { showToast(p.error, 'red'); return; }
+        document.getElementById('paySepayWebhookUrl').textContent = p.webhook_url;
+        document.getElementById('paySepayMemo').textContent = `${p.memo_prefix} <mã SP> <mã người mua>`;
+        document.getElementById('paySepayAuto').checked = !!p.auto_confirm;
+        document.getElementById('paySepayKey').value = '';
+        document.getElementById('paySepayClear').checked = false;
+        document.getElementById('paySepayKeyInfo').textContent =
+          p.key_source === 'db' ? `(đang lưu: ${p.key_masked})`
+          : p.key_source === 'env' ? `(đang dùng key mặc định từ server: ${p.key_masked})`
+          : '(chưa có)';
+      } catch (e) { showToast('Không tải được cài đặt thanh toán.', 'red'); }
+    }
+
+    async function savePaymentSettings() {
+      const body = { auto_confirm: document.getElementById('paySepayAuto').checked };
+      const key = document.getElementById('paySepayKey').value.trim();
+      if (document.getElementById('paySepayClear').checked) body.clear_key = true;
+      else if (key) body.api_key = key;
+      const res = await api('/admin/payment-settings', { method: 'PUT', body: JSON.stringify(body) });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      showToast('Đã lưu cài đặt SePay.', 'green');
+      loadPaymentSettings();
+    }
+
+    function copyPaySepayWebhook(btn) {
+      const url = document.getElementById('paySepayWebhookUrl').textContent;
+      if (!navigator.clipboard) return;
+      navigator.clipboard.writeText(url).then(() => {
+        btn.textContent = 'Đã chép';
+        setTimeout(() => { btn.textContent = 'Chép'; }, 1500);
+      });
     }
 
     async function loadAdminMarketplace() {
