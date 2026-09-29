@@ -807,10 +807,15 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // ── "Liên hệ cộng đồng" nav injector ─────────────────────────
-// Luôn nằm cuối sidebar (sau "Khác"), trỏ tới trang Liên hệ BTC.
+// Luôn nằm cuối sidebar (sau "Khác"): trang Liên hệ BTC + Danh sách địa điểm.
 (function injectContactNav() {
   const here = location.pathname.split('/').pop() || 'index.html';
   const icon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>';
+  const pinIcon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  const ITEMS = [
+    ['lien-he.html', 'Liên hệ BTC', icon],
+    ['dia-diem.html', 'Danh sách địa điểm', pinIcon],
+  ];
 
   function addSection(navEl) {
     if (!navEl || navEl.dataset.contactNav) return;
@@ -822,11 +827,13 @@ document.addEventListener('DOMContentLoaded', () => {
     label.style.marginTop = '8px';
     label.textContent = 'Liên hệ cộng đồng';
     section.appendChild(label);
-    const a = document.createElement('a');
-    a.href = 'lien-he.html';
-    a.className = 'nav-item' + (here === 'lien-he.html' ? ' active' : '');
-    a.innerHTML = icon + 'Liên hệ BTC';
-    section.appendChild(a);
+    ITEMS.forEach(([href, text, ico]) => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.className = 'nav-item' + (here === href ? ' active' : '');
+      a.innerHTML = ico + text;
+      section.appendChild(a);
+    });
     navEl.appendChild(section);
   }
   addSection(document.getElementById('sidebar-nav'));

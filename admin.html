@@ -1119,6 +1119,7 @@
     .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
     .mp-tab-btn:hover { color: var(--text); }
     .mp-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    @media (max-width: 560px) { .loc-modal-grid { grid-template-columns: 1fr !important; } }
     .mp-tab-panel { display: none; }
     .mp-tab-panel.active { display: block; }
     .p377-tab-panel { display: none; }
@@ -1436,6 +1437,13 @@
         <svg class="sbar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="sbar-group" data-key="hethong">
+      <button class="sbar-item" onclick="showPage('locations')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+        </svg>
+        Địa điểm
+        <span class="sbar-count" id="sbLocPendingCount" style="background:#ef4444;color:#fff;display:none">0</span>
+      </button>
       <button class="sbar-item" onclick="showPage('notifications')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -2633,6 +2641,46 @@
               </thead>
               <tbody id="assignmentsTbody">
                 <tr><td colspan="4"><div class="empty-state">Đang tải...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Địa điểm tác động cột sống / hỗ trợ mua sản phẩm (dia-diem.html) ── -->
+      <section class="page" id="page-locations">
+        <div class="table-card">
+          <div class="table-card-header" style="flex-wrap:wrap;gap:10px;">
+            <h2>Địa điểm tác động cột sống &amp; hỗ trợ mua sản phẩm</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input class="search-input" type="text" placeholder="Tìm tên, SĐT, địa chỉ..." id="locAdminSearch" oninput="renderAdminLocations()">
+              <a href="dia-diem.html" target="_blank"><button class="btn-sm">Xem trang ↗</button></a>
+              <button class="btn-sm primary" onclick="openLocationModal()">+ Thêm địa điểm</button>
+            </div>
+          </div>
+          <div class="mp-tabs" style="padding:0 20px;margin-bottom:0;" id="locStatusTabs">
+            <button class="mp-tab-btn active" data-status="pending" onclick="setLocStatusTab('pending', this)">⏳ Chờ duyệt <span id="locCnt-pending"></span></button>
+            <button class="mp-tab-btn" data-status="approved" onclick="setLocStatusTab('approved', this)">✅ Đang hiển thị <span id="locCnt-approved"></span></button>
+            <button class="mp-tab-btn" data-status="hidden" onclick="setLocStatusTab('hidden', this)">🙈 Đã ẩn <span id="locCnt-hidden"></span></button>
+            <button class="mp-tab-btn" data-status="rejected" onclick="setLocStatusTab('rejected', this)">✖ Từ chối <span id="locCnt-rejected"></span></button>
+            <button class="mp-tab-btn" data-status="" onclick="setLocStatusTab('', this)">Tất cả</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:84px">Ảnh</th>
+                  <th>Địa điểm</th>
+                  <th>Người đăng ký</th>
+                  <th>Hạng mục</th>
+                  <th>Chứng chỉ</th>
+                  <th>Trạng thái</th>
+                  <th>Ngày gửi</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="locAdminTbody">
+                <tr><td colspan="8"><div class="empty-state">Đang tải...</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3918,6 +3966,82 @@
   </div><!-- /shell -->
 
   <!-- ── CRM List Modal ────────────────────────────── -->
+  <!-- ── Địa điểm Modal (thêm / sửa / duyệt) ─────────────── -->
+  <div id="locationModal" onclick="if (event.target === this) closeLocationModal()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;margin:auto 0;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:15px;font-weight:700;" id="locModalTitle">Thêm địa điểm</div>
+        <button onclick="closeLocationModal()" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:18px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="loc-modal-grid">
+        <input type="hidden" id="locEditId">
+        <div style="grid-column:1/-1;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+          <div id="locImgPreview" style="width:200px;aspect-ratio:16/10;border-radius:8px;background:#f1f5f9;border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);text-align:center;">Chưa có ảnh<br>(trang sẽ dùng ảnh minh hoạ)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:180px;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;">Ảnh cửa hàng</label>
+            <input type="file" id="locImgFile" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewLocationImage(this)" style="font-size:13px;">
+            <div style="font-size:12px;color:var(--muted);">JPG/PNG/WEBP, tối đa 8MB. Ảnh ngang (16:10) hiển thị đẹp nhất.</div>
+            <label style="font-size:13px;display:none;align-items:center;gap:6px;" id="locImgRemoveWrap"><input type="checkbox" id="locImgRemove"> Xoá ảnh hiện tại</label>
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Họ và tên *</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locFullName">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Số điện thoại *</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locPhone">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Email (không hiển thị công khai)</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locEmail" type="email">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Tên địa điểm</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locPlaceName">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Địa chỉ</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locAddress">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Link Google Maps (tuỳ chọn)</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locMapUrl" placeholder="https://maps.app.goo.gl/... — để trống sẽ tự tìm theo địa chỉ">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Mô tả ngắn</label>
+          <textarea id="locDescription" rows="2" maxlength="1000" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="VD: Giờ mở cửa 8h–20h, nhận đặt lịch qua Zalo..."></textarea>
+        </div>
+        <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px;font-size:13px;">
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="locDoSpine"> Làm tác động cột sống</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="locDoSupply"> Cung cấp nguyên liệu Điền Viên Đường</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="locCertified"> Có chứng chỉ Y học bản địa Việt Nam</label>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Trạng thái</label>
+          <select class="search-input" style="width:100%;min-width:0" id="locStatus">
+            <option value="pending">⏳ Chờ duyệt</option>
+            <option value="approved">✅ Đã duyệt — hiển thị</option>
+            <option value="hidden">🙈 Ẩn</option>
+            <option value="rejected">✖ Từ chối</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Thứ tự (nhỏ lên trước)</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locSortOrder" type="number" value="0">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">Ghi chú nội bộ</label>
+          <input class="search-input" style="width:100%;min-width:0" id="locAdminNote" placeholder="Chỉ admin thấy">
+        </div>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn-sm" onclick="closeLocationModal()">Hủy</button>
+        <button class="btn-sm primary" id="locSaveBtn" onclick="saveLocation()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
   <div id="crmListModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#fff;border-radius:12px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
       <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
@@ -4981,6 +5105,7 @@
       'lesson-exercises': ['Bài tập AI đã chấm', 'Giám sát chất lượng chấm điểm của AI'],
       marketplace: ['Marketplace', 'Sản phẩm & Đơn hàng'],
       notifications: ['Thông báo', 'Gửi thông báo đến thành viên'],
+      locations: ['Địa điểm', 'Duyệt đăng ký & quản lý trang Danh sách địa điểm (dia-diem.html)'],
       crm: ['Email CRM', 'Lists · Tags · Sequences · Templates'],
       'challenge-progress': ['Tiến độ 28 ngày', 'Theo dõi tiến độ từng thành viên'],
       topics: ['Topics', 'Chủ đề đăng bài trong từng Space'],
@@ -5022,6 +5147,7 @@
       if (name === 'courses') loadAdminCourses();
       if (name === 'marketplace') { loadAdminMarketplace(); loadMpSettings(); }
       if (name === 'notifications') { loadAdminNotifications(); loadNotifUserDropdown(); }
+      if (name === 'locations') loadAdminLocations();
       if (name === 'crm') loadCRM();
       if (name === 'challenge-progress') loadChallengeProgress();
       if (name === 'camnang') { loadFoods(); loadRecipes(); loadCamnangDocs(); }
@@ -5346,6 +5472,7 @@
 
     // ── Dashboard ─────────────────────────────────────────────────
     async function loadDashboard() {
+      refreshLocPendingBadge();
       try {
         const d = await api('/admin/stats');
         document.getElementById('sTotal').textContent = d.total_users;
@@ -6884,6 +7011,191 @@
     function debounceHanNhietLeads() {
       clearTimeout(hnLeadDebTimer);
       hnLeadDebTimer = setTimeout(loadHanNhietLeads, 300);
+    }
+
+    // ── Địa điểm (dia-diem.html) ─────────────────────────────────
+    const LOC_STATUS_META = {
+      pending:  ['⏳ Chờ duyệt', 'background:#fef3c7;color:#92400e'],
+      approved: ['✅ Đang hiển thị', 'background:#dcfce7;color:#166534'],
+      hidden:   ['🙈 Đã ẩn', 'background:#e2e8f0;color:#475569'],
+      rejected: ['✖ Từ chối', 'background:#fee2e2;color:#991b1b'],
+    };
+    let locStatusTab = 'pending';
+    let adminLocations = [];
+
+    function setLocPendingBadge(n) {
+      const badge = document.getElementById('sbLocPendingCount');
+      badge.textContent = n;
+      badge.style.display = n > 0 ? 'inline' : 'none';
+    }
+    function refreshLocPendingBadge() {
+      api('/admin/locations?status=pending').then(d => setLocPendingBadge(d.locations.length)).catch(() => {});
+    }
+
+    function setLocStatusTab(status, btn) {
+      locStatusTab = status;
+      document.querySelectorAll('#locStatusTabs .mp-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      loadAdminLocations();
+    }
+
+    async function loadAdminLocations() {
+      try {
+        const d = await api(`/admin/locations?status=${encodeURIComponent(locStatusTab)}`);
+        adminLocations = d.locations;
+        Object.keys(LOC_STATUS_META).forEach(s => {
+          const el = document.getElementById('locCnt-' + s);
+          if (el) el.textContent = d.counts[s] ? `(${d.counts[s]})` : '';
+        });
+        setLocPendingBadge(d.counts.pending || 0);
+        renderAdminLocations();
+      } catch (e) {
+        showToast(e.message, 'red');
+      }
+    }
+
+    function renderAdminLocations() {
+      const tbody = document.getElementById('locAdminTbody');
+      const q = document.getElementById('locAdminSearch').value.trim().toLowerCase();
+      const list = adminLocations.filter(l => !q || [l.place_name, l.full_name, l.phone, l.email, l.address]
+        .some(v => String(v || '').toLowerCase().includes(q)));
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">${locStatusTab === 'pending' ? 'Không có đăng ký nào đang chờ duyệt.' : 'Không có địa điểm nào.'}</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(l => {
+        const [stLabel, stStyle] = LOC_STATUS_META[l.status] || [l.status, ''];
+        const services = [l.do_spine ? 'Tác động cột sống' : '', l.do_supply ? 'Nguyên liệu ĐVĐ' : ''].filter(Boolean).join('<br>');
+        const quick = l.status === 'pending'
+          ? `<button class="act-btn" style="color:#166534" onclick="setLocationStatus(${l.id}, 'approved')">Duyệt</button>
+             <button class="act-btn" style="color:#991b1b" onclick="setLocationStatus(${l.id}, 'rejected')">Từ chối</button>`
+          : l.status === 'approved'
+            ? `<button class="act-btn" onclick="setLocationStatus(${l.id}, 'hidden')">Ẩn</button>`
+            : `<button class="act-btn" style="color:#166534" onclick="setLocationStatus(${l.id}, 'approved')">Hiển thị</button>`;
+        return `<tr>
+      <td>${l.image_url ? `<img src="${escHtml(l.image_url)}" alt="" style="width:72px;height:45px;object-fit:cover;border-radius:6px;display:block;">` : '<div style="width:72px;height:45px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px;">🏪</div>'}</td>
+      <td style="font-weight:600;max-width:240px;">${escHtml(l.place_name || '—')}<div style="font-size:11.5px;color:var(--muted);font-weight:400;">${escHtml(l.address || '')}</div></td>
+      <td>${escHtml(l.full_name)}<div style="font-size:11.5px;color:var(--muted);">${escHtml(l.phone)}${l.email ? ' · ' + escHtml(l.email) : ''}</div></td>
+      <td style="font-size:12.5px;">${services || '—'}</td>
+      <td style="font-size:12.5px;">${l.certified ? '✅ Đã xác nhận' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><span class="badge" style="${stStyle}">${stLabel}</span></td>
+      <td style="color:var(--muted);font-size:12.5px;white-space:nowrap;">${escHtml((l.created_at || '').slice(0, 16))}</td>
+      <td style="white-space:nowrap;">
+        ${quick}
+        <button class="act-btn" onclick="openLocationModal(${l.id})">Sửa</button>
+        <button class="act-btn" style="color:#991b1b" onclick="deleteLocation(${l.id})">Xoá</button>
+      </td>
+    </tr>`;
+      }).join('');
+    }
+
+    async function setLocationStatus(id, status) {
+      if (status === 'rejected' && !confirm('Từ chối đăng ký này?')) return;
+      try {
+        await api(`/admin/locations/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+        showToast(status === 'approved' ? '✅ Đã duyệt — địa điểm hiển thị trên trang.' : 'Đã cập nhật trạng thái.', 'green');
+        loadAdminLocations();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    async function deleteLocation(id) {
+      const l = adminLocations.find(x => x.id === id);
+      if (!confirm(`Xoá vĩnh viễn địa điểm "${l?.place_name || l?.full_name || id}"?`)) return;
+      try {
+        await api(`/admin/locations/${id}`, { method: 'DELETE' });
+        showToast('Đã xoá địa điểm.', 'green');
+        loadAdminLocations();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    function setLocImgPreview(url) {
+      const box = document.getElementById('locImgPreview');
+      box.innerHTML = url
+        ? `<img src="${escHtml(url)}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+        : 'Chưa có ảnh<br>(trang sẽ dùng ảnh minh hoạ)';
+    }
+
+    function previewLocationImage(input) {
+      const f = input.files[0];
+      if (!f) return;
+      if (f.size > 8 * 1024 * 1024) { showToast('Ảnh tối đa 8MB.', 'red'); input.value = ''; return; }
+      setLocImgPreview(URL.createObjectURL(f));
+      document.getElementById('locImgRemove').checked = false;
+    }
+
+    function openLocationModal(id) {
+      const l = id ? adminLocations.find(x => x.id === id) : null;
+      const set = (elId, v) => { document.getElementById(elId).value = v == null ? '' : v; };
+      document.getElementById('locModalTitle').textContent = l ? 'Sửa địa điểm' : 'Thêm địa điểm';
+      set('locEditId', l ? l.id : '');
+      set('locFullName', l?.full_name);
+      set('locPhone', l?.phone);
+      set('locEmail', l?.email);
+      set('locPlaceName', l?.place_name);
+      set('locAddress', l?.address);
+      set('locMapUrl', l?.map_url);
+      set('locDescription', l?.description);
+      set('locStatus', l ? l.status : 'approved');
+      set('locSortOrder', l ? l.sort_order : 0);
+      set('locAdminNote', l?.admin_note);
+      document.getElementById('locDoSpine').checked = !!l?.do_spine;
+      document.getElementById('locDoSupply').checked = !!l?.do_supply;
+      document.getElementById('locCertified').checked = !!l?.certified;
+      document.getElementById('locImgFile').value = '';
+      document.getElementById('locImgRemove').checked = false;
+      document.getElementById('locImgRemoveWrap').style.display = l?.image_url ? 'flex' : 'none';
+      setLocImgPreview(l?.image_url);
+      document.getElementById('locationModal').style.display = 'flex';
+    }
+
+    function closeLocationModal() {
+      document.getElementById('locationModal').style.display = 'none';
+    }
+
+    async function saveLocation() {
+      const val = id => document.getElementById(id).value.trim();
+      const id = val('locEditId');
+      const body = {
+        full_name: val('locFullName'),
+        phone: val('locPhone'),
+        email: val('locEmail'),
+        place_name: val('locPlaceName'),
+        address: val('locAddress'),
+        map_url: val('locMapUrl'),
+        description: val('locDescription'),
+        status: val('locStatus'),
+        sort_order: Number(val('locSortOrder')) || 0,
+        admin_note: val('locAdminNote'),
+        do_spine: document.getElementById('locDoSpine').checked,
+        do_supply: document.getElementById('locDoSupply').checked,
+        certified: document.getElementById('locCertified').checked,
+      };
+      if (!body.full_name || !body.phone) { showToast('Cần nhập họ tên và số điện thoại.', 'red'); return; }
+      if (body.map_url && !/^https?:\/\//i.test(body.map_url)) { showToast('Link Google Maps phải bắt đầu bằng https://', 'red'); return; }
+      const btn = document.getElementById('locSaveBtn');
+      btn.disabled = true;
+      try {
+        let locId = id;
+        if (id) await api(`/admin/locations/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+        else locId = (await api('/admin/locations', { method: 'POST', body: JSON.stringify(body) })).id;
+
+        const file = document.getElementById('locImgFile').files[0];
+        if (file) {
+          const fd = new FormData();
+          fd.append('image', file);
+          const res = await fetch(`${API}/admin/locations/${locId}/image`, { method: 'POST', headers: { 'x-admin-key': adminKey }, body: fd });
+          const d = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(d.error || 'Tải ảnh không thành công.');
+        } else if (document.getElementById('locImgRemove').checked) {
+          await api(`/admin/locations/${locId}/image`, { method: 'DELETE' });
+        }
+        showToast('✅ Đã lưu địa điểm.', 'green');
+        closeLocationModal();
+        loadAdminLocations();
+      } catch (e) {
+        showToast(e.message, 'red');
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function loadHanNhietLeads() {

@@ -194,6 +194,15 @@ async function deleteDriveFileByUrl(drive, url) {
 
 app.use(cors());
 app.use(express.json());
+// Thư mục gốc được phục vụ static → chặn các file nội bộ (DB, mã nguồn server, tài liệu,
+// ảnh hồ sơ khách...). Chỉ cho phép uploads/locations/ (ảnh cửa hàng công khai).
+const BLOCKED_STATIC = /^\/(?:server\.js|_repro\.js|package(?:-lock)?\.json|start-server\.bat|gsheet-webhook\.gs|node_modules\/|tai-lieu\/|ttm-photos|uploads\/(?!locations\/))|\.(?:db|db-journal|sqlite3?|bak|md|docx)$/i;
+app.use((req, res, next) => {
+  let p;
+  try { p = path.posix.normalize(decodeURIComponent(req.path)); } catch { return res.status(400).end(); }
+  if (BLOCKED_STATIC.test(p)) return res.status(404).end();
+  next();
+});
 app.use(express.static(path.join(__dirname), {
   setHeaders(res, filePath) {
     if (filePath.endsWith('.js') || filePath.endsWith('.css') || filePath.endsWith('.html')) {
@@ -484,6 +493,29 @@ const SCHEMA = `
     name         TEXT,
     created_at   TEXT DEFAULT (datetime('now','localtime')),
     UNIQUE(course_id, email)
+  );
+  -- Địa điểm làm tác động cột sống / cung cấp nguyên liệu Điền Viên Đường. Người dùng đăng ký
+  -- (status 'pending'), admin duyệt thành 'approved' thì mới hiện ở trang dia-diem.html.
+  CREATE TABLE IF NOT EXISTS locations (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER,
+    full_name       TEXT NOT NULL,
+    phone           TEXT NOT NULL,
+    email           TEXT,
+    place_name      TEXT,
+    address         TEXT,
+    description     TEXT,
+    map_url         TEXT,
+    image_url       TEXT,
+    do_spine        INTEGER DEFAULT 0,
+    do_supply       INTEGER DEFAULT 0,
+    certified       INTEGER DEFAULT 0,
+    status          TEXT DEFAULT 'pending',
+    sort_order      INTEGER DEFAULT 0,
+    admin_note      TEXT,
+    created_at      TEXT DEFAULT (datetime('now','localtime')),
+    updated_at      TEXT,
+    approved_at     TEXT
   );
   -- Thư viện bài tập dùng lại (không AI chấm điểm) — chỉ hướng dẫn + 1 link, học
   -- viên tự đọc và bấm vào làm. Dùng chung cho bài học (exercise_type='link') và
@@ -5052,6 +5084,156 @@ QUY TẮC BẮT BUỘC:
     const results = db.all(sql, params);
     const total = db.get('SELECT COUNT(*) AS n FROM han_nhiet_quiz_results WHERE (name LIKE ? OR phone LIKE ?)', [like, like]).n;
     res.json({ results, total });
+  });
+
+  // ── Địa điểm tác động cột sống / hỗ trợ mua sản phẩm ──────────────
+  const LOCATION_IMG_DIR = path.join(__dirname, 'uploads', 'locations');
+  fs.mkdirSync(LOCATION_IMG_DIR, { recursive: true });
+  const locationImageUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, LOCATION_IMG_DIR),
+      filename: (req, file, cb) => {
+        const ext = (path.extname(file.originalname || '').toLowerCase().match(/^\.(jpe?g|png|webp|gif)$/) || ['.jpg'])[0];
+        cb(null, `loc${req.params.id}-${Date.now()}${ext}`);
+      },
+    }),
+    limits: { fileSize: 8 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const ok = /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype);
+      cb(ok ? null : new Error('Chỉ nhận ảnh JPG, PNG, WEBP hoặc GIF.'), ok);
+    },
+  });
+  const LOCATION_STATUSES = ['pending', 'approved', 'rejected', 'hidden'];
+  const cleanText = (v, max = 300) => String(v == null ? '' : v).trim().slice(0, max);
+  const cleanUrl = v => { const s = cleanText(v, 500); return /^https?:\/\//i.test(s) ? s : ''; };
+  function removeLocationImage(url) {
+    if (!url || !url.startsWith('/uploads/locations/')) return;
+    fs.unlink(path.join(LOCATION_IMG_DIR, path.basename(url)), () => {});
+  }
+
+  // Công khai: chỉ địa điểm đã duyệt, không trả email / ghi chú admin
+  app.get('/api/locations', (_req, res) => {
+    const locations = db.all(`SELECT id, full_name, phone, place_name, address, description, map_url, image_url,
+      do_spine, do_supply, certified FROM locations WHERE status = 'approved'
+      ORDER BY sort_order ASC, approved_at DESC, id DESC`);
+    res.json({ locations });
+  });
+
+  app.post('/api/locations/register', (req, res) => {
+    const b = req.body || {};
+    const full_name = cleanText(b.full_name, 120);
+    const phone = cleanText(b.phone, 30);
+    const email = cleanText(b.email, 160).toLowerCase();
+    const doSpine = b.do_spine ? 1 : 0;
+    const doSupply = b.do_supply ? 1 : 0;
+    const certified = b.certified ? 1 : 0;
+    if (!full_name) return res.status(400).json({ error: 'Vui lòng nhập họ và tên.' });
+    if (!/^[0-9+().\s-]{8,20}$/.test(phone)) return res.status(400).json({ error: 'Số điện thoại không hợp lệ.' });
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email không hợp lệ.' });
+    if (!doSpine && !doSupply) return res.status(400).json({ error: 'Vui lòng chọn ít nhất 1 hạng mục đăng ký.' });
+    if (doSpine && !certified) return res.status(400).json({ error: 'Đăng ký làm tác động cột sống cần xác nhận đã có chứng chỉ do Y học bản địa Việt Nam cấp.' });
+    const dup = db.get("SELECT id FROM locations WHERE phone = ? AND status = 'pending'", [phone]);
+    if (dup) return res.status(409).json({ error: 'Số điện thoại này đã có đơn đăng ký đang chờ duyệt.' });
+    const userId = Number(b.user_id) || null;
+    const user = userId ? db.get('SELECT id FROM users WHERE id = ?', [userId]) : null;
+    db.run(`INSERT INTO locations (user_id, full_name, phone, email, place_name, address, do_spine, do_supply, certified, status)
+      VALUES (?,?,?,?,?,?,?,?,?, 'pending')`,
+      [user ? user.id : null, full_name, phone, email || null, cleanText(b.place_name, 160) || null,
+       cleanText(b.address, 300) || null, doSpine, doSupply, certified]);
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/locations', requireAdmin, (req, res) => {
+    const { status = '' } = req.query;
+    const locations = LOCATION_STATUSES.includes(status)
+      ? db.all('SELECT * FROM locations WHERE status = ? ORDER BY sort_order ASC, id DESC', [status])
+      : db.all('SELECT * FROM locations ORDER BY sort_order ASC, id DESC');
+    const counts = {};
+    db.all('SELECT status, COUNT(*) AS n FROM locations GROUP BY status').forEach(r => { counts[r.status] = r.n; });
+    res.json({ locations, counts });
+  });
+
+  function readLocationBody(b) {
+    return {
+      full_name: cleanText(b.full_name, 120),
+      phone: cleanText(b.phone, 30),
+      email: cleanText(b.email, 160).toLowerCase() || null,
+      place_name: cleanText(b.place_name, 160) || null,
+      address: cleanText(b.address, 300) || null,
+      description: cleanText(b.description, 1000) || null,
+      map_url: cleanUrl(b.map_url) || null,
+      do_spine: b.do_spine ? 1 : 0,
+      do_supply: b.do_supply ? 1 : 0,
+      certified: b.certified ? 1 : 0,
+      status: LOCATION_STATUSES.includes(b.status) ? b.status : 'approved',
+      sort_order: Number.isFinite(Number(b.sort_order)) ? Math.trunc(Number(b.sort_order)) : 0,
+      admin_note: cleanText(b.admin_note, 500) || null,
+    };
+  }
+
+  app.post('/api/admin/locations', requireAdmin, (req, res) => {
+    const l = readLocationBody(req.body || {});
+    if (!l.full_name || !l.phone) return res.status(400).json({ error: 'Cần có họ tên và số điện thoại.' });
+    const r = db.run(`INSERT INTO locations (full_name, phone, email, place_name, address, description, map_url,
+      do_spine, do_supply, certified, status, sort_order, admin_note, approved_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, CASE WHEN ? = 'approved' THEN datetime('now','localtime') END)`,
+      [l.full_name, l.phone, l.email, l.place_name, l.address, l.description, l.map_url,
+       l.do_spine, l.do_supply, l.certified, l.status, l.sort_order, l.admin_note, l.status]);
+    res.json({ ok: true, id: r.lastInsertRowid });
+  });
+
+  app.put('/api/admin/locations/:id', requireAdmin, (req, res) => {
+    const cur = db.get('SELECT * FROM locations WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy địa điểm.' });
+    const l = readLocationBody({ status: cur.status, ...req.body });
+    if (!l.full_name || !l.phone) return res.status(400).json({ error: 'Cần có họ tên và số điện thoại.' });
+    db.run(`UPDATE locations SET full_name=?, phone=?, email=?, place_name=?, address=?, description=?, map_url=?,
+      do_spine=?, do_supply=?, certified=?, status=?, sort_order=?, admin_note=?,
+      approved_at = CASE WHEN ? = 'approved' AND approved_at IS NULL THEN datetime('now','localtime') ELSE approved_at END,
+      updated_at = datetime('now','localtime') WHERE id = ?`,
+      [l.full_name, l.phone, l.email, l.place_name, l.address, l.description, l.map_url,
+       l.do_spine, l.do_supply, l.certified, l.status, l.sort_order, l.admin_note, l.status, cur.id]);
+    res.json({ ok: true });
+  });
+
+  app.patch('/api/admin/locations/:id/status', requireAdmin, (req, res) => {
+    const { status } = req.body || {};
+    if (!LOCATION_STATUSES.includes(status)) return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+    const cur = db.get('SELECT id FROM locations WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy địa điểm.' });
+    db.run(`UPDATE locations SET status = ?,
+      approved_at = CASE WHEN ? = 'approved' AND approved_at IS NULL THEN datetime('now','localtime') ELSE approved_at END,
+      updated_at = datetime('now','localtime') WHERE id = ?`, [status, status, cur.id]);
+    res.json({ ok: true });
+  });
+
+  app.delete('/api/admin/locations/:id', requireAdmin, (req, res) => {
+    const cur = db.get('SELECT id, image_url FROM locations WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy địa điểm.' });
+    db.run('DELETE FROM locations WHERE id = ?', [cur.id]);
+    removeLocationImage(cur.image_url);
+    res.json({ ok: true });
+  });
+
+  app.post('/api/admin/locations/:id/image', requireAdmin, (req, res) => {
+    const cur = db.get('SELECT id, image_url FROM locations WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy địa điểm.' });
+    locationImageUpload.single('image')(req, res, err => {
+      if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Ảnh tối đa 8MB.' : err.message });
+      if (!req.file) return res.status(400).json({ error: 'Chưa chọn ảnh.' });
+      const url = `/uploads/locations/${req.file.filename}`;
+      db.run("UPDATE locations SET image_url = ?, updated_at = datetime('now','localtime') WHERE id = ?", [url, cur.id]);
+      removeLocationImage(cur.image_url);
+      res.json({ ok: true, image_url: url });
+    });
+  });
+
+  app.delete('/api/admin/locations/:id/image', requireAdmin, (req, res) => {
+    const cur = db.get('SELECT id, image_url FROM locations WHERE id = ?', [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy địa điểm.' });
+    db.run("UPDATE locations SET image_url = NULL, updated_at = datetime('now','localtime') WHERE id = ?", [cur.id]);
+    removeLocationImage(cur.image_url);
+    res.json({ ok: true });
   });
 
   // ── Chương trình 377 ngày ──────────────────────────────────────────
