@@ -4015,6 +4015,24 @@
   </div><!-- /shell -->
 
   <!-- ── CRM List Modal ────────────────────────────── -->
+  <!-- ── Chi tiết tin nhắn Liên hệ BTC ─────────────── -->
+  <div id="cmModal" onclick="if (event.target === this) closeContactMessageModal()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:600px;margin:auto 0;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="font-size:15px;font-weight:700;">Tin nhắn liên hệ</div>
+        <button onclick="closeContactMessageModal()" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:18px;color:var(--muted);">×</button>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;" id="cmModalBody"></div>
+      <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm" style="color:#991b1b" id="cmModalDelete">Xoá</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm" id="cmModalSaveNote">Lưu ghi chú</button>
+          <button class="btn-sm primary" id="cmModalToggle"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Địa điểm Modal (thêm / sửa / duyệt) ─────────────── -->
   <div id="locationModal" onclick="if (event.target === this) closeLocationModal()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;margin:auto 0;box-shadow:0 20px 60px rgba(0,0,0,.2);">
@@ -7121,23 +7139,23 @@
       tbody.innerHTML = list.map(m => {
         const [deptLabel, deptStyle] = CM_DEPT_LABELS[m.department] || [m.department, ''];
         const tel = String(m.phone || '').replace(/[^0-9+]/g, '');
-        return `<tr>
+        return `<tr onclick="openContactMessageModal(${m.id})" style="cursor:pointer;" title="Bấm để xem toàn bộ nội dung">
       <td style="min-width:170px;">
-        <div style="font-weight:600;">${escHtml(m.full_name)}${m.user_id ? ` <a href="profile.html?id=${m.user_id}" target="_blank" title="Xem hồ sơ thành viên" style="font-size:11px;">↗</a>` : ''}</div>
-        ${m.phone ? `<div style="font-size:12px;"><a href="tel:${escHtml(tel)}">${escHtml(m.phone)}</a></div>` : ''}
-        ${m.email ? `<div style="font-size:12px;"><a href="mailto:${escHtml(m.email)}">${escHtml(m.email)}</a></div>` : ''}
+        <div style="font-weight:600;">${escHtml(m.full_name)}${m.user_id ? ` <a href="profile.html?id=${m.user_id}" target="_blank" title="Xem hồ sơ thành viên" style="font-size:11px;" onclick="event.stopPropagation()">↗</a>` : ''}</div>
+        ${m.phone ? `<div style="font-size:12px;"><a href="tel:${escHtml(tel)}" onclick="event.stopPropagation()">${escHtml(m.phone)}</a></div>` : ''}
+        ${m.email ? `<div style="font-size:12px;"><a href="mailto:${escHtml(m.email)}" onclick="event.stopPropagation()">${escHtml(m.email)}</a></div>` : ''}
       </td>
       <td><span class="badge" style="${deptStyle};white-space:nowrap;">${escHtml(deptLabel)}</span></td>
-      <td style="font-size:13px;line-height:1.5;white-space:pre-wrap;max-width:420px;">${escHtml(m.message)}${m.admin_note ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);white-space:pre-wrap;">📝 ${escHtml(m.admin_note)}</div>` : ''}</td>
+      <td style="font-size:13px;line-height:1.5;max-width:420px;"><div style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;">${escHtml(m.message)}</div>${m.admin_note ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📝 ${escHtml(m.admin_note)}</div>` : ''}</td>
       <td style="color:var(--muted);font-size:12.5px;white-space:nowrap;">${escHtml((m.created_at || '').slice(0, 16))}</td>
       <td>${m.status === 'handled'
         ? `<span class="badge" style="background:#dcfce7;color:#166534;white-space:nowrap;">✅ Đã xử lý</span>`
         : `<span class="badge" style="background:#fee2e2;color:#991b1b;white-space:nowrap;">📩 Chưa xử lý</span>`}</td>
-      <td style="white-space:nowrap;">
+      <td style="white-space:nowrap;" onclick="event.stopPropagation()">
+        <button class="act-btn" onclick="openContactMessageModal(${m.id})">Xem</button>
         ${m.status === 'handled'
           ? `<button class="act-btn" onclick="setContactMessageStatus(${m.id}, 'new')">Mở lại</button>`
           : `<button class="act-btn" style="color:#166534" onclick="setContactMessageStatus(${m.id}, 'handled')">Đã xử lý</button>`}
-        <button class="act-btn" onclick="editContactMessageNote(${m.id})">Ghi chú</button>
         <button class="act-btn" style="color:#991b1b" onclick="deleteContactMessage(${m.id})">Xoá</button>
       </td>
     </tr>`;
@@ -7152,24 +7170,64 @@
       } catch (e) { showToast(e.message, 'red'); }
     }
 
-    async function editContactMessageNote(id) {
+    function openContactMessageModal(id) {
       const m = contactMessages.find(x => x.id === id);
-      const note = prompt('Ghi chú nội bộ (chỉ admin thấy):', m?.admin_note || '');
-      if (note === null) return;
+      if (!m) return;
+      const [deptLabel, deptStyle] = CM_DEPT_LABELS[m.department] || [m.department, ''];
+      const tel = String(m.phone || '').replace(/[^0-9+]/g, '');
+      const row = (label, html) => `<div style="display:flex;gap:10px;font-size:13.5px;"><div style="width:110px;flex-shrink:0;color:var(--muted);">${label}</div><div style="flex:1;min-width:0;word-break:break-word;">${html}</div></div>`;
+      document.getElementById('cmModalBody').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${row('Người gửi', `<strong>${escHtml(m.full_name)}</strong>${m.user_id ? ` · <a href="profile.html?id=${m.user_id}" target="_blank">Xem hồ sơ ↗</a>` : ''}`)}
+          ${m.phone ? row('Số điện thoại', `<a href="tel:${escHtml(tel)}">${escHtml(m.phone)}</a>`) : ''}
+          ${m.email ? row('Email', `<a href="mailto:${escHtml(m.email)}">${escHtml(m.email)}</a>`) : ''}
+          ${row('Gửi đến', `<span class="badge" style="${deptStyle}">${escHtml(deptLabel)}</span>`)}
+          ${row('Thời gian', escHtml((m.created_at || '').slice(0, 16)))}
+          ${row('Trạng thái', m.status === 'handled'
+            ? `<span class="badge" style="background:#dcfce7;color:#166534;">✅ Đã xử lý</span>${m.handled_at ? ` <span style="color:var(--muted);font-size:12px;">lúc ${escHtml(m.handled_at.slice(0, 16))}</span>` : ''}`
+            : '<span class="badge" style="background:#fee2e2;color:#991b1b;">📩 Chưa xử lý</span>')}
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Nội dung liên hệ</div>
+          <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:50vh;overflow-y:auto;">${escHtml(m.message)}</div>
+        </div>
+        <div>
+          <label for="cmModalNote" style="display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Ghi chú nội bộ (chỉ admin thấy)</label>
+          <textarea id="cmModalNote" rows="3" maxlength="1000" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;" placeholder="VD: Đã gọi lại, hẹn tư vấn thứ 7...">${escHtml(m.admin_note || '')}</textarea>
+        </div>`;
+      const toggle = document.getElementById('cmModalToggle');
+      const nextStatus = m.status === 'handled' ? 'new' : 'handled';
+      toggle.textContent = m.status === 'handled' ? 'Mở lại' : '✅ Đánh dấu đã xử lý';
+      toggle.onclick = () => saveContactMessageModal(m.id, nextStatus);
+      document.getElementById('cmModalSaveNote').onclick = () => saveContactMessageModal(m.id);
+      document.getElementById('cmModalDelete').onclick = async () => { if (await deleteContactMessage(m.id)) closeContactMessageModal(); };
+      document.getElementById('cmModal').style.display = 'flex';
+    }
+
+    function closeContactMessageModal() {
+      document.getElementById('cmModal').style.display = 'none';
+    }
+
+    // Lưu ghi chú (và đổi trạng thái nếu có) từ popup chi tiết
+    async function saveContactMessageModal(id, status) {
+      const body = { admin_note: document.getElementById('cmModalNote').value.trim() };
+      if (status) body.status = status;
       try {
-        await api(`/admin/contact-messages/${id}`, { method: 'PATCH', body: JSON.stringify({ admin_note: note }) });
-        showToast('Đã lưu ghi chú.', 'green');
+        await api(`/admin/contact-messages/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+        showToast(status === 'handled' ? '✅ Đã đánh dấu đã xử lý.' : status === 'new' ? 'Đã chuyển về chưa xử lý.' : 'Đã lưu ghi chú.', 'green');
+        closeContactMessageModal();
         loadContactMessages();
       } catch (e) { showToast(e.message, 'red'); }
     }
 
     async function deleteContactMessage(id) {
-      if (!confirm('Xoá vĩnh viễn tin nhắn này?')) return;
+      if (!confirm('Xoá vĩnh viễn tin nhắn này?')) return false;
       try {
         await api(`/admin/contact-messages/${id}`, { method: 'DELETE' });
         showToast('Đã xoá tin nhắn.', 'green');
         loadContactMessages();
-      } catch (e) { showToast(e.message, 'red'); }
+        return true;
+      } catch (e) { showToast(e.message, 'red'); return false; }
     }
 
     // ── Địa điểm (dia-diem.html) ─────────────────────────────────
