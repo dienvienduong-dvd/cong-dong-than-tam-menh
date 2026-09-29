@@ -4033,6 +4033,21 @@
     </div>
   </div>
 
+  <!-- ── Địa điểm: popup xem chi tiết ─────────────── -->
+  <div id="locationViewModal" onclick="if (event.target === this) closeLocationView()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:620px;margin:auto 0;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="font-size:15px;font-weight:700;" id="locViewTitle">Chi tiết địa điểm</div>
+        <button onclick="closeLocationView()" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:18px;color:var(--muted);flex-shrink:0;">×</button>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;" id="locViewBody"></div>
+      <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm" style="color:#991b1b" id="locViewDelete">Xoá</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="locViewActions"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Địa điểm Modal (thêm / sửa / duyệt) ─────────────── -->
   <div id="locationModal" onclick="if (event.target === this) closeLocationModal()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;margin:auto 0;box-shadow:0 20px 60px rgba(0,0,0,.2);">
@@ -7288,7 +7303,7 @@
           : l.status === 'approved'
             ? `<button class="act-btn" onclick="setLocationStatus(${l.id}, 'hidden')">Ẩn</button>`
             : `<button class="act-btn" style="color:#166534" onclick="setLocationStatus(${l.id}, 'approved')">Hiển thị</button>`;
-        return `<tr>
+        return `<tr onclick="openLocationView(${l.id})" style="cursor:pointer;" title="Bấm để xem chi tiết">
       <td>${l.image_url ? `<img src="${escHtml(l.image_url)}" alt="" style="width:72px;height:45px;object-fit:cover;border-radius:6px;display:block;">` : '<div style="width:72px;height:45px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px;">🏪</div>'}</td>
       <td style="font-weight:600;max-width:240px;">${escHtml(l.place_name || '—')}<div style="font-size:11.5px;color:var(--muted);font-weight:400;">${escHtml(l.address || '')}</div>${l.open_time || l.close_time ? `<div style="font-size:11.5px;color:var(--muted);font-weight:400;">🕗 ${escHtml(l.open_time || '?')} – ${escHtml(l.close_time || '?')}</div>` : ''}</td>
       <td>${escHtml(l.full_name)}<div style="font-size:11.5px;color:var(--muted);">${escHtml(l.phone)}${l.email ? ' · ' + escHtml(l.email) : ''}</div></td>
@@ -7296,7 +7311,8 @@
       <td style="font-size:12.5px;">${l.certified ? '✅ Đã xác nhận' : '<span style="color:var(--muted)">—</span>'}</td>
       <td><span class="badge" style="${stStyle}">${stLabel}</span></td>
       <td style="color:var(--muted);font-size:12.5px;white-space:nowrap;">${escHtml((l.created_at || '').slice(0, 16))}</td>
-      <td style="white-space:nowrap;">
+      <td style="white-space:nowrap;" onclick="event.stopPropagation()">
+        <button class="act-btn" onclick="openLocationView(${l.id})">Xem</button>
         ${quick}
         <button class="act-btn" onclick="openLocationModal(${l.id})">Sửa</button>
         <button class="act-btn" style="color:#991b1b" onclick="deleteLocation(${l.id})">Xoá</button>
@@ -7306,22 +7322,77 @@
     }
 
     async function setLocationStatus(id, status) {
-      if (status === 'rejected' && !confirm('Từ chối đăng ký này?')) return;
+      if (status === 'rejected' && !confirm('Từ chối đăng ký này?')) return false;
       try {
         await api(`/admin/locations/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
         showToast(status === 'approved' ? '✅ Đã duyệt — địa điểm hiển thị trên trang.' : 'Đã cập nhật trạng thái.', 'green');
         loadAdminLocations();
-      } catch (e) { showToast(e.message, 'red'); }
+        return true;
+      } catch (e) { showToast(e.message, 'red'); return false; }
     }
 
     async function deleteLocation(id) {
       const l = adminLocations.find(x => x.id === id);
-      if (!confirm(`Xoá vĩnh viễn địa điểm "${l?.place_name || l?.full_name || id}"?`)) return;
+      if (!confirm(`Xoá vĩnh viễn địa điểm "${l?.place_name || l?.full_name || id}"?`)) return false;
       try {
         await api(`/admin/locations/${id}`, { method: 'DELETE' });
         showToast('Đã xoá địa điểm.', 'green');
         loadAdminLocations();
-      } catch (e) { showToast(e.message, 'red'); }
+        return true;
+      } catch (e) { showToast(e.message, 'red'); return false; }
+    }
+
+    // Popup xem chi tiết 1 địa điểm (bấm vào dòng trong bảng)
+    function openLocationView(id) {
+      const l = adminLocations.find(x => x.id === id);
+      if (!l) return;
+      const [stLabel, stStyle] = LOC_STATUS_META[l.status] || [l.status, ''];
+      const tel = String(l.phone || '').replace(/[^0-9+]/g, '');
+      const mapHref = l.map_url || (l.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(l.address) : '');
+      const row = (label, html) => `<div style="display:flex;gap:10px;font-size:13.5px;"><div style="width:120px;flex-shrink:0;color:var(--muted);">${label}</div><div style="flex:1;min-width:0;word-break:break-word;">${html}</div></div>`;
+      const tag = (text, style) => `<span class="badge" style="${style};margin:0 4px 4px 0;">${text}</span>`;
+      document.getElementById('locViewTitle').textContent = l.place_name || `Địa điểm của ${l.full_name}`;
+      document.getElementById('locViewBody').innerHTML = `
+        ${l.image_url
+          ? `<img src="${escHtml(l.image_url)}" alt="" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;display:block;border:1px solid var(--border);">`
+          : '<div style="width:100%;aspect-ratio:16/6;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">🏪 Chưa có ảnh cửa hàng — trang công khai đang dùng ảnh minh hoạ</div>'}
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${row('Trạng thái', `<span class="badge" style="${stStyle}">${stLabel}</span>`)}
+          ${row('Tên địa điểm', `<strong>${escHtml(l.place_name || '—')}</strong>`)}
+          ${row('Địa chỉ', l.address ? `${escHtml(l.address)}${mapHref ? ` · <a href="${escHtml(mapHref)}" target="_blank" rel="noopener">Bản đồ ↗</a>` : ''}` : '—')}
+          ${row('Giờ mở cửa', l.open_time || l.close_time ? `${escHtml(l.open_time || '?')} – ${escHtml(l.close_time || '?')}` : '<span style="color:var(--muted)">Chưa có</span>')}
+          ${row('Hạng mục', (l.do_spine ? tag('Tác động cột sống', 'background:#ccfbf1;color:#115e59') : '') + (l.do_supply ? tag('Nguyên liệu Điền Viên Đường', 'background:#fef3c7;color:#92400e') : '') || '—')}
+          ${row('Chứng chỉ', l.certified ? '✅ Đã xác nhận có chứng chỉ tác động cột sống do Y học bản địa Việt Nam cấp' : '<span style="color:var(--muted)">Chưa xác nhận</span>')}
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:8px;">
+          ${row('Người đăng ký', `<strong>${escHtml(l.full_name)}</strong>${l.user_id ? ` · <a href="profile.html?id=${l.user_id}" target="_blank">Xem hồ sơ ↗</a>` : ''}`)}
+          ${row('Số điện thoại', `<a href="tel:${escHtml(tel)}">${escHtml(l.phone)}</a>`)}
+          ${row('Email', l.email ? `<a href="mailto:${escHtml(l.email)}">${escHtml(l.email)}</a>` : '—')}
+          ${row('Ngày gửi', escHtml((l.created_at || '').slice(0, 16)))}
+          ${l.approved_at ? row('Ngày duyệt', escHtml(l.approved_at.slice(0, 16))) : ''}
+          ${row('Thứ tự hiển thị', escHtml(String(l.sort_order ?? 0)))}
+        </div>
+        ${l.description ? `<div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Mô tả</div><div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;">${escHtml(l.description)}</div></div>` : ''}
+        ${l.admin_note ? `<div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Ghi chú nội bộ</div><div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;">📝 ${escHtml(l.admin_note)}</div></div>` : ''}`;
+
+      const btn = (label, cls, style, fn) => { const b = document.createElement('button'); b.className = 'btn-sm' + (cls ? ' ' + cls : ''); b.textContent = label; if (style) b.style.cssText = style; b.onclick = fn; return b; };
+      const act = document.getElementById('locViewActions');
+      act.innerHTML = '';
+      const statusThen = s => async () => { if (await setLocationStatus(l.id, s)) closeLocationView(); };
+      if (l.status === 'pending') {
+        act.append(btn('Từ chối', '', 'color:#991b1b', statusThen('rejected')), btn('✅ Duyệt', 'primary', '', statusThen('approved')));
+      } else if (l.status === 'approved') {
+        act.append(btn('Ẩn', '', '', statusThen('hidden')));
+      } else {
+        act.append(btn('Hiển thị', 'primary', '', statusThen('approved')));
+      }
+      act.prepend(btn('Sửa', '', '', () => { closeLocationView(); openLocationModal(l.id); }));
+      document.getElementById('locViewDelete').onclick = async () => { if (await deleteLocation(l.id)) closeLocationView(); };
+      document.getElementById('locationViewModal').style.display = 'flex';
+    }
+
+    function closeLocationView() {
+      document.getElementById('locationViewModal').style.display = 'none';
     }
 
     function setLocImgPreview(url) {
