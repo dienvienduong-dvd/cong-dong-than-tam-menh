@@ -37,7 +37,7 @@ function toggleMainMenu() {
 
 // ── Dynamic community branding ─────────────────────────────
 (function applyCommunityBranding() {
-  const DEFAULT_NAME = 'Ăn Uống Ngũ Hành';
+  const DEFAULT_NAME = 'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH';
   const CACHE_KEY = 'communitySettingsCache';
   let _titleObserver = null;
 
@@ -49,7 +49,7 @@ function toggleMainMenu() {
   }
 
   // Replace the fallback name with the real community name — guarded so it can't loop
-  // when `name` itself contains DEFAULT_NAME (e.g. "Cộng đồng Ăn Uống Ngũ Hành").
+  // when `name` itself contains DEFAULT_NAME (e.g. "Cộng đồng Hồi sinh THÂN - TÂM -MỆNH").
   function replaceInTitle(name) {
     if (name === DEFAULT_NAME) return;
     if (document.title.includes(name)) return;           // already branded

@@ -30,7 +30,7 @@ const RESEND_KEY       = process.env.RESEND_API_KEY    || '';
 const OPENROUTER_KEY   = process.env.OPENROUTER_API_KEY || '';
 
 // ── Community identity (override via .env) ───────────────────
-const COMMUNITY_NAME = process.env.COMMUNITY_NAME || 'Cộng đồng Ăn Uống Ngũ Hành';
+const COMMUNITY_NAME = process.env.COMMUNITY_NAME || 'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH';
 // ASCII-only version for HTTP headers (Latin-1 only) — strips Vietnamese diacritics
 const COMMUNITY_NAME_ASCII = COMMUNITY_NAME
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -39,6 +39,11 @@ const COMMUNITY_NAME_ASCII = COMMUNITY_NAME
 const SITE_URL       = (process.env.SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
 const SITE_DOMAIN    = SITE_URL.replace(/^https?:\/\//, '');
 const FROM_EMAIL  = process.env.FROM_EMAIL || `${COMMUNITY_NAME} <no-reply@${SITE_DOMAIN.split(':')[0]}>`;
+// Chỉ lấy phần địa chỉ; tên hiển thị người gửi lấy theo communityName() lúc gửi
+const FROM_ADDRESS = (FROM_EMAIL.match(/<([^>]+)>/) || [null, FROM_EMAIL])[1].trim();
+// Tên cộng đồng hiện hành — đọc từ site_settings.community_name (admin sửa ở Cài đặt),
+// fallback về COMMUNITY_NAME (env). Được gán lại sau khi DB khởi tạo.
+let communityName = () => COMMUNITY_NAME;
 const SEPAY_MEMO_PREFIX = process.env.SEPAY_MEMO_PREFIX || 'NGUHANH';
 const ADMIN_EMAIL = 'tuchinguyen.ctv@gmail.com';
 
@@ -51,7 +56,7 @@ async function sendEmail({ to, subject, html }) {
   }
   try {
     console.log(`[Email] Sending to ${to} | "${subject}"`);
-    const result = await resendClient.emails.send({ from: FROM_EMAIL, to, subject, html });
+    const result = await resendClient.emails.send({ from: `${communityName()} <${FROM_ADDRESS}>`, to, subject, html });
     if (result?.error) {
       console.error(`[Email] ❌ Rejected by Resend — ${result.error.name || ''}: ${result.error.message || JSON.stringify(result.error)}`);
     } else {
@@ -75,10 +80,10 @@ function emailWrap(title, body) {
     .green{color:#10b981;font-weight:700}
   </style></head><body>
   <div class="box">
-    <p style="color:#0ea5e9;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">${COMMUNITY_NAME.toUpperCase()}</p>
+    <p style="color:#0ea5e9;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">${communityName().toUpperCase()}</p>
     <h1>${title}</h1>
     ${body}
-    <div class="footer">${COMMUNITY_NAME}<br>${SITE_DOMAIN}</div>
+    <div class="footer">${communityName()}<br>${SITE_DOMAIN}</div>
   </div></body></html>`;
 }
 
@@ -1073,6 +1078,12 @@ const COURSE_SEED = [
 (async () => {
   const SQL = await initSqlJs();
   const db  = new DB(SQL);
+  communityName = () => {
+    try {
+      const row = db.get("SELECT value FROM site_settings WHERE key = 'community_name'");
+      return (row && row.value && row.value.trim()) || COMMUNITY_NAME;
+    } catch { return COMMUNITY_NAME; }
+  };
 
   db.exec(SCHEMA);
 
@@ -2126,7 +2137,7 @@ ${extra}
     ['mp_bank_name',           'BIDV'],
     ['mp_bank_account_name',   'TỪ CHÍ NGUYỆN'],
     ['mp_bank_account_number', '96247NGUYEN'],
-    ['home_tagline',           'Cộng đồng Ăn Uống Ngũ Hành'],
+    ['home_tagline',           'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH'],
     ['home_heading_line1',     'Ăn uống thuận'],
     ['home_heading_highlight', 'Ngũ Hành'],
     ['home_heading_line2',     'mỗi ngày.'],
@@ -2139,7 +2150,7 @@ ${extra}
     ['home_stat3_label',       'Ngày Dưỡng Hóa'],
     ['home_tags',              'Ngũ Hành, Ngũ Sắc, Ngũ Vị, Âm Dương, Thải Độc'],
     ['courses_hero_icon',      '📗'],
-    ['courses_hero_title',     'Khóa học Ăn Uống Ngũ Hành'],
+    ['courses_hero_title',     'Khóa học Hồi sinh THÂN - TÂM -MỆNH'],
     ['courses_hero_desc',      'Từ nền tảng Âm Dương Ngũ Hành đến ăn theo từng Hành, công thức cháo bổ âm và cách dùng gừng.'],
     ['workshop3_video_url',    ''],
     ['workshop3_space_url',    'space.html?id=6'],
@@ -2182,6 +2193,23 @@ ${extra}
     });
     db.run("INSERT OR REPLACE INTO site_settings (key, value) VALUES ('retheme_nguhanh', '2')");
     console.log('  Re-theme migration: refreshed branding settings for Ngũ Hành.');
+  }
+
+  // One-time rename: "Ăn Uống Ngũ Hành" → "Hồi sinh THÂN - TÂM -MỆNH" in stored settings
+  // (tagline, courses title, CRM email templates...). Chỉ thay đúng cụm thương hiệu cũ.
+  const renameMarker = db.get("SELECT value FROM site_settings WHERE key = 'rename_hsttm'");
+  if (!renameMarker) {
+    const OLD = 'Ăn Uống Ngũ Hành', NEW = 'Hồi sinh THÂN - TÂM -MỆNH';
+    db.all("SELECT key, value FROM site_settings WHERE value LIKE ?", [`%${OLD}%`]).forEach(r => {
+      const v = r.value
+        .split(`Cộng đồng ${OLD}`).join(`Cộng đồng ${NEW}`)
+        .split(`cộng đồng ${OLD}`).join(`cộng đồng ${NEW}`)
+        .split(`Khóa học ${OLD}`).join(`Khóa học ${NEW}`)
+        .split(OLD).join(`Cộng đồng ${NEW}`);
+      db.run('UPDATE site_settings SET value = ? WHERE key = ?', [v, r.key]);
+    });
+    db.run("INSERT OR REPLACE INTO site_settings (key, value) VALUES ('rename_hsttm', '1')");
+    console.log('  Rename migration: Ăn Uống Ngũ Hành → Hồi sinh THÂN - TÂM -MỆNH.');
   }
 
   // Seed sample products if empty
@@ -2457,7 +2485,7 @@ QUY TẮC BẮT BUỘC:
     const to = req.query.to || ADMIN_EMAIL;
     await sendEmail({
       to,
-      subject: `🧪 Test email từ ${COMMUNITY_NAME}`,
+      subject: `🧪 Test email từ ${communityName()}`,
       html: emailWrap('Email test thành công!', `
         <p>Email system đang hoạt động bình thường.</p>
         <p>From: <strong>${FROM_EMAIL}</strong></p>
@@ -2759,10 +2787,10 @@ QUY TẮC BẮT BUỘC:
     // Welcome email (fire-and-forget after response)
     sendEmail({
       to: email,
-      subject: `🎉 Chào mừng bạn đến với ${COMMUNITY_NAME}!`,
+      subject: `🎉 Chào mừng bạn đến với ${communityName()}!`,
       html: emailWrap('Chào mừng đến với cộng đồng!', `
         <p>Xin chào <strong>${user.first_name} ${user.last_name}</strong>,</p>
-        <p>Bạn đã đăng ký thành công tài khoản tại <strong>${COMMUNITY_NAME}</strong>.</p>
+        <p>Bạn đã đăng ký thành công tài khoản tại <strong>${communityName()}</strong>.</p>
         <p>Với tài khoản này, bạn có thể:</p>
         <ul style="color:#475569;line-height:2">
           <li>📝 Chia sẻ bữa ăn và học hỏi từ cộng đồng</li>
@@ -2842,10 +2870,10 @@ QUY TẮC BẮT BUỘC:
         user = db.get('SELECT * FROM users WHERE id = ?', [result.lastInsertRowid]);
         sendEmail({
           to: email,
-          subject: `🎉 Chào mừng bạn đến với ${COMMUNITY_NAME}!`,
+          subject: `🎉 Chào mừng bạn đến với ${communityName()}!`,
           html: emailWrap('Chào mừng đến với cộng đồng!', `
             <p>Xin chào <strong>${first_name}</strong>,</p>
-            <p>Bạn đã đăng ký thành công tài khoản tại <strong>${COMMUNITY_NAME}</strong> qua Google.</p>
+            <p>Bạn đã đăng ký thành công tài khoản tại <strong>${communityName()}</strong> qua Google.</p>
             <a class="btn" href="${SITE_URL}/feed.html">Vào Bảng Tin Ngay</a>
           `)
         });
@@ -2888,7 +2916,7 @@ QUY TẮC BẮT BUỘC:
     const resetLink = `${SITE_URL}/reset-password.html?token=${token}`;
     sendEmail({
       to: user.email,
-      subject: `🔑 Đặt lại mật khẩu — ${COMMUNITY_NAME}`,
+      subject: `🔑 Đặt lại mật khẩu — ${communityName()}`,
       html: emailWrap('Đặt lại mật khẩu', `
         <p>Xin chào <strong>${user.first_name}</strong>,</p>
         <p>Có yêu cầu đặt lại mật khẩu cho tài khoản này. Bấm nút bên dưới để đặt mật khẩu mới (link có hiệu lực trong 1 giờ):</p>
@@ -2974,7 +3002,7 @@ QUY TẮC BẮT BUỘC:
 
     await sendEmail({
       to: user.email,
-      subject: `🔐 Mã đăng nhập admin — ${COMMUNITY_NAME}`,
+      subject: `🔐 Mã đăng nhập admin — ${communityName()}`,
       html: emailWrap('Mã đăng nhập admin', `
         <p>Xin chào <strong>${user.first_name}</strong>,</p>
         <p>Mã xác thực để đăng nhập admin.html của bạn là:</p>
@@ -6700,7 +6728,7 @@ QUY TẮC BẮT BUỘC:
           🆔 Mã đơn: #${orderId}
         </div>
         <p>Admin sẽ kiểm tra và xác nhận thanh toán trong vòng <strong>1–4 giờ</strong> (giờ hành chính). Bạn sẽ nhận thêm email sau khi được xác nhận.</p>
-        <p style="color:#94a3b8;font-size:13px">Nếu có thắc mắc, hãy liên hệ qua ${COMMUNITY_NAME}.</p>
+        <p style="color:#94a3b8;font-size:13px">Nếu có thắc mắc, hãy liên hệ qua ${communityName()}.</p>
       `)
     });
     // Notify admin
@@ -7054,9 +7082,9 @@ QUY TẮC BẮT BUỘC:
     const existing = db.get("SELECT value FROM site_settings WHERE key='email_templates'");
     if (existing) return;
     const defaults = [
-      { id:1, name:'Email chào mừng', subject:`Chào mừng đến với ${COMMUNITY_NAME}! 🎉`, category:'welcome',
-        body:`<h2>Chào mừng {{first_name}} đến với ${COMMUNITY_NAME}! 🎉</h2>
-<p>Bạn đã chính thức gia nhập cộng đồng <strong>${COMMUNITY_NAME}</strong> — nơi mọi người cùng học cách ăn uống theo Ngũ Hành để thanh lọc và cân bằng cơ thể.</p>
+      { id:1, name:'Email chào mừng', subject:`Chào mừng đến với ${communityName()}! 🎉`, category:'welcome',
+        body:`<h2>Chào mừng {{first_name}} đến với ${communityName()}! 🎉</h2>
+<p>Bạn đã chính thức gia nhập cộng đồng <strong>${communityName()}</strong> — nơi mọi người cùng học cách ăn uống theo Ngũ Hành để thanh lọc và cân bằng cơ thể.</p>
 <p><strong>Bắt đầu ngay:</strong></p>
 <ul>
   <li>🔥 <a href="${SITE_URL}/challenge.html">Đăng ký Thử thách 28 ngày</a></li>
@@ -7118,7 +7146,7 @@ QUY TẮC BẮT BUỘC:
       { id:8, name:'Tái kích hoạt — Nhớ bạn', subject:'Chúng tôi nhớ bạn! Có nhiều điều mới 👋', category:'reengagement',
         body:`<h2>Chúng tôi nhớ bạn! 👋</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Đã {{days_inactive}} ngày kể từ lần cuối bạn ghé ${COMMUNITY_NAME}. Cộng đồng có nhiều điều mới:</p>
+<p>Đã {{days_inactive}} ngày kể từ lần cuối bạn ghé ${communityName()}. Cộng đồng có nhiều điều mới:</p>
 <ul>
   <li>🔥 Thử thách mới: <strong>{{new_challenge}}</strong></li>
   <li>💬 {{new_posts}} bài đăng từ cộng đồng</li>
@@ -7132,7 +7160,7 @@ QUY TẮC BẮT BUỘC:
 <p style="text-align:center;font-size:32px;font-weight:bold;color:#8b5cf6">+50 XP</p>
 <p>Bonus khi hoàn thành nhiệm vụ đầu tiên sau khi quay lại. Có hiệu lực trong 7 ngày.</p>
 <p><a href="${SITE_URL}/challenge.html">Nhận phần thưởng →</a></p>`, updated_at:'2025-05-10' },
-      { id:10, name:'Newsletter hàng tuần', subject:`Tổng hợp tuần tại ${COMMUNITY_NAME} — {{week}}`, category:'newsletter',
+      { id:10, name:'Newsletter hàng tuần', subject:`Tổng hợp tuần tại ${communityName()} — {{week}}`, category:'newsletter',
         body:`<h2>📰 Tổng hợp tuần {{week}}</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
 <p><strong>Bài nổi bật tuần này:</strong></p>
@@ -7142,7 +7170,7 @@ QUY TẮC BẮT BUỘC:
       { id:11, name:'Thông báo sản phẩm mới', subject:'🚀 Ra mắt: {{product_name}} — Xem ngay!', category:'sales',
         body:`<h2>🚀 Ra mắt: {{product_name}}</h2>
 <p>Chào <strong>{{first_name}}</strong>,</p>
-<p>Chúng tôi vừa ra mắt <strong>{{product_name}}</strong> — được thiết kế đặc biệt cho ${COMMUNITY_NAME}.</p>
+<p>Chúng tôi vừa ra mắt <strong>{{product_name}}</strong> — được thiết kế đặc biệt cho ${communityName()}.</p>
 <p style="text-align:center;font-size:28px;font-weight:bold;color:#10b981">{{launch_price}}</p>
 <p><strike>{{regular_price}}</strike> — Ưu đãi kết thúc sau {{launch_hours}} giờ.</p>
 <p><a href="${SITE_URL}/marketplace.html">Xem & mua ngay →</a></p>`, updated_at:'2025-05-22' },
@@ -7254,7 +7282,7 @@ QUY TẮC BẮT BUỘC:
   // Tính năng AI thứ 3 (cạnh chấm bài tập + chatbot intake), dùng chung callAiChat().
   // Không streaming, không RAG — kho kiến thức nhỏ, nhồi thẳng vào system prompt mỗi request.
 
-  const ASSISTANT_SYSTEM = `Bạn là "Trợ lý Ngũ Hành" của cộng đồng Ăn Uống Ngũ Hành — đồng hành cùng thành viên trong việc ăn uống dưỡng sinh theo Âm Dương Ngũ Hành (ngũ sắc – ngũ vị – tạng phủ – mùa – khung giờ).
+  const ASSISTANT_SYSTEM = `Bạn là "Trợ lý Ngũ Hành" của cộng đồng Hồi sinh THÂN - TÂM -MỆNH — đồng hành cùng thành viên trong việc ăn uống dưỡng sinh theo Âm Dương Ngũ Hành (ngũ sắc – ngũ vị – tạng phủ – mùa – khung giờ).
 
 NHIỆM VỤ: trả lời các câu hỏi thực tế về ăn uống hằng ngày, ví dụ:
 - "Vị chua thì nên ăn gì?" → gợi ý thực phẩm/món theo vị + hành + tạng, và NÊN ĂN VÀO BUỔI NÀO.
