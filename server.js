@@ -2145,8 +2145,8 @@ ${extra}
     ['mp_store_name',          COMMUNITY_NAME + ' Marketplace'],
     ['mp_store_desc',          'Combo thực phẩm, tài liệu và công cụ ăn uống theo Ngũ Hành dành cho cộng đồng.'],
     ['mp_bank_name',           'BIDV'],
-    ['mp_bank_account_name',   'TỪ CHÍ NGUYỆN'],
-    ['mp_bank_account_number', '96247NGUYEN'],
+    ['mp_bank_account_name',   'HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG'],
+    ['mp_bank_account_number', '8600359368'],
     ['home_tagline',           'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH'],
     ['home_heading_line1',     'Ăn uống thuận'],
     ['home_heading_highlight', 'Ngũ Hành'],
@@ -2174,6 +2174,19 @@ ${extra}
     // Thời điểm bắt buộc khảo sát Thân-Tâm-Mệnh: 'signup' (ngay khi tạo tài
     // khoản, mặc định) | 'workshop8' | 'program377' | 'none' (không bắt buộc)
     ['ttm_intake_trigger',     'signup'],
+    // Trang Liên hệ BTC (lien-he.html) — admin sửa ở Cài đặt → Liên hệ
+    ['contact_heading',        'THÔNG TIN LIÊN HỆ VỚI CỘNG ĐỒNG HỒI SINH THÂN TÂM MỆNH'],
+    ['contact_intro',          'Cộng đồng này được điều hành và quản lý bởi ĐIỀN VIÊN ĐƯỜNG'],
+    ['contact_people',         JSON.stringify([
+      { role: 'Điều hành Điền Viên Đường', name: 'Trần Thị Hồng Hạnh', phone: '091 865 3053' },
+      { role: 'Hỗ trợ tư vấn',             name: 'Đỗ Thị Hương Trà',   phone: '091 5398 247' },
+      { role: 'Đào tạo và giảng dạy',      name: 'Ngô Lâm',            phone: '' },
+      { role: 'Hỗ trợ xử lý kỹ thuật',     name: 'Từ Chí Nguyện',      phone: '0918 694 886' },
+    ])],
+    ['contact_bank_name',      'BIDV'],
+    ['contact_bank_account',   '8600359368'],
+    ['contact_bank_holder',    'HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG'],
+    ['contact_bank_note',      'Cộng đồng chỉ sử dụng duy nhất tài khoản Hộ kinh doanh Điền Viên Đường. Vui lòng không chuyển cho bất kỳ tài khoản nào ngoài tài khoản này.'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -2203,6 +2216,16 @@ ${extra}
     });
     db.run("INSERT OR REPLACE INTO site_settings (key, value) VALUES ('retheme_nguhanh', '2')");
     console.log('  Re-theme migration: refreshed branding settings for Ngũ Hành.');
+  }
+
+  // Ngừng dùng tài khoản BIDV 96247NGUYEN (TỪ CHÍ NGUYỆN) — chuyển sang tài khoản
+  // Hộ kinh doanh Điền Viên Đường nếu cài đặt Marketplace vẫn còn tài khoản cũ.
+  const oldBank = db.get("SELECT value FROM site_settings WHERE key = 'mp_bank_account_number'");
+  if (oldBank && oldBank.value.trim().toUpperCase() === '96247NGUYEN') {
+    db.run("UPDATE site_settings SET value = 'BIDV' WHERE key = 'mp_bank_name'");
+    db.run("UPDATE site_settings SET value = '8600359368' WHERE key = 'mp_bank_account_number'");
+    db.run("UPDATE site_settings SET value = 'HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG' WHERE key = 'mp_bank_account_name'");
+    console.log('  Bank migration: 96247NGUYEN → 8600359368 (HKD Điền Viên Đường).');
   }
 
   // One-time rename: "Ăn Uống Ngũ Hành" → "Hồi sinh THÂN - TÂM -MỆNH" in stored settings
@@ -2358,6 +2381,16 @@ ${extra}
     const existing = db.get('SELECT id FROM course_enrollments WHERE course_id = ? AND user_id = ?', [courseId, userId]);
     if (existing) db.run("UPDATE course_enrollments SET status = 'approved' WHERE id = ?", [existing.id]);
     else db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [courseId, userId, 'approved']);
+  }
+
+  // Tài khoản nhận thanh toán Marketplace — đọc từ Cài đặt Marketplace (mp_bank_*)
+  function paymentBank() {
+    const get = k => (db.get('SELECT value FROM site_settings WHERE key = ?', [k])?.value || '').trim();
+    return {
+      name:  get('mp_bank_name') || 'BIDV',
+      acc:   get('mp_bank_account_number') || '8600359368',
+      owner: get('mp_bank_account_name') || 'HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG',
+    };
   }
 
   // Chuyển các quyền học cấp trước theo email thành enrollment thật cho user này
@@ -6102,6 +6135,8 @@ QUY TẮC BẮT BUỘC:
       'workshop3_time_note',
       'workshop8_video_url', 'workshop8_letter_html', 'workshop8_time_note', 'workshop8_sessions',
       'ttm_intake_trigger',
+      'contact_heading', 'contact_intro', 'contact_people',
+      'contact_bank_name', 'contact_bank_account', 'contact_bank_holder', 'contact_bank_note',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
@@ -6360,7 +6395,7 @@ QUY TẮC BẮT BUỘC:
     // 15-min reminder email if still pending after 15 minutes
     const orderId  = order.id;
     const buyerRow = db.get('SELECT first_name, last_name, email FROM users WHERE id = ?', [buyer_id]);
-    const qrUrl    = `https://qr.sepay.vn/img?bank=BIDV&acc=96247NGUYEN&template=compact&amount=${product.price}&des=${SEPAY_MEMO_PREFIX}%20${product_id}%20${buyer_id}`;
+    const qrUrl    = `https://qr.sepay.vn/img?bank=${encodeURIComponent(paymentBank().name)}&acc=${encodeURIComponent(paymentBank().acc)}&template=compact&amount=${product.price}&des=${SEPAY_MEMO_PREFIX}%20${product_id}%20${buyer_id}`;
     const amountFmt = Number(product.price).toLocaleString('vi-VN') + 'đ';
 
     if (buyerRow) {
@@ -6376,8 +6411,8 @@ QUY TẮC BẮT BUỘC:
             <p>Đơn hàng <strong>${product.title}</strong> (${amountFmt}) của bạn vẫn đang chờ thanh toán.</p>
             <p>Vui lòng chuyển khoản đến:</p>
             <div class="rule">
-              🏦 <strong>BIDV</strong> — STK: <strong>96247NGUYEN</strong><br>
-              Chủ TK: <strong>TỪ CHÍ NGUYỆN</strong><br>
+              🏦 <strong>${paymentBank().name}</strong> — STK: <strong>${paymentBank().acc}</strong><br>
+              Chủ TK: <strong>${paymentBank().owner}</strong><br>
               Số tiền: <strong>${amountFmt}</strong><br>
               Nội dung: <strong>${SEPAY_MEMO_PREFIX} ${product_id} ${buyer_id}</strong>
             </div>
@@ -6997,7 +7032,7 @@ QUY TẮC BẮT BUỘC:
       const age = now - new Date(row.created_at).getTime();
       const D1 = 24 * 3600 * 1000;
       const amtFmt = Number(row.amount).toLocaleString('vi-VN') + 'đ';
-      const qrUrl = `https://qr.sepay.vn/img?bank=BIDV&acc=96247NGUYEN&template=compact&amount=${row.amount}&des=${SEPAY_MEMO_PREFIX}%20${row.product_id}%20${row.buyer_id}`;
+      const qrUrl = `https://qr.sepay.vn/img?bank=${encodeURIComponent(paymentBank().name)}&acc=${encodeURIComponent(paymentBank().acc)}&template=compact&amount=${row.amount}&des=${SEPAY_MEMO_PREFIX}%20${row.product_id}%20${row.buyer_id}`;
 
       const drips = [
         { flag: 'mail_1d', col: 'mail_1d', min: D1,     max: 2 * D1, day: 1,
@@ -7026,8 +7061,8 @@ QUY TẮC BẮT BUỘC:
               </div>
               <p>Chuyển khoản để hoàn tất:</p>
               <div class="rule">
-                🏦 <strong>BIDV</strong> — STK: <strong>96247NGUYEN</strong><br>
-                Chủ TK: <strong>TỪ CHÍ NGUYỆN</strong><br>
+                🏦 <strong>${paymentBank().name}</strong> — STK: <strong>${paymentBank().acc}</strong><br>
+                Chủ TK: <strong>${paymentBank().owner}</strong><br>
                 Số tiền: <strong>${amtFmt}</strong><br>
                 Nội dung: <strong>${SEPAY_MEMO_PREFIX} ${row.product_id} ${row.buyer_id}</strong>
               </div>

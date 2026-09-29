@@ -2929,12 +2929,12 @@
               <div style="display:flex;flex-direction:column;gap:6px;">
                 <label style="font-size:13px;font-weight:600;color:var(--text);">Tên tài khoản</label>
                 <input id="mpSettingBankAccountName" type="text" class="search-input" maxlength="80"
-                  style="width:100%" placeholder="VD: TỪ CHÍ NGUYỆN">
+                  style="width:100%" placeholder="VD: HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG">
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;">
                 <label style="font-size:13px;font-weight:600;color:var(--text);">Số tài khoản</label>
                 <input id="mpSettingBankAccountNumber" type="text" class="search-input" maxlength="40"
-                  style="width:100%" placeholder="VD: 96247NGUYEN">
+                  style="width:100%" placeholder="VD: 8600359368">
               </div>
               <div style="display:flex;gap:10px;">
                 <button class="btn-sm primary" onclick="saveMpPaymentSettings()">💾 Lưu</button>
@@ -3109,6 +3109,7 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('assistant', this); loadAssistantLogs();">🌿 Trợ lý</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('calendar', this)">📅 Lịch</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('contact', this)">📞 Thông tin liên hệ</button>
         </div>
 
         <div class="settings-tab-panel active" data-tab="community">
@@ -3605,6 +3606,48 @@
             </div>
             <div style="display:flex;gap:10px;">
               <button class="btn-sm primary" onclick="saveAboutSettings()">💾 Lưu</button>
+              <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- Contact page (lien-he.html) -->
+        <div class="settings-tab-panel" data-tab="contact">
+        <div class="table-card" style="max-width:640px;">
+          <div class="table-card-header">
+            <h2>📞 Thông tin liên hệ (trang Liên hệ BTC)</h2>
+            <a href="lien-he.html" target="_blank" class="btn-sm" style="text-decoration:none;">Xem trang ↗</a>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Tiêu đề</label>
+              <input id="settingContactHeading" type="text" class="search-input" style="width:100%">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Giới thiệu</label>
+              <textarea id="settingContactIntro" rows="2"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"></textarea>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Người liên hệ</label>
+              <div style="font-size:12px;color:var(--muted);">Mỗi người hiển thị thành 1 thẻ, theo đúng thứ tự dưới đây. Để trống SĐT nếu không muốn hiện.</div>
+              <div id="contactPeopleList" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <button class="btn-sm" type="button" onclick="addContactPersonRow()">+ Thêm người liên hệ</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--border);">
+              <label style="font-size:13px;font-weight:600;color:var(--text);">Tài khoản ngân hàng (QR tự tạo từ Ngân hàng + STK)</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <input id="settingContactBankName" type="text" class="search-input" placeholder="Ngân hàng (VD: BIDV)" oninput="updateContactQrPreview()">
+                <input id="settingContactBankAccount" type="text" class="search-input" placeholder="Số tài khoản" oninput="updateContactQrPreview()">
+              </div>
+              <input id="settingContactBankHolder" type="text" class="search-input" style="width:100%" placeholder="Chủ tài khoản">
+              <textarea id="settingContactBankNote" rows="2" placeholder="Lưu ý hiển thị (cảnh báo màu đỏ)"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;resize:vertical;outline:none;line-height:1.5;"></textarea>
+              <img id="contactQrPreview" alt="Xem trước QR" style="width:160px;height:160px;object-fit:contain;border:1px solid var(--border);border-radius:8px;padding:6px;background:#fff;display:none;">
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn-sm primary" onclick="saveContactSettings()">💾 Lưu</button>
               <button class="btn-sm" onclick="loadSettings()">↺ Đặt lại</button>
             </div>
           </div>
@@ -8302,6 +8345,7 @@
         document.getElementById('settingAssistantDailyLimit').value = s.assistant_daily_limit || '30';
 
         document.getElementById('settingCalendarUrl').value = s.calendar_embed_url || '';
+        loadContactSettings(s);
         updateCalendarPreview();
 
         document.getElementById('settingChallengeIcon').value = s.challenge_hero_icon || '⚡';
@@ -8482,6 +8526,78 @@
       const frame = document.getElementById('calendarPreviewFrame');
       if (url) { frame.src = url; wrap.style.display = 'block'; }
       else { frame.src = ''; wrap.style.display = 'none'; }
+    }
+
+    // ── Thông tin liên hệ (lien-he.html) ─────────────────────────
+    function loadContactSettings(s) {
+      document.getElementById('settingContactHeading').value = s.contact_heading || '';
+      document.getElementById('settingContactIntro').value = s.contact_intro || '';
+      document.getElementById('settingContactBankName').value = s.contact_bank_name || '';
+      document.getElementById('settingContactBankAccount').value = s.contact_bank_account || '';
+      document.getElementById('settingContactBankHolder').value = s.contact_bank_holder || '';
+      document.getElementById('settingContactBankNote').value = s.contact_bank_note || '';
+      let people = [];
+      try { people = JSON.parse(s.contact_people || '[]'); } catch (e) {}
+      document.getElementById('contactPeopleList').innerHTML = '';
+      people.forEach(p => addContactPersonRow(p));
+      updateContactQrPreview();
+    }
+
+    function addContactPersonRow(p = {}) {
+      const row = document.createElement('div');
+      row.className = 'contact-person-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1.2fr 1.2fr 1fr auto auto auto;gap:6px;align-items:center;';
+      row.innerHTML = `
+        <input type="text" class="search-input" data-f="role" placeholder="Vai trò (VD: Hỗ trợ tư vấn)" value="${escHtml(p.role || '')}">
+        <input type="text" class="search-input" data-f="name" placeholder="Họ tên" value="${escHtml(p.name || '')}">
+        <input type="text" class="search-input" data-f="phone" placeholder="SĐT" value="${escHtml(p.phone || '')}">
+        <button class="btn-sm" type="button" title="Lên" onclick="moveContactPersonRow(this, -1)">↑</button>
+        <button class="btn-sm" type="button" title="Xuống" onclick="moveContactPersonRow(this, 1)">↓</button>
+        <button class="btn-sm" type="button" title="Xoá" style="color:#ef4444" onclick="this.parentElement.remove()">✕</button>`;
+      document.getElementById('contactPeopleList').appendChild(row);
+    }
+
+    function moveContactPersonRow(btn, dir) {
+      const row = btn.parentElement;
+      const target = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+      if (!target) return;
+      if (dir < 0) row.parentElement.insertBefore(row, target);
+      else row.parentElement.insertBefore(target, row);
+    }
+
+    function updateContactQrPreview() {
+      const bank = document.getElementById('settingContactBankName').value.trim();
+      const acc = document.getElementById('settingContactBankAccount').value.trim();
+      const img = document.getElementById('contactQrPreview');
+      if (bank && acc) {
+        img.src = `https://qr.sepay.vn/img?bank=${encodeURIComponent(bank)}&acc=${encodeURIComponent(acc)}&template=compact`;
+        img.style.display = 'block';
+      } else {
+        img.style.display = 'none';
+      }
+    }
+
+    async function saveContactSettings() {
+      const people = Array.from(document.querySelectorAll('#contactPeopleList .contact-person-row')).map(row => ({
+        role: row.querySelector('[data-f="role"]').value.trim(),
+        name: row.querySelector('[data-f="name"]').value.trim(),
+        phone: row.querySelector('[data-f="phone"]').value.trim(),
+      })).filter(p => p.name || p.role);
+      const res = await api('/admin/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          contact_heading: document.getElementById('settingContactHeading').value.trim(),
+          contact_intro: document.getElementById('settingContactIntro').value.trim(),
+          contact_people: JSON.stringify(people),
+          contact_bank_name: document.getElementById('settingContactBankName').value.trim(),
+          contact_bank_account: document.getElementById('settingContactBankAccount').value.trim(),
+          contact_bank_holder: document.getElementById('settingContactBankHolder').value.trim(),
+          contact_bank_note: document.getElementById('settingContactBankNote').value.trim(),
+        })
+      });
+      if (res.error) { showToast(res.error, 'red'); return; }
+      updateContactQrPreview();
+      showToast('Đã lưu thông tin liên hệ.', 'green');
     }
 
     async function saveCalendarSettings() {
