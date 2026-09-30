@@ -1151,15 +1151,21 @@
 
     function fmtPrice(p) { return !p ? 'Miễn phí' : Number(p).toLocaleString('vi-VN') + '₫'; }
 
+    // join_mode (server): 'open' = vào học ngay · 'approval' = gửi yêu cầu, chờ admin duyệt · 'payment' = thanh toán
     function renderEnrollWrap(c) {
       const wrap = document.getElementById('cvEnrollWrap');
+      const note = text => `<div style="font-size:13px;color:var(--text-muted);margin-top:8px;line-height:1.5;">${text}</div>`;
       if (c.enroll_status === 'pending') {
-        wrap.innerHTML = `<span class="cv-enroll-badge pending">⏳ Đang chờ admin duyệt</span>`;
-      } else if (c.visibility === 'private') {
+        wrap.innerHTML = `<span class="cv-enroll-badge pending">⏳ Đang chờ admin duyệt</span>`
+          + note('Yêu cầu của bạn đã được gửi đến Ban tổ chức. Khi được duyệt, bạn sẽ nhận được thông báo trên ứng dụng và email.');
+      } else if (c.join_mode === 'payment') {
         const href = c.checkout_product_id ? `checkout.html?id=${c.checkout_product_id}` : '#';
         wrap.innerHTML = `<a href="${href}" class="cv-enroll-btn">THANH TOÁN KHÓA HỌC</a>`;
+      } else if (c.join_mode === 'approval') {
+        wrap.innerHTML = `<button class="cv-enroll-btn" onclick="enrollCourse()">Gửi yêu cầu tham gia</button>`
+          + note('Khoá học riêng tư — Ban tổ chức sẽ xem và duyệt yêu cầu của bạn.');
       } else {
-        wrap.innerHTML = `<button class="cv-enroll-btn" onclick="enrollCourse()">Đăng ký khóa học</button>`;
+        wrap.innerHTML = `<button class="cv-enroll-btn" onclick="enrollCourse()">Vào học ngay</button>`;
       }
     }
 
@@ -1176,7 +1182,8 @@
           wrap.innerHTML = `<div style="color:#ef4444;font-size:13px;">${escHtml(res.error)}</div>`;
           return;
         }
-        // Enrolled — reload so the page switches straight into the 2-column lesson view.
+        // Vào học ngay → tải lại để mở giao diện bài học; cần duyệt → hiện trạng thái chờ duyệt
+        if (res.status === 'pending') { renderEnrollWrap({ enroll_status: 'pending' }); return; }
         location.reload();
       } catch (e) {
         wrap.innerHTML = `<div style="color:#ef4444;font-size:13px;">Có lỗi xảy ra. Vui lòng thử lại.</div>`;

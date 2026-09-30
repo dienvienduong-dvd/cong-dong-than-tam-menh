@@ -1767,6 +1767,12 @@ ${extra}
     db.exec('ALTER TABLE courses ADD COLUMN compare_price INTEGER DEFAULT 0');
     console.log('  Migrated courses: added compare_price.');
   }
+  // Khoá riêng tư CÓ PHÍ: 'payment' = thanh toán qua checkout, 'approval' = gửi yêu cầu, admin duyệt.
+  // (Riêng tư 0đ luôn là admin duyệt; công khai luôn vào học ngay — xem courseJoinMode.)
+  if (!courseCols.includes('private_access')) {
+    db.exec("ALTER TABLE courses ADD COLUMN private_access TEXT DEFAULT 'payment'");
+    console.log('  Migrated courses: added private_access.');
+  }
 
   // Migrate products: add course_id — a product can represent the paid checkout for a private course.
   // Completing this product's order auto-enrolls the buyer into the course.
@@ -2647,6 +2653,16 @@ QUY TẮC BẮT BUỘC:
   // Private courses must always have a published, in-sync checkout product. Courses saved
   // before that pairing existed (or whose product drifted out of sync some other way) get
   // healed here on read, so the "Thanh toán" button never dead-ends.
+  // Cách tham gia khoá học:
+  //   'open'     — công khai: bấm là vào học ngay
+  //   'approval' — riêng tư 0đ, hoặc riêng tư có phí mà admin chọn "Admin duyệt": gửi yêu cầu, chờ duyệt
+  //   'payment'  — riêng tư có phí, admin chọn "Thanh toán": qua checkout, thanh toán xong tự vào học
+  function courseJoinMode(course) {
+    if (!course || course.visibility !== 'private') return 'open';
+    if (!(Number(course.price) > 0)) return 'approval';
+    return course.private_access === 'approval' ? 'approval' : 'payment';
+  }
+
   function ensureCourseProduct(courseId) {
     const product = db.get("SELECT id FROM products WHERE course_id = ? AND status = 'published'", [courseId]);
     if (product) return product.id;
@@ -2658,7 +2674,7 @@ QUY TẮC BẮT BUỘC:
     const { user_id = '' } = req.query;
     const courses = db.all(`
       SELECT c.id, c.title, c.description, c.cover_color, c.status, c.visibility, c.price, c.compare_price,
-             c.instructor, c.order_num, c.created_at, c.space_id, c.group_id,
+             c.private_access, c.instructor, c.order_num, c.created_at, c.space_id, c.group_id,
              s.name AS space_name, s.icon AS space_icon, g.name AS group_name,
              p.id AS checkout_product_id,
              COUNT(cl.id) AS lesson_count
@@ -2676,7 +2692,9 @@ QUY TẮC BẮT BUỘC:
         : c.space_id ? (getMembership(c.space_id, user_id)?.status || 'none')
         : null,
       enroll_status: user_id ? (getEnrollment(c.id, user_id)?.status || 'none') : 'none',
-      checkout_product_id: c.visibility === 'private' && !c.checkout_product_id ? ensureCourseProduct(c.id) : c.checkout_product_id,
+      join_mode: courseJoinMode(c),
+      checkout_product_id: courseJoinMode(c) !== 'payment' ? null
+        : (c.checkout_product_id || ensureCourseProduct(c.id)),
     }));
     const total_lessons = db.get("SELECT COUNT(*) AS n FROM course_lessons cl JOIN courses c ON c.id = cl.course_id WHERE c.status = 'published' AND cl.status = 'published'").n;
     res.json({ courses, total_lessons });
@@ -2744,35 +2762,35 @@ QUY TẮC BẮT BUỘC:
           return result;
         })
       : [];
-    const checkout_product_id = course.visibility === 'private' ? ensureCourseProduct(course.id) : null;
+    const join_mode = courseJoinMode(course);
+    const checkout_product_id = join_mode === 'payment' ? ensureCourseProduct(course.id) : null;
     res.json({
-      course: { ...course, enroll_status, checkout_product_id },
+      course: { ...course, enroll_status, join_mode, checkout_product_id },
       lessons,
       lesson_count,
       modules,
     });
   });
 
-  // Enroll instantly in a public course. Private courses must go through checkout —
-  // enrollment there is granted automatically once the linked order completes.
+  // Tham gia khoá học theo courseJoinMode: công khai → vào học ngay; cần duyệt → tạo yêu cầu
+  // 'pending' chờ admin; thanh toán → 402 kèm sản phẩm checkout (thanh toán xong tự được duyệt).
   app.post('/api/courses/:id/enroll', (req, res) => {
     const { user_id } = req.body;
     if (!user_id) return res.status(400).json({ error: 'Thiếu user_id.' });
     const course = db.get('SELECT * FROM courses WHERE id = ?', [req.params.id]);
     if (!course) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
-    if (course.visibility === 'private') {
+    if (!db.get('SELECT id FROM users WHERE id = ?', [user_id])) return res.status(404).json({ error: 'Tài khoản không tồn tại.' });
+    const mode = courseJoinMode(course);
+    if (mode === 'payment') {
       return res.status(402).json({ error: 'Khóa học này yêu cầu thanh toán để tham gia.', checkout_product_id: ensureCourseProduct(course.id) });
     }
 
-    const status = 'approved';
-    const existing = db.get('SELECT id, status FROM course_enrollments WHERE course_id = ? AND user_id = ?', [req.params.id, user_id]);
-    if (existing) {
-      if (existing.status !== 'approved')
-        db.run('UPDATE course_enrollments SET status = ? WHERE id = ?', [status, existing.id]);
-    } else {
-      db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [req.params.id, user_id, status]);
-    }
-    res.json({ success: true, status: 'approved' });
+    const existing = db.get('SELECT id, status FROM course_enrollments WHERE course_id = ? AND user_id = ?', [course.id, user_id]);
+    if (existing?.status === 'approved') return res.json({ success: true, status: 'approved' });
+    const status = mode === 'open' ? 'approved' : 'pending';
+    if (existing) db.run('UPDATE course_enrollments SET status = ? WHERE id = ?', [status, existing.id]);
+    else db.run('INSERT INTO course_enrollments (course_id, user_id, status) VALUES (?,?,?)', [course.id, user_id, status]);
+    res.json({ success: true, status });
   });
 
   // AI-graded lesson exercise — student submits once, gets an immediate score + feedback.
@@ -6041,7 +6059,8 @@ QUY TẮC BẮT BUỘC:
     const course = db.get('SELECT * FROM courses WHERE id = ?', [courseId]);
     if (!course) return;
     const existingProduct = db.get('SELECT id FROM products WHERE course_id = ?', [courseId]);
-    if (course.visibility === 'private') {
+    // Chỉ khoá thu phí qua checkout mới cần sản phẩm bán; khoá "admin duyệt" thì ẩn sản phẩm đi
+    if (courseJoinMode(course) === 'payment') {
       if (existingProduct) {
         db.run(
           "UPDATE products SET title = ?, description = ?, price = ?, compare_price = ?, cover_color = ?, category = 'course', status = 'published' WHERE id = ?",
@@ -6058,21 +6077,25 @@ QUY TẮC BẮT BUỘC:
       db.run("UPDATE products SET status = 'draft' WHERE id = ?", [existingProduct.id]);
     }
   }
+  // Khoá riêng tư không thu phí qua checkout (0đ / admin duyệt) → ẩn sản phẩm bán cũ (idempotent)
+  db.all("SELECT * FROM courses WHERE visibility = 'private'").forEach(c => {
+    if (courseJoinMode(c) !== 'payment') db.run("UPDATE products SET status = 'draft' WHERE course_id = ? AND status = 'published'", [c.id]);
+  });
 
   app.post('/api/admin/courses', requireAdmin, (req, res) => {
-    const { title, description, cover_color = '#6366f1', instructor, status = 'draft', order_num = 0, space_id = null, group_id = null, visibility = 'public', price = 0, compare_price = 0 } = req.body;
+    const { title, description, cover_color = '#6366f1', instructor, status = 'draft', order_num = 0, space_id = null, group_id = null, visibility = 'public', price = 0, compare_price = 0, private_access = 'payment' } = req.body;
     if (!title?.trim()) return res.status(400).json({ error: 'Tên khóa học không được để trống.' });
     const vis = ['public', 'private'].includes(visibility) ? visibility : 'public';
     const r = db.run(
-      'INSERT INTO courses (title, description, cover_color, instructor, status, order_num, space_id, group_id, visibility, price, compare_price) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-      [title.trim(), description || '', cover_color, instructor || '', status, Number(order_num), space_id || null, group_id || null, vis, Number(price) || 0, Number(compare_price) || 0]
+      'INSERT INTO courses (title, description, cover_color, instructor, status, order_num, space_id, group_id, visibility, price, compare_price, private_access) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      [title.trim(), description || '', cover_color, instructor || '', status, Number(order_num), space_id || null, group_id || null, vis, Number(price) || 0, Number(compare_price) || 0, private_access === 'approval' ? 'approval' : 'payment']
     );
     syncCourseProduct(r.lastInsertRowid);
     res.status(201).json({ success: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/courses/:id', requireAdmin, (req, res) => {
-    const { title, description, cover_color, instructor, status, order_num, space_id, group_id, visibility, price, compare_price } = req.body;
+    const { title, description, cover_color, instructor, status, order_num, space_id, group_id, visibility, price, compare_price, private_access } = req.body;
     const c = db.get('SELECT id FROM courses WHERE id = ?', [req.params.id]);
     if (!c) return res.status(404).json({ error: 'Khóa học không tồn tại.' });
     if (title !== undefined)       db.run('UPDATE courses SET title = ? WHERE id = ?', [title, req.params.id]);
@@ -6086,6 +6109,7 @@ QUY TẮC BẮT BUỘC:
     if (visibility !== undefined)  db.run('UPDATE courses SET visibility = ? WHERE id = ?', [['public', 'private'].includes(visibility) ? visibility : 'public', req.params.id]);
     if (price !== undefined)       db.run('UPDATE courses SET price = ? WHERE id = ?', [Number(price) || 0, req.params.id]);
     if (compare_price !== undefined) db.run('UPDATE courses SET compare_price = ? WHERE id = ?', [Number(compare_price) || 0, req.params.id]);
+    if (private_access !== undefined) db.run('UPDATE courses SET private_access = ? WHERE id = ?', [private_access === 'approval' ? 'approval' : 'payment', req.params.id]);
     syncCourseProduct(req.params.id);
     res.json({ success: true });
   });
@@ -6157,12 +6181,53 @@ QUY TẮC BẮT BUỘC:
     res.status(201).json({ success: true });
   });
 
+  // Tất cả yêu cầu tham gia khoá học (mọi khoá) — tab "Khoá học" ở trang Duyệt đăng ký & lộ trình
+  app.get('/api/admin/course-enrollments', requireAdmin, (req, res) => {
+    const status = ['pending', 'approved'].includes(req.query.status) ? req.query.status : 'pending';
+    const enrollments = db.all(`
+      SELECT ce.id, ce.status, ce.created_at, ce.course_id, c.title AS course_title, c.visibility, c.price,
+             u.id AS user_id, u.first_name, u.last_name, u.email
+      FROM course_enrollments ce
+      JOIN users u ON u.id = ce.user_id
+      JOIN courses c ON c.id = ce.course_id
+      WHERE ce.status = ?
+      ORDER BY ce.created_at DESC LIMIT 500
+    `, [status]);
+    res.json({ enrollments });
+  });
+
   app.patch('/api/admin/course-enrollments/:id', requireAdmin, (req, res) => {
     const { status } = req.body;
     if (!['approved', 'pending'].includes(status)) return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
-    db.run('UPDATE course_enrollments SET status = ? WHERE id = ?', [status, req.params.id]);
+    const cur = db.get(`SELECT ce.id, ce.status, ce.user_id, c.id AS course_id, c.title
+      FROM course_enrollments ce JOIN courses c ON c.id = ce.course_id WHERE ce.id = ?`, [req.params.id]);
+    if (!cur) return res.status(404).json({ error: 'Không tìm thấy yêu cầu.' });
+    db.run('UPDATE course_enrollments SET status = ? WHERE id = ?', [status, cur.id]);
+    if (status === 'approved' && cur.status !== 'approved') notifyCourseApproved(cur.user_id, cur.course_id, cur.title);
     res.json({ success: true });
   });
+
+  // Báo thành viên (trong app + email) khi yêu cầu tham gia khoá học được duyệt
+  function notifyCourseApproved(userId, courseId, courseTitle) {
+    const u = db.get('SELECT email, first_name FROM users WHERE id = ?', [userId]);
+    if (!u) return;
+    const title = `Yêu cầu tham gia khoá học đã được duyệt 🎉`;
+    const content = `Bạn đã có thể vào học khoá "${courseTitle}" ngay bây giờ.`;
+    const link = `course-view.html?id=${courseId}`;
+    db.run('INSERT INTO notifications (user_id, type, title, content, link, sent_by_admin) VALUES (?,?,?,?,?,1)',
+      [userId, 'course', title, content, link]);
+    if (!u.email) return;
+    const safe = v => String(v || '').replace(/[<>&"]/g, '');
+    sendEmail({
+      to: u.email,
+      subject: `✅ Đã duyệt: ${courseTitle}`,
+      html: emailWrap(title, `
+        <p>Chào ${safe(u.first_name) || 'bạn'},</p>
+        <p>Ban tổ chức ${communityName()} đã duyệt yêu cầu tham gia khoá học <strong>${safe(courseTitle)}</strong> của bạn.</p>
+        <a class="btn" href="${SITE_URL}/${link}">Vào học ngay</a>
+      `),
+    }).catch(err => console.error('[course-approved email]', err.message));
+  }
 
   app.delete('/api/admin/course-enrollments/:id', requireAdmin, (req, res) => {
     db.run('DELETE FROM course_enrollments WHERE id = ?', [req.params.id]);

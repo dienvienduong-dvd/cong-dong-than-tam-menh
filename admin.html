@@ -1864,6 +1864,35 @@
           <button class="mp-tab-btn appr-tab-btn active" data-tab="ttm" onclick="openApprovalTab('ttm')">🧭 Lộ trình <span id="apprCnt-ttm"></span></button>
           <button class="mp-tab-btn appr-tab-btn" data-tab="wk8" onclick="openApprovalTab('wk8')">💎 8 Buổi Chuyên Sâu <span id="apprCnt-wk8"></span></button>
           <button class="mp-tab-btn appr-tab-btn" data-tab="p377" onclick="openApprovalTab('p377')">🗓️ 377 ngày thực hành <span id="apprCnt-p377"></span></button>
+          <button class="mp-tab-btn appr-tab-btn" data-tab="course" onclick="openApprovalTab('course')">📚 Khoá học <span id="apprCnt-course"></span></button>
+        </div>
+
+        <div class="appr-tab-panel" data-tab="course">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>Yêu cầu tham gia khoá học riêng tư</h2>
+              <select class="filter-select" id="courseReqStatusFilter" onchange="loadCourseRequests()">
+                <option value="pending">Chờ duyệt</option>
+                <option value="approved">Đã duyệt</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Học viên</th>
+                    <th>Khoá học</th>
+                    <th>Gửi lúc</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="courseReqTbody">
+                  <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <div class="appr-tab-panel active" data-tab="ttm">
@@ -4858,7 +4887,7 @@
             style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Loại khóa học</label>
           <select id="crsVisibility" class="search-input" style="width:100%" onchange="toggleCoursePriceField()">
             <option value="public">🌐 Công khai — vào học ngay, miễn phí</option>
-            <option value="private">🔒 Riêng tư — trả phí để tham gia</option>
+            <option value="private">🔒 Riêng tư — cần admin duyệt hoặc thanh toán</option>
           </select>
         </div>
         <div id="crsPriceWrap" style="display:none;grid-template-columns:1fr 1fr;gap:12px;">
@@ -4870,10 +4899,20 @@
           <div>
             <label
               style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Giá bán (đ)</label>
-            <input class="search-input" style="width:100%" type="number" id="crsPrice" placeholder="299000" min="0" step="1000">
+            <input class="search-input" style="width:100%" type="number" id="crsPrice" placeholder="299000" min="0" step="1000" oninput="toggleCoursePriceField()">
           </div>
         </div>
-        <div id="crsPriceHint" style="display:none;font-size:11px;color:var(--muted);margin-top:-8px;">Giá trị thật hiển thị gạch ngang bên cạnh giá bán để làm nổi bật ưu đãi (để 0 nếu không cần). Học viên phải thanh toán qua trang checkout mới được vào học; thanh toán thành công sẽ tự động được tham gia, không cần admin duyệt.</div>
+        <div id="crsPriceHint" style="display:none;font-size:11px;color:var(--muted);margin-top:-8px;">Giá trị thật hiển thị gạch ngang bên cạnh giá bán để làm nổi bật ưu đãi (để 0 nếu không cần). Giá bán 0đ = miễn phí: học viên gửi yêu cầu, admin duyệt mới được vào học.</div>
+        <div id="crsAccessWrap" style="display:none;">
+          <label
+            style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Cách tham gia (khoá có phí)</label>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+            <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;"><input type="radio" name="crsPrivateAccess" value="payment" checked style="margin-top:3px;">
+              <span><b>Thanh toán</b> — học viên thanh toán qua trang checkout, thanh toán thành công tự động vào học.</span></label>
+            <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;"><input type="radio" name="crsPrivateAccess" value="approval" style="margin-top:3px;">
+              <span><b>Admin duyệt</b> — học viên gửi yêu cầu (thanh toán ngoài hệ thống), admin duyệt mới được vào học.</span></label>
+          </div>
+        </div>
         <div>
           <label
             style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Gắn vào Space / Group</label>
@@ -5237,7 +5276,7 @@
       assignments: ['Danh sách bài tập', 'Thư viện bài tập (hướng dẫn + link) dùng chung cho bài học & nội dung 377 ngày'],
       hannhietleads: ['Lead Kiểm tra Hàn-Nhiệt', 'Danh sách người đã làm minigame công khai kiem-tra-han-nhiet.html'],
       coaching: ['Coach 1-1', 'Yêu cầu đặt lịch coach 1-1 từ khách đã mua gói'],
-      'ttm-roadmaps': ['Duyệt đăng ký & lộ trình', 'Lộ trình Thân Tâm Mệnh · 8 Buổi Chuyên Sâu · 377 ngày thực hành'],
+      'ttm-roadmaps': ['Duyệt đăng ký & lộ trình', 'Lộ trình Thân Tâm Mệnh · 8 Buổi Chuyên Sâu · 377 ngày thực hành · Khoá học'],
       'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
       'member-profile-detail': ['Hồ sơ thành viên', ''],
       program377: ['Chương trình 377 ngày', 'Duyệt đăng ký, soạn nội dung từng ngày, xem báo cáo hằng ngày'],
@@ -6537,6 +6576,51 @@
       if (name === 'ttm') loadTtmRoadmaps();
       if (name === 'wk8') loadWorkshop8Enrollments();
       if (name === 'p377') loadP377Enrollments();
+      if (name === 'course') loadCourseRequests();
+    }
+
+    // Tab "Khoá học": yêu cầu tham gia khoá riêng tư (0đ hoặc khoá có phí chọn "Admin duyệt")
+    async function loadCourseRequests() {
+      const status = document.getElementById('courseReqStatusFilter').value;
+      const tbody = document.getElementById('courseReqTbody');
+      try {
+        const d = await api(`/admin/course-enrollments?status=${status}`);
+        refreshApprovalCounts();
+        if (!d.enrollments.length) {
+          tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">${status === 'pending' ? 'Không có yêu cầu nào chờ duyệt.' : 'Chưa có học viên nào.'}</div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = d.enrollments.map((e, i) => `
+    <tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td><span style="font-weight:600;">${escHtml(`${e.first_name} ${e.last_name || ''}`.trim())}</span>
+        <div style="font-size:11px;color:var(--muted)">${escHtml(e.email)}</div></td>
+      <td>${escHtml(e.course_title)}<div style="font-size:11px;color:var(--muted)">${e.visibility === 'private' ? '🔒 Riêng tư' : '🌐 Công khai'} · ${e.price > 0 ? Number(e.price).toLocaleString('vi-VN') + '₫' : 'Miễn phí'}</div></td>
+      <td style="color:var(--muted)">${fmtDate(e.created_at)}</td>
+      <td>${e.status === 'pending' ? `
+        <button class="act-btn" onclick="approveCourseRequest(${e.id})">Duyệt</button>
+        <button class="act-btn" style="color:#dc2626;" onclick="rejectCourseRequest(${e.id})">Từ chối</button>` : '<span class="badge" style="background:#dcfce7;color:#166534;">Đã duyệt</span>'}</td>
+    </tr>`).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">${escHtml(err.message)}</div></td></tr>`;
+      }
+    }
+
+    async function approveCourseRequest(id) {
+      try {
+        await api(`/admin/course-enrollments/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+        showToast('✅ Đã duyệt — học viên nhận thông báo và email.', 'green');
+        loadCourseRequests();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    async function rejectCourseRequest(id) {
+      if (!confirm('Từ chối yêu cầu tham gia khoá học này?')) return;
+      try {
+        await api(`/admin/course-enrollments/${id}`, { method: 'DELETE' });
+        showToast('Đã từ chối yêu cầu.', '');
+        loadCourseRequests();
+      } catch (e) { showToast(e.message, 'red'); }
     }
 
     // Số chờ duyệt trên từng tab + badge sidebar (tổng cả 3)
@@ -6544,17 +6628,18 @@
     function refreshApprovalCounts() {
       clearTimeout(_apprCountsTimer);
       _apprCountsTimer = setTimeout(async () => {
-        const [t, w, p] = await Promise.all([
+        const [t, w, p, c] = await Promise.all([
           api('/admin/ttm/roadmaps?status=pending_approval').catch(() => null),
           api('/admin/workshop8/enrollments?status=pending').catch(() => null),
           api('/admin/program377/enrollments?status=pending').catch(() => null),
+          api('/admin/course-enrollments?status=pending').catch(() => null),
         ]);
-        const counts = { ttm: t?.pending_count || 0, wk8: w?.enrollments?.length || 0, p377: p?.enrollments?.length || 0 };
+        const counts = { ttm: t?.pending_count || 0, wk8: w?.enrollments?.length || 0, p377: p?.enrollments?.length || 0, course: c?.enrollments?.length || 0 };
         Object.entries(counts).forEach(([k, n]) => {
           const el = document.getElementById('apprCnt-' + k);
           if (el) el.textContent = n ? `(${n})` : '';
         });
-        const total = counts.ttm + counts.wk8 + counts.p377;
+        const total = counts.ttm + counts.wk8 + counts.p377 + counts.course;
         const badge = document.getElementById('sbTtmPendingCount');
         badge.textContent = total;
         badge.style.display = total > 0 ? 'inline' : 'none';
@@ -10303,6 +10388,13 @@
       const isPrivate = document.getElementById('crsVisibility').value === 'private';
       document.getElementById('crsPriceWrap').style.display = isPrivate ? 'grid' : 'none';
       document.getElementById('crsPriceHint').style.display = isPrivate ? '' : 'none';
+      // Chọn "Thanh toán / Admin duyệt" chỉ áp dụng cho khoá riêng tư có phí (0đ luôn là admin duyệt)
+      const paid = isPrivate && Number(document.getElementById('crsPrice').value) > 0;
+      document.getElementById('crsAccessWrap').style.display = paid ? '' : 'none';
+    }
+    function setCoursePrivateAccess(v) {
+      const r = document.querySelector(`input[name="crsPrivateAccess"][value="${v === 'approval' ? 'approval' : 'payment'}"]`);
+      if (r) r.checked = true;
     }
 
     function openCourseModal(id = null) {
@@ -10317,6 +10409,7 @@
       document.getElementById('crsPrice').value = '';
       document.getElementById('crsComparePrice').value = '';
       document.getElementById('crsOrder').value = '0';
+      setCoursePrivateAccess('payment');
       toggleCoursePriceField();
       populateCourseSpaceSelect(null);
       if (id) {
@@ -10331,6 +10424,7 @@
           document.getElementById('crsVisibility').value = c.visibility === 'private' ? 'private' : 'public';
           document.getElementById('crsPrice').value = c.price || '';
           document.getElementById('crsComparePrice').value = c.compare_price || '';
+          setCoursePrivateAccess(c.private_access);
           toggleCoursePriceField();
           document.getElementById('crsOrder').value = c.order_num;
           const selectedValue = c.group_id ? `group:${c.group_id}` : c.space_id ? `space:${c.space_id}` : '';
@@ -10352,6 +10446,7 @@
         visibility: document.getElementById('crsVisibility').value,
         price: Number(document.getElementById('crsPrice').value) || 0,
         compare_price: Number(document.getElementById('crsComparePrice').value) || 0,
+        private_access: document.querySelector('input[name="crsPrivateAccess"]:checked')?.value || 'payment',
         order_num: Number(document.getElementById('crsOrder').value) || 0,
         space_id: kind === 'space' ? Number(rawId) : null,
         group_id: kind === 'group' ? Number(rawId) : null,
