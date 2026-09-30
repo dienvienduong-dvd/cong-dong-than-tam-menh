@@ -5802,8 +5802,36 @@ QUY TẮC BẮT BUỘC:
     res.json({ enrollments: rows });
   });
 
+  // Báo cho thành viên khi đăng ký 8 Buổi Chuyên Sâu / 377 ngày được duyệt: thông báo trong app + email.
+  // Chưa làm khảo sát Thân-Tâm-Mệnh → nhắc làm ngay (trang chương trình yêu cầu khảo sát trước khi mở nội dung).
+  function notifyEnrollmentApproved(userId, programName, page, intakeRedirect) {
+    const u = db.get('SELECT email, first_name, ttm_intake_done_at FROM users WHERE id = ?', [userId]);
+    if (!u) return;
+    const trigger = db.get("SELECT value FROM site_settings WHERE key = 'ttm_intake_trigger'")?.value || 'signup';
+    const needIntake = !u.ttm_intake_done_at && trigger !== 'none';
+    const title = `Đăng ký ${programName} đã được duyệt 🎉`;
+    const content = needIntake
+      ? 'Bước tiếp theo: hoàn thành phiếu khảo sát Thân – Tâm – Mệnh để Ban tổ chức cá nhân hoá lộ trình cho bạn.'
+      : 'Bạn đã có thể bắt đầu chương trình ngay bây giờ.';
+    const link = needIntake ? `intake-than-tam-menh.html?redirect=${intakeRedirect}` : page;
+    db.run('INSERT INTO notifications (user_id, type, title, content, link, sent_by_admin) VALUES (?,?,?,?,?,1)',
+      [userId, 'course', title, content, link]);
+    if (!u.email) return;
+    const name = String(u.first_name || '').replace(/[<>&"]/g, '');
+    sendEmail({
+      to: u.email,
+      subject: `✅ ${title}`,
+      html: emailWrap(title, `
+        <p>Chào ${name || 'bạn'},</p>
+        <p>Ban tổ chức ${communityName()} đã duyệt đăng ký tham gia chương trình <strong>${programName}</strong> của bạn.</p>
+        <p>${content}</p>
+        <a class="btn" href="${SITE_URL}/${link}">${needIntake ? 'Làm khảo sát Thân – Tâm – Mệnh' : 'Vào chương trình'}</a>
+      `),
+    }).catch(err => console.error('[enroll-approved email]', err.message));
+  }
+
   app.post('/api/admin/program377/enrollments/:id/approve', requireAdmin, (req, res) => {
-    const enrollment = db.get('SELECT id FROM program377_enrollments WHERE id = ?', [req.params.id]);
+    const enrollment = db.get('SELECT id, user_id FROM program377_enrollments WHERE id = ?', [req.params.id]);
     if (!enrollment) return res.status(404).json({ error: 'Không tìm thấy đăng ký.' });
     const todayStr = db.get("SELECT date('now','localtime') AS d").d;
     const startDate = req.body.start_date && /^\d{4}-\d{2}-\d{2}$/.test(req.body.start_date) ? req.body.start_date : todayStr;
@@ -5811,6 +5839,7 @@ QUY TẮC BẮT BUỘC:
       "UPDATE program377_enrollments SET status = 'approved', start_date = ?, approved_at = datetime('now','localtime'), approved_by = ? WHERE id = ?",
       [startDate, req.adminUserId || null, req.params.id]
     );
+    notifyEnrollmentApproved(enrollment.user_id, '377 ngày thực hành', 'program377.html', '377');
     res.json({ ok: true });
   });
 
@@ -5834,12 +5863,13 @@ QUY TẮC BẮT BUỘC:
   });
 
   app.post('/api/admin/workshop8/enrollments/:id/approve', requireAdmin, (req, res) => {
-    const enrollment = db.get('SELECT id FROM workshop8_enrollments WHERE id = ?', [req.params.id]);
+    const enrollment = db.get('SELECT id, user_id FROM workshop8_enrollments WHERE id = ?', [req.params.id]);
     if (!enrollment) return res.status(404).json({ error: 'Không tìm thấy đăng ký.' });
     db.run(
       "UPDATE workshop8_enrollments SET status = 'approved', approved_at = datetime('now','localtime'), approved_by = ? WHERE id = ?",
       [req.adminUserId || null, req.params.id]
     );
+    notifyEnrollmentApproved(enrollment.user_id, '8 Buổi Chuyên Sâu', 'workshop8.html', 'workshop8');
     res.json({ ok: true });
   });
 

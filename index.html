@@ -479,7 +479,7 @@ async function redirectAfterLogin() {
   // khác của cộng đồng — ưu tiên hơn mọi giá trị ?redirect= khác. Chỉ áp dụng
   // khi admin đã chọn thời điểm "signup" (mặc định) trong Cài đặt → Khảo sát;
   // nếu chọn thời điểm khác (khi đăng ký 8 buổi / 377 ngày / không bắt buộc)
-  // thì không chặn ở đây, để enrollWorkshop8()/enrollP377() tự kiểm tra.
+  // thì không chặn ở đây — trang 8 buổi / 377 ngày yêu cầu khảo sát sau khi được duyệt.
   let user = null;
   try { user = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) {}
   if (user && !user.ttm_intake_done_at) {
