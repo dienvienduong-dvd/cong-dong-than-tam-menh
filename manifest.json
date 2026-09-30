@@ -1,12 +1,14 @@
 {
-  "name": "Cộng đồng Thân Tâm Mệnh",
-  "short_name": "Thân Tâm Mệnh",
+  "name": "NGÔI NHÀ DƯỠNG HOÁ",
+  "short_name": "Dưỡng Hoá",
+  "description": "Nơi cùng nhau nuôi dưỡng Thân – Tâm – Mệnh mỗi ngày",
   "start_url": "/feed.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
   "icons": [
-    { "src": "/assets/img/app-icon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/assets/img/app-icon.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
