@@ -306,6 +306,13 @@ if (localStorage.getItem('currentUser')) {
   redirectAfterLogin();
 }
 
+// Phiên cũ không còn hợp lệ (tài khoản bị xoá / khoá) — app.js chuyển về đây kèm ?session=expired
+if (new URLSearchParams(location.search).get('session') === 'expired') {
+  const msgEl = document.querySelector('#errorBanner [data-msg]');
+  if (msgEl) msgEl.textContent = 'Tài khoản của bạn không còn tồn tại hoặc đã bị khoá. Vui lòng đăng nhập lại hoặc đăng ký tài khoản mới.';
+  showAlert('errorBanner');
+}
+
 // ── Homepage hero content (admin-configurable) ──────────────
 (function applyHomeSettings() {
   function splitStatValue(value) {

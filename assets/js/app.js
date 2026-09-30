@@ -35,6 +35,42 @@ function toggleMainMenu() {
   document.getElementById('mob-mainmenu')?.classList.contains('open') ? closeMainMenu() : openMainMenu();
 }
 
+// ── Phiên đăng nhập ─────────────────────────────────────────
+// Đăng xuất phải xoá phiên lưu trong localStorage — nếu còn, index.html sẽ tự đăng nhập lại.
+// Mọi nút có title/aria-label "Đăng xuất" đều đi qua đây (vài trang cũ chỉ xoá sessionStorage).
+function clearLoginSession() {
+  try { localStorage.removeItem('currentUser'); } catch (e) {}
+  try { sessionStorage.clear(); } catch (e) {}
+}
+// Trang tự khai báo doLogout() sẽ ghi đè bản này; bản này cho các trang gọi doLogout() mà thiếu hàm.
+function doLogout() {
+  clearLoginSession();
+  window.location.href = 'index.html';
+}
+document.addEventListener('click', e => {
+  if (e.target.closest && e.target.closest('[title="Đăng xuất"], [aria-label="Đăng xuất"]')) clearLoginSession();
+}, true);
+
+// Tài khoản đã bị xoá / bị khoá mà trình duyệt vẫn giữ phiên cũ → buộc đăng nhập (hoặc đăng ký) lại.
+(function checkLoginSession() {
+  let u = null;
+  try { u = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) {}
+  if (!u || !u.id) return;
+  fetch('/api/auth/session-check', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: u.id }),
+  })
+    .then(r => (r.ok ? r.json() : null))
+    .then(d => {
+      if (d && d.valid === false) {
+        clearLoginSession();
+        window.location.href = 'index.html?session=expired';
+      }
+    })
+    .catch(() => {}); // lỗi mạng: không đăng xuất nhầm
+})();
+
 // ── Dynamic community branding ─────────────────────────────
 (function applyCommunityBranding() {
   const DEFAULT_NAME = 'NGÔI NHÀ DƯỠNG HOÁ';

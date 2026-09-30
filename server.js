@@ -3038,6 +3038,14 @@ QUY TẮC BẮT BUỘC:
     });
   });
 
+  // Kiểm tra phiên đăng nhập lưu ở trình duyệt còn hợp lệ không (app.js gọi mỗi lần mở trang):
+  // tài khoản đã bị xoá / bị khoá → buộc đăng nhập lại. (users.id AUTOINCREMENT nên id không bị dùng lại.)
+  app.post('/api/auth/session-check', (req, res) => {
+    const { user_id } = req.body || {};
+    const user = Number(user_id) ? db.get('SELECT status FROM users WHERE id = ?', [Number(user_id)]) : null;
+    res.json({ valid: !!user && user.status !== 'banned' });
+  });
+
   // Forgot password — generate reset token
   app.post('/api/auth/forgot-password', (req, res) => {
     const { email } = req.body;

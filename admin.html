@@ -1119,6 +1119,8 @@
     .mp-tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -1px; }
     .mp-tab-btn:hover { color: var(--text); }
     .mp-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .appr-tab-panel { display: none; }
+    .appr-tab-panel.active { display: block; }
     @media (max-width: 560px) { .loc-modal-grid { grid-template-columns: 1fr !important; } }
     .mp-tab-panel { display: none; }
     .mp-tab-panel.active { display: block; }
@@ -1317,7 +1319,7 @@
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 2C8 6 6 9.5 6 13a6 6 0 0012 0c0-3.5-2-7-6-11z" />
           </svg>
-          Lộ trình chờ duyệt
+          Duyệt đăng ký &amp; lộ trình
           <span class="sbar-count" id="sbTtmPendingCount" style="background:#ef4444;color:#fff;display:none">0</span>
         </button>
         <button class="sbar-item" onclick="showPage('zoom-events')">
@@ -1858,53 +1860,81 @@
 
       <!-- ── Lộ trình Thân Tâm Mệnh (Agent 1 draft → duyệt) ── -->
       <section class="page" id="page-ttm-roadmaps">
-        <div class="table-card">
-          <div class="table-card-header">
-            <h2>Lộ trình chờ duyệt</h2>
-            <select class="filter-select" id="ttmStatusFilter" onchange="loadTtmRoadmaps()">
-              <option value="pending_approval">Chờ duyệt</option>
-              <option value="approved">Đã duyệt</option>
-              <option value="rejected">Từ chối</option>
-            </select>
-          </div>
-          <div style="overflow-x:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Khách hàng</th>
-                  <th>Trạng thái</th>
-                  <th>Nộp intake lúc</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody id="ttmTbody">
-                <tr>
-                  <td colspan="5">
-                    <div class="empty-state">Đang tải...</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── Chương trình 377 ngày (6 tab) ── -->
-      <section class="page" id="page-program377">
         <div class="mp-tabs">
-          <button id="p377TabBtn-letter" class="settings-tab-btn p377-tab-btn active" onclick="openP377Tab('letter')">Thư ngỏ</button>
-          <button id="p377TabBtn-topics" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('topics')">Tổng quan chủ đề</button>
-          <button id="p377TabBtn-enrollments" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('enrollments')">Duyệt đăng ký</button>
-          <button id="p377TabBtn-days" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('days')">Nội dung từng ngày</button>
-          <button id="p377TabBtn-blocks" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('blocks')">Thư viện khối nội dung</button>
-          <button id="p377TabBtn-reports" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('reports')">Báo cáo hằng ngày</button>
+          <button class="mp-tab-btn appr-tab-btn active" data-tab="ttm" onclick="openApprovalTab('ttm')">🧭 Lộ trình <span id="apprCnt-ttm"></span></button>
+          <button class="mp-tab-btn appr-tab-btn" data-tab="wk8" onclick="openApprovalTab('wk8')">💎 8 Buổi Chuyên Sâu <span id="apprCnt-wk8"></span></button>
+          <button class="mp-tab-btn appr-tab-btn" data-tab="p377" onclick="openApprovalTab('p377')">🗓️ 377 ngày thực hành <span id="apprCnt-p377"></span></button>
         </div>
 
-        <div class="p377-tab-panel" data-tab="enrollments">
+        <div class="appr-tab-panel active" data-tab="ttm">
           <div class="table-card">
             <div class="table-card-header">
-              <h2>Duyệt đăng ký 377 ngày</h2>
+              <h2>Lộ trình Thân Tâm Mệnh (sau khảo sát)</h2>
+              <select class="filter-select" id="ttmStatusFilter" onchange="loadTtmRoadmaps()">
+                <option value="pending_approval">Chờ duyệt</option>
+                <option value="approved">Đã duyệt</option>
+                <option value="rejected">Từ chối</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Khách hàng</th>
+                    <th>Trạng thái</th>
+                    <th>Nộp intake lúc</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="ttmTbody">
+                  <tr>
+                    <td colspan="5">
+                      <div class="empty-state">Đang tải...</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="appr-tab-panel" data-tab="wk8">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>Duyệt đăng ký 8 Buổi Chuyên Sâu</h2>
+              <select class="filter-select" id="wk8EnrollStatusFilter" onchange="loadWorkshop8Enrollments()">
+                <option value="pending">Chờ duyệt</option>
+                <option value="approved">Đã duyệt</option>
+                <option value="rejected">Từ chối</option>
+              </select>
+            </div>
+            <div style="padding:20px 24px;">
+              <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">
+                Học viên đăng ký sau khi đã chuyển khoản/liên hệ ngoài hệ thống — duyệt thủ công giống chương trình 377 ngày.
+              </div>
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;">
+                    <th style="padding:6px 4px;">#</th>
+                    <th style="padding:6px 4px;">Học viên</th>
+                    <th style="padding:6px 4px;">Trạng thái</th>
+                    <th style="padding:6px 4px;">Ngày đăng ký</th>
+                    <th style="padding:6px 4px;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="wk8EnrollTbody">
+                  <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="appr-tab-panel" data-tab="p377">
+          <div class="table-card">
+            <div class="table-card-header">
+              <h2>Duyệt đăng ký 377 ngày thực hành</h2>
               <select class="filter-select" id="p377EnrollStatusFilter" onchange="loadP377Enrollments()">
                 <option value="pending">Chờ duyệt</option>
                 <option value="approved">Đã duyệt</option>
@@ -1928,6 +1958,25 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Chương trình 377 ngày (6 tab) ── -->
+      <section class="page" id="page-program377">
+        <div class="mp-tabs">
+          <button id="p377TabBtn-letter" class="settings-tab-btn p377-tab-btn active" onclick="openP377Tab('letter')">Thư ngỏ</button>
+          <button id="p377TabBtn-topics" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('topics')">Tổng quan chủ đề</button>
+          <button id="p377TabBtn-enrollments" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('enrollments')">Duyệt đăng ký</button>
+          <button id="p377TabBtn-days" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('days')">Nội dung từng ngày</button>
+          <button id="p377TabBtn-blocks" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('blocks')">Thư viện khối nội dung</button>
+          <button id="p377TabBtn-reports" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('reports')">Báo cáo hằng ngày</button>
+        </div>
+
+        <div class="p377-tab-panel" data-tab="enrollments">
+          <div class="table-card" style="padding:20px 24px;">
+            <div style="font-size:13.5px;color:var(--muted);">Danh sách đăng ký 377 ngày thực hành đã chuyển sang trang <b>Duyệt đăng ký &amp; lộ trình</b> (gộp chung với Lộ trình và 8 Buổi Chuyên Sâu).</div>
+            <button class="btn-sm primary" style="margin-top:10px;" onclick="showPage('ttm-roadmaps'); openApprovalTab('p377')">Mở trang duyệt →</button>
           </div>
         </div>
 
@@ -2104,27 +2153,9 @@
         </div>
 
         <div class="zoom-tab-panel" data-tab="eight">
-          <div class="table-card" style="max-width:820px;">
-            <div class="table-card-header"><h2>📝 8 Buổi Chuyên Sâu — đăng ký chờ duyệt</h2></div>
-            <div style="padding:20px 24px;">
-              <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">
-                Học viên đăng ký sau khi đã chuyển khoản/liên hệ ngoài hệ thống — duyệt thủ công giống chương trình 377 ngày.
-              </div>
-              <table style="width:100%;border-collapse:collapse;">
-                <thead>
-                  <tr style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;">
-                    <th style="padding:6px 4px;">#</th>
-                    <th style="padding:6px 4px;">Học viên</th>
-                    <th style="padding:6px 4px;">Trạng thái</th>
-                    <th style="padding:6px 4px;">Ngày đăng ký</th>
-                    <th style="padding:6px 4px;">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody id="wk8EnrollTbody">
-                  <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="table-card" style="max-width:820px;padding:20px 24px;">
+            <div style="font-size:13.5px;color:var(--muted);">Danh sách đăng ký 8 Buổi Chuyên Sâu đã chuyển sang trang <b>Duyệt đăng ký &amp; lộ trình</b>.</div>
+            <button class="btn-sm primary" style="margin-top:10px;" onclick="showPage('ttm-roadmaps'); openApprovalTab('wk8')">Mở trang duyệt →</button>
           </div>
 
           <div class="table-card" style="max-width:820px;">
@@ -5206,7 +5237,7 @@
       assignments: ['Danh sách bài tập', 'Thư viện bài tập (hướng dẫn + link) dùng chung cho bài học & nội dung 377 ngày'],
       hannhietleads: ['Lead Kiểm tra Hàn-Nhiệt', 'Danh sách người đã làm minigame công khai kiem-tra-han-nhiet.html'],
       coaching: ['Coach 1-1', 'Yêu cầu đặt lịch coach 1-1 từ khách đã mua gói'],
-      'ttm-roadmaps': ['Lộ trình Thân Tâm Mệnh', 'Bản nháp do Agent 1 (An Lộ) soạn — chờ Ngô Lâm duyệt'],
+      'ttm-roadmaps': ['Duyệt đăng ký & lộ trình', 'Lộ trình Thân Tâm Mệnh · 8 Buổi Chuyên Sâu · 377 ngày thực hành'],
       'member-profile-list': ['Profile thành viên', 'Xem toàn bộ thông tin của từng thành viên'],
       'member-profile-detail': ['Hồ sơ thành viên', ''],
       program377: ['Chương trình 377 ngày', 'Duyệt đăng ký, soạn nội dung từng ngày, xem báo cáo hằng ngày'],
@@ -5247,7 +5278,7 @@
       if (name === 'assignments') loadAssignments();
       if (name === 'hannhietleads') loadHanNhietLeads();
       if (name === 'coaching') { loadCoachingBookings(); loadCoachAvailabilitySettings(); }
-      if (name === 'ttm-roadmaps') loadTtmRoadmaps();
+      if (name === 'ttm-roadmaps') { openApprovalTab(approvalTab); refreshApprovalCounts(); }
       if (name === 'member-profile-list') loadMemberProfileList();
       if (name === 'program377') loadP377Letter();
       if (name === 'zoom-events') loadP377Sessions();
@@ -5256,6 +5287,14 @@
     // Sidebar có 4 lối tắt vào cùng 1 trang "Chương trình 377 ngày", mỗi lối tắt tự chọn đúng
     // tab tương ứng thay vì chỉ mở trang ở tab mặc định.
     function openP377Tab(name) {
+      // Duyệt đăng ký 377 ngày nay nằm ở trang "Duyệt đăng ký & lộ trình"
+      if (name === 'enrollments') {
+        showPage('ttm-roadmaps');
+        openApprovalTab('p377');
+        document.querySelectorAll('.sbar-item').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.sbar-item[onclick="openP377Tab('enrollments')"]`)?.classList.add('active');
+        return;
+      }
       showPage('program377');
       document.querySelectorAll('.sbar-item').forEach(b => b.classList.remove('active'));
       document.querySelector(`.sbar-item[onclick="openP377Tab('${name}')"]`)?.classList.add('active');
@@ -5273,7 +5312,7 @@
       mpTab('zoom-tab-btn', 'zoom-tab-panel', name, btn);
       if (name === '377') loadP377Sessions();
       if (name === 'three') loadWorkshop3Settings();
-      if (name === 'eight') { loadWorkshop8Settings(); loadWorkshop8Enrollments(); }
+      if (name === 'eight') loadWorkshop8Settings();
     }
 
     // ── Cẩm nang: thực phẩm & công thức ──────────────────────────
@@ -5565,6 +5604,7 @@
     // ── Dashboard ─────────────────────────────────────────────────
     async function loadDashboard() {
       refreshLocPendingBadge();
+      refreshApprovalCounts();
       refreshContactNewBadge();
       try {
         const d = await api('/admin/stats');
@@ -6488,14 +6528,45 @@
     let ttmRoadmapsCache = [];
     let reviewingTtmId = null;
 
+    // ── Trang "Duyệt đăng ký & lộ trình": 3 tab (Lộ trình / 8 Buổi / 377 ngày) ──
+    let approvalTab = 'ttm';
+    function openApprovalTab(name) {
+      approvalTab = name;
+      document.querySelectorAll('.appr-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.appr-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === name));
+      if (name === 'ttm') loadTtmRoadmaps();
+      if (name === 'wk8') loadWorkshop8Enrollments();
+      if (name === 'p377') loadP377Enrollments();
+    }
+
+    // Số chờ duyệt trên từng tab + badge sidebar (tổng cả 3)
+    let _apprCountsTimer = null;
+    function refreshApprovalCounts() {
+      clearTimeout(_apprCountsTimer);
+      _apprCountsTimer = setTimeout(async () => {
+        const [t, w, p] = await Promise.all([
+          api('/admin/ttm/roadmaps?status=pending_approval').catch(() => null),
+          api('/admin/workshop8/enrollments?status=pending').catch(() => null),
+          api('/admin/program377/enrollments?status=pending').catch(() => null),
+        ]);
+        const counts = { ttm: t?.pending_count || 0, wk8: w?.enrollments?.length || 0, p377: p?.enrollments?.length || 0 };
+        Object.entries(counts).forEach(([k, n]) => {
+          const el = document.getElementById('apprCnt-' + k);
+          if (el) el.textContent = n ? `(${n})` : '';
+        });
+        const total = counts.ttm + counts.wk8 + counts.p377;
+        const badge = document.getElementById('sbTtmPendingCount');
+        badge.textContent = total;
+        badge.style.display = total > 0 ? 'inline' : 'none';
+      }, 150);
+    }
+
     async function loadTtmRoadmaps() {
       const status = document.getElementById('ttmStatusFilter').value;
       const d = await api(`/admin/ttm/roadmaps?status=${status}`);
       ttmRoadmapsCache = d.roadmaps;
 
-      const badge = document.getElementById('sbTtmPendingCount');
-      badge.textContent = d.pending_count;
-      badge.style.display = d.pending_count > 0 ? 'inline' : 'none';
+      refreshApprovalCounts();
 
       const tbody = document.getElementById('ttmTbody');
       if (!d.roadmaps.length) {
@@ -6671,6 +6742,7 @@
       const status = document.getElementById('p377EnrollStatusFilter').value;
       const d = await api(`/admin/program377/enrollments?status=${status}`);
       p377EnrollCache = d.enrollments;
+      refreshApprovalCounts();
       const badge = document.getElementById('sbP377PendingCount');
       if (status === 'pending') {
         badge.textContent = d.enrollments.length;
@@ -8029,23 +8101,27 @@
     let wk8EnrollCache = [];
 
     async function loadWorkshop8Enrollments() {
-      const d = await api('/admin/workshop8/enrollments?status=pending');
+      const status = document.getElementById('wk8EnrollStatusFilter')?.value || 'pending';
+      const d = await api(`/admin/workshop8/enrollments?status=${status}`);
       wk8EnrollCache = d.enrollments;
+      refreshApprovalCounts();
       const tbody = document.getElementById('wk8EnrollTbody');
       if (!d.enrollments.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Không có đăng ký chờ duyệt.</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Không có đăng ký nào.</div></td></tr>`;
         return;
       }
+      const statusLabel = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
+      const statusStyle = { pending: 'background:#fef3c7;color:#92400e;', approved: 'background:#dcfce7;color:#166534;', rejected: 'background:#fee2e2;color:#991b1b;' };
       tbody.innerHTML = d.enrollments.map((e, i) => `
         <tr>
           <td style="padding:8px 4px;color:var(--muted)">${i + 1}</td>
           <td style="padding:8px 4px;"><span style="font-weight:600;">${escHtml(`${e.first_name} ${e.last_name || ''}`.trim())}</span>
             <div style="font-size:11px;color:var(--muted)">${escHtml(e.email)}</div></td>
-          <td style="padding:8px 4px;"><span class="badge" style="background:#fef3c7;color:#92400e;">Chờ duyệt</span></td>
+          <td style="padding:8px 4px;"><span class="badge" style="${statusStyle[e.status] || ''}">${statusLabel[e.status] || e.status}</span></td>
           <td style="padding:8px 4px;color:var(--muted)">${fmtDate(e.enrolled_at)}</td>
-          <td style="padding:8px 4px;">
+          <td style="padding:8px 4px;">${e.status === 'pending' ? `
             <button class="act-btn" onclick="approveWorkshop8Enrollment(${e.id})">Duyệt</button>
-            <button class="act-btn" style="color:#dc2626;" onclick="rejectWorkshop8Enrollment(${e.id})">Từ chối</button>
+            <button class="act-btn" style="color:#dc2626;" onclick="rejectWorkshop8Enrollment(${e.id})">Từ chối</button>` : ''}
           </td>
         </tr>`).join('');
     }
