@@ -1667,6 +1667,12 @@ ${extra}
 
   // Migrate users: add intake_profile
   const userCols = db.all('PRAGMA table_info(users)').map(c => c.name);
+  // Xác nhận Nội quy cộng đồng: phiên bản nội quy thành viên đã đồng ý (so với site_settings.rules_version)
+  if (!userCols.includes('rules_accepted_version')) {
+    db.exec('ALTER TABLE users ADD COLUMN rules_accepted_version INTEGER DEFAULT 0');
+    db.exec('ALTER TABLE users ADD COLUMN rules_accepted_at TEXT');
+    console.log('  Migrated users: added rules_accepted_version, rules_accepted_at.');
+  }
   if (!userCols.includes('intake_profile')) {
     db.exec('ALTER TABLE users ADD COLUMN intake_profile TEXT');
     db.exec('ALTER TABLE users ADD COLUMN intake_done_at TEXT');
@@ -2249,6 +2255,10 @@ ${extra}
     ['contact_bank_note',      'Cộng đồng chỉ sử dụng duy nhất tài khoản Hộ kinh doanh Điền Viên Đường. Vui lòng không chuyển cho bất kỳ tài khoản nào ngoài tài khoản này.'],
     // [{ platform: facebook|youtube|tiktok|zalo|instagram|website|other, label, url }]
     ['contact_socials',        '[]'],
+    // Nội quy cộng đồng (Markdown) — trang noi-quy.html + popup xác nhận. Tăng rules_version để
+    // yêu cầu mọi thành viên xác nhận lại.
+    ['rules_content',          (() => { try { return fs.readFileSync(path.join(__dirname, 'content', 'noi-quy-mac-dinh.md'), 'utf8'); } catch (e) { return ''; } })()],
+    ['rules_version',          '1'],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -2914,10 +2924,12 @@ QUY TẮC BẮT BUỘC:
 
   // Register
   app.post('/api/auth/register', (req, res) => {
-    const { first_name, last_name, email, password } = req.body;
+    const { first_name, last_name, email, password, rules_accepted } = req.body;
 
     if (!first_name || !last_name || !email || !password)
       return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin.' });
+    if (!rules_accepted)
+      return res.status(400).json({ error: 'Vui lòng đọc và đồng ý với Nội quy cộng đồng.' });
     if (!/\S+@\S+\.\S+/.test(email))
       return res.status(400).json({ error: 'Email không hợp lệ.' });
     if (password.length < 8)
@@ -2934,6 +2946,8 @@ QUY TẮC BẮT BUỘC:
     );
 
     const userId = result.lastInsertRowid;
+    db.run("UPDATE users SET rules_accepted_version = ?, rules_accepted_at = datetime('now','localtime') WHERE id = ?",
+      [currentRulesVersion(), userId]);
     addXP(userId, 10, 'register', 'Chào mừng thành viên mới');
     applyCourseEmailGrants(userId, email);
 
@@ -3058,10 +3072,45 @@ QUY TẮC BẮT BUỘC:
 
   // Kiểm tra phiên đăng nhập lưu ở trình duyệt còn hợp lệ không (app.js gọi mỗi lần mở trang):
   // tài khoản đã bị xoá / bị khoá → buộc đăng nhập lại. (users.id AUTOINCREMENT nên id không bị dùng lại.)
+  // Kèm trạng thái Nội quy: rules_pending = true → app.js hiện popup bắt xác nhận.
   app.post('/api/auth/session-check', (req, res) => {
     const { user_id } = req.body || {};
-    const user = Number(user_id) ? db.get('SELECT status FROM users WHERE id = ?', [Number(user_id)]) : null;
-    res.json({ valid: !!user && user.status !== 'banned' });
+    const user = Number(user_id) ? db.get('SELECT status, rules_accepted_version FROM users WHERE id = ?', [Number(user_id)]) : null;
+    const valid = !!user && user.status !== 'banned';
+    const version = currentRulesVersion();
+    res.json({ valid, rules_version: version, rules_pending: valid && rulesContentSet() && (Number(user.rules_accepted_version) || 0) < version });
+  });
+
+  // ── Nội quy cộng đồng ──────────────────────────────────────────────
+  function currentRulesVersion() {
+    return Number(db.get("SELECT value FROM site_settings WHERE key = 'rules_version'")?.value) || 1;
+  }
+  function rulesContentSet() {
+    return !!(db.get("SELECT value FROM site_settings WHERE key = 'rules_content'")?.value || '').trim();
+  }
+
+  app.post('/api/rules/accept', (req, res) => {
+    const userId = Number(req.body?.user_id);
+    if (!userId || !db.get('SELECT id FROM users WHERE id = ?', [userId])) return res.status(404).json({ error: 'Tài khoản không tồn tại.' });
+    db.run("UPDATE users SET rules_accepted_version = ?, rules_accepted_at = datetime('now','localtime') WHERE id = ?",
+      [currentRulesVersion(), userId]);
+    res.json({ ok: true });
+  });
+
+  // Admin: ai đã đồng ý phiên bản nội quy hiện tại
+  app.get('/api/admin/rules/acceptances', requireAdmin, (_req, res) => {
+    const version = currentRulesVersion();
+    const members = db.all(`SELECT id, first_name, last_name, email, rules_accepted_version, rules_accepted_at
+      FROM users ORDER BY (rules_accepted_version >= ?) DESC, rules_accepted_at DESC, id DESC`, [version]);
+    const accepted = members.filter(m => (Number(m.rules_accepted_version) || 0) >= version).length;
+    res.json({ version, accepted, total: members.length, members });
+  });
+
+  // Admin: yêu cầu mọi thành viên xác nhận lại (tăng phiên bản)
+  app.post('/api/admin/rules/bump', requireAdmin, (_req, res) => {
+    const next = currentRulesVersion() + 1;
+    db.run("INSERT INTO site_settings (key, value) VALUES ('rules_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [String(next)]);
+    res.json({ ok: true, version: next });
   });
 
   // Forgot password — generate reset token
@@ -6527,6 +6576,7 @@ QUY TẮC BẮT BUỘC:
       'contact_heading', 'contact_intro', 'contact_people',
       'contact_bank_name', 'contact_bank_account', 'contact_bank_holder', 'contact_bank_note',
       'contact_socials',
+      'rules_content', 'rules_version',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });

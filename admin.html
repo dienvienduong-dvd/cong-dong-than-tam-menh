@@ -3237,6 +3237,44 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('about', this)">ℹ️ About</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('contact', this)">📞 Thông tin liên hệ</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('payment', this); loadPaymentSettings();">💳 Thanh toán</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('rules', this); loadRulesAcceptances();">📜 Nội quy</button>
+        </div>
+
+        <div class="settings-tab-panel" data-tab="rules">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>📜 Nội quy cộng đồng</h2>
+            <a href="noi-quy.html" target="_blank" class="btn-sm" style="text-decoration:none;">Xem trang ↗</a>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">
+              Hiển thị ở trang <b>Nội quy cộng đồng</b> (sidebar → Liên hệ cộng đồng), popup xác nhận và form đăng ký.
+              Hỗ trợ định dạng Markdown: <code># Tiêu đề</code>, <code>## Tiêu đề nhỏ</code>, <code>**in đậm**</code>, <code>*in nghiêng*</code>,
+              <code>* </code> danh sách, <code>1. </code> danh sách số, <code>&gt; </code> lưu ý nổi bật, <code>---</code> đường kẻ. Cách 1 dòng trống giữa các đoạn.
+            </div>
+            <textarea id="settingRulesContent" rows="22"
+              style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+            <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="settingRulesBump" style="margin-top:3px;">
+              <span><b>Yêu cầu mọi thành viên xác nhận lại</b> — dùng khi nội quy thay đổi quan trọng. Lần mở trang tiếp theo, mọi thành viên sẽ thấy popup và phải bấm "Tôi đồng ý".</span>
+            </label>
+            <div>
+              <button class="btn-sm primary" onclick="saveRulesSettings()">💾 Lưu nội quy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card" style="margin-top:16px;">
+          <div class="table-card-header">
+            <h2>Thành viên đã xác nhận <span id="rulesAcceptSummary" style="font-weight:500;color:var(--muted);font-size:13px;"></span></h2>
+          </div>
+          <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+            <table>
+              <thead><tr><th>Thành viên</th><th>Trạng thái</th><th>Xác nhận lúc</th></tr></thead>
+              <tbody id="rulesAcceptTbody"><tr><td colspan="3"><div class="empty-state">Đang tải...</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
         </div>
 
         <div class="settings-tab-panel active" data-tab="community">
@@ -9168,6 +9206,7 @@
 
         document.getElementById('settingCalendarUrl').value = s.calendar_embed_url || '';
         loadContactSettings(s);
+        document.getElementById('settingRulesContent').value = s.rules_content || '';
         updateCalendarPreview();
 
         document.getElementById('settingChallengeIcon').value = s.challenge_hero_icon || '⚡';
@@ -9351,6 +9390,42 @@
     }
 
     // ── Thông tin liên hệ (lien-he.html) ─────────────────────────
+    // ── Nội quy cộng đồng ──────────────────────────────────────────
+    async function saveRulesSettings() {
+      const content = document.getElementById('settingRulesContent').value;
+      if (!content.trim()) { showToast('Nội dung nội quy đang trống.', 'red'); return; }
+      const bump = document.getElementById('settingRulesBump').checked;
+      if (bump && !confirm('Mọi thành viên sẽ phải xác nhận lại nội quy ở lần mở trang tiếp theo. Tiếp tục?')) return;
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ rules_content: content }) });
+        if (bump) await api('/admin/rules/bump', { method: 'POST', body: '{}' });
+        document.getElementById('settingRulesBump').checked = false;
+        showToast(bump ? '✅ Đã lưu — mọi thành viên sẽ được yêu cầu xác nhận lại.' : '✅ Đã lưu nội quy.', 'green');
+        loadRulesAcceptances();
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    async function loadRulesAcceptances() {
+      const tbody = document.getElementById('rulesAcceptTbody');
+      try {
+        const d = await api('/admin/rules/acceptances');
+        document.getElementById('rulesAcceptSummary').textContent = `— ${d.accepted}/${d.total} thành viên (phiên bản ${d.version})`;
+        if (!d.members.length) { tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state">Chưa có thành viên.</div></td></tr>'; return; }
+        tbody.innerHTML = d.members.map(m => {
+          const ok = (Number(m.rules_accepted_version) || 0) >= d.version;
+          return `<tr>
+            <td><span style="font-weight:600;">${escHtml(`${m.first_name} ${m.last_name || ''}`.trim())}</span>
+              <div style="font-size:11px;color:var(--muted)">${escHtml(m.email)}</div></td>
+            <td>${ok ? '<span class="badge" style="background:#dcfce7;color:#166534;">✓ Đã đồng ý</span>'
+              : '<span class="badge" style="background:#fef3c7;color:#92400e;">Chưa xác nhận</span>'}</td>
+            <td style="color:var(--muted);font-size:12.5px;">${ok && m.rules_accepted_at ? escHtml(m.rules_accepted_at.slice(0, 16)) : '—'}</td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">${escHtml(e.message)}</div></td></tr>`;
+      }
+    }
+
     function loadContactSettings(s) {
       document.getElementById('settingContactHeading').value = s.contact_heading || '';
       document.getElementById('settingContactIntro').value = s.contact_intro || '';

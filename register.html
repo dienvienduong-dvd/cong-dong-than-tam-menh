@@ -238,7 +238,7 @@
 
       <label class="terms-row">
         <input type="checkbox" id="terms" name="terms" required>
-        <span>Tôi đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a></span>
+        <span>Tôi đã đọc và đồng ý với <a href="#" onclick="openRulesPreview(); return false;">Nội quy cộng đồng</a></span>
       </label>
 
       <button type="submit" class="btn btn-primary btn-lg btn-full" id="submitBtn">
@@ -260,6 +260,36 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="assets/js/app.js?v=3"></script>
 <script>
+// Xem Nội quy cộng đồng ngay trên trang đăng ký (chưa có tài khoản nên không mở được noi-quy.html)
+function openRulesPreview() {
+  let wrap = document.getElementById('rulesPreview');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'rulesPreview';
+    wrap.className = 'rules-consent';
+    wrap.innerHTML = `
+      <div class="rules-consent-box">
+        <div class="rules-consent-head"><div class="rules-consent-title">📜 Nội quy cộng đồng</div></div>
+        <div class="rules-consent-body md-content">Đang tải nội quy...</div>
+        <div class="rules-consent-foot">
+          <div class="rules-consent-actions">
+            <button type="button" class="rules-consent-btn" id="rulesPreviewAgree">Tôi đồng ý</button>
+          </div>
+        </div>
+      </div>`;
+    wrap.addEventListener('click', e => { if (e.target === wrap) wrap.style.display = 'none'; });
+    wrap.querySelector('#rulesPreviewAgree').onclick = () => {
+      document.getElementById('terms').checked = true;
+      wrap.style.display = 'none';
+    };
+    document.body.appendChild(wrap);
+    fetch('/api/settings').then(r => r.json()).then(s => {
+      wrap.querySelector('.rules-consent-body').innerHTML = renderSimpleMarkdown(s.rules_content || '');
+    }).catch(() => { wrap.querySelector('.rules-consent-body').textContent = 'Không tải được nội quy.'; });
+  }
+  wrap.style.display = 'flex';
+}
+
 const GOOGLE_CLIENT_ID = '320594182829-ctcpfp3spr9jqgnkbjh6vs96hef4og42.apps.googleusercontent.com';
 let gTokenClient;
 
@@ -387,7 +417,7 @@ form.addEventListener('submit', async (e) => {
   pwErr.style.display = 'none';
 
   if (!document.getElementById('terms').checked) {
-    showAlert('errorBanner', 'Vui lòng đồng ý với điều khoản sử dụng.');
+    showAlert('errorBanner', 'Vui lòng đọc và đồng ý với Nội quy cộng đồng.');
     return;
   }
 
@@ -401,7 +431,7 @@ form.addEventListener('submit', async (e) => {
     const res = await fetch('/api/auth/register', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ first_name, last_name, email, password: pw }),
+      body:    JSON.stringify({ first_name, last_name, email, password: pw, rules_accepted: true }),
     });
     const data = await res.json();
 

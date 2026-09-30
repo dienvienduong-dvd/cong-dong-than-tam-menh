@@ -1160,7 +1160,8 @@
           + note('Yêu cầu của bạn đã được gửi đến Ban tổ chức. Khi được duyệt, bạn sẽ nhận được thông báo trên ứng dụng và email.');
       } else if (c.join_mode === 'payment') {
         const href = c.checkout_product_id ? `checkout.html?id=${c.checkout_product_id}` : '#';
-        wrap.innerHTML = `<a href="${href}" class="cv-enroll-btn">THANH TOÁN KHÓA HỌC</a>`;
+        wrap.innerHTML = `<a href="${href}" class="cv-enroll-btn">THANH TOÁN KHÓA HỌC</a>`
+          + '<div class="rules-note">Bằng việc đăng ký, bạn đồng ý với <a href="noi-quy.html">Nội quy cộng đồng</a> và chính sách hoàn phí.</div>';
       } else if (c.join_mode === 'approval') {
         wrap.innerHTML = `<button class="cv-enroll-btn" onclick="enrollCourse()">Gửi yêu cầu tham gia</button>`
           + note('Khoá học riêng tư — Ban tổ chức sẽ xem và duyệt yêu cầu của bạn.');

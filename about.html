@@ -142,6 +142,14 @@
     }
     .about-intro-text blockquote p:last-child { margin-bottom: 0; }
     .about-intro-text hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+    .about-rules-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 18px; padding: 8px 14px;
+      border: 1px solid var(--border); border-radius: 999px;
+      background: var(--bg-active); color: var(--color-primary);
+      font-size: 13.5px; font-weight: 600; text-decoration: none;
+    }
+    .about-rules-link:hover { border-color: var(--color-primary); }
 
     .about-empty {
       text-align: center;
@@ -638,40 +646,11 @@
         // Intro text
         const introWrap = document.getElementById('aboutIntroWrap');
         introWrap.innerHTML = data.intro
-          ? `<div class="about-intro-text">${renderAboutMarkdown(data.intro)}</div>`
+          ? `<a href="noi-quy.html" class="about-rules-link">📜 Nội quy cộng đồng — đọc trước khi tham gia →</a><div class="about-intro-text">${renderSimpleMarkdown(data.intro)}</div>`
           : `<div class="about-empty">Cộng đồng chưa cập nhật phần giới thiệu.</div>`;
       } catch (e) {
         document.getElementById('aboutIntroWrap').innerHTML = '<div class="about-empty">Không thể tải trang giới thiệu. Đảm bảo server đang chạy.</div>';
       }
-    }
-
-    // Markdown đơn giản cho phần giới thiệu: # tiêu đề, **đậm**, *nghiêng*, danh sách (* / - / 1.),
-    // > trích dẫn, --- đường kẻ. Văn bản thường (không có ký hiệu) vẫn hiển thị như cũ.
-    // Luôn escape HTML trước rồi mới thêm thẻ → không chèn được mã lạ.
-    function renderAboutMarkdown(src) {
-      const inline = s => esc(s)
-        .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>')
-        .replace(/\n/g, '<br>');
-      const blocks = String(src).replace(/\r\n?/g, '\n').split(/\n\s*\n/);
-      return blocks.map(block => {
-        const b = block.replace(/^\n+|\n+$/g, '');
-        if (!b.trim()) return '';
-        if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(b)) return '<hr>';
-        const h = b.match(/^(#{1,4})\s+([^\n]+)$/);
-        if (h) { const lv = h[1].length + 1; return `<h${lv}>${inline(h[2].trim())}</h${lv}>`; }
-        const lines = b.split('\n');
-        if (lines.every(l => /^\s*>/.test(l))) {
-          return `<blockquote><p>${inline(lines.map(l => l.replace(/^\s*>\s?/, '')).join('\n'))}</p></blockquote>`;
-        }
-        if (lines.every(l => /^\s*[*-]\s+/.test(l))) {
-          return `<ul>${lines.map(l => `<li>${inline(l.replace(/^\s*[*-]\s+/, ''))}</li>`).join('')}</ul>`;
-        }
-        if (lines.every(l => /^\s*\d+[.)]\s+/.test(l))) {
-          return `<ol>${lines.map(l => `<li>${inline(l.replace(/^\s*\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
-        }
-        return `<p>${inline(b)}</p>`;
-      }).join('');
     }
 
     loadAbout();

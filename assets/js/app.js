@@ -51,7 +51,75 @@ document.addEventListener('click', e => {
   if (e.target.closest && e.target.closest('[title="Đăng xuất"], [aria-label="Đăng xuất"]')) clearLoginSession();
 }, true);
 
+// ── Markdown đơn giản (trang Giới thiệu, Nội quy, popup Nội quy) ─────────
+// # tiêu đề, **đậm**, *nghiêng*, danh sách (* / - / 1.), > trích dẫn, --- đường kẻ.
+// Luôn escape HTML trước rồi mới thêm thẻ → không chèn được mã lạ.
+function renderSimpleMarkdown(src) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const inline = s => esc(s)
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>')
+    .replace(/\n/g, '<br>');
+  return String(src || '').replace(/\r\n?/g, '\n').split(/\n\s*\n/).map(block => {
+    const b = block.replace(/^\n+|\n+$/g, '');
+    if (!b.trim()) return '';
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(b)) return '<hr>';
+    const h = b.match(/^(#{1,4})\s+([^\n]+)$/);
+    if (h) { const lv = h[1].length + 1; return `<h${lv}>${inline(h[2].trim())}</h${lv}>`; }
+    const lines = b.split('\n');
+    if (lines.every(l => /^\s*>/.test(l))) return `<blockquote><p>${inline(lines.map(l => l.replace(/^\s*>\s?/, '')).join('\n'))}</p></blockquote>`;
+    if (lines.every(l => /^\s*[*-]\s+/.test(l))) return `<ul>${lines.map(l => `<li>${inline(l.replace(/^\s*[*-]\s+/, ''))}</li>`).join('')}</ul>`;
+    if (lines.every(l => /^\s*\d+[.)]\s+/.test(l))) return `<ol>${lines.map(l => `<li>${inline(l.replace(/^\s*\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
+    return `<p>${inline(b)}</p>`;
+  }).join('');
+}
+
+// ── Popup Nội quy: thành viên chưa đồng ý phiên bản nội quy hiện tại phải xác nhận mới dùng tiếp ──
+function showRulesConsent(userId) {
+  if (document.getElementById('rulesConsent')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'rulesConsent';
+  wrap.className = 'rules-consent';
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
+  wrap.innerHTML = `
+    <div class="rules-consent-box">
+      <div class="rules-consent-head">
+        <div class="rules-consent-title">📜 Nội quy cộng đồng</div>
+        <div class="rules-consent-sub">Vui lòng đọc kỹ và xác nhận để tiếp tục sử dụng cộng đồng.</div>
+      </div>
+      <div class="rules-consent-body md-content">Đang tải nội quy...</div>
+      <div class="rules-consent-foot">
+        <label class="rules-consent-check"><input type="checkbox" id="rulesConsentChk"> Tôi đã đọc và đồng ý với Nội quy cộng đồng</label>
+        <div class="rules-consent-actions">
+          <a href="index.html" class="rules-consent-logout" onclick="clearLoginSession()">Đăng xuất</a>
+          <button type="button" class="rules-consent-btn" id="rulesConsentBtn" disabled>Tôi đồng ý</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  document.body.style.overflow = 'hidden';
+  const chk = wrap.querySelector('#rulesConsentChk');
+  const btn = wrap.querySelector('#rulesConsentBtn');
+  chk.addEventListener('change', () => { btn.disabled = !chk.checked; });
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    wrap.querySelector('.rules-consent-body').innerHTML = renderSimpleMarkdown(s.rules_content || '');
+  }).catch(() => { wrap.querySelector('.rules-consent-body').textContent = 'Không tải được nội quy. Vui lòng tải lại trang.'; });
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+    try {
+      const r = await fetch('/api/rules/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }) });
+      if (!r.ok) throw new Error();
+      wrap.remove();
+      document.body.style.overflow = '';
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Thử lại';
+    }
+  });
+}
+
 // Tài khoản đã bị xoá / bị khoá mà trình duyệt vẫn giữ phiên cũ → buộc đăng nhập (hoặc đăng ký) lại.
+// Còn hợp lệ nhưng chưa đồng ý Nội quy (phiên bản hiện tại) → hiện popup xác nhận.
 (function checkLoginSession() {
   let u = null;
   try { u = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) {}
@@ -66,6 +134,11 @@ document.addEventListener('click', e => {
       if (d && d.valid === false) {
         clearLoginSession();
         window.location.href = 'index.html?session=expired';
+        return;
+      }
+      if (d && d.rules_pending) {
+        const show = () => showRulesConsent(u.id);
+        if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
       }
     })
     .catch(() => {}); // lỗi mạng: không đăng xuất nhầm
@@ -846,7 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // ── "Liên hệ cộng đồng" nav injector ─────────────────────────
-// Luôn nằm cuối sidebar (sau "Khác"): trang Liên hệ BTC + Danh sách địa điểm.
+// Luôn nằm cuối sidebar (sau "Khác"): Liên hệ BTC, Danh sách địa điểm, Nội quy cộng đồng.
 (function injectContactNav() {
   const here = location.pathname.split('/').pop() || 'index.html';
   const icon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>';
@@ -854,6 +927,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ITEMS = [
     ['lien-he.html', 'Liên hệ BTC', icon],
     ['dia-diem.html', 'Danh sách địa điểm', pinIcon],
+    ['noi-quy.html', 'Nội quy cộng đồng', '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>'],
   ];
 
   function addSection(navEl) {
