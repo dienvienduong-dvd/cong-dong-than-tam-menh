@@ -37,7 +37,7 @@ function toggleMainMenu() {
 
 // ── Dynamic community branding ─────────────────────────────
 (function applyCommunityBranding() {
-  const DEFAULT_NAME = 'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH';
+  const DEFAULT_NAME = 'NGÔI NHÀ DƯỠNG HOÁ';
   const CACHE_KEY = 'communitySettingsCache';
   let _titleObserver = null;
 
@@ -49,7 +49,7 @@ function toggleMainMenu() {
   }
 
   // Replace the fallback name with the real community name — guarded so it can't loop
-  // when `name` itself contains DEFAULT_NAME (e.g. "Cộng đồng Hồi sinh THÂN - TÂM -MỆNH").
+  // when `name` itself contains DEFAULT_NAME (e.g. "NGÔI NHÀ DƯỠNG HOÁ").
   function replaceInTitle(name) {
     if (name === DEFAULT_NAME) return;
     if (document.title.includes(name)) return;           // already branded
@@ -68,18 +68,21 @@ function toggleMainMenu() {
     if (tagline && taglineEl) taglineEl.textContent = tagline;
 
     const name = (s.community_name || '').trim();
-    if (!name || name === DEFAULT_NAME) return;
+    if (!name) return;
 
+    // Logo luôn lấy theo tên đã cài (kể cả khi trùng DEFAULT_NAME) — markup tĩnh của
+    // các trang vẫn còn logo cũ "Ngũ Hành ÂU".
+    document.querySelectorAll('.sidebar-logo-text, .form-logo-name, .mob-brand-name, #aboutCommunityName, .co-logo-text, .logo-text, .login-logo-name, .header-name').forEach(el => {
+      el.textContent = name;
+    });
+
+    if (name === DEFAULT_NAME) return; // tiêu đề trang đã đúng sẵn
     const titleEl = document.querySelector('title');
     if (titleEl && !_titleObserver) {
       _titleObserver = new MutationObserver(() => replaceInTitle(name));
       _titleObserver.observe(titleEl, { childList: true });
     }
     replaceInTitle(name);
-
-    document.querySelectorAll('.sidebar-logo-text, .form-logo-name, .mob-brand-name, #aboutCommunityName, .co-logo-text, .logo-text, .login-logo-name, .header-name').forEach(el => {
-      el.textContent = name;
-    });
   }
 
   // Render from last-known settings immediately (no fetch wait) so the brand

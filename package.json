@@ -1,7 +1,7 @@
 {
   "name": "cong-dong-an-uong-ngu-hanh",
   "version": "1.0.0",
-  "description": "Cộng đồng Hồi sinh THÂN - TÂM -MỆNH — Community Platform (Vietnamese)",
+  "description": "NGÔI NHÀ DƯỠNG HOÁ — Community Platform (Vietnamese)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

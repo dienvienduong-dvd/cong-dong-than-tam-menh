@@ -30,7 +30,7 @@ const RESEND_KEY       = process.env.RESEND_API_KEY    || '';
 const OPENROUTER_KEY   = process.env.OPENROUTER_API_KEY || '';
 
 // ── Community identity (override via .env) ───────────────────
-const COMMUNITY_NAME = process.env.COMMUNITY_NAME || 'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH';
+const COMMUNITY_NAME = process.env.COMMUNITY_NAME || 'NGÔI NHÀ DƯỠNG HOÁ';
 // ASCII-only version for HTTP headers (Latin-1 only) — strips Vietnamese diacritics
 const COMMUNITY_NAME_ASCII = COMMUNITY_NAME
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -1317,7 +1317,7 @@ ${summaryText}`;
       extra = `\n[LƯU Ý] Vận động là thứ yếu, hỗ trợ thêm cho phần ăn uống — gợi ý bài tập nhẹ nhàng, cụ thể (tên bài tập, thời lượng), phù hợp mùa ${seasonLabel} và thể trạng ${theTrangLabel} (VD thể Hàn nên vận động buổi có nắng ấm, thể Nhiệt tránh vận động quá sức lúc nắng gắt).`;
     }
 
-    return `[VAI TRÒ] Bạn là trợ lý soạn nội dung hướng dẫn hằng ngày cho "Chương trình 377 ngày" của cộng đồng Hồi Sinh Thân-Tâm-Mệnh, dựa trên kiến thức Ngũ Hành (tham khảo các tài liệu Ngũ Hành đã có: ăn uống theo hành Thổ/Thủy/Hỏa/Kim/Mộc, cẩm nang dinh dưỡng Ngũ Hành 24h).
+    return `[VAI TRÒ] Bạn là trợ lý soạn nội dung hướng dẫn hằng ngày cho "Chương trình 377 ngày" của NGÔI NHÀ DƯỠNG HOÁ, dựa trên kiến thức Ngũ Hành (tham khảo các tài liệu Ngũ Hành đã có: ăn uống theo hành Thổ/Thủy/Hỏa/Kim/Mộc, cẩm nang dinh dưỡng Ngũ Hành 24h).
 
 [NHIỆM VỤ] Soạn 1 khối nội dung ngắn gọn, thực tế, áp dụng được ngay hôm nay cho mục "${categoryLabel}", dành cho người có thể trạng: ${theTrangLabel}, vào mùa: ${seasonLabel}.
 ${extra}
@@ -2201,7 +2201,7 @@ ${extra}
     ['mp_bank_name',           'BIDV'],
     ['mp_bank_account_name',   'HỘ KINH DOANH ĐIỀN VIÊN ĐƯỜNG'],
     ['mp_bank_account_number', '8600359368'],
-    ['home_tagline',           'Cộng đồng Hồi sinh THÂN - TÂM -MỆNH'],
+    ['home_tagline',           'NGÔI NHÀ DƯỠNG HOÁ'],
     ['home_heading_line1',     'Ăn uống thuận'],
     ['home_heading_highlight', 'Ngũ Hành'],
     ['home_heading_line2',     'mỗi ngày.'],
@@ -2214,7 +2214,7 @@ ${extra}
     ['home_stat3_label',       'Ngày Dưỡng Hóa'],
     ['home_tags',              'Ngũ Hành, Ngũ Sắc, Ngũ Vị, Âm Dương, Thải Độc'],
     ['courses_hero_icon',      '📗'],
-    ['courses_hero_title',     'Khóa học Hồi sinh THÂN - TÂM -MỆNH'],
+    ['courses_hero_title',     'Khóa học NGÔI NHÀ DƯỠNG HOÁ'],
     ['courses_hero_desc',      'Từ nền tảng Âm Dương Ngũ Hành đến ăn theo từng Hành, công thức cháo bổ âm và cách dùng gừng.'],
     ['workshop3_video_url',    ''],
     ['workshop3_space_url',    'space.html?id=6'],
@@ -2229,7 +2229,7 @@ ${extra}
     // khoản, mặc định) | 'workshop8' | 'program377' | 'none' (không bắt buộc)
     ['ttm_intake_trigger',     'signup'],
     // Trang Liên hệ BTC (lien-he.html) — admin sửa ở Cài đặt → Liên hệ
-    ['contact_heading',        'THÔNG TIN LIÊN HỆ VỚI CỘNG ĐỒNG HỒI SINH THÂN TÂM MỆNH'],
+    ['contact_heading',        'THÔNG TIN LIÊN HỆ VỚI NGÔI NHÀ DƯỠNG HOÁ'],
     ['contact_intro',          'Cộng đồng này được điều hành và quản lý bởi ĐIỀN VIÊN ĐƯỜNG'],
     ['contact_people',         JSON.stringify([
       { role: 'Điều hành Điền Viên Đường', name: 'Trần Thị Hồng Hạnh', phone: '091 865 3053' },
@@ -2299,6 +2299,30 @@ ${extra}
     });
     db.run("INSERT OR REPLACE INTO site_settings (key, value) VALUES ('rename_hsttm', '1')");
     console.log('  Rename migration: Ăn Uống Ngũ Hành → Hồi sinh THÂN - TÂM -MỆNH.');
+  }
+
+  // One-time rename: "Cộng đồng Hồi sinh THÂN - TÂM -MỆNH" → "NGÔI NHÀ DƯỠNG HOÁ" trong settings đã lưu
+  // (tên cộng đồng, tagline, email templates, tên cửa hàng, tiêu đề khoá học, liên hệ, giới thiệu).
+  // Chỉ thay cụm có chữ "Cộng đồng" / "Khóa học" đứng trước — giữ nguyên tên chương trình
+  // như "Hành trình Hồi Sinh THÂN – TÂM – MỆNH", "khảo sát Thân-Tâm-Mệnh".
+  if (!db.get("SELECT value FROM site_settings WHERE key = 'rename_nndh'")) {
+    const NEW = 'NGÔI NHÀ DƯỠNG HOÁ';
+    const BRAND = 'hồi\\s*sinh\\s+thân[\\s\\-–]*tâm[\\s\\-–]*mệnh';
+    const rules = [
+      [new RegExp(`(khóa học\\s+)${BRAND}`, 'giu'), `$1${NEW}`],
+      [new RegExp(`cộng đồng\\s+${BRAND}`, 'giu'), NEW],
+    ];
+    let changed = 0;
+    db.all('SELECT key, value FROM site_settings').forEach(r => {
+      if (typeof r.value !== 'string') return;
+      let v = r.value;
+      rules.forEach(([re, rep]) => { v = v.replace(re, rep); });
+      // Tên cộng đồng / tagline admin đã gõ tay kiểu thường ("Ngôi Nhà Dưỡng Hoá", "Ngô Nhà Dưỡng Hoá") → chữ hoa chuẩn
+      if ((r.key === 'community_name' || r.key === 'home_tagline') && /^\s*ngôi?\s+nhà\s+dưỡng\s+ho[áa]\s*$/iu.test(v)) v = NEW;
+      if (v !== r.value) { db.run('UPDATE site_settings SET value = ? WHERE key = ?', [v, r.key]); changed++; }
+    });
+    db.run("INSERT OR REPLACE INTO site_settings (key, value) VALUES ('rename_nndh', '1')");
+    console.log(`  Rename migration: → ${NEW} (${changed} settings).`);
   }
 
   // Seed sample products if empty
@@ -7688,7 +7712,7 @@ QUY TẮC BẮT BUỘC:
   // Tính năng AI thứ 3 (cạnh chấm bài tập + chatbot intake), dùng chung callAiChat().
   // Không streaming, không RAG — kho kiến thức nhỏ, nhồi thẳng vào system prompt mỗi request.
 
-  const ASSISTANT_SYSTEM = `Bạn là "Trợ lý Ngũ Hành" của cộng đồng Hồi sinh THÂN - TÂM -MỆNH — đồng hành cùng thành viên trong việc ăn uống dưỡng sinh theo Âm Dương Ngũ Hành (ngũ sắc – ngũ vị – tạng phủ – mùa – khung giờ).
+  const ASSISTANT_SYSTEM = `Bạn là "Trợ lý Ngũ Hành" của NGÔI NHÀ DƯỠNG HOÁ — đồng hành cùng thành viên trong việc ăn uống dưỡng sinh theo Âm Dương Ngũ Hành (ngũ sắc – ngũ vị – tạng phủ – mùa – khung giờ).
 
 NHIỆM VỤ: trả lời các câu hỏi thực tế về ăn uống hằng ngày, ví dụ:
 - "Vị chua thì nên ăn gì?" → gợi ý thực phẩm/món theo vị + hành + tạng, và NÊN ĂN VÀO BUỔI NÀO.
