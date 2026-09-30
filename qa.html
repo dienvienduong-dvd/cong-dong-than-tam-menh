@@ -1601,6 +1601,7 @@
         '<span class="badge-question" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#ecfdf5;color:#10b981;border:1px solid #a7f3d0;">❓ Câu hỏi</span>' +
         (hasAns ? '<span class="badge-answered" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#d1fae5;color:#065f46;">✓ Đã có trả lời</span>' : '');
 
+      pmPostExtras(p); // nút ✏️ Sửa bài (tác giả) + nhãn bài bị ẩn — app.js
       document.getElementById('pmLikeCount').textContent = p.likes_count || 0;
       document.getElementById('pmCmtCount').textContent = p.comments_count || 0;
 

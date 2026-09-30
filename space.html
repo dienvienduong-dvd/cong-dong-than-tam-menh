@@ -1325,6 +1325,7 @@
     document.getElementById('pmHeaderBadges').innerHTML =
       (pl ? `<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:${pl.color}20;color:${pl.color}">${pl.label}</span>` : '') +
       pinPill;
+    pmPostExtras(p); // nút ✏️ Sửa bài (tác giả) + nhãn bài bị ẩn — app.js
     document.getElementById('pmLikeCount').textContent = p.likes_count || 0;
     document.getElementById('pmCmtCount').textContent = p.comments_count || 0;
     document.getElementById('pmBody').innerHTML = `

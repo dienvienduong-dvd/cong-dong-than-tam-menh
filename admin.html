@@ -4114,6 +4114,25 @@
   </div><!-- /shell -->
 
   <!-- ── CRM List Modal ────────────────────────────── -->
+  <!-- ── Chi tiết bài đăng (xem / sửa / ẩn / xoá) ─────────────── -->
+  <div id="adminPostModal" onclick="if (event.target === this) closeAdminPost()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:680px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;">
+        <div style="font-size:15px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;" id="adminPostModalTitle">Bài đăng</div>
+        <button onclick="closeAdminPost()" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:18px;color:var(--muted);flex-shrink:0;">×</button>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;min-height:0;" id="adminPostModalBody"></div>
+      <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;flex-shrink:0;">
+        <button class="btn-sm" style="color:#991b1b" id="adminPostDeleteBtn">Xoá</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm" id="adminPostHideBtn">🙈 Ẩn bài</button>
+          <button class="btn-sm primary" id="adminPostEditBtn">✏️ Sửa</button>
+          <button class="btn-sm primary" id="adminPostSaveBtn" style="display:none;">💾 Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Chi tiết tin nhắn Liên hệ BTC ─────────────── -->
   <div id="cmModal" onclick="if (event.target === this) closeContactMessageModal()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:12px;width:100%;max-width:600px;margin:auto 0;box-shadow:0 20px 60px rgba(0,0,0,.2);">
@@ -5906,32 +5925,114 @@
         tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">Không có bài đăng nào.</div></td></tr>`;
         return;
       }
+      adminPostsCache = d.posts;
       tbody.innerHTML = d.posts.map((p, i) => `
-    <tr>
+    <tr onclick="openAdminPost(${p.id})" style="cursor:pointer;${p.hidden ? 'opacity:.6;' : ''}" title="Bấm để xem toàn bộ nội dung">
       <td style="color:var(--muted)">${i + 1}</td>
       <td style="max-width:240px">
-        <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</div>
+        <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.title || (p.content || '').slice(0, 60))}</div>
+        ${p.hidden ? '<span class="badge" style="background:#e2e8f0;color:#475569;margin-top:3px;">🙈 Đã ẩn</span>' : ''}
       </td>
       <td>
-        <div style="font-size:12px;font-weight:600">${p.author_name}</div>
-        <div style="font-size:11px;color:var(--muted)">${p.author_email}</div>
+        <div style="font-size:12px;font-weight:600">${escHtml(p.author_name)}</div>
+        <div style="font-size:11px;color:var(--muted)">${escHtml(p.author_email)}</div>
       </td>
       <td>${p.pillar ? renderPillarBadge(p.pillar) : '—'}</td>
-      <td><span style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600">${p.post_type}</span></td>
+      <td><span style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600">${escHtml(p.post_type)}</span></td>
       <td>♥ ${p.likes_count}</td>
       <td>💬 ${p.comments_count}</td>
       <td style="color:var(--muted)">${fmtDate(p.created_at)}</td>
-      <td>
+      <td style="white-space:nowrap;" onclick="event.stopPropagation()">
+        <button class="act-btn" onclick="openAdminPost(${p.id})">Xem</button>
+        <button class="act-btn" onclick="setPostHidden(${p.id}, ${p.hidden ? 0 : 1})">${p.hidden ? 'Hiện' : 'Ẩn'}</button>
         <button class="act-btn danger" onclick="deletePost(${p.id})">Xoá</button>
       </td>
     </tr>`).join('');
     }
 
     async function deletePost(id) {
-      if (!confirm('Xoá bài đăng này?')) return;
+      if (!confirm('Xoá vĩnh viễn bài đăng này?')) return false;
       await api(`/admin/posts/${id}`, { method: 'DELETE' });
       showToast('Đã xoá bài đăng.');
       loadPosts();
+      return true;
+    }
+
+    // ── Popup xem / sửa / ẩn bài đăng ─────────────────────────────
+    let adminPostsCache = [];
+    let adminPostViewing = null;
+
+    async function setPostHidden(id, hidden) {
+      try {
+        await api(`/admin/posts/${id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !!hidden }) });
+        showToast(hidden ? '🙈 Đã ẩn bài — thành viên không còn thấy bài này.' : 'Bài đã hiển thị lại.', 'green');
+        await loadPosts();
+        if (adminPostViewing === id) openAdminPost(id);
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    function openAdminPost(id) {
+      const p = adminPostsCache.find(x => x.id === id);
+      if (!p) return;
+      adminPostViewing = id;
+      const link = (label, url) => url ? `<div style="font-size:13px;margin-top:6px;">${label}: <a href="${escHtml(url)}" target="_blank" rel="noopener" style="word-break:break-all;">${escHtml(url)}</a></div>` : '';
+      document.getElementById('adminPostModalTitle').textContent = p.title || 'Bài đăng không tiêu đề';
+      document.getElementById('adminPostModalBody').innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted);">
+          <b style="color:var(--text);">${escHtml(p.author_name)}</b> · ${escHtml(p.author_email)} · ${fmtDate(p.created_at)}${p.updated_at ? ' · đã sửa ' + fmtDate(p.updated_at) : ''}
+          ${p.pillar ? renderPillarBadge(p.pillar) : ''}
+          <span class="badge" style="background:#f1f5f9;color:#475569;text-transform:uppercase;">${escHtml(p.post_type)}</span>
+          ${p.hidden ? '<span class="badge" style="background:#e2e8f0;color:#475569;">🙈 Đã ẩn</span>' : '<span class="badge" style="background:#dcfce7;color:#166534;">Đang hiển thị</span>'}
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);">♥ ${p.likes_count} · 💬 ${p.comments_count}</div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:45vh;overflow-y:auto;">${escHtml(p.content)}</div>
+        ${p.image_url ? `<img src="${escHtml(p.image_url)}" alt="" style="max-width:100%;max-height:340px;border-radius:8px;border:1px solid var(--border);object-fit:contain;align-self:flex-start;" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'⚠️ Ảnh không tải được — kiểm tra link đã chia sẻ \\'Bất kỳ ai có đường liên kết\\' chưa.',style:'font-size:12.5px;color:#b45309'}))">` : ''}
+        ${link('Ảnh', p.image_url)}${link('GIF', p.gif_url)}${link('Video', p.video_url)}${link('Tài liệu', p.doc_url)}`;
+      document.getElementById('adminPostHideBtn').textContent = p.hidden ? '👁 Hiện bài' : '🙈 Ẩn bài';
+      document.getElementById('adminPostHideBtn').onclick = () => setPostHidden(p.id, p.hidden ? 0 : 1);
+      document.getElementById('adminPostDeleteBtn').onclick = async () => { if (await deletePost(p.id)) closeAdminPost(); };
+      document.getElementById('adminPostEditBtn').style.display = '';
+      document.getElementById('adminPostEditBtn').onclick = () => editAdminPost(p.id);
+      document.getElementById('adminPostSaveBtn').style.display = 'none';
+      document.getElementById('adminPostModal').style.display = 'flex';
+    }
+
+    function editAdminPost(id) {
+      const p = adminPostsCache.find(x => x.id === id);
+      if (!p) return;
+      const st = 'width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;outline:none;';
+      const lab = t => `<label style="display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;">${t}</label>`;
+      document.getElementById('adminPostModalBody').innerHTML = `
+        <div>${lab('Tiêu đề')}<input id="apEditTitle" style="${st}" value="${escHtml(p.title || '')}"></div>
+        <div>${lab('Nội dung *')}<textarea id="apEditContent" rows="10" style="${st}resize:vertical;line-height:1.55;">${escHtml(p.content || '')}</textarea></div>
+        <div>${lab('Link ảnh')}<input id="apEditImage" style="${st}" placeholder="https://..." value="${escHtml(p.image_url || '')}"></div>
+        <div>${lab('Link video')}<input id="apEditVideo" style="${st}" placeholder="https://..." value="${escHtml(p.video_url || '')}"></div>
+        <div>${lab('Link tài liệu')}<input id="apEditDoc" style="${st}" placeholder="https://..." value="${escHtml(p.doc_url || '')}"></div>`;
+      document.getElementById('adminPostEditBtn').style.display = 'none';
+      const save = document.getElementById('adminPostSaveBtn');
+      save.style.display = '';
+      save.onclick = () => saveAdminPost(p.id);
+    }
+
+    async function saveAdminPost(id) {
+      const val = k => document.getElementById(k).value.trim();
+      const body = {
+        title: val('apEditTitle'), content: document.getElementById('apEditContent').value,
+        image_url: val('apEditImage'), video_url: val('apEditVideo'), doc_url: val('apEditDoc'),
+      };
+      if (!body.content.trim()) { showToast('Nội dung không được để trống.', 'red'); return; }
+      if (['image_url', 'video_url', 'doc_url'].some(k => body[k] && !/^https?:\/\//i.test(body[k]))) { showToast('Link phải bắt đầu bằng https://', 'red'); return; }
+      try {
+        await api(`/admin/posts/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+        showToast('✅ Đã lưu bài đăng.', 'green');
+        await loadPosts();
+        openAdminPost(id);
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
+    function closeAdminPost() {
+      adminPostViewing = null;
+      document.getElementById('adminPostModal').style.display = 'none';
     }
 
     function debouncePosts() {

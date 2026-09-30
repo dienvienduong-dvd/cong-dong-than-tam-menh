@@ -74,6 +74,75 @@ function renderSimpleMarkdown(src) {
   }).join('');
 }
 
+// ── Popup chi tiết bài đăng (feed, space, profile, qa, signal, cot): tác giả sửa bài ──────
+// Mỗi trang gọi pmPostExtras(p) sau khi vẽ header popup (#pmHeaderBadges, #pmBody).
+let _pmEditPost = null;
+function pmPostExtras(p) {
+  _pmEditPost = p;
+  const badges = document.getElementById('pmHeaderBadges');
+  if (!badges || !p) return;
+  const me = typeof currentUser !== 'undefined' ? currentUser : null;
+  if (p.hidden) {
+    badges.insertAdjacentHTML('beforeend', '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#e2e8f0;color:#475569">🙈 Admin đã ẩn bài này</span>');
+  }
+  if (me && Number(me.id) === Number(p.author_id)) {
+    badges.insertAdjacentHTML('beforeend', '<button type="button" onclick="editPmPost()" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;">✏️ Sửa bài</button>');
+  }
+}
+
+function editPmPost() {
+  const p = _pmEditPost;
+  const body = document.getElementById('pmBody');
+  if (!p || !body) return;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const st = 'width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-input, var(--bg-card));color:var(--text);font-family:inherit;font-size:14px;';
+  const field = (label, html) => `<label style="display:block;font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:12px 0 5px;">${label}</label>${html}`;
+  body.innerHTML = `
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px;">✏️ Sửa bài viết</div>
+    ${field('Tiêu đề', `<input id="pmEditTitle" style="${st}" maxlength="200" value="${esc(p.title)}">`)}
+    ${field('Nội dung *', `<textarea id="pmEditContent" rows="8" style="${st}resize:vertical;line-height:1.55;">${esc(p.content)}</textarea>`)}
+    ${field('Link ảnh — Google Drive: chia sẻ "Bất kỳ ai có đường liên kết"', `<input id="pmEditImage" style="${st}" placeholder="https://..." value="${esc(p.image_url)}">`)}
+    ${field('Link video (YouTube, Google Drive...)', `<input id="pmEditVideo" style="${st}" placeholder="https://..." value="${esc(p.video_url)}">`)}
+    ${field('Link tài liệu', `<input id="pmEditDoc" style="${st}" placeholder="https://..." value="${esc(p.doc_url)}">`)}
+    <div id="pmEditErr" style="color:#ef4444;font-size:13px;margin-top:10px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button type="button" onclick="openPost(${Number(p.id)})" style="padding:9px 18px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;">Huỷ</button>
+      <button type="button" id="pmEditSave" onclick="savePmPost()" style="padding:9px 18px;border-radius:10px;border:none;background:var(--color-primary);color:#fff;cursor:pointer;font-family:inherit;font-weight:700;">Lưu thay đổi</button>
+    </div>`;
+}
+
+async function savePmPost() {
+  const p = _pmEditPost;
+  const me = typeof currentUser !== 'undefined' ? currentUser : null;
+  if (!p || !me) return;
+  const val = id => document.getElementById(id).value.trim();
+  const err = document.getElementById('pmEditErr');
+  const body = {
+    user_id: me.id,
+    title: val('pmEditTitle'),
+    content: document.getElementById('pmEditContent').value,
+    image_url: val('pmEditImage'),
+    video_url: val('pmEditVideo'),
+    doc_url: val('pmEditDoc'),
+  };
+  if (!body.content.trim()) { err.textContent = 'Nội dung không được để trống.'; return; }
+  if (['image_url', 'video_url', 'doc_url'].some(k => body[k] && !/^https?:\/\//i.test(body[k]))) {
+    err.textContent = 'Link phải bắt đầu bằng https://'; return;
+  }
+  const btn = document.getElementById('pmEditSave');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+  try {
+    const r = await fetch(`/api/posts/${p.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Không lưu được.');
+    if (typeof openPost === 'function') openPost(p.id);
+    if (typeof loadFeed === 'function') loadFeed();
+  } catch (e) {
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+  }
+}
+
 // ── Popup Nội quy: thành viên chưa đồng ý phiên bản nội quy hiện tại phải xác nhận mới dùng tiếp ──
 function showRulesConsent(userId) {
   if (document.getElementById('rulesConsent')) return;

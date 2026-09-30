@@ -1530,7 +1530,8 @@
     function normalizeAttachUrl(type, url) {
       if ((type === 'image' || type === 'gif') && DRIVE_HOST_RE.test(url)) {
         const id = driveFileId(url);
-        if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+        // "uc?export=view" không còn nhúng được vào <img> — dùng endpoint thumbnail của Drive
+        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
       }
       return url;
     }
@@ -1974,6 +1975,7 @@
         (pl ? `<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:${pl.color}20;color:${pl.color}">${pl.label}</span>` : '') +
         (p.post_type === 'cot' ? '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:#fef3c7;color:#b45309">★ CÔT</span>' : '') +
         pinPill;
+      pmPostExtras(p); // nút ✏️ Sửa bài (tác giả) + nhãn bài bị ẩn — app.js
       document.getElementById('pmLikeCount').textContent = p.likes_count || 0;
       document.getElementById('pmCmtCount').textContent = p.comments_count || 0;
       document.getElementById('pmBody').innerHTML = `
@@ -1981,7 +1983,7 @@
       <div class="pm-avatar" style="background:${col}">${ini}</div>
       <div>
         <div class="pm-author-name">${escHtml(p.first_name)} ${escHtml(p.last_name || '')}</div>
-        <div class="pm-author-meta">Lv.${p.level} · ${timeAgo(p.created_at)}</div>
+        <div class="pm-author-meta">Lv.${p.level} · ${timeAgo(p.created_at)}${p.updated_at ? ' · đã sửa' : ''}</div>
       </div>
     </div>
     ${p.title ? `<div class="pm-title">${escHtml(p.title)}</div>` : ''}

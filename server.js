@@ -182,6 +182,15 @@ async function uploadToUserDrive(drive, localFilePath, filename, mimeType, folde
   return { fileId, displayUrl };
 }
 
+// Link chia sẻ ảnh Google Drive (…/file/d/ID/view, open?id=, uc?export=view&id=) không nhúng được
+// vào <img> — đổi sang endpoint thumbnail. Link không phải Drive giữ nguyên.
+function driveImageUrl(url) {
+  const s = String(url || '').trim();
+  if (!/^https?:\/\/(drive|docs)\.google\.com\//i.test(s) || /\/thumbnail\?/.test(s)) return s;
+  const m = s.match(/\/d\/([a-zA-Z0-9_-]{15,})/) || s.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600` : s;
+}
+
 // Xoá 1 file Drive cũ khi bị thay thế (best-effort, không throw nếu lỗi).
 async function deleteDriveFileByUrl(drive, url) {
   if (!url) return;
@@ -1745,6 +1754,21 @@ ${extra}
     db.exec('ALTER TABLE posts ADD COLUMN poll_options TEXT');
     console.log('  Migrated posts: added poll_options.');
   }
+  // Admin ẩn bài (vẫn giữ trong DB) + thời điểm sửa gần nhất
+  if (!postCols.includes('hidden')) {
+    db.exec('ALTER TABLE posts ADD COLUMN hidden INTEGER DEFAULT 0');
+    db.exec('ALTER TABLE posts ADD COLUMN updated_at TEXT');
+    console.log('  Migrated posts: added hidden, updated_at.');
+  }
+  // Link ảnh Google Drive dạng "uc?export=view" / ".../file/d/ID/view" không hiển thị trong <img>
+  // → đổi sang endpoint thumbnail (idempotent: chỉ đụng các link chưa đổi)
+  ['image_url', 'gif_url'].forEach(col => {
+    db.all(`SELECT id, ${col} AS url FROM posts WHERE ${col} LIKE '%drive.google.com%' AND ${col} NOT LIKE '%/thumbnail?%'`)
+      .forEach(r => {
+        const fixed = driveImageUrl(r.url);
+        if (fixed !== r.url) db.run(`UPDATE posts SET ${col} = ? WHERE id = ?`, [fixed, r.id]);
+      });
+  });
 
   // Migrate courses: add space_id (course shows in a member's sidebar only if they belong to this space)
   const courseCols = db.all('PRAGMA table_info(courses)').map(c => c.name);
@@ -3349,9 +3373,10 @@ QUY TẮC BẮT BUỘC:
     const { search = '', pillar = '', limit = 50, offset = 0 } = req.query;
     const like = `%${search}%`;
 
-    let sql = `SELECT p.id, p.title, p.pillar, p.post_type, p.likes_count, p.comments_count,
-                      p.is_pinned, p.created_at,
-                      u.first_name || ' ' || u.last_name AS author_name, u.email AS author_email
+    let sql = `SELECT p.id, p.title, p.content, p.pillar, p.post_type, p.likes_count, p.comments_count,
+                      p.is_pinned, p.created_at, p.updated_at, p.hidden, p.space_id,
+                      p.image_url, p.video_url, p.doc_url, p.gif_url,
+                      u.id AS author_id, u.first_name || ' ' || u.last_name AS author_name, u.email AS author_email
                FROM posts p JOIN users u ON u.id = p.user_id
                WHERE (p.title LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)`;
     const params = [like, like, like];
@@ -3374,6 +3399,22 @@ QUY TẮC BẮT BUỘC:
       [uid, (title || '').trim(), content.trim(), pillar || null, post_type]
     );
     res.status(201).json({ success: true, post_id: result.lastInsertRowid });
+  });
+
+  // Admin sửa nội dung / ẩn - hiện bài đăng
+  app.patch('/api/admin/posts/:id', requireAdmin, (req, res) => {
+    const b = req.body || {};
+    const post = db.get('SELECT id FROM posts WHERE id = ?', [req.params.id]);
+    if (!post) return res.status(404).json({ error: 'Không tìm thấy bài đăng.' });
+    if (b.hidden !== undefined) {
+      db.run('UPDATE posts SET hidden = ? WHERE id = ?', [b.hidden ? 1 : 0, post.id]);
+    }
+    const hasContentFields = ['title', 'content', 'image_url', 'gif_url', 'video_url', 'doc_url'].some(k => b[k] !== undefined);
+    if (hasContentFields) {
+      const err = updatePostFields(post.id, b);
+      if (err) return res.status(400).json({ error: err });
+    }
+    res.json({ success: true });
   });
 
   // Delete post
@@ -3518,7 +3559,7 @@ QUY TẮC BẮT BUỘC:
              t.name AS topic_name, t.icon AS topic_icon
       FROM posts p JOIN users u ON u.id = p.user_id
       LEFT JOIN topics t ON t.id = p.topic_id
-      WHERE 1=1`;
+      WHERE COALESCE(p.hidden, 0) = 0`;
     const params = [];
     if (pillar) { sql += ' AND p.pillar = ?'; params.push(pillar); }
     if (type)   { sql += ' AND p.post_type = ?'; params.push(type); }
@@ -3580,7 +3621,7 @@ QUY TẮC BẮT BUỘC:
         image_url, video_url, doc_url, gif_url, poll_question, poll_options)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [user_id, title || '', content, pillar || null, post_type, space_id || null, topic_id || null,
-       image_url || null, video_url || null, doc_url || null, gif_url || null,
+       driveImageUrl(image_url) || null, video_url || null, doc_url || null, driveImageUrl(gif_url) || null,
        pollOptionsJson ? (poll_question || '').trim() : null, pollOptionsJson]
     );
     addXP(user_id, 3, 'post', `Đăng bài: ${title || content.slice(0, 30)}`);
@@ -3780,7 +3821,7 @@ QUY TẮC BẮT BUỘC:
     const p = db.get(
       `SELECT p.id, p.title, p.content, p.pillar, p.post_type, p.space_id, p.is_pinned,
               p.topic_id, p.image_url, p.video_url, p.doc_url, p.gif_url, p.poll_question, p.poll_options,
-              p.likes_count, p.comments_count, p.created_at,
+              p.likes_count, p.comments_count, p.created_at, p.updated_at, p.hidden,
               u.id AS author_id, u.first_name, u.last_name, u.level,
               t.name AS topic_name, t.icon AS topic_icon
        FROM posts p JOIN users u ON u.id = p.user_id
@@ -3789,9 +3830,44 @@ QUY TẮC BẮT BUỘC:
       [req.params.id]
     );
     if (!p) return res.status(404).json({ error: 'Không tìm thấy bài đăng' });
+    // Bài bị admin ẩn: chỉ tác giả và admin còn xem được
+    if (p.hidden && Number(req.query.user_id) !== p.author_id && !getUserFlags(req.query.user_id).isAdmin)
+      return res.status(404).json({ error: 'Không tìm thấy bài đăng' });
     attachPollData([p], req.query.user_id);
     res.json(p);
   });
+
+  // Tác giả sửa bài của mình (tiêu đề, nội dung, link ảnh/video/tài liệu/GIF)
+  app.patch('/api/posts/:id', (req, res) => {
+    const b = req.body || {};
+    const post = db.get('SELECT id, user_id FROM posts WHERE id = ?', [req.params.id]);
+    if (!post) return res.status(404).json({ error: 'Không tìm thấy bài đăng.' });
+    if (!b.user_id || Number(b.user_id) !== post.user_id)
+      return res.status(403).json({ error: 'Bạn chỉ có thể sửa bài viết của chính mình.' });
+    const err = updatePostFields(post.id, b);
+    if (err) return res.status(400).json({ error: err });
+    res.json({ success: true });
+  });
+
+  // Cập nhật các trường nội dung bài đăng (dùng chung cho tác giả & admin). Trả về lỗi (string) hoặc null.
+  function updatePostFields(postId, b) {
+    const sets = [], params = [];
+    if (b.content !== undefined) {
+      if (!String(b.content).trim()) return 'Nội dung bài đăng không được để trống.';
+      sets.push('content = ?'); params.push(String(b.content));
+    }
+    if (b.title !== undefined) { sets.push('title = ?'); params.push(String(b.title || '').trim()); }
+    [['image_url', true], ['gif_url', true], ['video_url', false], ['doc_url', false]].forEach(([k, isImg]) => {
+      if (b[k] === undefined) return;
+      const v = String(b[k] || '').trim();
+      if (v && !/^https?:\/\//i.test(v)) return;
+      sets.push(`${k} = ?`); params.push(v ? (isImg ? driveImageUrl(v) : v) : null);
+    });
+    if (!sets.length) return 'Không có gì để cập nhật.';
+    sets.push("updated_at = datetime('now','localtime')");
+    db.run(`UPDATE posts SET ${sets.join(', ')} WHERE id = ?`, [...params, postId]);
+    return null;
+  }
 
   // Toggle pin — community admins only
   app.post('/api/posts/:id/pin', (req, res) => {
@@ -3972,7 +4048,7 @@ QUY TẮC BẮT BUỘC:
     const posts = db.all(`
       SELECT p.id, p.title, p.content, u.first_name, u.last_name
       FROM posts p JOIN users u ON u.id = p.user_id
-      WHERE p.space_id IS NULL AND (p.title LIKE ? OR p.content LIKE ?)
+      WHERE p.space_id IS NULL AND COALESCE(p.hidden, 0) = 0 AND (p.title LIKE ? OR p.content LIKE ?)
       ORDER BY p.created_at DESC LIMIT 5
     `, [like, like]);
 
@@ -4028,7 +4104,7 @@ QUY TẮC BẮT BUỘC:
   app.get('/api/users/:id/posts', (req, res) => {
     const posts = db.all(
       `SELECT id, title, content, pillar, post_type, likes_count, comments_count, created_at
-       FROM posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 8`,
+       FROM posts WHERE user_id = ? AND COALESCE(hidden, 0) = 0 ORDER BY created_at DESC LIMIT 8`,
       [req.params.id]
     );
     res.json({ posts });
