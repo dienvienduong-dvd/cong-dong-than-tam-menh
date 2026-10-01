@@ -601,3 +601,8 @@ html, body { height: 100%; overflow: hidden; }
   body.auth-body { overflow: hidden; }
   .auth-page { height: 100vh; }
 }
+
+/* Mobile: html/body are overflow:hidden for the app shell, so auth pages scroll inside .auth-page */
+@media (max-width: 899px) {
+  .auth-page { height: 100vh; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+}
