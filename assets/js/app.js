@@ -1202,3 +1202,57 @@ document.addEventListener('DOMContentLoaded', () => {
     else drawer.appendChild(a);
   });
 })();
+
+// ── Khung nổi bật "Lịch Zoom / sự kiện trong 24 giờ" (3 buổi, 8 buổi, 377 ngày) ──
+// events: [{ title, date:'YYYY-MM-DD', time:'20:00 - 21:30 (Zoom mở lúc 19:45)', link }]
+// Giờ hiểu theo giờ Việt Nam (+07:00). Hiện buổi bắt đầu trong 24 giờ tới, hoặc đã diễn ra trong ngày hôm nay.
+function dhEventWindow(ev) {
+  const date = String(ev.date || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const at = (h, m) => new Date(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+07:00`);
+  const times = [...String(ev.time || '').matchAll(/(\d{1,2})\s*[:hH]\s*(\d{2})?/g)]
+    .map(m => [+m[1], +(m[2] || 0)]).filter(([h, m]) => h < 24 && m < 60);
+  const dayEnd = at(23, 59);
+  if (!times.length) return { start: at(0, 0), end: dayEnd, dayEnd, hasTime: false };
+  const start = at(...times[0]);
+  let end = times[1] ? at(...times[1]) : new Date(start.getTime() + 90 * 60000);
+  if (end <= start) end = new Date(start.getTime() + 90 * 60000);
+  return { start, end, dayEnd, hasTime: true };
+}
+
+function renderTodayEventBanner(el, events, opts) {
+  if (!el) return;
+  const canJoin = !opts || opts.canJoin !== false;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const draw = () => {
+    const now = new Date();
+    const list = (events || []).map(ev => ({ ev, w: dhEventWindow(ev) }))
+      .filter(x => x.w && x.w.start - now <= 24 * 3600000 && now <= x.w.dayEnd)
+      .sort((a, b) => a.w.start - b.w.start);
+    if (!list.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.innerHTML = list.map(({ ev, w }) => {
+      let cls, label;
+      if (!w.hasTime) { cls = 'today'; label = '📅 Diễn ra hôm nay'; }
+      else if (now < w.start) {
+        const mins = Math.max(1, Math.ceil((w.start - now) / 60000));
+        const h = Math.floor(mins / 60), m = mins % 60;
+        cls = 'soon'; label = `⏳ Chưa bắt đầu · còn ${h ? h + ' giờ ' : ''}${m ? m + ' phút' : ''} nữa`;
+      } else if (now <= w.end) { cls = 'live'; label = '🔴 Đang diễn ra'; }
+      else { cls = 'ended'; label = '✅ Đã kết thúc'; }
+      const dd = String(ev.date).slice(0, 10).split('-').reverse().join('/');
+      const when = [dd, ev.time].filter(Boolean).join(' · ');
+      const showBtn = ev.link && canJoin && cls !== 'ended';
+      return `
+        <div class="dh-live dh-live--${cls}">
+          <div class="dh-live-top"><span class="dh-live-kicker">📣 Lịch Zoom / sự kiện trong 24 giờ</span><span class="dh-live-status">${label}</span></div>
+          <div class="dh-live-title">${esc(ev.title || 'Buổi Zoom')}</div>
+          <div class="dh-live-when">🕐 ${esc(when)}</div>
+          ${showBtn ? `<a class="dh-live-btn" href="${esc(ev.link)}" target="_blank" rel="noopener">📹 ${cls === 'live' ? 'Vào Zoom ngay' : 'Tham gia Zoom'}</a>` : ''}
+        </div>`;
+    }).join('');
+  };
+  draw();
+  clearInterval(el._dhTimer);
+  el._dhTimer = setInterval(draw, 30000);
+}

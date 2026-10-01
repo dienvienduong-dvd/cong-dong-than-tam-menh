@@ -2068,6 +2068,15 @@
         </div>
 
         <div class="p377-tab-panel" data-tab="zoom">
+          <div class="table-card" style="margin-bottom:16px;">
+            <div style="padding:16px 20px;">
+              <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">🎥 Link video đào tạo khoá trước (hiện trên trang 377 ngày, giống 8 buổi)</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <input class="search-input" style="flex:1;min-width:240px;" id="p377VideoUrl" placeholder="https://www.youtube.com/watch?v=... hoặc link Google Drive">
+                <button class="btn-sm primary" onclick="saveP377VideoUrl()">Lưu video</button>
+              </div>
+            </div>
+          </div>
           <div class="table-card">
             <div class="table-card-header">
               <h2>Zoom / sự kiện — Chương trình 377 ngày</h2>
@@ -8354,7 +8363,18 @@
     function closeP377ReportModal() { document.getElementById('p377ReportModal').style.display = 'none'; }
 
     // -- Lịch Zoom / sự kiện --
+    async function saveP377VideoUrl() {
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ program377_video_url: document.getElementById('p377VideoUrl').value.trim() }) });
+        showToast('✅ Đã lưu video.', 'green');
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
+    }
+
     async function loadP377Sessions() {
+      fetch('/api/settings').then(r => r.json()).then(s => {
+        const el = document.getElementById('p377VideoUrl');
+        if (el && document.activeElement !== el) el.value = s.program377_video_url || '';
+      }).catch(() => {});
       const d = await api('/admin/program377/sessions');
       p377SessionsCache = d.sessions;
       const typeOpts = [['zoom', 'Zoom'], ['video', 'Video'], ['exercise', 'Bài tập'], ['other', 'Khác']];

@@ -2295,6 +2295,7 @@ ${extra}
     ['workshop8_letter_html',  WORKSHOP8_DEFAULT_LETTER_HTML],
     ['workshop8_time_note',    '20:00 - 21:30 (Zoom mở lúc 19:45)'],
     ['workshop8_sessions',     JSON.stringify(WORKSHOP8_DEFAULT_SESSIONS)],
+    ['program377_video_url',   ''],
     // Thời điểm bắt buộc khảo sát Thân-Tâm-Mệnh: 'signup' (ngay khi tạo tài
     // khoản, mặc định) | 'workshop8' | 'program377' | 'none' (không bắt buộc)
     ['ttm_intake_trigger',     'signup'],
@@ -6963,6 +6964,7 @@ QUY TẮC BẮT BUỘC:
       'workshop3_video_url', 'workshop3_space_url', 'workshop3_course_url', 'workshop3_sessions',
       'workshop3_time_note',
       'workshop8_video_url', 'workshop8_letter_html', 'workshop8_time_note', 'workshop8_sessions',
+      'program377_video_url',
       'ttm_intake_trigger',
       'contact_heading', 'contact_intro', 'contact_people',
       'contact_bank_name', 'contact_bank_account', 'contact_bank_holder', 'contact_bank_note',

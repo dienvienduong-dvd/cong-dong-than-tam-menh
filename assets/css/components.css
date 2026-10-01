@@ -668,3 +668,20 @@
 }
 .notif-push-note { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
 .notif-push-note.err { color: #dc2626; }
+
+/* Khung nổi bật lịch Zoom / sự kiện trong 24 giờ (app.js renderTodayEventBanner) */
+.dh-live { border-radius: var(--radius-lg, 14px); padding: 16px 20px; margin-bottom: 16px; border: 2px solid #8b5cf6; background: rgba(139,92,246,.10); }
+.dh-live--live { border-color: #ef4444; background: rgba(239,68,68,.10); }
+.dh-live--ended { border-color: var(--border); background: var(--bg-card); opacity: .85; }
+.dh-live-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dh-live-kicker { font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--text-muted); text-transform: uppercase; }
+.dh-live-status { font-size: 13px; font-weight: 800; padding: 4px 12px; border-radius: 99px; background: #8b5cf6; color: #fff; }
+.dh-live--live .dh-live-status { background: #ef4444; animation: dhLivePulse 1.6s ease-in-out infinite; }
+.dh-live--ended .dh-live-status { background: var(--border); color: var(--text-muted); }
+.dh-live--today .dh-live-status { background: #0ea5e9; }
+.dh-live-title { font-family: var(--font-heading); font-size: 19px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.dh-live-when { font-size: 15px; font-weight: 600; color: var(--text); }
+.dh-live-btn { display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 700; color: #fff; background: #8b5cf6; padding: 9px 20px; border-radius: 99px; text-decoration: none; }
+.dh-live--live .dh-live-btn { background: #ef4444; }
+.dh-live-btn:hover { opacity: .9; }
+@keyframes dhLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
