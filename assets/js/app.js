@@ -1204,7 +1204,8 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // ── Khung nổi bật "Lịch Zoom / sự kiện trong 24 giờ" (3 buổi, 8 buổi, 377 ngày) ──
-// events: [{ title, date:'YYYY-MM-DD', time:'20:00 - 21:30 (Zoom mở lúc 19:45)', link }]
+// events: [{ title, date:'YYYY-MM-DD', time:'20:00 - 21:30 (Zoom mở lúc 19:45)', link, content_html }]
+// content_html do admin soạn — chỉ hiện khi canJoin (người đã được duyệt), giống phần nội dung buổi ở trang.
 // Giờ hiểu theo giờ Việt Nam (+07:00). Hiện buổi bắt đầu trong 24 giờ tới, hoặc đã diễn ra trong ngày hôm nay.
 function dhEventWindow(ev) {
   const date = String(ev.date || '').slice(0, 10);
@@ -1248,6 +1249,7 @@ function renderTodayEventBanner(el, events, opts) {
           <div class="dh-live-top"><span class="dh-live-kicker">📣 Lịch Zoom / sự kiện trong 24 giờ</span><span class="dh-live-status">${label}</span></div>
           <div class="dh-live-title">${esc(ev.title || 'Buổi Zoom')}</div>
           <div class="dh-live-when">🕐 ${esc(when)}</div>
+          ${ev.content_html && canJoin ? `<div class="dh-live-body">${ev.content_html}</div>` : ''}
           ${showBtn ? `<a class="dh-live-btn" href="${esc(ev.link)}" target="_blank" rel="noopener">📹 ${cls === 'live' ? 'Vào Zoom ngay' : 'Tham gia Zoom'}</a>` : ''}
         </div>`;
     }).join('');

@@ -681,6 +681,12 @@
 .dh-live--today .dh-live-status { background: #0ea5e9; }
 .dh-live-title { font-family: var(--font-heading); font-size: 19px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
 .dh-live-when { font-size: 15px; font-weight: 600; color: var(--text); }
+.dh-live-body { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 14px; line-height: 1.8; color: var(--text); }
+.dh-live-body p { margin-bottom: 10px; }
+.dh-live-body ul, .dh-live-body ol { padding-left: 22px; margin: 0 0 10px; }
+.dh-live-body li { margin-bottom: 6px; }
+.dh-live-body > :last-child { margin-bottom: 0; }
+.dh-live-body img { max-width: 100%; height: auto; border-radius: 8px; }
 .dh-live-btn { display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 700; color: #fff; background: #8b5cf6; padding: 9px 20px; border-radius: 99px; text-decoration: none; }
 .dh-live--live .dh-live-btn { background: #ef4444; }
 .dh-live-btn:hover { opacity: .9; }
