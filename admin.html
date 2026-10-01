@@ -2076,21 +2076,9 @@
                 <button class="btn-sm primary" onclick="openP377SessionModal()">+ Thêm buổi</button>
               </div>
             </div>
-            <div style="overflow-x:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Ngày</th>
-                    <th>Tiêu đề</th>
-                    <th>Loại</th>
-                    <th>Link</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody id="p377SessionsTbody">
-                  <tr><td colspan="5"><div class="empty-state">Đang tải...</div></td></tr>
-                </tbody>
-              </table>
+            <!-- Soạn trực tiếp từng buổi (giống 8 buổi Chuyên sâu) -->
+            <div id="p377SessionsEditor" style="padding:0 20px 20px;">
+              <div class="empty-state">Đang tải...</div>
             </div>
           </div>
         </div>
@@ -8369,23 +8357,75 @@
     async function loadP377Sessions() {
       const d = await api('/admin/program377/sessions');
       p377SessionsCache = d.sessions;
-      const typeLabel = { zoom: 'Zoom', video: 'Video', exercise: 'Bài tập', other: 'Khác' };
-      const tbody = document.getElementById('p377SessionsTbody');
+      const typeOpts = [['zoom', 'Zoom'], ['video', 'Video'], ['exercise', 'Bài tập'], ['other', 'Khác']];
+      const box = document.getElementById('p377SessionsEditor');
       if (!d.sessions.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Chưa có buổi nào.</div></td></tr>`;
+        box.innerHTML = `<div class="empty-state">Chưa có buổi nào. Bấm "+ Thêm buổi" hoặc "Thêm nhanh Zoom ngày 1 và ngày 15".</div>`;
         return;
       }
-      tbody.innerHTML = d.sessions.map(s => `
-    <tr>
-      <td>${fmtDateOnly(s.session_date)}${s.session_time ? `<div style="font-size:12px;color:var(--muted)">${escHtml(s.session_time)}</div>` : ''}</td>
-      <td>${escHtml(s.title)}</td>
-      <td style="color:var(--muted)">${typeLabel[s.session_type] || s.session_type}</td>
-      <td>${s.link_url ? `<a href="${s.link_url}" target="_blank" rel="noopener">Link</a>` : '—'}</td>
-      <td>
-        <button class="act-btn" onclick="openP377SessionModal(${s.id})">Sửa</button>
-        <button class="act-btn" style="color:#dc2626;" onclick="deleteP377Session(${s.id})">Xóa</button>
-      </td>
-    </tr>`).join('');
+      const lbl = 'font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;';
+      box.innerHTML = d.sessions.map((s, i) => `
+          <div style="margin-top:${i ? 20 : 4}px;padding-top:16px;border-top:1px solid var(--border);">
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;">
+              <div style="flex:2;min-width:240px;">
+                <label style="${lbl}">Tiêu đề</label>
+                <input class="search-input" style="width:100%" id="p377sTitle${s.id}" value="${escHtmlAttr(s.title || '')}">
+              </div>
+              <div style="flex:1;min-width:150px;">
+                <label style="${lbl}">Ngày</label>
+                <input type="date" class="search-input" style="width:100%" id="p377sDate${s.id}" value="${escHtmlAttr(String(s.session_date || '').slice(0, 10))}">
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;">
+              <div style="flex:2;min-width:240px;">
+                <label style="${lbl}">Giờ (không bắt buộc)</label>
+                <input class="search-input" style="width:100%" id="p377sTime${s.id}" placeholder="VD: 20:00 - 21:30 (Zoom mở lúc 19:45)" value="${escHtmlAttr(s.session_time || '')}">
+              </div>
+              <div style="flex:1;min-width:150px;">
+                <label style="${lbl}">Loại</label>
+                <select class="search-input" style="width:100%" id="p377sType${s.id}">${typeOpts.map(([v, t]) => `<option value="${v}"${(s.session_type || 'zoom') === v ? ' selected' : ''}>${t}</option>`).join('')}</select>
+              </div>
+            </div>
+            <div style="margin-bottom:10px;">
+              <label style="${lbl}">Link Zoom</label>
+              <input class="search-input" style="width:100%" id="p377sLink${s.id}" placeholder="https://zoom.us/j/..." value="${escHtmlAttr(s.link_url || '')}">
+            </div>
+            <div>
+              <label style="${lbl}">Nội dung</label>
+              <div id="p377sRte${s.id}"></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+              <button class="btn-sm" style="color:#dc2626;" onclick="deleteP377Session(${s.id})">Xóa buổi</button>
+              <button class="btn-sm primary" onclick="saveP377SessionInline(${s.id})">Lưu buổi này</button>
+            </div>
+          </div>`).join('');
+      d.sessions.forEach(s => initRTE(`p377sRte${s.id}`, p377SessionInitialHtml(s), '140px'));
+    }
+
+    // Nội dung cũ dạng chữ thường (mỗi dòng 1 ý) → gạch đầu dòng trong khung soạn thảo
+    function p377SessionInitialHtml(s) {
+      if (s.content_html) return s.content_html;
+      const lines = String(s.description || '').split(/\r?\n/).map(l => l.replace(/^\s*[-•*]\s+/, '').trim()).filter(Boolean);
+      return lines.length ? '<ul>' + lines.map(l => `<li>${escHtml(l).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</li>`).join('') + '</ul>' : '';
+    }
+
+    async function saveP377SessionInline(id) {
+      const payload = {
+        session_date: document.getElementById(`p377sDate${id}`).value,
+        session_time: document.getElementById(`p377sTime${id}`).value.trim(),
+        title: document.getElementById(`p377sTitle${id}`).value.trim(),
+        session_type: document.getElementById(`p377sType${id}`).value,
+        link_url: document.getElementById(`p377sLink${id}`).value.trim(),
+        description: '',
+        content_html: getRteContent(`p377sRte${id}`),
+      };
+      if (!payload.session_date || !payload.title) { showToast('Vui lòng nhập ngày và tiêu đề.', 'red'); return; }
+      try {
+        await api(`/admin/program377/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        const c = p377SessionsCache.find(x => x.id === id);
+        if (c) Object.assign(c, payload);
+        showToast('✅ Đã lưu buổi.', 'green');
+      } catch (e) { showToast('Lỗi: ' + e.message, 'red'); }
     }
 
     function openP377SessionModal(id) {
@@ -8398,9 +8438,7 @@
         document.getElementById('p377SessionTitle').value = s.title;
         document.getElementById('p377SessionType').value = s.session_type;
         document.getElementById('p377SessionLink').value = s.link_url || '';
-        // Nội dung cũ dạng chữ thường (mỗi dòng 1 ý) → chuyển thành gạch đầu dòng trong khung soạn thảo
-        const oldDesc = String(s.description || '').split(/\r?\n/).map(l => l.replace(/^\s*[-•*]\s+/, '').trim()).filter(Boolean);
-        initRTE('p377SessionRte', s.content_html || (oldDesc.length ? '<ul>' + oldDesc.map(l => `<li>${escHtml(l).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</li>`).join('') + '</ul>' : ''), '220px');
+        initRTE('p377SessionRte', p377SessionInitialHtml(s), '220px');
       } else {
         document.getElementById('p377SessionDate').value = '';
         document.getElementById('p377SessionTime').value = '';
