@@ -3326,8 +3326,11 @@ QUY TẮC BẮT BUỘC:
     const { search = '', status = '', limit = 50, offset = 0 } = req.query;
     const like = `%${search}%`;
 
-    let sql = `SELECT id, first_name, last_name, email, level, xp, streak,
-                      status, is_admin, last_active_at, created_at
+    // Kèm thông tin hồ sơ để admin nhìn nhanh ngay trong danh sách (khảo sát, 8 buổi, 377 ngày)
+    let sql = `SELECT id, first_name, last_name, email, phone, level, xp, streak,
+                      status, is_admin, last_active_at, created_at, ttm_intake_done_at,
+                      (SELECT status FROM workshop8_enrollments w WHERE w.user_id = users.id) AS w8_status,
+                      (SELECT status FROM program377_enrollments p WHERE p.user_id = users.id) AS p377_status
                FROM users
                WHERE (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)`;
     const params = [like, like, like];
@@ -5505,6 +5508,70 @@ QUY TẮC BẮT BUỘC:
 
   // "Ngày thứ mấy" của user tính theo lịch thật (date('now','localtime')) kể từ start_date —
   // mở khóa đúng lúc qua 0h, không lệch theo giờ họ bấm tham gia (khác cơ chế thử thách 21 ngày).
+  // ── Admin: "Việc cần xử lý" — gom mọi thứ đang chờ admin vào 1 chỗ ─────────
+  app.get('/api/admin/inbox', requireAdmin, (_req, res) => {
+    const name = r => `${r.first_name || ''} ${r.last_name || ''}`.trim() || r.email || '—';
+    const section = (key, countSql, listSql, map) => {
+      try {
+        return { key, count: db.get(countSql).n, items: db.all(listSql).map(map) };
+      } catch (e) { return { key, count: 0, items: [] }; } // bảng chưa có (DB cũ) → bỏ qua
+    };
+    const sections = [
+      section('roadmaps',
+        "SELECT COUNT(*) AS n FROM ttm_roadmaps WHERE status = 'pending_approval'",
+        `SELECT r.created_at AS t, u.first_name, u.last_name, u.email FROM ttm_roadmaps r JOIN users u ON u.id = r.user_id
+         WHERE r.status = 'pending_approval' ORDER BY r.created_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: 'Lộ trình Thân Tâm Mệnh chờ duyệt', t: r.t })),
+      section('workshop8',
+        "SELECT COUNT(*) AS n FROM workshop8_enrollments WHERE status = 'pending'",
+        `SELECT e.enrolled_at AS t, u.first_name, u.last_name, u.email FROM workshop8_enrollments e JOIN users u ON u.id = e.user_id
+         WHERE e.status = 'pending' ORDER BY e.enrolled_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: r.email, t: r.t })),
+      section('program377',
+        "SELECT COUNT(*) AS n FROM program377_enrollments WHERE status = 'pending'",
+        `SELECT e.enrolled_at AS t, u.first_name, u.last_name, u.email FROM program377_enrollments e JOIN users u ON u.id = e.user_id
+         WHERE e.status = 'pending' ORDER BY e.enrolled_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: r.email, t: r.t })),
+      section('courses',
+        "SELECT COUNT(*) AS n FROM course_enrollments WHERE status = 'pending'",
+        `SELECT ce.created_at AS t, c.title AS course, u.first_name, u.last_name, u.email FROM course_enrollments ce
+         JOIN users u ON u.id = ce.user_id JOIN courses c ON c.id = ce.course_id
+         WHERE ce.status = 'pending' ORDER BY ce.created_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: r.course, t: r.t })),
+      section('coaching',
+        "SELECT COUNT(*) AS n FROM coaching_bookings WHERE status = 'pending'",
+        `SELECT b.created_at AS t, b.preferred_date, u.first_name, u.last_name, u.email FROM coaching_bookings b JOIN users u ON u.id = b.user_id
+         WHERE b.status = 'pending' ORDER BY b.created_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: r.preferred_date ? `Muốn hẹn: ${r.preferred_date}` : 'Đặt qua Google Calendar', t: r.t })),
+      section('orders',
+        "SELECT COUNT(*) AS n FROM orders WHERE status = 'pending'",
+        `SELECT o.created_at AS t, p.title AS product, u.first_name, u.last_name, u.email FROM orders o
+         JOIN users u ON u.id = o.buyer_id LEFT JOIN products p ON p.id = o.product_id
+         WHERE o.status = 'pending' ORDER BY o.created_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: r.product || 'Đơn hàng', t: r.t })),
+      section('contact',
+        "SELECT COUNT(*) AS n FROM contact_messages WHERE status = 'new'",
+        "SELECT created_at AS t, full_name, message FROM contact_messages WHERE status = 'new' ORDER BY id DESC LIMIT 5",
+        r => ({ title: r.full_name, sub: String(r.message || '').slice(0, 80), t: r.t })),
+      section('locations',
+        "SELECT COUNT(*) AS n FROM locations WHERE status = 'pending'",
+        "SELECT created_at AS t, full_name, place_name, address FROM locations WHERE status = 'pending' ORDER BY id DESC LIMIT 5",
+        r => ({ title: r.place_name || r.full_name, sub: r.address || r.full_name, t: r.t })),
+      section('challenge_enrollments',
+        "SELECT COUNT(*) AS n FROM challenge_enrollments WHERE status = 'pending'",
+        `SELECT e.enrolled_at AS t, c.title AS challenge, u.first_name, u.last_name, u.email FROM challenge_enrollments e
+         JOIN users u ON u.id = e.user_id LEFT JOIN challenges c ON c.id = e.challenge_id
+         WHERE e.status = 'pending' ORDER BY e.enrolled_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: r.challenge || 'Thử thách', t: r.t })),
+      section('submissions',
+        "SELECT COUNT(*) AS n FROM challenge_submissions WHERE status = 'pending'",
+        `SELECT s.submitted_at AS t, u.first_name, u.last_name, u.email FROM challenge_submissions s JOIN users u ON u.id = s.user_id
+         WHERE s.status = 'pending' ORDER BY s.submitted_at DESC LIMIT 5`,
+        r => ({ title: name(r), sub: 'Bài nộp thử thách', t: r.t })),
+    ];
+    res.json({ total: sections.reduce((s, x) => s + x.count, 0), sections });
+  });
+
   // ── Admin: tiến độ 377 ngày của từng thành viên đã được duyệt ──────────
   // days: chuỗi 377 ký tự — r = đã báo cáo, m = bỏ lỡ (ngày đã qua chưa báo cáo),
   //       t = hôm nay chưa báo cáo, f = chưa tới.
