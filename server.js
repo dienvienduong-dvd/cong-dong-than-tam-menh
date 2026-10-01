@@ -356,6 +356,16 @@ const SCHEMA = `
     key   TEXT PRIMARY KEY,
     value TEXT
   );
+  -- Mã đăng nhập 6 số gửi qua email (đăng nhập không cần mật khẩu / không cần Google)
+  CREATE TABLE IF NOT EXISTS login_codes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    email       TEXT    NOT NULL,
+    code_hash   TEXT    NOT NULL,
+    expires_at  TEXT    NOT NULL,
+    attempts    INTEGER DEFAULT 0,
+    used        INTEGER DEFAULT 0,
+    created_at  TEXT    DEFAULT (datetime('now','localtime'))
+  );
   -- Thiết bị đã bật thông báo đẩy (Web Push) — mỗi trình duyệt/điện thoại 1 dòng
   CREATE TABLE IF NOT EXISTS push_subscriptions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -3022,12 +3032,95 @@ QUY TẮC BẮT BUỘC:
     const user = db.get('SELECT * FROM users WHERE email = ?', [email]);
     if (!user) return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng.' });
     if (!user.password_hash)
-      return res.status(401).json({ error: 'Tài khoản này đăng nhập bằng Google. Vui lòng dùng nút "Đăng nhập với Google".' });
+      return res.status(401).json({ error: 'Tài khoản này đăng nhập bằng Google. Vui lòng dùng nút "Tiếp tục với Google" hoặc "Đăng nhập bằng mã qua email".' });
     if (!bcrypt.compareSync(password, user.password_hash))
       return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng.' });
     if (user.status !== 'active')
       return res.status(403).json({ error: 'Tài khoản này đã bị khoá.' });
 
+    db.run("UPDATE users SET last_active_at = datetime('now','localtime') WHERE id = ?", [user.id]);
+    applyCourseEmailGrants(user.id, user.email);
+    res.json({
+      success: true,
+      user: { id: user.id, first_name: user.first_name, last_name: user.last_name,
+              email: user.email, level: user.level, xp: user.xp, is_admin: !!user.is_admin,
+              ttm_intake_done_at: user.ttm_intake_done_at || null,
+              telegram_chat_id: user.telegram_chat_id || null },
+    });
+  });
+
+  // ── Đăng nhập bằng mã 6 số qua email ──────────────────────────────────
+  // Dùng được ở mọi nơi (kể cả app ở màn hình chính, nơi cửa sổ Google không thấy tài khoản
+  // đã đăng nhập trong trình duyệt). Mã lưu dạng băm, hết hạn 10 phút, dùng 1 lần, tối đa 5 lần nhập sai.
+  const LOGIN_CODE_TTL_MIN = 10;
+  const loginCodeIpHits = new Map(); // ip → [timestamps] (giới hạn gửi mã theo IP, trong bộ nhớ)
+  const hashLoginCode = (email, code) => crypto.createHash('sha256').update(`${email}:${code}`).digest('hex');
+  const normEmail = e => String(e || '').trim().toLowerCase();
+
+  app.post('/api/auth/email-code/request', (req, res) => {
+    const email = normEmail(req.body?.email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Email không hợp lệ.' });
+
+    // Giới hạn: 20 lần / giờ / IP; 1 lần / 60 giây và 5 lần / giờ cho mỗi email
+    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+    const now = Date.now();
+    const hits = (loginCodeIpHits.get(ip) || []).filter(t => now - t < 3600e3);
+    if (hits.length >= 20) return res.status(429).json({ error: 'Bạn đã yêu cầu quá nhiều mã. Vui lòng thử lại sau ít phút.' });
+    const recent = db.get(`SELECT COUNT(*) AS n,
+        SUM(CASE WHEN created_at > datetime('now','localtime','-60 seconds') THEN 1 ELSE 0 END) AS last_min
+      FROM login_codes WHERE email = ? AND created_at > datetime('now','localtime','-1 hour')`, [email]);
+    if (recent.last_min > 0) return res.status(429).json({ error: 'Vui lòng đợi 1 phút trước khi gửi lại mã.' });
+    if (recent.n >= 5) return res.status(429).json({ error: 'Email này đã nhận quá nhiều mã trong 1 giờ. Vui lòng thử lại sau.' });
+    hits.push(now); loginCodeIpHits.set(ip, hits);
+
+    // Luôn trả lời giống nhau (không tiết lộ email có tài khoản hay không); chỉ gửi mã khi có tài khoản đang hoạt động
+    const user = db.get('SELECT id, first_name, status FROM users WHERE lower(email) = ?', [email]);
+    if (user && user.status === 'active') {
+      const code = String(crypto.randomInt(100000, 1000000));
+      db.run('UPDATE login_codes SET used = 1 WHERE email = ? AND used = 0', [email]); // mã cũ hết hiệu lực
+      db.run(`INSERT INTO login_codes (email, code_hash, expires_at)
+              VALUES (?, ?, datetime('now','localtime','+${LOGIN_CODE_TTL_MIN} minutes'))`, [email, hashLoginCode(email, code)]);
+      const name = String(user.first_name || '').replace(/[<>&"]/g, '');
+      if (!resendClient) console.log(`[login-code DEV — chưa cấu hình email] ${email}: ${code}`); // chỉ máy thử
+      sendEmail({
+        to: email,
+        subject: `${code} là mã đăng nhập ${communityName()}`,
+        html: emailWrap('Mã đăng nhập của bạn', `
+          <p>Chào ${name || 'bạn'},</p>
+          <p>Mã đăng nhập ${communityName()} của bạn là:</p>
+          <p style="font-size:34px;font-weight:800;letter-spacing:8px;color:#0f766e;margin:18px 0;">${code}</p>
+          <p>Mã có hiệu lực trong ${LOGIN_CODE_TTL_MIN} phút và chỉ dùng được 1 lần.</p>
+          <p style="color:#94a3b8;font-size:13px;">Nếu bạn không yêu cầu mã này, hãy bỏ qua email — tài khoản của bạn vẫn an toàn.</p>
+        `),
+      }).catch(err => console.error('[login-code email]', err.message));
+    } else {
+      // Vẫn ghi 1 dòng (đã dùng) để giới hạn tần suất áp dụng cả với email không có tài khoản
+      db.run(`INSERT INTO login_codes (email, code_hash, expires_at, used) VALUES (?, '-', datetime('now','localtime'), 1)`, [email]);
+    }
+    res.json({ ok: true, ttl_minutes: LOGIN_CODE_TTL_MIN });
+  });
+
+  app.post('/api/auth/email-code/verify', (req, res) => {
+    const email = normEmail(req.body?.email);
+    const code = String(req.body?.code || '').replace(/\D/g, '');
+    if (!email || code.length !== 6) return res.status(400).json({ error: 'Vui lòng nhập đủ 6 số của mã.' });
+    const row = db.get(`SELECT * FROM login_codes WHERE email = ? AND used = 0 AND code_hash != '-'
+                        AND expires_at > datetime('now','localtime') ORDER BY id DESC LIMIT 1`, [email]);
+    if (!row) return res.status(400).json({ error: 'Mã đã hết hạn hoặc chưa được gửi. Vui lòng bấm "Gửi lại mã".' });
+    if (row.attempts >= 5) {
+      db.run('UPDATE login_codes SET used = 1 WHERE id = ?', [row.id]);
+      return res.status(400).json({ error: 'Nhập sai quá nhiều lần. Vui lòng bấm "Gửi lại mã" để nhận mã mới.' });
+    }
+    const ok = crypto.timingSafeEqual(Buffer.from(row.code_hash, 'hex'), Buffer.from(hashLoginCode(email, code), 'hex'));
+    if (!ok) {
+      db.run('UPDATE login_codes SET attempts = attempts + 1 WHERE id = ?', [row.id]);
+      const left = 4 - row.attempts;
+      return res.status(400).json({ error: left > 0 ? `Mã không đúng. Bạn còn ${left} lần thử.` : 'Mã không đúng. Vui lòng bấm "Gửi lại mã".' });
+    }
+    db.run('UPDATE login_codes SET used = 1 WHERE id = ?', [row.id]);
+    const user = db.get('SELECT * FROM users WHERE lower(email) = ?', [email]);
+    if (!user) return res.status(404).json({ error: 'Tài khoản không tồn tại.' });
+    if (user.status !== 'active') return res.status(403).json({ error: 'Tài khoản này đã bị khoá.' });
     db.run("UPDATE users SET last_active_at = datetime('now','localtime') WHERE id = ?", [user.id]);
     applyCourseEmailGrants(user.id, user.email);
     res.json({

@@ -236,7 +236,45 @@
       <span id="googleBtnText">Tiếp tục với Google</span>
     </button>
 
-    <div class="or-divider"><span>hoặc đăng nhập bằng email</span></div>
+    <!-- Đăng nhập bằng mã 6 số gửi qua email — dùng được cả trong app ở màn hình chính -->
+    <button class="btn-google" id="codeLoginBtn" type="button" onclick="showCodeLogin(true)" style="margin-top:10px;">
+      <span style="font-size:17px;line-height:1;">✉️</span>
+      <span>Đăng nhập bằng mã qua email</span>
+    </button>
+
+    <div id="codeLoginBox" style="display:none;">
+      <div class="alert alert-error" id="codeError" role="alert" style="display:none;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01" stroke-linecap="round"/></svg>
+        <span data-msg></span>
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label for="codeEmail">Email đã đăng ký</label>
+        <div class="input-wrap">
+          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor"/>
+            <path d="M2 8l10 6 10-6" stroke="currentColor" stroke-linecap="round"/>
+          </svg>
+          <input class="input" type="email" id="codeEmail" placeholder="ban@gmail.com" autocomplete="email" inputmode="email">
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary btn-lg btn-full" id="codeSendBtn" onclick="sendLoginCode()">Gửi mã đăng nhập</button>
+
+      <div id="codeStep2" style="display:none;margin-top:16px;">
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:10px;" id="codeSentNote"></div>
+        <div class="field">
+          <label for="loginCode">Mã 6 số</label>
+          <input class="input" type="text" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"
+            style="font-size:24px;letter-spacing:10px;text-align:center;font-weight:700;padding-left:12px;"
+            oninput="this.value=this.value.replace(/\D/g,'').slice(0,6); if(this.value.length===6) verifyLoginCode();">
+        </div>
+        <button type="button" class="btn btn-primary btn-lg btn-full" id="codeVerifyBtn" onclick="verifyLoginCode()">Đăng nhập</button>
+        <button type="button" id="codeResendBtn" onclick="sendLoginCode(true)" style="margin-top:10px;width:100%;background:none;border:none;color:var(--color-primary);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Gửi lại mã</button>
+      </div>
+
+      <button type="button" onclick="showCodeLogin(false)" style="margin-top:14px;width:100%;background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit;">← Đăng nhập bằng mật khẩu</button>
+    </div>
+
+    <div class="or-divider" id="pwDivider"><span>hoặc đăng nhập bằng email</span></div>
 
     <!-- Error banner -->
     <div class="alert alert-error" id="errorBanner" role="alert">
@@ -418,6 +456,93 @@ async function handleGoogleToken(access_token) {
 window.addEventListener('load', initGoogleClient);
 
 // Email/password form
+// ── Đăng nhập bằng mã 6 số qua email ───────────────────────────
+let codeResendTimer = null;
+function showCodeLogin(on) {
+  document.getElementById('codeLoginBox').style.display = on ? '' : 'none';
+  ['loginForm', 'pwDivider', 'codeLoginBtn', 'googleBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? 'none' : '';
+  });
+  hideAlert('errorBanner');
+  if (on) {
+    const pwEmail = document.getElementById('email').value.trim();
+    const ce = document.getElementById('codeEmail');
+    if (!ce.value && pwEmail) ce.value = pwEmail;
+    setTimeout(() => ce.focus(), 50);
+  }
+}
+function codeErr(msg) {
+  const el = document.getElementById('codeError');
+  if (!msg) { el.style.display = 'none'; return; }
+  el.querySelector('[data-msg]').textContent = msg;
+  el.style.display = 'flex';
+}
+function startResendCountdown(sec) {
+  const btn = document.getElementById('codeResendBtn');
+  clearInterval(codeResendTimer);
+  let left = sec;
+  btn.disabled = true;
+  btn.textContent = `Gửi lại mã (${left}s)`;
+  codeResendTimer = setInterval(() => {
+    left--;
+    if (left <= 0) { clearInterval(codeResendTimer); btn.disabled = false; btn.textContent = 'Gửi lại mã'; return; }
+    btn.textContent = `Gửi lại mã (${left}s)`;
+  }, 1000);
+}
+async function sendLoginCode(isResend) {
+  const email = document.getElementById('codeEmail').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { codeErr('Vui lòng nhập email hợp lệ.'); return; }
+  codeErr('');
+  const btn = document.getElementById('codeSendBtn');
+  btn.disabled = true; btn.textContent = 'Đang gửi...';
+  try {
+    const r = await fetch('/api/auth/email-code/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Không gửi được mã. Vui lòng thử lại.');
+    document.getElementById('codeStep2').style.display = '';
+    document.getElementById('codeSentNote').innerHTML = `Nếu <b>${email.replace(/[<>&"]/g, '')}</b> đã có tài khoản, mã 6 số vừa được gửi tới hộp thư (có hiệu lực ${d.ttl_minutes || 10} phút). Kiểm tra cả mục <b>Thư rác / Quảng cáo</b> nếu chưa thấy.`;
+    btn.style.display = 'none';
+    document.getElementById('loginCode').value = '';
+    document.getElementById('loginCode').focus();
+    startResendCountdown(60);
+  } catch (e) {
+    codeErr(e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Gửi mã đăng nhập';
+  }
+}
+let codeVerifying = false;
+async function verifyLoginCode() {
+  if (codeVerifying) return;
+  const email = document.getElementById('codeEmail').value.trim();
+  const code = document.getElementById('loginCode').value.trim();
+  if (code.length !== 6) { codeErr('Vui lòng nhập đủ 6 số của mã.'); return; }
+  codeErr('');
+  codeVerifying = true;
+  const btn = document.getElementById('codeVerifyBtn');
+  btn.disabled = true; btn.textContent = 'Đang kiểm tra...';
+  try {
+    const r = await fetch('/api/auth/email-code/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Không đăng nhập được.');
+    localStorage.setItem('currentUser', JSON.stringify(d.user));
+    await savePendingIntakeProfile(d.user.id);
+    redirectAfterLogin();
+  } catch (e) {
+    codeErr(e.message);
+    document.getElementById('loginCode').select();
+  } finally {
+    codeVerifying = false;
+    btn.disabled = false; btn.textContent = 'Đăng nhập';
+  }
+}
+// Mở từ icon ngoài màn hình chính (app riêng) → cửa sổ Google không thấy tài khoản đã đăng nhập
+// trong trình duyệt → mở sẵn cách đăng nhập bằng mã qua email.
+if ((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {
+  if (!localStorage.getItem('currentUser')) showCodeLogin(true);
+}
+
 const loginForm = document.getElementById('loginForm');
 const submitBtn = document.getElementById('submitBtn');
 const spinner   = document.getElementById('spinner');
