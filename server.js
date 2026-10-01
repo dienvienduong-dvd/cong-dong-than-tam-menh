@@ -5955,6 +5955,68 @@ QUY TẮC BẮT BUỘC:
 
   // Báo cho thành viên khi đăng ký 8 Buổi Chuyên Sâu / 377 ngày được duyệt: thông báo trong app + email.
   // Chưa làm khảo sát Thân-Tâm-Mệnh → nhắc làm ngay (trang chương trình yêu cầu khảo sát trước khi mở nội dung).
+  // ── Quyền truy cập tự động khi được duyệt 8 Buổi Chuyên Sâu / 377 ngày thực hành ──
+  // site_settings.program_access = { workshop8: { courses: [id], spaces: [id] }, program377: {...} }
+  const PROGRAM_KEYS = ['workshop8', 'program377'];
+  const PROGRAM_ENROLL_TABLE = { workshop8: 'workshop8_enrollments', program377: 'program377_enrollments' };
+  function getProgramAccess() {
+    let cfg = {};
+    try { cfg = JSON.parse(db.get("SELECT value FROM site_settings WHERE key = 'program_access'")?.value || '{}') || {}; } catch (e) { cfg = {}; }
+    PROGRAM_KEYS.forEach(k => {
+      cfg[k] = cfg[k] || {};
+      cfg[k].courses = (Array.isArray(cfg[k].courses) ? cfg[k].courses : []).map(Number).filter(Boolean);
+      cfg[k].spaces = (Array.isArray(cfg[k].spaces) ? cfg[k].spaces : []).map(Number).filter(Boolean);
+    });
+    return cfg;
+  }
+  // Cấp quyền xem các khoá học + Space đã thiết lập cho chương trình (idempotent)
+  function grantProgramAccess(program, userId) {
+    const cfg = getProgramAccess()[program];
+    if (!cfg || !userId) return;
+    cfg.courses.forEach(cid => { if (db.get('SELECT id FROM courses WHERE id = ?', [cid])) approveCourseEnrollment(cid, userId); });
+    cfg.spaces.forEach(sid => {
+      if (!db.get('SELECT id FROM spaces WHERE id = ?', [sid])) return;
+      const m = db.get('SELECT id, status FROM space_members WHERE space_id = ? AND user_id = ?', [sid, userId]);
+      if (m) { if (m.status !== 'approved') db.run("UPDATE space_members SET status = 'approved' WHERE id = ?", [m.id]); }
+      else db.run("INSERT INTO space_members (space_id, user_id, status) VALUES (?,?,'approved')", [sid, userId]);
+    });
+  }
+  function grantProgramAccessToApproved(program) {
+    const rows = db.all(`SELECT user_id FROM ${PROGRAM_ENROLL_TABLE[program]} WHERE status = 'approved'`);
+    rows.forEach(r => grantProgramAccess(program, r.user_id));
+    return rows.length;
+  }
+  // Mặc định: cả 2 chương trình được xem khoá "Hành trình Khai Nguyên" + "Tái tạo cơ thể cấp tế bào".
+  // Lần đầu: áp dụng luôn cho các học viên đã được duyệt trước đó.
+  if (!db.get("SELECT value FROM site_settings WHERE key = 'program_access'")) {
+    const ids = db.all("SELECT id, title FROM courses").filter(c => /hành trình khai nguyên|tái tạo cơ thể cấp tế bào/i.test(c.title)).map(c => c.id);
+    const def = { workshop8: { courses: ids, spaces: [] }, program377: { courses: ids, spaces: [] } };
+    db.run("INSERT INTO site_settings (key, value) VALUES ('program_access', ?)", [JSON.stringify(def)]);
+    const n = PROGRAM_KEYS.reduce((sum, k) => sum + grantProgramAccessToApproved(k), 0);
+    console.log(`  Program access: mặc định khoá [${ids.join(', ')}] cho 8 buổi & 377 ngày (áp dụng ${n} học viên đã duyệt).`);
+  }
+
+  app.get('/api/admin/program-access', requireAdmin, (_req, res) => {
+    res.json({
+      config: getProgramAccess(),
+      courses: db.all('SELECT id, title, visibility, price, status FROM courses ORDER BY order_num ASC, id ASC'),
+      spaces: db.all('SELECT id, name, icon, visibility FROM spaces ORDER BY id ASC'),
+    });
+  });
+
+  app.put('/api/admin/program-access', requireAdmin, (req, res) => {
+    const { program, courses, spaces, apply_existing } = req.body || {};
+    if (!PROGRAM_KEYS.includes(program)) return res.status(400).json({ error: 'Chương trình không hợp lệ.' });
+    const cfg = getProgramAccess();
+    cfg[program] = {
+      courses: (Array.isArray(courses) ? courses : []).map(Number).filter(Boolean),
+      spaces: (Array.isArray(spaces) ? spaces : []).map(Number).filter(Boolean),
+    };
+    db.run("INSERT INTO site_settings (key, value) VALUES ('program_access', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [JSON.stringify(cfg)]);
+    const applied = apply_existing ? grantProgramAccessToApproved(program) : 0;
+    res.json({ ok: true, applied });
+  });
+
   function notifyEnrollmentApproved(userId, programName, page, intakeRedirect) {
     const u = db.get('SELECT email, first_name, ttm_intake_done_at FROM users WHERE id = ?', [userId]);
     if (!u) return;
@@ -5990,6 +6052,7 @@ QUY TẮC BẮT BUỘC:
       "UPDATE program377_enrollments SET status = 'approved', start_date = ?, approved_at = datetime('now','localtime'), approved_by = ? WHERE id = ?",
       [startDate, req.adminUserId || null, req.params.id]
     );
+    grantProgramAccess('program377', enrollment.user_id);
     notifyEnrollmentApproved(enrollment.user_id, '377 ngày thực hành', 'program377.html', '377');
     res.json({ ok: true });
   });
@@ -6020,6 +6083,7 @@ QUY TẮC BẮT BUỘC:
       "UPDATE workshop8_enrollments SET status = 'approved', approved_at = datetime('now','localtime'), approved_by = ? WHERE id = ?",
       [req.adminUserId || null, req.params.id]
     );
+    grantProgramAccess('workshop8', enrollment.user_id);
     notifyEnrollmentApproved(enrollment.user_id, '8 Buổi Chuyên Sâu', 'workshop8.html', 'workshop8');
     res.json({ ok: true });
   });

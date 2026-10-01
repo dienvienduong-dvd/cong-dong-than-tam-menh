@@ -199,11 +199,14 @@
 .post-media-img {
   display: block;
   width: 100%;
-  max-height: 360px;
-  object-fit: cover;
+  max-height: 420px;
+  object-fit: contain; /* thu nhỏ để thấy trọn ảnh, không cắt */
+  background: var(--bg-hover);
   border-radius: var(--radius-md);
   margin: 8px 0;
 }
+/* Trong popup chi tiết bài đăng: hiện ảnh đầy đủ kích thước */
+.pm-body .post-media-img { max-height: none; height: auto; background: transparent; cursor: zoom-in; }
 .post-media-video {
   position: relative;
   width: 100%;

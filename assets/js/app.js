@@ -74,6 +74,12 @@ function renderSimpleMarkdown(src) {
   }).join('');
 }
 
+// Bấm vào ảnh trong popup bài đăng → mở ảnh gốc ở tab mới
+document.addEventListener('click', e => {
+  const img = e.target.closest && e.target.closest('.pm-body .post-media-img');
+  if (img && img.src) window.open(img.src, '_blank', 'noopener');
+});
+
 // ── Popup chi tiết bài đăng (feed, space, profile, qa, signal, cot): tác giả sửa bài ──────
 // Mỗi trang gọi pmPostExtras(p) sau khi vẽ header popup (#pmHeaderBadges, #pmBody).
 let _pmEditPost = null;

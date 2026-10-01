@@ -1929,6 +1929,7 @@
         </div>
 
         <div class="appr-tab-panel" data-tab="wk8">
+          <div id="progAccess-workshop8"></div>
           <div class="table-card">
             <div class="table-card-header">
               <h2>Duyệt đăng ký 8 Buổi Chuyên Sâu</h2>
@@ -1961,6 +1962,7 @@
         </div>
 
         <div class="appr-tab-panel" data-tab="p377">
+          <div id="progAccess-program377"></div>
           <div class="table-card">
             <div class="table-card-header">
               <h2>Duyệt đăng ký 377 ngày thực hành</h2>
@@ -6715,9 +6717,61 @@
       document.querySelectorAll('.appr-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       document.querySelectorAll('.appr-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === name));
       if (name === 'ttm') loadTtmRoadmaps();
-      if (name === 'wk8') loadWorkshop8Enrollments();
-      if (name === 'p377') loadP377Enrollments();
+      if (name === 'wk8') { loadWorkshop8Enrollments(); loadProgramAccess('workshop8'); }
+      if (name === 'p377') { loadP377Enrollments(); loadProgramAccess('program377'); }
       if (name === 'course') loadCourseRequests();
+    }
+
+    // ── Quyền truy cập tự động khi duyệt 8 Buổi / 377 ngày ─────────
+    const PROGRAM_LABELS = { workshop8: '8 Buổi Chuyên Sâu', program377: '377 ngày thực hành' };
+    async function loadProgramAccess(program) {
+      const box = document.getElementById('progAccess-' + program);
+      if (!box) return;
+      try {
+        const d = await api('/admin/program-access');
+        const cfg = d.config[program] || { courses: [], spaces: [] };
+        const chk = (kind, item, label, sub) => `<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+            <input type="checkbox" data-kind="${kind}" value="${item.id}" ${cfg[kind].includes(item.id) ? 'checked' : ''} style="margin-top:2px;">
+            <span>${escHtml(label)}${sub ? `<div style="font-size:11px;color:var(--muted);">${sub}</div>` : ''}</span></label>`;
+        box.innerHTML = `
+          <div class="table-card" style="margin-bottom:16px;">
+            <div class="table-card-header"><h2>🔓 Quyền truy cập khi được duyệt ${PROGRAM_LABELS[program]}</h2></div>
+            <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+              <div style="font-size:12.5px;color:var(--muted);">Khi admin duyệt đăng ký ${PROGRAM_LABELS[program]}, thành viên tự động được xem các khoá học và tham gia các Space được chọn dưới đây.</div>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Khoá học</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;">
+                  ${d.courses.map(c => chk('courses', c, c.title, `${c.visibility === 'private' ? '🔒 Riêng tư' : '🌐 Công khai'}${c.status !== 'published' ? ' · bản nháp' : ''}`)).join('') || '<span style="color:var(--muted);font-size:13px;">Chưa có khoá học.</span>'}
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Space</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;">
+                  ${d.spaces.map(sp => chk('spaces', sp, `${sp.icon || '💬'} ${sp.name}`, sp.visibility === 'public' ? '🌐 Công khai' : sp.visibility === 'secret' ? '🕶 Bí mật' : '🔒 Riêng tư')).join('') || '<span style="color:var(--muted);font-size:13px;">Chưa có Space.</span>'}
+                </div>
+              </div>
+              <label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;">
+                <input type="checkbox" id="progAccessApply-${program}" checked>
+                Áp dụng luôn cho các thành viên đã được duyệt trước đó
+              </label>
+              <div><button class="btn-sm primary" onclick="saveProgramAccess('${program}')">💾 Lưu quyền truy cập</button></div>
+            </div>
+          </div>`;
+      } catch (e) {
+        box.innerHTML = `<div class="empty-state">${escHtml(e.message)}</div>`;
+      }
+    }
+
+    async function saveProgramAccess(program) {
+      const box = document.getElementById('progAccess-' + program);
+      const pick = kind => Array.from(box.querySelectorAll(`input[data-kind="${kind}"]:checked`)).map(i => Number(i.value));
+      try {
+        const d = await api('/admin/program-access', {
+          method: 'PUT',
+          body: JSON.stringify({ program, courses: pick('courses'), spaces: pick('spaces'), apply_existing: document.getElementById('progAccessApply-' + program).checked }),
+        });
+        showToast(d.applied ? `✅ Đã lưu — đã cấp quyền cho ${d.applied} thành viên đã duyệt.` : '✅ Đã lưu quyền truy cập.', 'green');
+      } catch (e) { showToast(e.message, 'red'); }
     }
 
     // Tab "Khoá học": yêu cầu tham gia khoá riêng tư (0đ hoặc khoá có phí chọn "Admin duyệt")
