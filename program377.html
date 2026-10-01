@@ -73,7 +73,10 @@
     .p377-session-zoom:hover { opacity: .9; }
     .p377-session-zoom.disabled { background: var(--border); color: var(--text-muted); pointer-events: none; }
     .p377-session-body { font-size: 14px; line-height: 1.8; }
-    .p377-session-body ul { padding-left: 22px; margin: 0; }
+    .p377-session-body ul, .p377-session-body ol { padding-left: 22px; margin: 0 0 14px; }
+    .p377-session-body p { margin-bottom: 14px; }
+    .p377-session-body p:last-child, .p377-session-body ul:last-child, .p377-session-body ol:last-child { margin-bottom: 0; }
+    .p377-session-body img { max-width: 100%; height: auto; border-radius: 8px; }
     .p377-session-body li { margin-bottom: 10px; }
     .p377-session-body li:last-child { margin-bottom: 0; }
     #p377Sessions { margin-top: 14px; }
@@ -956,7 +959,7 @@ const API = '/api';
           const btn = s.link_url
             ? `<a href="${esc(s.link_url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="p377-session-zoom">${isZoom ? '📹 Tham gia Zoom' : '🔗 Mở link'}</a>`
             : (isZoom ? `<span class="p377-session-zoom disabled">📹 Link Zoom sẽ cập nhật sau</span>` : '');
-          const body = sessionBodyHtml(s.description);
+          const body = s.content_html || sessionBodyHtml(s.description);
           return `
       <div class="p377-session">
         <div class="p377-session-title">${esc(s.title)}</div>

@@ -1996,6 +1996,11 @@ ${extra}
     db.exec('ALTER TABLE program377_sessions ADD COLUMN session_time TEXT');
     console.log('  Migrated program377_sessions: added session_time.');
   }
+  // Nội dung buổi soạn bằng khung soạn thảo (HTML) — giống 8 buổi
+  if (!p377SessCols.includes('content_html')) {
+    db.exec('ALTER TABLE program377_sessions ADD COLUMN content_html TEXT');
+    console.log('  Migrated program377_sessions: added content_html.');
+  }
 
   // Migrate program377_days: thêm liên kết bài học (mục II.1 — "chọn trong danh
   // sách bài học" — liên kết tới 1 course_lessons có sẵn cho ngày đó).
@@ -6360,20 +6365,20 @@ QUY TẮC BẮT BUỘC:
   });
 
   app.post('/api/admin/program377/sessions', requireAdmin, (req, res) => {
-    const { session_date, session_time, title, session_type, link_url, description } = req.body;
+    const { session_date, session_time, title, session_type, link_url, description, content_html } = req.body;
     if (!session_date || !title?.trim()) return res.status(400).json({ error: 'Thiếu ngày hoặc tiêu đề.' });
     const r = db.run(
-      'INSERT INTO program377_sessions (session_date, session_time, title, session_type, link_url, description, created_by) VALUES (?,?,?,?,?,?,?)',
-      [session_date, session_time?.trim() || null, title.trim(), session_type || 'zoom', link_url || null, description || null, req.adminUserId || null]
+      'INSERT INTO program377_sessions (session_date, session_time, title, session_type, link_url, description, content_html, created_by) VALUES (?,?,?,?,?,?,?,?)',
+      [session_date, session_time?.trim() || null, title.trim(), session_type || 'zoom', link_url || null, description || null, content_html || null, req.adminUserId || null]
     );
     res.status(201).json({ ok: true, id: r.lastInsertRowid });
   });
 
   app.patch('/api/admin/program377/sessions/:id', requireAdmin, (req, res) => {
-    const { session_date, session_time, title, session_type, link_url, description } = req.body;
+    const { session_date, session_time, title, session_type, link_url, description, content_html } = req.body;
     db.run(
-      'UPDATE program377_sessions SET session_date=?, session_time=?, title=?, session_type=?, link_url=?, description=? WHERE id=?',
-      [session_date, session_time?.trim() || null, title?.trim(), session_type || 'zoom', link_url || null, description || null, req.params.id]
+      'UPDATE program377_sessions SET session_date=?, session_time=?, title=?, session_type=?, link_url=?, description=?, content_html=? WHERE id=?',
+      [session_date, session_time?.trim() || null, title?.trim(), session_type || 'zoom', link_url || null, description || null, content_html || null, req.params.id]
     );
     res.json({ ok: true });
   });
