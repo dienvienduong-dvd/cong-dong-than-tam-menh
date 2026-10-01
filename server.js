@@ -14,6 +14,7 @@ const cors      = require('cors');
 const path      = require('path');
 const fs        = require('fs');
 const multer    = require('multer');
+const webpush   = require('web-push'); // thông báo đẩy (PWA) — xem mục "Web Push"
 const initSqlJs = require('sql.js');
 
 const https    = require('https');
@@ -354,6 +355,17 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS admin_secrets (
     key   TEXT PRIMARY KEY,
     value TEXT
+  );
+  -- Thiết bị đã bật thông báo đẩy (Web Push) — mỗi trình duyệt/điện thoại 1 dòng
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id),
+    endpoint        TEXT    NOT NULL UNIQUE,
+    p256dh          TEXT    NOT NULL,
+    auth            TEXT    NOT NULL,
+    user_agent      TEXT,
+    created_at      TEXT    DEFAULT (datetime('now','localtime')),
+    last_success_at TEXT
   );
   CREATE TABLE IF NOT EXISTS ai_providers (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -4576,6 +4588,7 @@ QUY TẮC BẮT BUỘC:
       db.run("UPDATE challenge_enrollments SET status = 'approved', approved_at = datetime('now','localtime') WHERE id = ?", [id]);
       db.run('INSERT INTO notifications (user_id, type, content) VALUES (?,?,?)',
         [enroll.user_id, 'enrollment_approved', 'Yêu cầu tham gia thử thách đã được duyệt! Vào trang thử thách để bắt đầu.']);
+      pushNotify(enroll.user_id, { title: 'Đã duyệt tham gia thử thách 🎉', body: 'Vào trang thử thách để bắt đầu.', link: 'challenge.html' });
 
       // Approval email with community rules
       const approvedUser = db.get('SELECT first_name, last_name, email FROM users WHERE id = ?', [enroll.user_id]);
@@ -4603,6 +4616,7 @@ QUY TẮC BẮT BUỘC:
       db.run("UPDATE challenge_enrollments SET status = 'rejected' WHERE id = ?", [id]);
       db.run('INSERT INTO notifications (user_id, type, content) VALUES (?,?,?)',
         [enroll.user_id, 'enrollment_rejected', 'Yêu cầu tham gia thử thách chưa được chấp thuận.']);
+      pushNotify(enroll.user_id, { title: 'Thử thách', body: 'Yêu cầu tham gia thử thách chưa được chấp thuận.', link: 'challenge.html' });
     }
     res.json({ success: true });
   });
@@ -6159,6 +6173,7 @@ QUY TẮC BẮT BUỘC:
     const link = needIntake ? `intake-than-tam-menh.html?redirect=${intakeRedirect}` : page;
     db.run('INSERT INTO notifications (user_id, type, title, content, link, sent_by_admin) VALUES (?,?,?,?,?,1)',
       [userId, 'course', title, content, link]);
+    pushNotify(userId, { title, body: content, link });
     if (!u.email) return;
     const name = String(u.first_name || '').replace(/[<>&"]/g, '');
     sendEmail({
@@ -6535,6 +6550,7 @@ QUY TẮC BẮT BUỘC:
     const link = `course-view.html?id=${courseId}`;
     db.run('INSERT INTO notifications (user_id, type, title, content, link, sent_by_admin) VALUES (?,?,?,?,?,1)',
       [userId, 'course', title, content, link]);
+    pushNotify(userId, { title, body: content, link });
     if (!u.email) return;
     const safe = v => String(v || '').replace(/[<>&"]/g, '');
     sendEmail({
@@ -6983,6 +6999,7 @@ QUY TẮC BẮT BUỘC:
           'INSERT INTO notifications (user_id, type, title, content, link, sent_by_admin) VALUES (?,?,?,?,?,1)',
           [u.id, type, title, content, link || null]
         );
+        pushNotify(u.id, { title, body: content, link });
       }
       res.json({ success: true, sent: users.length });
     } else {
@@ -6994,6 +7011,7 @@ QUY TẮC BẮT BUỘC:
         'INSERT INTO notifications (user_id, type, title, content, link, sent_by_admin) VALUES (?,?,?,?,?,1)',
         [uid, type, title, content, link || null]
       );
+      pushNotify(uid, { title, body: content, link });
       res.json({ success: true, sent: 1 });
     }
   });
@@ -7630,6 +7648,88 @@ QUY TẮC BẮT BUỘC:
   function setSecret(key, value) {
     db.run('INSERT INTO admin_secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', [key, value]);
   }
+  // ── Web Push (PWA): thông báo đẩy như app + số đỏ trên icon ──────────
+  // Khoá VAPID tạo 1 lần, lưu trong admin_secrets (không công khai). Thông báo đi qua dịch vụ
+  // push của Google/Apple/Mozilla — miễn phí. Gửi song song với thông báo trong app (chuông).
+  const VAPID = (() => {
+    let pub = getSecret('vapid_public_key'), priv = getSecret('vapid_private_key');
+    if (!pub || !priv) {
+      const k = webpush.generateVAPIDKeys();
+      setSecret('vapid_public_key', k.publicKey);
+      setSecret('vapid_private_key', k.privateKey);
+      pub = k.publicKey; priv = k.privateKey;
+      console.log('  Web Push: đã tạo khoá VAPID mới.');
+    }
+    return { pub, priv };
+  })();
+  webpush.setVapidDetails(`mailto:${ADMIN_EMAIL}`, VAPID.pub, VAPID.priv);
+
+  function unreadNotificationCount(userId) {
+    return db.get('SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND is_read = 0', [userId])?.n || 0;
+  }
+
+  // Gửi thông báo đẩy tới mọi thiết bị đã bật của thành viên (không chặn request; lỗi chỉ ghi log).
+  // Thiết bị đã gỡ quyền / hết hạn (404, 410) → tự xoá khỏi danh sách.
+  function pushNotify(userId, { title, body, link } = {}) {
+    let subs = [];
+    try { subs = db.all('SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?', [userId]); } catch (e) { return; }
+    if (!subs.length) return;
+    const url = !link ? '/feed.html' : /^https?:\/\//i.test(link) ? link : '/' + String(link).replace(/^\/+/, '');
+    const payload = JSON.stringify({
+      title: title || communityName(),
+      body: String(body || '').slice(0, 300),
+      url,
+      badge: unreadNotificationCount(userId),
+    });
+    subs.forEach(s => {
+      webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, { TTL: 86400 })
+        .then(() => db.run("UPDATE push_subscriptions SET last_success_at = datetime('now','localtime') WHERE id = ?", [s.id]))
+        .catch(err => {
+          if (err.statusCode === 404 || err.statusCode === 410) db.run('DELETE FROM push_subscriptions WHERE id = ?', [s.id]);
+          else console.error('[push]', err.statusCode || '', err.body || err.message);
+        });
+    });
+  }
+
+  app.get('/api/push/public-key', (_req, res) => res.json({ publicKey: VAPID.pub }));
+
+  app.post('/api/push/subscribe', (req, res) => {
+    const { user_id, subscription } = req.body || {};
+    const uid = Number(user_id);
+    const endpoint = String(subscription?.endpoint || '');
+    const p256dh = String(subscription?.keys?.p256dh || '');
+    const auth = String(subscription?.keys?.auth || '');
+    if (!uid || !db.get('SELECT id FROM users WHERE id = ?', [uid])) return res.status(404).json({ error: 'Tài khoản không tồn tại.' });
+    if (!/^https:\/\//.test(endpoint) || !p256dh || !auth) return res.status(400).json({ error: 'Thông tin đăng ký thông báo không hợp lệ.' });
+    const ua = String(req.headers['user-agent'] || '').slice(0, 300);
+    const cur = db.get('SELECT id FROM push_subscriptions WHERE endpoint = ?', [endpoint]);
+    if (cur) db.run('UPDATE push_subscriptions SET user_id = ?, p256dh = ?, auth = ?, user_agent = ? WHERE id = ?', [uid, p256dh, auth, ua, cur.id]);
+    else db.run('INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent) VALUES (?,?,?,?,?)', [uid, endpoint, p256dh, auth, ua]);
+    res.json({ ok: true });
+  });
+
+  app.post('/api/push/unsubscribe', (req, res) => {
+    const endpoint = String(req.body?.endpoint || '');
+    if (endpoint) db.run('DELETE FROM push_subscriptions WHERE endpoint = ?', [endpoint]);
+    res.json({ ok: true });
+  });
+
+  // Thành viên tự gửi thông báo thử tới thiết bị của mình (kiểm tra đã bật thành công)
+  app.post('/api/push/test', (req, res) => {
+    const uid = Number(req.body?.user_id);
+    const n = uid ? db.get('SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = ?', [uid]).n : 0;
+    if (!n) return res.status(400).json({ error: 'Thiết bị này chưa bật thông báo.' });
+    pushNotify(uid, { title: 'Thông báo đã được bật 🎉', body: `Bạn sẽ nhận thông báo từ ${communityName()} ngay cả khi không mở trang.`, link: 'feed.html' });
+    res.json({ ok: true, devices: n });
+  });
+
+  app.get('/api/admin/push/stats', requireAdmin, (_req, res) => {
+    res.json({
+      devices: db.get('SELECT COUNT(*) AS n FROM push_subscriptions').n,
+      members: db.get('SELECT COUNT(DISTINCT user_id) AS n FROM push_subscriptions').n,
+    });
+  });
+
   function sepayApiKey() {
     return getSecret('sepay_api_key') || SEPAY_KEY || '';
   }

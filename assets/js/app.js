@@ -39,9 +39,124 @@ function toggleMainMenu() {
 // Đăng xuất phải xoá phiên lưu trong localStorage — nếu còn, index.html sẽ tự đăng nhập lại.
 // Mọi nút có title/aria-label "Đăng xuất" đều đi qua đây (vài trang cũ chỉ xoá sessionStorage).
 function clearLoginSession() {
+  // Đăng xuất → thiết bị này thôi nhận thông báo đẩy của tài khoản cũ (best-effort)
+  try { if (window.dhPush) dhPush.forgetDevice(); } catch (e) {}
   try { localStorage.removeItem('currentUser'); } catch (e) {}
   try { sessionStorage.clear(); } catch (e) {}
 }
+
+// ── Thông báo đẩy (PWA / Web Push) + số đỏ trên icon app ──────────────
+// Service worker /sw.js chỉ nhận thông báo, KHÔNG cache trang. Nút bật/tắt nằm cuối khung chuông.
+// iPhone: chỉ nhận được khi đã "Thêm vào MH chính" và mở từ icon (iOS 16.4+).
+const dhPush = (() => {
+  const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  let reg = null;
+  const me = () => { try { return JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch (e) { return null; } };
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+  if ('serviceWorker' in navigator && me()) {
+    navigator.serviceWorker.register('/sw.js').then(r => { reg = r; renderRow(); }).catch(() => {});
+  }
+
+  function b64ToUint8(b64) {
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  }
+  async function getSub() {
+    if (!supported) return null;
+    if (!reg) reg = await navigator.serviceWorker.getRegistration('/');
+    return reg ? reg.pushManager.getSubscription() : null;
+  }
+  function note(text, isErr) {
+    const el = document.getElementById('notifPushRow');
+    if (el) el.insertAdjacentHTML('beforeend', `<div class="notif-push-note${isErr ? ' err' : ''}">${text}</div>`);
+  }
+
+  async function enable() {
+    const u = me();
+    if (!u || !supported) return;
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { await renderRow(); return; }
+      if (!reg) reg = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+      const { publicKey } = await fetch('/api/push/public-key').then(r => r.json());
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(publicKey) });
+      const r = await post('/api/push/subscribe', { user_id: u.id, subscription: sub.toJSON() });
+      if (!r.ok) throw new Error('subscribe');
+      await renderRow();
+      test();
+    } catch (e) {
+      await renderRow();
+      note('Không bật được thông báo trên thiết bị này. Vui lòng thử lại sau.', true);
+    }
+  }
+
+  async function disable() {
+    try {
+      const sub = await getSub();
+      if (sub) { await post('/api/push/unsubscribe', { endpoint: sub.endpoint }); await sub.unsubscribe(); }
+    } catch (e) {}
+    setAppBadge(0);
+    renderRow();
+  }
+
+  async function test() {
+    const u = me();
+    if (!u) return;
+    const r = await post('/api/push/test', { user_id: u.id }).catch(() => null);
+    note(r && r.ok ? '✓ Đã gửi thông báo thử — kiểm tra thông báo trên thiết bị.' : 'Không gửi được thông báo thử.', !(r && r.ok));
+  }
+
+  // Đăng xuất: huỷ đăng ký trên máy chủ + trình duyệt (không chờ)
+  function forgetDevice() {
+    if (!supported) return;
+    getSub().then(sub => {
+      if (!sub) return;
+      try { navigator.sendBeacon('/api/push/unsubscribe', new Blob([JSON.stringify({ endpoint: sub.endpoint })], { type: 'application/json' })); } catch (e) {}
+      sub.unsubscribe().catch(() => {});
+    }).catch(() => {});
+    setAppBadge(0);
+  }
+
+  async function renderRow() {
+    const el = document.getElementById('notifPushRow');
+    if (!el || !me()) return;
+    if (!supported) {
+      el.innerHTML = isIOS && !standalone
+        ? '📱 <b>Nhận thông báo trên iPhone:</b> bấm nút <b>Chia sẻ</b> <span style="font-size:15px">⎋</span> của Safari → <b>"Thêm vào MH chính"</b>, rồi mở <b>Dưỡng Hoá</b> từ icon trên màn hình chính và bật thông báo tại đây.'
+        : 'Trình duyệt này chưa hỗ trợ thông báo đẩy.';
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      el.innerHTML = '🔕 Bạn đã chặn thông báo cho trang này. Mở <b>cài đặt trang web</b> của trình duyệt (biểu tượng ổ khoá cạnh địa chỉ) → cho phép <b>Thông báo</b>.';
+      return;
+    }
+    const sub = await getSub().catch(() => null);
+    if (sub && Notification.permission === 'granted') {
+      el.innerHTML = '🔔 Thông báo đẩy: <b>đang bật</b> trên thiết bị này'
+        + '<div class="notif-push-actions"><button type="button" onclick="dhPush.test()">Gửi thử</button><button type="button" onclick="dhPush.disable()">Tắt</button></div>';
+    } else {
+      el.innerHTML = '<button type="button" class="notif-push-btn" onclick="dhPush.enable()">🔔 Bật thông báo trên thiết bị này</button>'
+        + '<div class="notif-push-note">Nhận thông báo như app — kể cả khi không mở trang.</div>';
+    }
+  }
+
+  // Số đỏ trên icon ngoài màn hình chính (Android, iPhone đã thêm vào MH chính, máy tính đã cài app)
+  function setAppBadge(n) {
+    try {
+      if (!('setAppBadge' in navigator)) return;
+      if (n > 0) navigator.setAppBadge(n).catch(() => {}); else navigator.clearAppBadge().catch(() => {});
+    } catch (e) {}
+  }
+
+  return { enable, disable, test, renderRow, setAppBadge, forgetDevice };
+})();
+window.dhPush = dhPush;
 // Trang tự khai báo doLogout() sẽ ghi đè bản này; bản này cho các trang gọi doLogout() mà thiếu hàm.
 function doLogout() {
   clearLoginSession();
@@ -827,6 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function _renderBadge(unread) {
+    dhPush.setAppBadge(unread);
     document.querySelectorAll('#notifBadge, #notifBadgeMob').forEach(el => {
       if (unread > 0) {
         el.textContent = unread > 99 ? '99+' : unread;
@@ -843,7 +959,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('notifDropdown');
     if (!el) return;
     if (!notifs || !notifs.length) {
-      el.innerHTML = '<div class="notif-header"><span>Thông báo</span></div><div class="notif-empty">🔔 Chưa có thông báo nào</div>';
+      el.innerHTML = '<div class="notif-header"><span>Thông báo</span></div><div class="notif-empty">🔔 Chưa có thông báo nào</div><div class="notif-push" id="notifPushRow"></div>';
+      dhPush.renderRow();
       return;
     }
     const unread = notifs.filter(n => !n.is_read).length;
@@ -865,7 +982,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           ${!n.is_read ? '<div class="notif-item-dot"></div>' : ''}
         </div>`).join('')}
-      </div>`;
+      </div>
+      <div class="notif-push" id="notifPushRow"></div>`;
+    dhPush.renderRow();
   }
 
   window._notifClick = async function(id, link) {
