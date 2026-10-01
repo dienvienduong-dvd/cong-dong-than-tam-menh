@@ -727,7 +727,11 @@
         row.classList.toggle('active', Number(row.dataset.id) === id);
       });
       const activeRow = document.querySelector(`#cvLessonList .lesson-row[data-id="${id}"]`);
-      activeRow?.closest('.module-group')?.classList.remove('collapsed');
+      // Chỉ mở module chứa bài đang học, các module khác thu gọn
+      const activeGroup = activeRow?.closest('.module-group');
+      if (activeGroup) {
+        document.querySelectorAll('#cvLessonList .module-group').forEach(g => g.classList.toggle('collapsed', g !== activeGroup));
+      }
 
       let html = `<div class="cv-lesson-title">${escHtml(lesson.title)}</div>`;
       if (lesson.video_url) {
@@ -1089,9 +1093,13 @@
     </div>`;
     }
 
+    // Dạng accordion: mở 1 module thì các module khác tự thu gọn
     function toggleModule(moduleKey) {
       const el = document.querySelector(`.module-group[data-module="${moduleKey}"]`);
-      if (el) el.classList.toggle('collapsed');
+      if (!el) return;
+      const willOpen = el.classList.contains('collapsed');
+      document.querySelectorAll('#cvLessonList .module-group').forEach(g => g.classList.add('collapsed'));
+      if (willOpen) el.classList.remove('collapsed');
     }
 
     const chevronSvg = '<svg class="module-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
@@ -1112,7 +1120,7 @@
       let html = modules.map(m => {
         const ls = byModule[m.id] || [];
         return `
-    <div class="module-group" data-module="${m.id}">
+    <div class="module-group collapsed" data-module="${m.id}">
       <div class="module-header" onclick="toggleModule(${m.id})">
         <div class="module-header-text">
           <div class="module-title">${escHtml(m.title)}</div>
@@ -1125,7 +1133,7 @@
       }).join('');
       if (noModule.length) {
         html += `
-    <div class="module-group" data-module="none">
+    <div class="module-group collapsed" data-module="none">
       <div class="module-header" onclick="toggleModule('none')">
         <div class="module-header-text">
           <div class="module-title">Bài học khác</div>
