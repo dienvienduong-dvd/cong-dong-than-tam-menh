@@ -1120,6 +1120,14 @@
     .mp-tab-btn:hover { color: var(--text); }
     .mp-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
     .appr-tab-panel { display: none; }
+    .p377-grid { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 12px; }
+    .p377-cell { width: 13px; height: 13px; border-radius: 3px; background: #e2e8f0; }
+    .p377-cell.r { background: #10b981; cursor: pointer; }
+    .p377-cell.r:hover { outline: 2px solid #065f46; }
+    .p377-cell.m { background: #fca5a5; }
+    .p377-cell.t { background: #f59e0b; }
+    .p377-cell.f { background: #e2e8f0; }
+    .p377-cell.wk { margin-right: 4px; }
     .appr-tab-panel.active { display: block; }
     @media (max-width: 560px) { .loc-modal-grid { grid-template-columns: 1fr !important; } }
     .mp-tab-panel { display: none; }
@@ -1371,6 +1379,12 @@
             <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-5 9l2 2 4-4" />
           </svg>
           Báo cáo hằng ngày
+        </button>
+        <button class="sbar-item" onclick="openP377Tab('progress')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" />
+          </svg>
+          Tiến độ thành viên
         </button>
         </div>
 
@@ -2002,6 +2016,7 @@
           <button id="p377TabBtn-days" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('days')">Nội dung từng ngày</button>
           <button id="p377TabBtn-blocks" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('blocks')">Thư viện khối nội dung</button>
           <button id="p377TabBtn-reports" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('reports')">Báo cáo hằng ngày</button>
+          <button id="p377TabBtn-progress" class="settings-tab-btn p377-tab-btn" onclick="openP377Tab('progress')">Tiến độ thành viên</button>
         </div>
 
         <div class="p377-tab-panel" data-tab="enrollments">
@@ -2076,6 +2091,32 @@
               </table>
             </div>
           </div>
+        </div>
+
+        <div class="p377-tab-panel" data-tab="progress">
+          <div class="table-card" style="margin-bottom:16px;">
+            <div style="padding:16px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+              <select class="filter-select" id="p377ProgFilter" onchange="renderP377Progress()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="active">Đang thực hành</option>
+                <option value="behind">Bỏ lỡ nhiều (tỉ lệ &lt; 70%)</option>
+                <option value="finished">Đã hoàn thành 377 ngày</option>
+                <option value="not_started">Chưa tới ngày bắt đầu</option>
+              </select>
+              <input class="search-input" id="p377ProgSearch" placeholder="Tìm tên, email..." oninput="renderP377Progress()" style="min-width:220px;">
+              <button class="btn-sm primary" style="margin-left:auto;" onclick="loadP377Progress()">↺ Làm mới</button>
+            </div>
+          </div>
+          <div id="p377ProgSummary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:14px;"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);margin-bottom:10px;">
+            <span><i class="p377-cell r" style="display:inline-block;vertical-align:-2px;"></i> Đã báo cáo</span>
+            <span><i class="p377-cell t" style="display:inline-block;vertical-align:-2px;"></i> Hôm nay chưa báo cáo</span>
+            <span><i class="p377-cell m" style="display:inline-block;vertical-align:-2px;"></i> Bỏ lỡ</span>
+            <span><i class="p377-cell f" style="display:inline-block;vertical-align:-2px;"></i> Chưa tới</span>
+            <span>· Bấm vào ô xanh để xem báo cáo ngày đó</span>
+          </div>
+          <div id="p377ProgCount" style="font-size:13px;color:var(--muted);margin-bottom:8px;"></div>
+          <div id="p377ProgList"><div class="empty-state">Đang tải...</div></div>
         </div>
 
         <div class="p377-tab-panel" data-tab="reports">
@@ -4116,6 +4157,17 @@
   </div><!-- /shell -->
 
   <!-- ── CRM List Modal ────────────────────────────── -->
+  <!-- ── Báo cáo 1 ngày (377 ngày → Tiến độ thành viên) ─────────────── -->
+  <div id="p377DayReportModal" onclick="if (event.target === this) this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;">
+        <div style="font-size:15px;font-weight:700;" id="p377DayReportTitle">Báo cáo</div>
+        <button onclick="document.getElementById('p377DayReportModal').style.display='none'" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:18px;color:var(--muted);flex-shrink:0;">×</button>
+      </div>
+      <div style="padding:12px 20px 18px;overflow-y:auto;flex:1;min-height:0;" id="p377DayReportBody"></div>
+    </div>
+  </div>
+
   <!-- ── Chi tiết bài đăng (xem / sửa / ẩn / xoá) ─────────────── -->
   <div id="adminPostModal" onclick="if (event.target === this) closeAdminPost()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:center;justify-content:center;padding:16px;">
     <div style="background:#fff;border-radius:12px;width:100%;max-width:680px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);">
@@ -5404,6 +5456,7 @@
       if (name === 'days') loadP377Days();
       if (name === 'blocks') loadP377Blocks();
       if (name === 'reports') loadP377Reports();
+      if (name === 'progress') loadP377Progress();
       if (name === 'letter') loadP377Letter();
       if (name === 'topics') loadP377TopicsOverview();
     }
@@ -7015,6 +7068,102 @@
       if (p377TopicsCache.length) return;
       const d = await api('/admin/program377/topics');
       p377TopicsCache = d.topics;
+    }
+
+    // -- Tiến độ thành viên (377 ô / người) --
+    // 'YYYY-MM-DD' → 'DD/MM/YYYY' (không qua Date để tránh lệch múi giờ)
+    const ymdVN = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'; };
+    let p377Progress = null;
+    async function loadP377Progress() {
+      try {
+        p377Progress = await api('/admin/program377/progress');
+        renderP377Progress();
+      } catch (e) {
+        document.getElementById('p377ProgList').innerHTML = `<div class="empty-state">${escHtml(e.message)}</div>`;
+      }
+    }
+
+    function renderP377Progress() {
+      const d = p377Progress;
+      if (!d) return;
+      const s = d.summary;
+      const stat = (n, label, color) => `<div class="table-card" style="padding:16px 18px;"><div style="font-size:22px;font-weight:800;color:${color};">${n}</div><div style="font-size:13px;color:var(--text);">${label}</div></div>`;
+      document.getElementById('p377ProgSummary').innerHTML =
+        stat(s.members, 'Thành viên đã duyệt', 'var(--text)') +
+        stat(s.active, 'Đang thực hành', '#0ea5e9') +
+        stat(s.finished, 'Hoàn thành 377 ngày', '#10b981') +
+        stat(s.not_started, 'Chưa tới ngày bắt đầu', '#64748b') +
+        stat(s.avg_rate + '%', 'TB tỉ lệ báo cáo (đang thực hành)', '#8b5cf6');
+
+      const f = document.getElementById('p377ProgFilter').value;
+      const q = document.getElementById('p377ProgSearch').value.trim().toLowerCase();
+      const list = d.members.filter(m => {
+        if (q && !`${m.name} ${m.email}`.toLowerCase().includes(q)) return false;
+        if (f === 'active') return m.day_today >= 1 && !m.finished;
+        if (f === 'behind') return m.day_today > 1 && !m.finished && m.rate < 70;
+        if (f === 'finished') return m.finished;
+        if (f === 'not_started') return m.day_today < 1;
+        return true;
+      });
+      document.getElementById('p377ProgCount').textContent = `${list.length} / ${d.members.length} thành viên`;
+      if (!list.length) {
+        document.getElementById('p377ProgList').innerHTML = '<div class="table-card"><div class="empty-state">Không có thành viên nào.</div></div>';
+        return;
+      }
+      const num = (n, label, color) => `<div style="text-align:center;min-width:62px;"><div style="font-size:20px;font-weight:800;color:${color};">${n}</div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">${label}</div></div>`;
+      document.getElementById('p377ProgList').innerHTML = list.map(m => {
+        const dayLabel = m.day_today < 1 ? 'Chưa bắt đầu' : m.finished ? 'Đã hoàn thành' : `Ngày ${m.day_today}/${d.total_days}`;
+        const cells = Array.from(m.days).map((c, i) => {
+          const day = i + 1;
+          const tip = { r: 'đã báo cáo', m: 'bỏ lỡ', t: 'hôm nay — chưa báo cáo', f: 'chưa tới' }[c];
+          return `<i class="p377-cell ${c}${day % 7 === 0 ? ' wk' : ''}" title="Ngày ${day}: ${tip}"${c === 'r' ? ` onclick="openP377DayReport(${m.user_id}, '${m.start_date}', ${day})"` : ''}></i>`;
+        }).join('');
+        return `<div class="table-card" style="padding:18px 20px;margin-bottom:12px;">
+          <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:12px;align-items:center;min-width:0;">
+              <div class="av" style="background:${avatarColor(m.user_id)};width:42px;height:42px;font-size:16px;flex-shrink:0;">${escHtml((m.name || '?')[0])}</div>
+              <div style="min-width:0;">
+                <div style="font-weight:700;font-size:15px;">${escHtml(m.name)}</div>
+                <div style="font-size:12.5px;color:var(--muted);">${escHtml(m.email)} · Bắt đầu: ${ymdVN(m.start_date)} · <b style="color:var(--text);">${dayLabel}</b>${m.last_report ? ` · Báo cáo gần nhất: ${ymdVN(m.last_report)}` : ''}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${num(m.reported, 'Đã báo cáo', '#10b981')}
+              ${num(m.missed, 'Bỏ lỡ', '#ef4444')}
+              ${num(m.remaining, 'Còn lại', '#64748b')}
+              ${num(m.rate + '%', 'Tỉ lệ', m.rate >= 70 ? '#10b981' : m.rate >= 40 ? '#f59e0b' : '#ef4444')}
+              ${num(m.progress + '%', 'Tiến độ', '#0ea5e9')}
+            </div>
+          </div>
+          <div style="height:6px;background:#e2e8f0;border-radius:99px;margin-top:14px;overflow:hidden;"><div style="height:100%;width:${m.progress}%;background:#0ea5e9;"></div></div>
+          <div class="p377-grid">${cells}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Xem báo cáo của 1 ngày (bấm ô xanh)
+    const P377_REPORT_LABELS = {
+      meal_breakfast: 'Bữa sáng', meal_lunch: 'Bữa trưa', meal_dinner: 'Bữa tối', meal_colors: 'Màu sắc bữa ăn',
+      meal_tastes: 'Vị', urine_amount: 'Lượng nước tiểu', urine_color: 'Màu nước tiểu', stool_shape: 'Hình dạng phân',
+      stool_color: 'Màu phân', exercise_type: 'Vận động', exercise_minutes: 'Số phút vận động', sweat_amount: 'Lượng mồ hôi',
+      sweat_taste: 'Vị mồ hôi', feeling_note: 'Cảm nhận',
+    };
+    async function openP377DayReport(userId, startDate, day) {
+      const dt = new Date(startDate + 'T00:00:00');
+      dt.setDate(dt.getDate() + day - 1);
+      const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+      try {
+        const d = await api(`/admin/program377/reports?user_id=${userId}&from=${iso}&to=${iso}&limit=5`);
+        const r = (d.reports || [])[0];
+        if (!r) { showToast('Không tìm thấy báo cáo ngày này.', 'red'); return; }
+        const rows = Object.entries(P377_REPORT_LABELS)
+          .filter(([k]) => r[k] !== null && r[k] !== undefined && String(r[k]).trim() !== '')
+          .map(([k, label]) => `<div style="display:flex;gap:10px;font-size:13.5px;padding:6px 0;border-bottom:1px solid var(--border);"><div style="width:150px;flex-shrink:0;color:var(--muted);">${label}</div><div style="flex:1;white-space:pre-wrap;word-break:break-word;">${escHtml(String(r[k]))}</div></div>`)
+          .join('');
+        document.getElementById('p377DayReportTitle').textContent = `${r.first_name || ''} ${r.last_name || ''} — Ngày ${day} (${ymdVN(iso)})${r.is_late ? ' · nộp trễ' : ''}`;
+        document.getElementById('p377DayReportBody').innerHTML = rows || '<div class="empty-state">Báo cáo không có nội dung.</div>';
+        document.getElementById('p377DayReportModal').style.display = 'flex';
+      } catch (e) { showToast(e.message, 'red'); }
     }
 
     // -- Duyệt đăng ký --

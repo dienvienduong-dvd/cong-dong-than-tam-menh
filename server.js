@@ -5505,6 +5505,64 @@ QUY TẮC BẮT BUỘC:
 
   // "Ngày thứ mấy" của user tính theo lịch thật (date('now','localtime')) kể từ start_date —
   // mở khóa đúng lúc qua 0h, không lệch theo giờ họ bấm tham gia (khác cơ chế thử thách 21 ngày).
+  // ── Admin: tiến độ 377 ngày của từng thành viên đã được duyệt ──────────
+  // days: chuỗi 377 ký tự — r = đã báo cáo, m = bỏ lỡ (ngày đã qua chưa báo cáo),
+  //       t = hôm nay chưa báo cáo, f = chưa tới.
+  app.get('/api/admin/program377/progress', requireAdmin, (req, res) => {
+    const search = String(req.query.search || '').trim().toLowerCase();
+    const rows = db.all(`
+      SELECT e.user_id, e.start_date, e.approved_at, u.first_name, u.last_name, u.email
+      FROM program377_enrollments e JOIN users u ON u.id = e.user_id
+      WHERE e.status = 'approved' ORDER BY e.start_date ASC, e.id ASC`);
+    const TOTAL = 377;
+    const members = rows
+      .filter(r => !search || `${r.first_name} ${r.last_name || ''} ${r.email}`.toLowerCase().includes(search))
+      .map(r => {
+        const today = program377DayNumberToday(r.start_date); // 0 = chưa tới ngày bắt đầu
+        const reported = new Set(db.all(
+          `SELECT DISTINCT COALESCE(day_number, CAST(julianday(report_date) - julianday(?) AS INTEGER) + 1) AS d
+           FROM program377_reports WHERE user_id = ?`, [r.start_date, r.user_id]
+        ).map(x => Number(x.d)).filter(d => d >= 1 && d <= TOTAL));
+        let days = '', missed = 0;
+        for (let d = 1; d <= TOTAL; d++) {
+          if (reported.has(d)) days += 'r';
+          else if (d < today) { days += 'm'; missed++; }
+          else if (d === today) days += 't';
+          else days += 'f';
+        }
+        const elapsed = Math.min(Math.max(today, 0), TOTAL);           // số ngày đã tới (kể cả hôm nay)
+        const due = Math.max(elapsed - (days[elapsed - 1] === 't' ? 1 : 0), 0); // ngày phải nộp tính tới hôm qua
+        const lastReport = db.get('SELECT MAX(report_date) AS d FROM program377_reports WHERE user_id = ?', [r.user_id])?.d || null;
+        return {
+          user_id: r.user_id,
+          name: `${r.first_name} ${r.last_name || ''}`.trim(),
+          email: r.email,
+          start_date: r.start_date,
+          day_today: today,
+          reported: reported.size,
+          missed,
+          remaining: TOTAL - elapsed,
+          rate: due ? Math.round(Math.min(reported.size, due) / due * 100) : (reported.size ? 100 : 0),
+          progress: Math.round(reported.size / TOTAL * 100),
+          finished: today > TOTAL,
+          last_report: lastReport,
+          days,
+        };
+      });
+    const active = members.filter(m => m.day_today >= 1 && !m.finished);
+    res.json({
+      total_days: TOTAL,
+      summary: {
+        members: members.length,
+        active: active.length,
+        finished: members.filter(m => m.finished).length,
+        not_started: members.filter(m => m.day_today < 1).length,
+        avg_rate: active.length ? Math.round(active.reduce((s, m) => s + m.rate, 0) / active.length) : 0,
+      },
+      members,
+    });
+  });
+
   function program377DayNumberToday(startDate) {
     if (!startDate) return 0;
     const row = db.get(
