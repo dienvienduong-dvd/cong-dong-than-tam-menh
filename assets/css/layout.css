@@ -605,4 +605,6 @@ html, body { height: 100%; overflow: hidden; }
 /* Mobile: html/body are overflow:hidden for the app shell, so auth pages scroll inside .auth-page */
 @media (max-width: 899px) {
   .auth-page { height: 100vh; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* Safari iOS 26: thanh địa chỉ nổi che cuối trang → chừa khoảng trống để cuộn lên khỏi nó */
+  .auth-right { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 }
