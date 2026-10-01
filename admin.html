@@ -1035,6 +1035,21 @@
     /* Khung trong từng tab Cài đặt giãn hết chiều ngang (bỏ max-width inline 600–760px) */
     .settings-tab-panel > .table-card,
     .settings-tab-panel > div { max-width: none !important; }
+    /* Hồ sơ thành viên: tab chính bên trái, nội dung bên phải; tab con nằm ngang phía trên nội dung */
+    #page-member-profile-detail.active { display: grid; grid-template-columns: 210px minmax(0, 1fr); column-gap: 24px; align-items: start; }
+    #page-member-profile-detail > :not(.settings-tabs):not(.mpp-top-tab-panel) { grid-column: 1 / -1; }
+    #page-member-profile-detail > button { justify-self: start; }
+    #page-member-profile-detail > .settings-tabs { grid-column: 1; grid-row: 3; margin-top: 16px; }
+    #page-member-profile-detail > .mpp-top-tab-panel { grid-column: 2; grid-row: 3; margin-top: 16px; }
+    #page-member-profile-detail .mpp-top-tab-panel .settings-tabs {
+      flex-direction: row; flex-wrap: wrap; width: auto; position: static;
+      border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 8px; margin-bottom: 14px;
+    }
+    @media (max-width: 900px) {
+      #page-member-profile-detail.active { grid-template-columns: minmax(0, 1fr); }
+      #page-member-profile-detail > .settings-tabs { grid-row: auto; flex-direction: row; flex-wrap: wrap; width: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 8px; }
+      #page-member-profile-detail > .mpp-top-tab-panel { grid-column: 1; grid-row: auto; }
+    }
     .mpp-top-tab-panel, .mpp-ttm-tab-panel, .mpp-comm-tab-panel, .mpp-learn-tab-panel { display: none; }
     .mpp-top-tab-panel.active, .mpp-ttm-tab-panel.active, .mpp-comm-tab-panel.active, .mpp-learn-tab-panel.active { display: block; }
 
