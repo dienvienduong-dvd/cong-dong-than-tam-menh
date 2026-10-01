@@ -602,9 +602,10 @@ html, body { height: 100%; overflow: hidden; }
   .auth-page { height: 100vh; }
 }
 
-/* Mobile: html/body are overflow:hidden for the app shell, so auth pages scroll inside .auth-page */
+/* Mobile: auth pages (html.auth-html) scroll the whole document, not an inner box —
+   Safari's floating address bar only gets out of the way for normal page scrolling. */
 @media (max-width: 899px) {
-  .auth-page { height: 100vh; height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  /* Safari iOS 26: thanh địa chỉ nổi che cuối trang → chừa khoảng trống để cuộn lên khỏi nó */
-  .auth-right { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  html.auth-html, html.auth-html body { overflow: visible !important; height: auto !important; }
+  html.auth-html .auth-page { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; }
+  html.auth-html .auth-right { min-height: 0; padding-top: calc(32px + env(safe-area-inset-top, 0px)); padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
