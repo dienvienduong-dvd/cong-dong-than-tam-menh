@@ -2118,8 +2118,8 @@
 
     // ── Post media (image / video / doc / gif) + poll rendering ────
     function youtubeEmbedUrl(url) {
-      const m = String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/);
-      return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+      // YouTube (kể cả /live/), Vimeo, Google Drive → link nhúng (app.js videoEmbedUrl)
+      return videoEmbedUrl(url);
     }
     function vimeoEmbedUrl(url) {
       const m = String(url).match(/vimeo\.com\/(\d+)/);

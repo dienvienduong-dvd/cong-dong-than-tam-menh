@@ -5830,6 +5830,11 @@ QUY TẮC BẮT BUỘC:
       }
       const v = u.searchParams.get('v');
       if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+      // Google Drive: …/file/d/ID/view (bị chặn nhúng) → …/file/d/ID/preview
+      if (u.hostname === 'drive.google.com' || u.hostname === 'docs.google.com') {
+        const id = (u.pathname.match(/\/d\/([\w-]{15,})/) || [])[1] || u.searchParams.get('id');
+        if (id) return `https://drive.google.com/file/d/${id}/preview`;
+      }
       return url;
     } catch { return url; }
   }

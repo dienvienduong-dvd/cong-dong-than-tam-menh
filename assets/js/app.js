@@ -74,6 +74,38 @@ function renderSimpleMarkdown(src) {
   }).join('');
 }
 
+// ── Link video → URL nhúng được trong <iframe> ─────────────────
+// YouTube (watch?v=, youtu.be/, /live/, /shorts/, /embed/), Vimeo, Google Drive (…/file/d/ID/view → /preview).
+// Link watch/live/view gốc bị chặn nhúng nên phải đổi. Trả về null nếu không nhận ra.
+function videoEmbedUrl(raw) {
+  if (!raw) return null;
+  const srcMatch = String(raw).match(/\bsrc=["']([^"']+)["']/i); // dán cả mã <iframe>
+  const url = (srcMatch ? srcMatch[1] : String(raw)).trim();
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^(www|m)\./, '');
+    if (host === 'youtu.be') return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1).split('/')[0]}`;
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      if (u.pathname.startsWith('/embed/')) return url;
+      const p = u.pathname.match(/^\/(live|shorts|v)\/([^/?]+)/);
+      if (p) return `https://www.youtube-nocookie.com/embed/${p[2]}`;
+      const v = u.searchParams.get('v');
+      if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+      return null;
+    }
+    if (host === 'player.vimeo.com') return url;
+    if (host === 'vimeo.com') {
+      const m = u.pathname.match(/^\/(\d+)/);
+      return m ? `https://player.vimeo.com/video/${m[1]}` : null;
+    }
+    if (host === 'drive.google.com' || host === 'docs.google.com') {
+      const id = (u.pathname.match(/\/d\/([\w-]{15,})/) || [])[1] || u.searchParams.get('id');
+      return id ? `https://drive.google.com/file/d/${id}/preview` : null;
+    }
+  } catch (e) { /* không phải URL */ }
+  return null;
+}
+
 // Bấm vào ảnh trong popup bài đăng → mở ảnh gốc ở tab mới
 document.addEventListener('click', e => {
   const img = e.target.closest && e.target.closest('.pm-body .post-media-img');
