@@ -1179,3 +1179,26 @@ document.addEventListener('DOMContentLoaded', () => {
   addSection(document.querySelector('#mob-sidebar nav'));
   addSection(document.querySelector('#mob-mainmenu nav'));
 })();
+
+// ── Nút "Đăng xuất" trong menu điện thoại ─────────────────────
+// Trên máy tính nút nằm ở góc dưới thanh bên; trên điện thoại thanh bên bị ẩn nên thêm vào cuối 2 menu trượt.
+(function injectMobileLogout() {
+  let loggedIn = false;
+  try { loggedIn = !!localStorage.getItem('currentUser') || !!sessionStorage.getItem('currentUser'); } catch (e) {}
+  if (!loggedIn) return;
+  const icon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+  ['mob-sidebar', 'mob-mainmenu'].forEach(id => {
+    const drawer = document.getElementById(id);
+    if (!drawer || drawer.querySelector('.mob-logout')) return;
+    const a = document.createElement('a');
+    a.href = 'index.html';
+    a.className = 'nav-item mob-logout';
+    a.setAttribute('aria-label', 'Đăng xuất');
+    a.style.cssText = 'color:#dc2626;margin:6px 8px calc(var(--mob-nav-h, 60px) + 6px + env(safe-area-inset-bottom, 0px));flex-shrink:0;';
+    a.innerHTML = icon + 'Đăng xuất';
+    a.addEventListener('click', () => { if (typeof clearLoginSession === 'function') clearLoginSession(); });
+    const userBox = drawer.querySelector('#mob-sidebar-user');
+    if (userBox) { userBox.style.flexWrap = 'wrap'; drawer.insertBefore(a, userBox.nextSibling); }
+    else drawer.appendChild(a);
+  });
+})();
