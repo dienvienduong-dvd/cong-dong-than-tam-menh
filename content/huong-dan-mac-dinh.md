@@ -93,7 +93,74 @@ Bên dưới ô nội dung có một hàng nút nhỏ:
 
 Hãy chia sẻ trải nghiệm thật, tôn trọng mọi người và không quảng cáo khi chưa được phép. Xem đầy đủ ở mục **Nội quy cộng đồng**.
 
-## 4. Tham gia chương trình: 3 buổi, 8 buổi, 377 ngày
+## 4. Spaces — nhóm thảo luận
+
+**Space** là các nhóm thảo luận riêng theo chương trình hoặc chủ đề (ví dụ Workshop 3 Buổi, Chuyên sâu 8 buổi, 377 ngày thực hành). Bấm **Spaces** trên thanh trên cùng để xem.
+
+### Tìm và tham gia Space
+
+* Tab **Tất cả** — mọi Space trong cộng đồng. Tab **Của tôi** — các Space bạn đã tham gia.
+* Ô **Tìm Space...** để tìm theo tên; có thể sắp xếp theo Tên A-Z, Nhiều bài đăng nhất hoặc Mới nhất.
+* Nhãn **🔒 Private** là Space riêng tư; **🕵️ Secret** là Space bí mật, chỉ người được mời mới thấy.
+
+Nút trên mỗi thẻ Space:
+
+* **Tham gia** — Space công khai, bấm là vào ngay.
+* **Yêu cầu tham gia** — Space riêng tư, cần Ban tổ chức duyệt. Trong lúc chờ, nút hiện **Đang chờ duyệt**.
+* **Xem Space** — mở Space bạn đã tham gia.
+
+> Khi được duyệt vào chương trình 8 buổi hoặc 377 ngày, bạn sẽ được mở sẵn các Space của chương trình đó.
+
+### Bên trong một Space
+
+* Khung đăng bài giống Feed — bài đăng ở đây thuộc riêng Space này. Chọn **Topic** rồi bấm **Đăng bài**.
+* Tab **Mới nhất** và **🔥 Phổ biến** để lọc bài.
+* Thích, bình luận và sửa bài giống hệt ở Feed.
+
+## 5. Members — Thành viên
+
+Bấm **Members** trên thanh trên cùng để xem tất cả thành viên cộng đồng.
+
+* Dải thống kê trên cùng: tổng số **Thành viên**, số **Admin** và số người **Đang online**.
+* Ô **Tìm theo tên...** để tìm một người.
+* Sắp xếp danh sách: **Xếp theo XP**, **Mới nhất** (người mới tham gia) hoặc **Nhiều bài nhất**.
+* Bấm vào thẻ một thành viên để mở **hồ sơ**: cấp độ, XP, bài viết và hoạt động của họ.
+
+### Mời bạn bè tham gia
+
+1. Bấm nút **MỜI** — link đăng ký được sao chép sẵn (nút đổi thành **ĐÃ SAO CHÉP**).
+2. Dán link vào Zalo, Messenger, tin nhắn… gửi cho người bạn muốn mời.
+
+## 6. Leaderboard — Bảng xếp hạng
+
+Bấm **Leaderboard** để xem ai đang tích cực nhất cộng đồng.
+
+* Ba bảng xếp hạng theo XP: **7 ngày gần nhất**, **30 ngày gần nhất** và **Tổng thể (All-time)**.
+* Khung đầu trang cho biết **thứ hạng của bạn**.
+* **Tiến trình cấp độ** — 9 cấp từ **Sơ Cơ** đến **Ngũ Hành Hòa**, và bạn đang ở cấp nào.
+* Bấm vào một người trong bảng để xem hồ sơ của họ.
+
+> **Muốn lên hạng?** Đăng bài, bình luận, ghi nhật ký ăn uống và làm báo cáo hằng ngày đều được cộng XP (xem mục **Sử dụng trang Feed**).
+
+## 7. Calendar — Lịch sự kiện
+
+Bấm **Calendar** để xem lịch chung của cộng đồng do Ban tổ chức cập nhật: các buổi Zoom, workshop và sự kiện.
+
+* Bấm vào một sự kiện để xem giờ, nội dung và link tham gia (nếu có).
+* Dùng các nút trên đầu lịch để chuyển tháng, tuần hoặc xem dạng danh sách.
+
+> Lịch Zoom riêng của từng chương trình nằm ngay trong trang chương trình đó. Ngày có Zoom, đầu trang chương trình sẽ hiện khung đếm ngược và nút **Tham gia Zoom**.
+
+## 8. About — Giới thiệu cộng đồng
+
+Bấm **About** để đọc giới thiệu về **Ngôi Nhà Dưỡng Hoá**:
+
+* Câu chuyện, sứ mệnh và người sáng lập cộng đồng.
+* Số thành viên hiện tại.
+* Hình ảnh và video — bấm vào để xem cỡ lớn.
+* Đường dẫn tới **Nội quy cộng đồng**.
+
+## 9. Tham gia chương trình: 3 buổi, 8 buổi, 377 ngày
 
 Các chương trình nằm ở menu trái, mục **Sức khoẻ**.
 
@@ -107,7 +174,7 @@ Các chương trình nằm ở menu trái, mục **Sức khoẻ**.
 
 > **Ngày có Zoom:** đầu trang chương trình sẽ hiện khung **Lịch Zoom trong 24 giờ** kèm đồng hồ đếm ngược. Đến giờ, bấm **Tham gia Zoom**.
 
-## 5. Báo cáo hằng ngày (377 ngày)
+## 10. Báo cáo hằng ngày (377 ngày)
 
 1. Vào **377 ngày thực hành** → tab **Ngày 1-377**.
 2. Điền bữa sáng / trưa / tối, chọn các **màu** và **vị** đã ăn, tình trạng nước tiểu, phân, tập luyện, mồ hôi và 3 điều biết ơn.
@@ -117,7 +184,7 @@ Các chương trình nằm ở menu trái, mục **Sức khoẻ**.
 * Tab **Kết quả** — xem nhận xét về thay đổi sức khoẻ của bạn.
 * Tab **Lịch Zoom / sự kiện** — các buổi Zoom sắp tới.
 
-## 6. Xem khoá học
+## 11. Xem khoá học
 
 1. Bấm **Courses** trên thanh menu và chọn khoá học.
 2. Trong khoá học, bấm vào từng **module** để mở danh sách bài.
@@ -125,7 +192,7 @@ Các chương trình nằm ở menu trái, mục **Sức khoẻ**.
 * **Khoá công khai** — bấm là học ngay.
 * **Khoá riêng tư** — gửi yêu cầu và chờ Ban tổ chức duyệt, hoặc thanh toán (nếu có phí).
 
-## 7. Cần hỗ trợ?
+## 12. Cần hỗ trợ?
 
 Menu trái, mục **Hỗ trợ**:
 

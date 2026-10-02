@@ -6296,7 +6296,7 @@ QUY TẮC BẮT BUỘC:
         <p>Ban tổ chức ${communityName()} đã duyệt đăng ký tham gia chương trình <strong>${programName}</strong> của bạn.</p>
         <p>${content}</p>
         <a class="btn" href="${SITE_URL}/${link}">${needIntake ? 'Làm khảo sát Thân – Tâm – Mệnh' : 'Vào chương trình'}</a>
-        <p>📖 Cách tham gia Zoom, nộp báo cáo hằng ngày và bật thông báo: xem <a href="${SITE_URL}/huong-dan.html#muc-4">Hướng dẫn sử dụng</a>.</p>
+        <p>📖 Cách tham gia Zoom, nộp báo cáo hằng ngày và bật thông báo: xem <a href="${SITE_URL}/huong-dan.html#muc-9">Hướng dẫn sử dụng</a>.</p>
       `),
     }).catch(err => console.error('[enroll-approved email]', err.message));
   }
