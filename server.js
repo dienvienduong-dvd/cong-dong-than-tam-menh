@@ -3259,6 +3259,8 @@ QUY TẮC BẮT BUỘC:
   app.post('/api/auth/forgot-password', (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Vui lòng nhập email.' });
+    // Bắt đầu từ trang admin → link trong email đưa về luồng đăng nhập admin, không phải trang thành viên
+    const fromAdmin = req.body.from === 'admin';
 
     const user = db.get('SELECT id, email, first_name FROM users WHERE email = ?', [email]);
     // Always return success to avoid email enumeration
@@ -3268,12 +3270,12 @@ QUY TẮC BẮT BUỘC:
     db.run('UPDATE reset_tokens SET used = 1 WHERE user_id = ?', [user.id]);
 
     // Generate a random 32-char hex token
-    const token = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    const token = crypto.randomBytes(16).toString('hex');
     const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     db.run('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?,?,?)',
       [user.id, token, expires_at]);
 
-    const resetLink = `${SITE_URL}/reset-password.html?token=${token}`;
+    const resetLink = `${SITE_URL}/reset-password.html?token=${token}${fromAdmin ? '&from=admin' : ''}`;
     sendEmail({
       to: user.email,
       subject: `🔑 Đặt lại mật khẩu — ${communityName()}`,
