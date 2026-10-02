@@ -1,6 +1,6 @@
 # HƯỚNG DẪN SỬ DỤNG NGÔI NHÀ DƯỠNG HOÁ
 
-*Bấm vào từng mục bên dưới để xem hướng dẫn chi tiết. Cần hỗ trợ thêm, hãy vào mục **Liên hệ BTC** ở menu trái.*
+*Chọn từng mục để xem hướng dẫn chi tiết. Cần hỗ trợ thêm, hãy vào mục **Liên hệ BTC** ở menu trái.*
 
 ## 1. Đăng nhập & cài ứng dụng lên điện thoại
 
