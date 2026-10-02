@@ -3254,6 +3254,29 @@
           <button class="settings-tab-btn" onclick="showSettingsTab('contact', this)">📞 Thông tin liên hệ</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('payment', this); loadPaymentSettings();">💳 Thanh toán</button>
           <button class="settings-tab-btn" onclick="showSettingsTab('rules', this); loadRulesAcceptances();">📜 Nội quy</button>
+          <button class="settings-tab-btn" onclick="showSettingsTab('guide', this)">📖 Hướng dẫn sử dụng</button>
+        </div>
+
+        <div class="settings-tab-panel" data-tab="guide">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2>📖 Hướng dẫn sử dụng</h2>
+            <a href="huong-dan.html" target="_blank" class="btn-sm" style="text-decoration:none;">Xem trang ↗</a>
+          </div>
+          <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">
+              Hiển thị ở trang <b>Hướng dẫn sử dụng</b> (menu trái → Hỗ trợ, và nút <b>?</b> cạnh chuông thông báo).
+              Mỗi dòng bắt đầu bằng <code>## </code> là <b>1 mục</b> — thành viên bấm vào để mở/thu gọn. Phần trước mục đầu tiên là lời mở đầu.
+              Định dạng giống Nội quy: <code>**in đậm**</code>, <code>*in nghiêng*</code>, <code>* </code> danh sách, <code>1. </code> danh sách số,
+              <code>&gt; </code> lưu ý nổi bật. Cách 1 dòng trống giữa các đoạn.
+            </div>
+            <textarea id="settingGuideContent" rows="26"
+              style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+            <div>
+              <button class="btn-sm primary" onclick="saveGuideSettings()">💾 Lưu hướng dẫn</button>
+            </div>
+          </div>
+        </div>
         </div>
 
         <div class="settings-tab-panel" data-tab="rules">
@@ -9671,6 +9694,7 @@
         document.getElementById('settingCalendarUrl').value = s.calendar_embed_url || '';
         loadContactSettings(s);
         document.getElementById('settingRulesContent').value = s.rules_content || '';
+        document.getElementById('settingGuideContent').value = s.guide_content || '';
         updateCalendarPreview();
 
         document.getElementById('settingChallengeIcon').value = s.challenge_hero_icon || '⚡';
@@ -9854,6 +9878,16 @@
     }
 
     // ── Thông tin liên hệ (lien-he.html) ─────────────────────────
+    // ── Hướng dẫn sử dụng ──────────────────────────────────────────
+    async function saveGuideSettings() {
+      const content = document.getElementById('settingGuideContent').value;
+      if (!content.trim()) { showToast('Nội dung hướng dẫn đang trống.', 'red'); return; }
+      try {
+        await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ guide_content: content }) });
+        showToast('✅ Đã lưu hướng dẫn.', 'green');
+      } catch (e) { showToast(e.message, 'red'); }
+    }
+
     // ── Nội quy cộng đồng ──────────────────────────────────────────
     async function saveRulesSettings() {
       const content = document.getElementById('settingRulesContent').value;

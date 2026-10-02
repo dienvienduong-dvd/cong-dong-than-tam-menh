@@ -1144,13 +1144,14 @@ document.addEventListener('DOMContentLoaded', () => {
   addSection(document.querySelector('#mob-mainmenu nav'), 'nav-item');
 })();
 
-// ── "Liên hệ cộng đồng" nav injector ─────────────────────────
-// Luôn nằm cuối sidebar (sau "Khác"): Liên hệ BTC, Danh sách địa điểm, Nội quy cộng đồng.
+// ── "Hỗ trợ" nav injector ─────────────────────────────────────
+// Luôn nằm cuối sidebar (sau "Khác"): Hướng dẫn sử dụng, Liên hệ BTC, Danh sách địa điểm, Nội quy cộng đồng.
 (function injectContactNav() {
   const here = location.pathname.split('/').pop() || 'index.html';
   const icon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>';
   const pinIcon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';
   const ITEMS = [
+    ['huong-dan.html', 'Hướng dẫn sử dụng', '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>'],
     ['lien-he.html', 'Liên hệ BTC', icon],
     ['dia-diem.html', 'Danh sách địa điểm', pinIcon],
     ['noi-quy.html', 'Nội quy cộng đồng', '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>'],
@@ -1164,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const label = document.createElement('div');
     label.className = 'nav-section-label';
     label.style.marginTop = '8px';
-    label.textContent = 'Liên hệ cộng đồng';
+    label.textContent = 'Hỗ trợ';
     section.appendChild(label);
     ITEMS.forEach(([href, text, ico]) => {
       const a = document.createElement('a');
@@ -1258,3 +1259,43 @@ function renderTodayEventBanner(el, events, opts) {
   clearInterval(el._dhTimer);
   el._dhTimer = setInterval(draw, 30000);
 }
+
+// ── Nút "?" (Hướng dẫn sử dụng) cạnh chuông thông báo + lời mời cho người mới ở Feed ──
+(function injectGuideHelp() {
+  const here = location.pathname.split('/').pop() || 'index.html';
+  const qIcon = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  function addHelp(bell) {
+    if (!bell || document.getElementById(bell.id + 'Help')) return;
+    const a = document.createElement('a');
+    a.id = bell.id + 'Help';
+    a.href = 'huong-dan.html';
+    a.className = 'icon-btn' + (here === 'huong-dan.html' ? ' active' : '');
+    a.title = 'Hướng dẫn sử dụng';
+    a.setAttribute('aria-label', 'Hướng dẫn sử dụng');
+    a.innerHTML = qIcon;
+    // Chuông trên máy tính nằm trong 1 <div> bọc (chứa cả khung thông báo) → chèn trước khung đó
+    const anchor = bell.parentElement && bell.parentElement.children.length > 1 && bell.parentElement.tagName === 'DIV' && !bell.parentElement.classList.contains('mob-topbar-right')
+      ? bell.parentElement : bell;
+    anchor.parentElement.insertBefore(a, anchor);
+  }
+  addHelp(document.getElementById('notifBell'));
+  addHelp(document.getElementById('notifBellMob'));
+
+  // Lời mời xem hướng dẫn: chỉ ở Feed, chỉ khi chưa mở hướng dẫn và chưa bấm đóng
+  if (here !== 'feed.html') return;
+  let seen = false;
+  try { seen = !!localStorage.getItem('dh_guide_seen'); } catch (e) {}
+  const feed = document.getElementById('feed');
+  if (seen || !feed) return;
+  const box = document.createElement('div');
+  box.className = 'dh-guide-invite';
+  box.innerHTML = `<div class="dh-guide-invite-ico">📖</div>
+    <div class="dh-guide-invite-text"><b>Mới tham gia Ngôi Nhà Dưỡng Hoá?</b><span>Xem hướng dẫn 3 phút: đăng nhập, cài ứng dụng, bật thông báo, đăng bài, vào Zoom…</span></div>
+    <a class="dh-guide-invite-btn" href="huong-dan.html">Xem hướng dẫn →</a>
+    <button type="button" class="dh-guide-invite-close" aria-label="Đóng">×</button>`;
+  box.querySelector('.dh-guide-invite-close').onclick = () => {
+    try { localStorage.setItem('dh_guide_seen', '1'); } catch (e) {}
+    box.remove();
+  };
+  feed.insertBefore(box, feed.firstChild);
+})();

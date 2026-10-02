@@ -2318,6 +2318,8 @@ ${extra}
     // yêu cầu mọi thành viên xác nhận lại.
     ['rules_content',          (() => { try { return fs.readFileSync(path.join(__dirname, 'content', 'noi-quy-mac-dinh.md'), 'utf8'); } catch (e) { return ''; } })()],
     ['rules_version',          '1'],
+    // Hướng dẫn sử dụng (Markdown) — trang huong-dan.html; mỗi "## " là 1 mục mở/thu gọn
+    ['guide_content',          (() => { try { return fs.readFileSync(path.join(__dirname, 'content', 'huong-dan-mac-dinh.md'), 'utf8'); } catch (e) { return ''; } })()],
   ];
   defaultSettings.forEach(([key, value]) => {
     const existing = db.get('SELECT key FROM site_settings WHERE key = ?', [key]);
@@ -3031,6 +3033,7 @@ QUY TẮC BẮT BUỘC:
           <li>📗 Truy cập khoá học và công thức độc quyền</li>
         </ul>
         <a class="btn" href="${SITE_URL}/feed.html">Vào Bảng Tin Ngay</a>
+        <p>📖 Lần đầu sử dụng? Xem <a href="${SITE_URL}/huong-dan.html">Hướng dẫn sử dụng</a> (đăng nhập, cài ứng dụng lên điện thoại, bật thông báo, vào Zoom…).</p>
         <p>Nếu có bất kỳ câu hỏi nào, hãy đăng lên cộng đồng — chúng tôi luôn sẵn sàng hỗ trợ!</p>
       `)
     });
@@ -3191,6 +3194,7 @@ QUY TẮC BẮT BUỘC:
             <p>Xin chào <strong>${first_name}</strong>,</p>
             <p>Bạn đã đăng ký thành công tài khoản tại <strong>${communityName()}</strong> qua Google.</p>
             <a class="btn" href="${SITE_URL}/feed.html">Vào Bảng Tin Ngay</a>
+            <p>📖 Lần đầu sử dụng? Xem <a href="${SITE_URL}/huong-dan.html">Hướng dẫn sử dụng</a> (đăng nhập, cài ứng dụng lên điện thoại, bật thông báo, vào Zoom…).</p>
           `)
         });
       }
@@ -6292,6 +6296,7 @@ QUY TẮC BẮT BUỘC:
         <p>Ban tổ chức ${communityName()} đã duyệt đăng ký tham gia chương trình <strong>${programName}</strong> của bạn.</p>
         <p>${content}</p>
         <a class="btn" href="${SITE_URL}/${link}">${needIntake ? 'Làm khảo sát Thân – Tâm – Mệnh' : 'Vào chương trình'}</a>
+        <p>📖 Cách tham gia Zoom, nộp báo cáo hằng ngày và bật thông báo: xem <a href="${SITE_URL}/huong-dan.html#muc-4">Hướng dẫn sử dụng</a>.</p>
       `),
     }).catch(err => console.error('[enroll-approved email]', err.message));
   }
@@ -6971,7 +6976,7 @@ QUY TẮC BẮT BUỘC:
       'contact_heading', 'contact_intro', 'contact_people',
       'contact_bank_name', 'contact_bank_account', 'contact_bank_holder', 'contact_bank_note',
       'contact_socials',
-      'rules_content', 'rules_version',
+      'rules_content', 'rules_version', 'guide_content',
     ];
     const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
     if (!updates.length) return res.status(400).json({ error: 'Không có trường hợp lệ.' });
