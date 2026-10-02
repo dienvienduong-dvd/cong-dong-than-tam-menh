@@ -27,15 +27,71 @@ Sau đó mở bằng biểu tượng **Dưỡng Hoá** như một ứng dụng b
 
 > **iPhone:** cần iOS 16.4 trở lên và phải mở ứng dụng từ biểu tượng ngoài màn hình chính (xem mục 1) thì mới nhận được thông báo.
 
-## 3. Đăng bài & bình luận
+## 3. Sử dụng trang Feed (Bảng tin)
 
-1. Vào **Feed**, bấm vào khung **"Bạn đang nghĩ gì?"**.
-2. Nhập tiêu đề (không bắt buộc) và nội dung.
-3. Chọn nơi đăng (ví dụ **Workshop 3 Buổi**, **Thảo luận chung**) rồi bấm **Đăng bài**.
+**Feed** là bảng tin chung của cộng đồng — nơi mọi người chia sẻ bữa ăn, kinh nghiệm thực hành, đặt câu hỏi và nhận thông báo từ Ban tổ chức. Bấm **Feed** ở menu trái hoặc thanh trên cùng để mở.
 
-* **Gắn ảnh Google Drive:** trên Drive, đặt chia sẻ ảnh là **"Bất kỳ ai có đường liên kết"**, rồi dán link vào bài.
-* **Sửa bài đã đăng:** bấm vào bài viết của bạn → **Sửa**.
-* **Bình luận:** bấm vào bài viết, nhập bình luận ở cuối bài.
+### Bố cục trang
+
+* **Menu trái:** các chương trình (Sức khoẻ), Chương trình đào tạo, Học tập, Cẩm nang và Hỗ trợ.
+* **Ở giữa:** khung đăng bài và danh sách bài viết.
+* **Cột phải (trên máy tính):** thẻ hồ sơ của bạn (cấp độ, điểm XP, số bài đăng, Streak), Community Challenge và bảng Top XP.
+* **Thanh trên cùng:** 🔍 Tìm kiếm, ☀️ đổi giao diện sáng/tối, ❓ Hướng dẫn, 🔔 Thông báo, 💬 Tin nhắn và ảnh đại diện (bấm để mở hồ sơ của bạn).
+
+> Trên điện thoại, cột phải được ẩn để dễ đọc. Bấm nút ☰ góc trên bên trái để mở menu.
+
+### Đăng một bài viết
+
+1. Bấm vào khung **"… ơi, bạn đang nghĩ gì?"**.
+2. Nhập **tiêu đề** (không bắt buộc) và **nội dung**.
+3. Chọn **Space** — nhóm sẽ hiển thị bài (ví dụ Workshop 3 Buổi, Chuyên sâu 8 buổi). Bắt buộc.
+4. Chọn **Topic** — chủ đề trong nhóm (ví dụ Thảo luận chung). Bắt buộc.
+5. Chọn **Trụ cột** Ngũ Hành nếu bài nói về một hành (Kim, Mộc, Thủy, Hỏa, Thổ) — không bắt buộc.
+6. Bấm **Đăng bài**. Mỗi bài đăng được cộng **+3 XP**.
+
+### Thêm ảnh, video, tài liệu, bình chọn
+
+Bên dưới ô nội dung có một hàng nút nhỏ:
+
+* 🖼️ **Ảnh** — dán link ảnh.
+* 🎬 **Video** — dán link YouTube, Vimeo hoặc Google Drive.
+* 📄 **Tài liệu** — dán link Google Docs, PDF…
+* 🎞️ **GIF** — dán link ảnh động.
+* 📊 **Bình chọn** — đặt câu hỏi và các lựa chọn (tối đa 6) để mọi người cùng bình chọn.
+* 😀 **Emoji** — chèn biểu tượng cảm xúc vào nội dung.
+
+> **Ảnh/video Google Drive:** trên Drive bấm **Chia sẻ** → mục *Quyền truy cập chung* chọn **"Bất kỳ ai có đường liên kết"** → **Sao chép đường liên kết** rồi dán vào bài. Nếu không đặt như vậy, ảnh sẽ không hiện.
+
+### Đọc, thích và bình luận
+
+* Bấm vào một bài viết để mở **toàn bộ nội dung**. Bấm vào ảnh để xem ảnh cỡ lớn.
+* Bấm ♡ để **thích** bài viết.
+* Viết bình luận ở ô **"Viết bình luận..."** cuối bài — mỗi bình luận được **+2 XP**.
+* Bấm **Trả lời** dưới một bình luận để trả lời riêng người đó.
+
+### Sửa bài của bạn
+
+1. Bấm mở bài viết của chính bạn.
+2. Bấm **✏️ Sửa bài**, chỉnh tiêu đề, nội dung hoặc link ảnh.
+3. Bấm **Lưu thay đổi**.
+
+### Lọc và tìm bài
+
+* **Mới nhất** — bài mới đăng gần đây; bài **📌 Đã ghim** (thông báo quan trọng của Ban tổ chức) luôn nằm đầu.
+* **🔥 Phổ biến** — bài được thích và bình luận nhiều nhất.
+* **💡 Mẹo sức khỏe** — các bài mẹo chăm sóc sức khoẻ.
+* **Trụ cột ▾** — chỉ xem bài thuộc một hành: Kim, Mộc, Thủy, Hỏa hoặc Thổ.
+* **🔍 Tìm kiếm** trên thanh trên cùng — gõ từ khoá để tìm bài viết và thành viên.
+
+### Điểm XP, cấp độ và Streak
+
+* Mỗi hoạt động đều được cộng **XP**: đăng bài +3, bình luận +2, ghi nhật ký ăn uống hoặc báo cáo hằng ngày +3.
+* XP giúp bạn **lên cấp** (Sơ Cơ → Nhập Môn → Dưỡng Khí → …) và có mặt trên bảng **Top XP**.
+* **Streak** 🔥 là số ngày liên tục bạn ghi nhật ký ăn uống — giữ chuỗi càng dài càng tốt!
+
+### Viết bài sao cho văn minh
+
+Hãy chia sẻ trải nghiệm thật, tôn trọng mọi người và không quảng cáo khi chưa được phép. Xem đầy đủ ở mục **Nội quy cộng đồng**.
 
 ## 4. Tham gia chương trình: 3 buổi, 8 buổi, 377 ngày
 
